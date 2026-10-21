@@ -20,28 +20,40 @@
     // about: soft edges for the hair video
     'html[data-xp="about"] video{-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 9%,#000 78%,transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 9%,#000 78%,transparent 100%)}',
     '[data-xh]{display:none!important}',
+    // menu and project captions in the typeface, colour and hover animation of paul-michel.framer.website
+    '@font-face{font-family:"IBM Plex Mono";font-weight:500;font-style:normal;font-display:swap;src:url(/fonts.gstatic.com/s/ibmplexmono/v20/-F6qfjptAgt5VM-kVkqdyU8n3twJwlBFgg.woff2) format("woff2")}',
+    '[data-xnc]{mix-blend-mode:normal!important}',
+    '[data-xn],[data-xcap]{font-family:"IBM Plex Mono","IBM Plex Mono Placeholder",monospace!important;font-size:14px!important;font-weight:500!important;letter-spacing:.025em!important;text-transform:uppercase!important;color:#888!important;line-height:1.6em!important;text-decoration:none!important}',
+    '.x-roll{position:relative;display:inline-grid;overflow:hidden;white-space:pre;vertical-align:top}',
+    '.x-roll>span{grid-area:1/1;display:inline-flex}',
+    '.x-roll i{font-style:normal;display:inline-block;transition:transform .55s cubic-bezier(.3,1.35,.5,1);transition-delay:calc(var(--i) * 40ms)}',
+    '.x-roll .x-b i{transform:translateY(112%)}',
+    '[data-xn]:hover .x-roll .x-a i,[data-xn]:focus-visible .x-roll .x-a i{transform:translateY(-112%)}',
+    '[data-xn]:hover .x-roll .x-b i,[data-xn]:focus-visible .x-roll .x-b i{transform:translateY(0)}',
     // project pages: Framer fixes the page, main and image column to ~5,000px, but the images are taller, so the
     // footer ended up in the middle of the images and the background gradient stopped. Let them grow with the content.
     'main[data-xm]{height:auto!important;min-height:0!important}',
     '[data-xr]{height:auto!important;min-height:100vh!important}',
     '[data-xg]{height:auto!important}',
     // view toggle
-    '.x-toggle{position:absolute;top:56px;right:20px;display:flex;gap:4px;z-index:6}',
+    // the view toggle is the first row of the image column (not floating), so it can never cover the text or the images
+    '.x-toggle{display:flex;justify-content:flex-end;align-items:center;align-self:center;gap:4px;width:100%;height:32px;padding:0;box-sizing:border-box;flex:none}',
     '.x-toggle button{width:32px;height:32px;display:grid;place-items:center;padding:0;border:0;background:none;color:#1b1b1b;opacity:.35;cursor:pointer;transition:opacity .2s}',
     '.x-toggle button[aria-pressed="true"]{opacity:1}',
     '.x-toggle button:hover{opacity:.75}',
     '.x-toggle svg{width:16px;height:16px;fill:currentColor}',
     'main[data-gal="grid"]{flex-direction:column!important;height:auto!important;min-height:0!important}',
-    'main[data-gal="grid"]>:not([data-xg]):not(.x-toggle){flex:none!important;width:605px!important;max-width:100%!important;height:auto!important;position:relative!important;top:auto!important}',
+    'main[data-gal="grid"]>:not([data-xg]){flex:none!important;width:605px!important;max-width:100%!important;height:auto!important;position:relative!important;top:auto!important}',
     // grid view on wide screens: title/role/year on the left, description beside it instead of one tall narrow column
-    '@media(min-width:811px){main[data-gal="grid"]>:not([data-xg]):not(.x-toggle){width:100%!important;max-width:none!important}',
-    'main[data-gal="grid"]>:not([data-xg]):not(.x-toggle)>*{width:100%!important;max-width:none!important;height:auto!important;flex-direction:row!important;align-items:flex-start!important;justify-content:flex-start!important;gap:80px!important}',
-    'main[data-gal="grid"]>:not([data-xg]):not(.x-toggle)>*>:first-child{flex:none!important;width:320px!important}',
-    'main[data-gal="grid"]>:not([data-xg]):not(.x-toggle)>*>:last-child{flex:1 1 0!important;width:auto!important;max-width:900px!important}}',
+    '@media(min-width:811px){main[data-gal="grid"]>:not([data-xg]){width:100%!important;max-width:none!important;padding-right:96px!important;box-sizing:border-box!important}',
+    'main[data-gal="grid"]>:not([data-xg])>*{width:100%!important;max-width:none!important;height:auto!important;flex-direction:row!important;align-items:flex-start!important;justify-content:flex-start!important;gap:80px!important}',
+    'main[data-gal="grid"]>:not([data-xg])>*>:first-child{flex:none!important;width:320px!important}',
+    'main[data-gal="grid"]>:not([data-xg])>*>:last-child{flex:1 1 0!important;width:auto!important;max-width:900px!important}}',
     'main[data-gal="grid"]>[data-xg]{flex:none!important}',
     // grid view is a masonry: every item goes under the shortest column, so there are no empty gaps
-    'main[data-gal="grid"] [data-xg]{display:block!important;position:relative!important;width:100%!important;height:var(--ch,auto)!important;min-height:0!important;padding:0!important;box-sizing:border-box}',
-    'main[data-gal="grid"] [data-xg]>*{position:absolute!important;left:var(--mx,0);top:var(--my,0);width:var(--mw,100%)!important;height:var(--gh,auto)!important;max-width:none!important;margin:0!important}',
+    'main[data-gal="grid"] [data-xg]{display:block!important;align-content:flex-start!important;justify-content:flex-start!important;position:relative!important;width:100%!important;height:var(--ch,auto)!important;min-height:0!important;padding:0!important;box-sizing:border-box}',
+    'main[data-gal="grid"] [data-xg]>.x-toggle{position:relative!important;left:auto!important;top:auto!important;width:100%!important;height:32px!important;padding:6px var(--pad,20px) 0!important;box-sizing:border-box!important}',
+    'main[data-gal="grid"] [data-xg]>:not(.x-toggle){position:absolute!important;left:var(--mx,0);top:var(--my,0);width:var(--mw,100%)!important;height:var(--gh,auto)!important;max-width:none!important;margin:0!important}',
     // project footer (prev/next row and © / contact row): Switzer, the typeface of nolan-barret.framer.website, small and quiet
     'main[data-xm]~section,main[data-xm]~section *,main[data-xm]~div[class*="-container"],main[data-xm]~div[class*="-container"] *{font-family:"Switzer","Switzer Placeholder",sans-serif!important;font-weight:500!important;font-size:12.5px!important;letter-spacing:-.01em!important;line-height:1.35!important}',
     'main[data-xm]~section a,main[data-xm]~section p,main[data-xm]~section span,main[data-xm]~div[class*="-container"] a,main[data-xm]~div[class*="-container"] p,main[data-xm]~div[class*="-container"] span{color:rgba(20,20,20,.55)!important;transition:color .2s}',
@@ -73,9 +85,14 @@
 
   function pageKey() { return location.pathname.replace(/\/+$/, '').replace(/^\//, '') || 'home'; }
   function mainEl() { return document.querySelector('main'); }
+  // the images/videos of the column (without the view toggle)
+  function items(g) {
+    var out = [];
+    for (var i = 0; i < g.children.length; i++) if (!g.children[i].classList.contains('x-toggle')) out.push(g.children[i]);
+    return out;
+  }
   function galleryEl(m) {
-    for (var i = m.children.length - 1; i >= 0; i--) if (!m.children[i].classList.contains('x-toggle')) return m.children[i];
-    return null;
+    return m.lastElementChild;
   }
   function setAttr(el, name, val) { if (el.getAttribute(name) !== val) el.setAttribute(name, val); }
   function unset(sel, attr) {
@@ -93,8 +110,8 @@
     apply();
   }
 
-  function ensureToggle(m) {
-    var t = m.querySelector(':scope > .x-toggle');
+  function ensureToggle(m, g) {
+    var t = g.querySelector(':scope > .x-toggle');
     if (!t) {
       t = document.createElement('div');
       t.className = 'x-toggle';
@@ -105,10 +122,20 @@
         var b = e.target.closest && e.target.closest('button[data-m]');
         if (b) { e.preventDefault(); e.stopPropagation(); setMode(b.getAttribute('data-m')); }
       });
-      m.appendChild(t);
     }
+    if (g.firstChild !== t) g.insertBefore(t, g.firstChild);
     var bs = t.querySelectorAll('button');
     for (var i = 0; i < bs.length; i++) setAttr(bs[i], 'aria-pressed', String(bs[i].getAttribute('data-m') === mode));
+    // as wide as the images in single view (so it sits above their right edge), full width in the grid
+    var ref = null, k = items(g);
+    for (i = 0; i < k.length; i++) if (!k[i].hasAttribute('data-x')) { ref = k[i]; break; }
+    if (mode === 'single' && ref && ref.offsetWidth) t.style.width = ref.offsetWidth + 'px'; else t.style.width = '';
+  }
+
+  // where the first image goes: right after the view toggle
+  function firstItemSlot(g) {
+    var t = g.querySelector(':scope > .x-toggle');
+    return t ? t.nextSibling : g.firstChild;
   }
 
   // items added to the image column; data-r is height/width
@@ -116,10 +143,11 @@
 
   function sizeExtras(g) {
     var ref = null, i;
-    for (i = 0; i < g.children.length; i++) if (!g.children[i].hasAttribute('data-x')) { ref = g.children[i]; break; }
-    var w = ref ? ref.offsetWidth : 0, items = extraItems(g);
-    for (i = 0; i < items.length; i++) {
-      var el = items[i], r = parseFloat(el.getAttribute('data-r')) || 1;
+    var kk = items(g);
+    for (i = 0; i < kk.length; i++) if (!kk[i].hasAttribute('data-x')) { ref = kk[i]; break; }
+    var w = ref ? ref.offsetWidth : 0, extra = extraItems(g);
+    for (i = 0; i < extra.length; i++) {
+      var el = extra[i], r = parseFloat(el.getAttribute('data-r')) || 1;
       if (mode === 'single' && w) { el.style.width = w + 'px'; el.style.height = Math.round(w * r) + 'px'; }
       else if (mode === 'grid') { el.style.width = ''; el.style.height = ''; }
     }
@@ -141,9 +169,9 @@
       f.setAttribute('scrolling', 'no');
       f.setAttribute('allow', 'autoplay; encrypted-media; fullscreen; picture-in-picture');
       ig.appendChild(f);
-      g.insertBefore(ig, g.firstChild);       // first in the gallery
-    } else if (g.firstChild !== ig) {
-      g.insertBefore(ig, g.firstChild);
+      g.insertBefore(ig, firstItemSlot(g));   // first in the gallery
+    } else if (firstItemSlot(g) !== ig) {
+      g.insertBefore(ig, firstItemSlot(g));
     }
     if (!im) {
       im = document.createElement('div');
@@ -179,7 +207,7 @@
   });
 
   function applyGrid(m, g) {
-    var kids = g.children, i, c;
+    var kids = items(g), i, c;
     // remember each item's height/width ratio from the single-column layout
     var missing = false;
     for (i = 0; i < kids.length; i++) if (!kids[i].getAttribute('data-r')) missing = true;
@@ -196,11 +224,12 @@
     // the text column's content can be taller than its own box; keep the grid below it
     for (i = 0; i < m.children.length; i++) {
       var t = m.children[i];
-      if (t === g || t.classList.contains('x-toggle')) continue;
+      if (t === g) continue;
       t.style.minHeight = '';
       if (t.scrollHeight > t.clientHeight) t.style.minHeight = t.scrollHeight + 'px';
     }
-    var narrow = innerWidth <= 810, cols = narrow ? 2 : 3, gap = 12, pad = narrow ? 12 : 20;
+    var narrow = innerWidth <= 810, cols = narrow ? 2 : 3, gap = 12, pad = narrow ? 12 : 20, top = 40;
+    g.style.setProperty('--pad', pad + 'px');
     var W = g.clientWidth - 2 * pad, colW = Math.floor((W - gap * (cols - 1)) / cols), heights = [], k;
     for (k = 0; k < cols; k++) heights.push(0);
     for (i = 0; i < kids.length; i++) {
@@ -208,12 +237,12 @@
       var r = parseFloat(c.getAttribute('data-r')) || 1, h = Math.round(colW * r), col = 0;
       for (k = 1; k < cols; k++) if (heights[k] < heights[col]) col = k;
       c.style.setProperty('--mx', (pad + col * (colW + gap)) + 'px');
-      c.style.setProperty('--my', (pad + heights[col]) + 'px');
+      c.style.setProperty('--my', (top + heights[col]) + 'px');
       c.style.setProperty('--mw', colW + 'px');
       c.style.setProperty('--gh', h + 'px');
       heights[col] += h + gap;
     }
-    g.style.setProperty('--ch', (2 * pad + Math.max.apply(null, heights) - gap) + 'px');
+    g.style.setProperty('--ch', (top + pad + Math.max.apply(null, heights) - gap) + 'px');
   }
 
   function ensureYoutube(m) {
@@ -335,6 +364,58 @@
     reel.f = reel.wrap = reel.btn = null;
   }
 
+  // ---- menu: letters roll up on hover (copy of the "rolling text" of paul-michel.framer.website)
+  function rollify(a) {
+    if (a.querySelector('.x-roll')) return;
+    var text = a.textContent.trim();
+    if (!text) return;
+    if (!a.getAttribute('aria-label')) a.setAttribute('aria-label', text);
+    var row = function (cls) {
+      var s = document.createElement('span');
+      s.className = cls;
+      s.setAttribute('aria-hidden', 'true');
+      Array.prototype.forEach.call(text, function (ch, i) {
+        var l = document.createElement('i');
+        l.textContent = ch;
+        l.style.setProperty('--i', i);
+        s.appendChild(l);
+      });
+      return s;
+    };
+    var w = document.createElement('span');
+    w.className = 'x-roll';
+    w.appendChild(row('x-a'));
+    w.appendChild(row('x-b'));
+    a.textContent = '';
+    a.appendChild(w);
+  }
+  function styleMenu() {
+    var links = document.querySelectorAll('a[href="./about"],a[href="./contact"]'), i, e;
+    for (i = 0; i < links.length; i++) {
+      // the header menu is the sticky one; the same links also exist in the page footer
+      for (e = links[i].parentElement; e && e !== document.body; e = e.parentElement) {
+        var cs = getComputedStyle(e);
+        if (cs.position === 'sticky' || cs.position === 'fixed') {
+          setAttr(links[i], 'data-xn', '');
+          if (cs.mixBlendMode !== 'normal') setAttr(e, 'data-xnc', '');
+          rollify(links[i]);
+          break;
+        }
+      }
+    }
+  }
+  // ---- home: project captions under the thumbnails
+  function styleCaptions(on) {
+    var old = document.querySelectorAll('[data-xcap]'), i;
+    if (!on) { for (i = 0; i < old.length; i++) old[i].removeAttribute('data-xcap'); return; }
+    var cards = document.querySelectorAll('a[href^="./"]');
+    for (i = 0; i < cards.length; i++) {
+      if (!cards[i].querySelector('img')) continue;
+      var p = cards[i].querySelector(':scope > div:last-child p');
+      if (p) setAttr(p, 'data-xcap', '');
+    }
+  }
+
   // ---- the "Coming soon" project is gone: no card on the home page, footer links skip it, its URL goes home
   function dropComingSoon(p) {
     if (p === 'coming-soon') { location.replace('/'); return; }
@@ -350,6 +431,7 @@
         // project footer: "↳ Coming soon" (next) and "Coming soon ↵" (previous)
         var next = /^\s*↳/.test(a.textContent), slug = next ? 'china' : 'lexus-singapore';
         setAttr(a, 'href', './' + slug);
+        setAttr(a, 'data-xl', '');
         var label = next ? '↳ ' + TITLES[slug] : TITLES[slug] + ' ↵';
         if (a.textContent !== label) a.textContent = label;
       }
@@ -364,7 +446,7 @@
     var m = mainEl();
     var g = m && galleryEl(m);
     var proj = !!m && NOT_PROJECTS.indexOf(p) === -1 && m.children.length >= 2;
-    var isGallery = proj && !!(g && g.children.length >= 3 && g.querySelector('img'));
+    var isGallery = proj && !!(g && items(g).length >= 3 && g.querySelector('img'));
 
     if (proj) {
       setAttr(m, 'data-xm', '');
@@ -375,7 +457,7 @@
     }
 
     if (isGallery) {
-      ensureToggle(m);
+      ensureToggle(m, g);
       if (p === 'lexus-singapore') ensureExtras(g, true);
       else removeAll('[data-x]');
       if (mode === 'grid') applyGrid(m, g);
@@ -390,12 +472,22 @@
 
     watchColumn(isGallery ? g : null);
     dropComingSoon(p);
+    styleMenu();
+    styleCaptions(p === 'home');
     setupTilt(p === 'contact');
     setupReel(p === 'home');
 
     if (p === 'schweppes' && m) ensureYoutube(m);
     else { removeAll('.x-yt'); unset('[data-xh]', 'data-xh'); }
   }
+
+  // links rewritten by dropComingSoon: Framer's router would still go to its own (original) target
+  addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[data-xl]');
+    if (!a || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    location.href = a.href;
+  }, true);
 
   var timer = 0;
   function schedule() {
@@ -413,7 +505,8 @@
     watched = g;
     if (g) {
       sizeWatch.observe(g);
-      for (var i = 0; i < g.children.length && i < 3; i++) if (!g.children[i].hasAttribute('data-x')) { sizeWatch.observe(g.children[i]); break; }
+      var k = items(g);
+      for (var i = 0; i < k.length && i < 3; i++) if (!k[i].hasAttribute('data-x')) { sizeWatch.observe(k[i]); break; }
     }
   }
   addEventListener('resize', schedule);
