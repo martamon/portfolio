@@ -14,11 +14,16 @@ for f in $(find "$HERE/framerusercontent.com" "$HERE/app.framerstatic.com" "$HER
 done
 # Framer's router assumes the site is served from the domain root; on a subpath, load internal links as real pages.
 SHIM='<script>addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("a[href]");if(!a||e.defaultPrevented||e.button||e.metaKey||e.ctrlKey||e.shiftKey||a.target==="_blank")return;var u=new URL(a.href,location.href);if(u.origin!==location.origin)return;if(u.pathname===location.pathname)return;e.preventDefault();e.stopImmediatePropagation();location.href=u.href},true)</script>'
+# Served from the domain root (custom domain): no <base> and no shim needed, Framer's own router works.
+PATH_PART="${BASE#*://*/}"; [ "$PATH_PART" = "$BASE" ] && PATH_PART=""
+if [ -z "$PATH_PART" ]; then HEAD_INJECT='<head>'; else HEAD_INJECT="<head><base href=\"$BASE/\">${SHIM//&/\\&}"; fi
 for f in "$RAW"/html/*.html; do
   n="$(basename "$f" .html)"
   out="$HERE/$n/index.html"; [ "$n" = index ] && out="$HERE/index.html"
   mkdir -p "$(dirname "$out")"
-  sed -E "s#https://(framerusercontent\.com|fonts\.gstatic\.com|app\.framerstatic\.com)/#$BASE/\1/#g; s#<head>#<head><base href=\"$BASE/\">${SHIM//&/\\&}#" "$f" > "$out"
+  sed -E "s#https://(framerusercontent\.com|fonts\.gstatic\.com|app\.framerstatic\.com)/#$BASE/\1/#g; s#<head>#$HEAD_INJECT#" "$f" > "$out"
 done
 cp "$HERE/coming-soon/index.html" "$HERE/404.html"
 touch "$HERE/.nojekyll"
+# Custom domain: GitHub Pages needs a CNAME file with the bare host.
+if [ -z "$PATH_PART" ]; then echo "${BASE#*://}" > "$HERE/CNAME"; else rm -f "$HERE/CNAME"; fi

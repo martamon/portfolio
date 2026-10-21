@@ -1,2 +1,2 @@
-import{a as o}from"https://martamon.github.io/portfolio/app.framerstatic.com/chunk-GW5J7FZA.mjs";import{a as r}from"https://martamon.github.io/portfolio/app.framerstatic.com/chunk-SWYZG2NI.mjs";import{e as t}from"https://martamon.github.io/portfolio/app.framerstatic.com/chunk-WLHSDIGQ.mjs";var e=t(r(),1);function a(){return(0,e.useContext)(o)}export{a};
-//# sourceMappingURL=https://martamon.github.io/portfolio/app.framerstatic.com/chunk-52WPPTHC.mjs.map
+import{a as o}from"https://martamonteagudo.com/app.framerstatic.com/chunk-GW5J7FZA.mjs";import{a as r}from"https://martamonteagudo.com/app.framerstatic.com/chunk-SWYZG2NI.mjs";import{e as t}from"https://martamonteagudo.com/app.framerstatic.com/chunk-WLHSDIGQ.mjs";var e=t(r(),1);function a(){return(0,e.useContext)(o)}export{a};
+//# sourceMappingURL=https://martamonteagudo.com/app.framerstatic.com/chunk-52WPPTHC.mjs.map
