@@ -1,4 +1,4 @@
-import"https://martamon.github.io/portfolio/app.framerstatic.com/chunk-WLHSDIGQ.mjs";var n=`// ../../../node_modules/devalue/src/constants.js
+import"https://martamonteagudo.com/app.framerstatic.com/chunk-WLHSDIGQ.mjs";var n=`// ../../../node_modules/devalue/src/constants.js
 var UNDEFINED = -1;
 var HOLE = -2;
 var NAN = -3;
@@ -1629,4 +1629,4 @@ export {
   createHandler
 };
 `;export{n as clientRuntimeSource,e as serverRuntimeSource};
-//# sourceMappingURL=https://martamon.github.io/portfolio/app.framerstatic.com/serverFunctionRuntimes-CATETTOP.mjs.map
+//# sourceMappingURL=https://martamonteagudo.com/app.framerstatic.com/serverFunctionRuntimes-CATETTOP.mjs.map
