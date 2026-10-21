@@ -8,7 +8,10 @@
   'use strict';
 
   var PROJECTS = ['lexus-singapore', 'china', 'soapglory', 'djone', 'greece', 'pedrapas', 'ayeaye', 'soidades-de-onte', 'schweppes', 'coming-soon'];
-  var INSTAGRAM = 'https://www.instagram.com/p/DUk54nFkTu_/embed/';
+  var INSTAGRAM = 'https://www.instagram.com/p/DUYB457D3x5/embed/';
+  // Instagram's embed card is header (54px) + media + footer with likes/comments (154px); only the media is shown
+  var IG_HEAD = 54, IG_FOOT = 154;
+  var LEXUS_IMAGE = '/extras/lexus-rz.webp';
   var YOUTUBE = 'CCBU84Ma-gE';
 
   var css = [
@@ -32,9 +35,10 @@
     'main[data-gal="grid"] [data-xg]{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;align-items:start;width:100%!important;height:auto!important;min-height:0!important;padding:20px!important;box-sizing:border-box}',
     'main[data-gal="grid"] [data-xg]>*{width:100%!important;max-width:none!important;height:var(--gh,auto)!important}',
     '@media(max-width:810px){main[data-gal="grid"] [data-xg]{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:12px!important}}',
-    // instagram reel
-    '.x-insta{position:relative;flex:none;overflow:hidden}',
-    '.x-insta iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0}',
+    // lexus extras: instagram video (cropped to the media only) and the RZ image
+    '.x-insta,.x-img{position:relative;flex:none;overflow:hidden}',
+    '.x-insta iframe{position:absolute;left:0;top:-' + IG_HEAD + 'px;width:100%;height:calc(100% + ' + (IG_HEAD + IG_FOOT) + 'px);border:0}',
+    '.x-img img{display:block;width:100%;height:100%;object-fit:cover}',
     // schweppes full-screen video: fills the viewport (cropping the sides a little) on screens up to 16:9,
     // and shows the whole frame, full width, on wider or portrait screens
     '.x-yt{position:relative;width:100%;height:100vh;overflow:hidden;background:#000}',
@@ -88,22 +92,28 @@
     for (var i = 0; i < bs.length; i++) setAttr(bs[i], 'aria-pressed', String(bs[i].getAttribute('data-m') === mode));
   }
 
-  function sizeInsta(g) {
-    var el = g.querySelector(':scope > .x-insta');
-    if (!el) return;
-    var ref = g.children[0] !== el ? g.children[0] : null;
-    var w = ref ? ref.offsetWidth : el.offsetWidth;
-    var h = parseFloat(el.getAttribute('data-h')) || (w ? Math.round(w * 16 / 9) : 0);
-    if (w) el.setAttribute('data-r', String(h / w));
-    if (mode === 'single' && w && h) { el.style.width = w + 'px'; el.style.height = h + 'px'; }
-    else if (mode === 'grid') { el.style.width = ''; el.style.height = ''; }
+  // items added to the image column; data-r is height/width
+  function extraItems(g) { return g.querySelectorAll(':scope > [data-x]'); }
+
+  function sizeExtras(g) {
+    var ref = null, i;
+    for (i = 0; i < g.children.length; i++) if (!g.children[i].hasAttribute('data-x')) { ref = g.children[i]; break; }
+    var w = ref ? ref.offsetWidth : 0, items = extraItems(g);
+    for (i = 0; i < items.length; i++) {
+      var el = items[i], r = parseFloat(el.getAttribute('data-r')) || 1;
+      if (mode === 'single' && w) { el.style.width = w + 'px'; el.style.height = Math.round(w * r) + 'px'; }
+      else if (mode === 'grid') { el.style.width = ''; el.style.height = ''; }
+    }
   }
 
-  function ensureInsta(g) {
-    var el = g.querySelector(':scope > .x-insta');
-    if (!el) {
-      el = document.createElement('div');
-      el.className = 'x-insta';
+  function ensureExtras(g, show) {
+    var ig = g.querySelector(':scope > .x-insta'), im = g.querySelector(':scope > .x-img');
+    if (!show) { if (ig) g.removeChild(ig); if (im) g.removeChild(im); return; }
+    if (!ig) {
+      ig = document.createElement('div');
+      ig.className = 'x-insta';
+      ig.setAttribute('data-x', 'insta');
+      ig.setAttribute('data-r', String(9 / 16));
       var f = document.createElement('iframe');
       f.src = INSTAGRAM;
       f.title = 'Lexus on Instagram';
@@ -111,23 +121,42 @@
       f.allowFullscreen = true;
       f.setAttribute('scrolling', 'no');
       f.setAttribute('allow', 'autoplay; encrypted-media; fullscreen; picture-in-picture');
-      el.appendChild(f);
-      g.appendChild(el);
+      ig.appendChild(f);
+      g.insertBefore(ig, g.firstChild);       // first in the gallery
+    } else if (g.firstChild !== ig) {
+      g.insertBefore(ig, g.firstChild);
     }
-    sizeInsta(g);
+    if (!im) {
+      im = document.createElement('div');
+      im.className = 'x-img';
+      im.setAttribute('data-x', 'img');
+      im.setAttribute('data-r', String(1676 / 1658));
+      var i = document.createElement('img');
+      i.src = LEXUS_IMAGE;
+      i.alt = 'Lexus RZ - Bold. Beautiful.';
+      i.loading = 'lazy';
+      im.appendChild(i);
+      g.appendChild(im);                      // last in the gallery
+    } else if (g.lastChild !== im) {
+      g.appendChild(im);
+    }
+    sizeExtras(g);
   }
 
-  // Instagram's embed reports the height of its card; use it so there is no empty space below the post
+  // Instagram's embed reports the height of its card; derive the media's height/width ratio from it
   addEventListener('message', function (e) {
     if (!/(^|\.)instagram\.com$/.test(String(e.origin).replace(/^https?:\/\//, ''))) return;
     var d = e.data;
     if (typeof d === 'string') { try { d = JSON.parse(d); } catch (err) { return; } }
     if (!d || d.type !== 'MEASURE' || !d.details || !d.details.height) return;
     var el = document.querySelector('.x-insta');
-    if (!el) return;
-    el.setAttribute('data-h', String(d.details.height));
-    var g = el.parentNode;
-    if (g) { sizeInsta(g); if (mode === 'grid') schedule(); }
+    if (!el || !el.offsetWidth) return;
+    var ratio = (d.details.height - IG_HEAD - IG_FOOT) / el.offsetWidth;
+    if (ratio > 0.2 && ratio < 3) {
+      el.setAttribute('data-r', String(ratio));
+      var g = el.parentNode;
+      if (g) { sizeExtras(g); if (mode === 'grid') schedule(); }
+    }
   });
 
   function applyGrid(m, g) {
@@ -189,9 +218,9 @@
 
     var m = mainEl();
     var g = m && galleryEl(m);
-    var isGallery = !!(g && g.children.length >= 3 && g.querySelector('img'));
-
     var proj = !!m && PROJECTS.indexOf(p) !== -1;
+    var isGallery = proj && !!(g && g.children.length >= 3 && g.querySelector('img'));
+
     if (proj) {
       setAttr(m, 'data-xm', '');
       setAttr(m.parentElement, 'data-xr', '');
@@ -202,14 +231,15 @@
 
     if (isGallery) {
       ensureToggle(m);
-      if (p === 'lexus-singapore') ensureInsta(g); else removeAll('.x-insta');
+      if (p === 'lexus-singapore') ensureExtras(g, true);
+      else removeAll('[data-x]');
       if (mode === 'grid') applyGrid(m, g);
       else {
         m.removeAttribute('data-gal');
         for (var j = 0; j < m.children.length; j++) if (m.children[j] !== g) m.children[j].style.minHeight = '';
       }
     } else {
-      removeAll('.x-toggle'); removeAll('.x-insta');
+      removeAll('.x-toggle'); removeAll('[data-x]');
       unset('[data-gal]', 'data-gal');
     }
 
