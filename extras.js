@@ -39,30 +39,27 @@
     'main[data-gal="grid"]>:not([data-xg]):not(.x-toggle)>*>:first-child{flex:none!important;width:320px!important}',
     'main[data-gal="grid"]>:not([data-xg]):not(.x-toggle)>*>:last-child{flex:1 1 0!important;width:auto!important;max-width:900px!important}}',
     'main[data-gal="grid"]>[data-xg]{flex:none!important}',
-    'main[data-gal="grid"] [data-xg]{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;align-items:start;width:100%!important;height:auto!important;min-height:0!important;padding:20px!important;box-sizing:border-box}',
-    'main[data-gal="grid"] [data-xg]>*{width:100%!important;max-width:none!important;height:var(--gh,auto)!important}',
-    '@media(max-width:810px){main[data-gal="grid"] [data-xg]{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:12px!important}}',
+    // grid view is a masonry: every item goes under the shortest column, so there are no empty gaps
+    'main[data-gal="grid"] [data-xg]{display:block!important;position:relative!important;width:100%!important;height:var(--ch,auto)!important;min-height:0!important;padding:0!important;box-sizing:border-box}',
+    'main[data-gal="grid"] [data-xg]>*{position:absolute!important;left:var(--mx,0);top:var(--my,0);width:var(--mw,100%)!important;height:var(--gh,auto)!important;max-width:none!important;margin:0!important}',
+    // project footer (prev/next row and © / contact row): Switzer, the typeface of nolan-barret.framer.website, small and quiet
+    'main[data-xm]~section,main[data-xm]~section *,main[data-xm]~div[class*="-container"],main[data-xm]~div[class*="-container"] *{font-family:"Switzer","Switzer Placeholder",sans-serif!important;font-weight:500!important;font-size:12.5px!important;letter-spacing:-.01em!important;line-height:1.35!important}',
+    'main[data-xm]~section a,main[data-xm]~section p,main[data-xm]~section span,main[data-xm]~div[class*="-container"] a,main[data-xm]~div[class*="-container"] p,main[data-xm]~div[class*="-container"] span{color:rgba(20,20,20,.55)!important;transition:color .2s}',
+    'main[data-xm]~section a:hover,main[data-xm]~section a:hover *,main[data-xm]~div[class*="-container"] a:hover,main[data-xm]~div[class*="-container"] a:hover *{color:#141414!important}',
     // lexus extras: instagram video (cropped to the media only) and the RZ image
     '.x-insta,.x-img{position:relative;flex:none;overflow:hidden}',
     '.x-insta iframe{position:absolute;left:0;top:-' + IG_HEAD + 'px;width:100%;height:calc(100% + ' + (IG_HEAD + IG_FOOT) + 'px);border:0}',
     '.x-img img{display:block;width:100%;height:100%;object-fit:cover}',
-    // project galleries: only the outer corners of the column (or of the grid) are rounded
-    '[data-xc]{overflow:hidden}',
-    '[data-xc~="tl"]{border-top-left-radius:20px}',
-    '[data-xc~="tr"]{border-top-right-radius:20px}',
-    '[data-xc~="bl"]{border-bottom-left-radius:20px}',
-    '[data-xc~="br"]{border-bottom-right-radius:20px}',
     // contact portrait: 3D tilt on hover
     '[data-x3d]{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) scale(var(--s,1))!important;transition:transform .2s ease-out,box-shadow .3s;will-change:transform;box-shadow:0 0 0 rgba(20,60,100,0)}',
     '[data-x3d][data-hot]{box-shadow:0 28px 55px rgba(20,60,100,.32);transition:transform .08s linear,box-shadow .3s}',
-    // home reel: no YouTube UI (iframe is enlarged inside its clipping box) and our own sound button
-    '[data-xv]{transform:scale(1.16)!important;transform-origin:50% 50%}',
+    // home reel: our own sound button
     '.x-reel-ctl{position:absolute;right:16px;bottom:16px;z-index:5;width:44px;height:44px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.45);color:#fff;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);pointer-events:auto;transition:background .2s}',
     '.x-reel-ctl:hover{background:rgba(0,0,0,.65)}',
     '.x-reel-ctl svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}',
     // schweppes full-screen video: fills the viewport (cropping the sides a little) on screens up to 16:9,
     // and shows the whole frame, full width, on wider or portrait screens
-    '.x-yt{position:relative;width:calc(100% - 40px);height:calc(100vh - 40px);margin:20px;overflow:hidden;background:#000;border-radius:20px}',
+    '.x-yt{position:relative;width:calc(100% - 40px);height:calc(100vh - 40px);margin:20px;overflow:hidden;background:#000}',
     '.x-yt iframe{position:absolute;top:50%;left:50%;width:max(100vw,177.78vh);height:max(100vh,56.25vw);transform:translate(-50%,-50%);border:0}',
     '@media(min-aspect-ratio:16/9),(max-aspect-ratio:1/1){.x-yt{height:calc((100vw - 40px) * .5625)}.x-yt iframe{top:0;left:0;width:100%;height:100%;transform:none}}',
     '[data-xs]{display:none!important}'
@@ -203,11 +200,20 @@
       t.style.minHeight = '';
       if (t.scrollHeight > t.clientHeight) t.style.minHeight = t.scrollHeight + 'px';
     }
+    var narrow = innerWidth <= 810, cols = narrow ? 2 : 3, gap = 12, pad = narrow ? 12 : 20;
+    var W = g.clientWidth - 2 * pad, colW = Math.floor((W - gap * (cols - 1)) / cols), heights = [], k;
+    for (k = 0; k < cols; k++) heights.push(0);
     for (i = 0; i < kids.length; i++) {
       c = kids[i];
-      var r = parseFloat(c.getAttribute('data-r'));
-      if (r) c.style.setProperty('--gh', Math.round(c.getBoundingClientRect().width * r) + 'px');
+      var r = parseFloat(c.getAttribute('data-r')) || 1, h = Math.round(colW * r), col = 0;
+      for (k = 1; k < cols; k++) if (heights[k] < heights[col]) col = k;
+      c.style.setProperty('--mx', (pad + col * (colW + gap)) + 'px');
+      c.style.setProperty('--my', (pad + heights[col]) + 'px');
+      c.style.setProperty('--mw', colW + 'px');
+      c.style.setProperty('--gh', h + 'px');
+      heights[col] += h + gap;
     }
+    g.style.setProperty('--ch', (2 * pad + Math.max.apply(null, heights) - gap) + 'px');
   }
 
   function ensureYoutube(m) {
@@ -234,26 +240,6 @@
     }
   }
 
-
-  // ---- rounded corners: only the outer corners of the image column (single view) or of the grid
-  function tagCorners(g) {
-    var kids = g.children, n = kids.length, i;
-    var cols = 1;
-    if (mode === 'grid' && getComputedStyle(g).display === 'grid') {
-      cols = Math.max(1, getComputedStyle(g).gridTemplateColumns.split(' ').length);
-    }
-    var lastRow = Math.floor((n - 1) / cols);
-    for (i = 0; i < n; i++) {
-      var row = Math.floor(i / cols), col = i % cols, c = [];
-      if (i === 0) c.push('tl');
-      if (row === 0 && (col === cols - 1 || i === n - 1)) c.push('tr');
-      if (row === lastRow && col === 0) c.push('bl');
-      if (i === n - 1) c.push('br');
-      if (cols === 1) { c = []; if (i === 0) c.push('tl', 'tr'); if (i === n - 1) c.push('bl', 'br'); }
-      var v = c.join(' ');
-      if (v) setAttr(kids[i], 'data-xc', v); else kids[i].removeAttribute('data-xc');
-    }
-  }
 
   // ---- contact portrait: 3D tilt following the mouse
   // Framer shrinks this portrait to a third of its size on hover; the tilt replaces that, so it is applied to
@@ -320,7 +306,6 @@
     if (reel.f === f && reel.btn && reel.btn.isConnected) return;
     teardownReel();
     reel.f = f; reel.wrap = f.parentElement.parentElement; reel.muted = true;
-    setAttr(f, 'data-xv', '');
     reel.btn = document.createElement('button');
     reel.btn.type = 'button';
     reel.btn.className = 'x-reel-ctl';
@@ -347,7 +332,6 @@
     reel.timers.forEach(clearTimeout); reel.timers = [];
     if (reel.io) { reel.io.disconnect(); reel.io = null; }
     if (reel.btn && reel.btn.parentNode) reel.btn.parentNode.removeChild(reel.btn);
-    if (reel.f) reel.f.removeAttribute('data-xv');
     reel.f = reel.wrap = reel.btn = null;
   }
 
@@ -404,7 +388,6 @@
       unset('[data-gal]', 'data-gal');
     }
 
-    if (isGallery) tagCorners(g); else unset('[data-xc]', 'data-xc');
     watchColumn(isGallery ? g : null);
     dropComingSoon(p);
     setupTilt(p === 'contact');
