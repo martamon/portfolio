@@ -22,8 +22,10 @@
     '[data-xh]{display:none!important}',
     // menu and project captions in the typeface, colour and hover animation of paul-michel.framer.website
     '@font-face{font-family:"IBM Plex Mono";font-weight:500;font-style:normal;font-display:swap;src:url(/fonts.gstatic.com/s/ibmplexmono/v20/-F6qfjptAgt5VM-kVkqdyU8n3twJwlBFgg.woff2) format("woff2")}',
-    '[data-xnc]{mix-blend-mode:normal!important}',
-    '[data-xn],[data-xcap]{font-family:"IBM Plex Mono","IBM Plex Mono Placeholder",monospace!important;font-size:14px!important;font-weight:500!important;letter-spacing:.025em!important;text-transform:uppercase!important;color:#888!important;line-height:1.6em!important;text-decoration:none!important}',
+    '[data-xnc]{z-index:10!important}',
+    '[data-xn]{color:#fff!important}',
+    '[data-xn],[data-xcap]{font-family:"IBM Plex Mono","IBM Plex Mono Placeholder",monospace!important;font-size:14px!important;font-weight:500!important;letter-spacing:.025em!important;text-transform:uppercase!important;line-height:1.6em!important;text-decoration:none!important}',
+    '[data-xcap]{color:#888!important}',
     '.x-roll{position:relative;display:inline-grid;overflow:hidden;white-space:pre;vertical-align:top}',
     '.x-roll>span{grid-area:1/1;display:inline-flex}',
     '.x-roll i{font-style:normal;display:inline-block;transition:transform .55s cubic-bezier(.3,1.35,.5,1);transition-delay:calc(var(--i) * 40ms)}',
@@ -55,9 +57,9 @@
     'main[data-gal="grid"] [data-xg]>.x-toggle{position:relative!important;left:auto!important;top:auto!important;width:100%!important;height:32px!important;padding:6px var(--pad,20px) 0!important;box-sizing:border-box!important}',
     'main[data-gal="grid"] [data-xg]>:not(.x-toggle){position:absolute!important;left:var(--mx,0);top:var(--my,0);width:var(--mw,100%)!important;height:var(--gh,auto)!important;max-width:none!important;margin:0!important}',
     // project footer (prev/next row and © / contact row): Switzer, the typeface of nolan-barret.framer.website, small and quiet
-    'main[data-xm]~section,main[data-xm]~section *,main[data-xm]~div[class*="-container"],main[data-xm]~div[class*="-container"] *{font-family:"Switzer","Switzer Placeholder",sans-serif!important;font-weight:500!important;font-size:12.5px!important;letter-spacing:-.01em!important;line-height:1.35!important}',
-    'main[data-xm]~section a,main[data-xm]~section p,main[data-xm]~section span,main[data-xm]~div[class*="-container"] a,main[data-xm]~div[class*="-container"] p,main[data-xm]~div[class*="-container"] span{color:rgba(20,20,20,.55)!important;transition:color .2s}',
-    'main[data-xm]~section a:hover,main[data-xm]~section a:hover *,main[data-xm]~div[class*="-container"] a:hover,main[data-xm]~div[class*="-container"] a:hover *{color:#141414!important}',
+    'main[data-xm]~section,main[data-xm]~section *,main[data-xm]~*:not(.x-yt) footer,main[data-xm]~*:not(.x-yt) footer *{font-family:"Switzer","Switzer Placeholder",sans-serif!important;font-weight:500!important;font-size:12.5px!important;letter-spacing:-.01em!important;line-height:1.35!important}',
+    'main[data-xm]~section a,main[data-xm]~section p,main[data-xm]~section span,main[data-xm]~*:not(.x-yt) footer a,main[data-xm]~*:not(.x-yt) footer p,main[data-xm]~*:not(.x-yt) footer span{color:rgba(20,20,20,.55)!important;transition:color .2s}',
+    'main[data-xm]~section a:hover,main[data-xm]~section a:hover *,main[data-xm]~*:not(.x-yt) footer a:hover,main[data-xm]~*:not(.x-yt) footer a:hover *{color:#141414!important}',
     // lexus extras: instagram video (cropped to the media only) and the RZ image
     '.x-insta,.x-img{position:relative;flex:none;overflow:hidden}',
     '.x-insta iframe{position:absolute;left:0;top:-' + IG_HEAD + 'px;width:100%;height:calc(100% + ' + (IG_HEAD + IG_FOOT) + 'px);border:0}',
@@ -71,9 +73,16 @@
     '.x-reel-ctl svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}',
     // schweppes full-screen video: fills the viewport (cropping the sides a little) on screens up to 16:9,
     // and shows the whole frame, full width, on wider or portrait screens
-    '.x-yt{position:relative;width:calc(100% - 40px);height:calc(100vh - 40px);margin:20px;overflow:hidden;background:#000}',
+    // schweppes: on landscape screens the video is the page background (behind the menu and the text, with a 20px margin);
+    // on portrait screens it sits below the text, full width at 16:9. Its size follows its box, whatever the screen.
+    '[data-xr]{isolation:isolate}',
+    '.x-yt{position:relative;width:calc(100% - 40px);margin:20px;aspect-ratio:16/9;overflow:hidden;background:#000;container-type:size}',
     '.x-yt iframe{position:absolute;top:50%;left:50%;width:max(100vw,177.78vh);height:max(100vh,56.25vw);transform:translate(-50%,-50%);border:0}',
-    '@media(min-aspect-ratio:16/9),(max-aspect-ratio:1/1){.x-yt{height:calc((100vw - 40px) * .5625)}.x-yt iframe{top:0;left:0;width:100%;height:100%;transform:none}}',
+    '.x-yt iframe{width:max(100cqw,177.78cqh);height:max(100cqh,56.25cqw)}',
+    '@media(min-aspect-ratio:1/1){.x-yt{position:absolute;z-index:-1;top:20px;left:20px;right:20px;width:auto;margin:0;aspect-ratio:auto;height:calc(100vh - 40px);height:calc(100dvh - 40px)}',
+    'main[data-xy]{min-height:100vh!important;min-height:100dvh!important}',
+    'main[data-xy]>:first-child{margin-left:20px}',
+    'main[data-xy] *{color:#fff!important;text-shadow:0 1px 14px rgba(0,0,0,.35)}}',
     '[data-xs]{display:none!important}'
   ].join('\n');
   var style = document.createElement('style');
@@ -258,6 +267,10 @@
       sec.appendChild(f);
       m.parentNode.insertBefore(sec, m.nextSibling);
     }
+    setAttr(m, 'data-xy', '');
+    // Framer lays the page blocks out with CSS `order` (it changes per breakpoint): sit right after the text
+    var ord = String((parseInt(getComputedStyle(m).order, 10) || 0) + 1);
+    if (sec.style.order !== ord) sec.style.order = ord;
     // the empty image column and the small copy of this video further down are replaced by the full-screen one
     var g = galleryEl(m);
     if (g && g.children.length === 0) setAttr(g, 'data-xh', '');
@@ -478,7 +491,7 @@
     setupReel(p === 'home');
 
     if (p === 'schweppes' && m) ensureYoutube(m);
-    else { removeAll('.x-yt'); unset('[data-xh]', 'data-xh'); }
+    else { removeAll('.x-yt'); unset('[data-xh]', 'data-xh'); unset('[data-xy]', 'data-xy'); }
   }
 
   // links rewritten by dropComingSoon: Framer's router would still go to its own (original) target
