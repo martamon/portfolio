@@ -7,7 +7,9 @@
 (function () {
   'use strict';
 
-  var PROJECTS = ['lexus-singapore', 'china', 'soapglory', 'djone', 'greece', 'pedrapas', 'ayeaye', 'soidades-de-onte', 'schweppes', 'coming-soon'];
+  // every route that is not one of these is a project page (the project list lives in Framer's CMS and grows)
+  var NOT_PROJECTS = ['home', 'about', 'contact'];
+  var TITLES = { 'soapglory': 'Soap&Glory', 'lexus-singapore': 'Lexus', 'china': 'China', 'schweppes': 'Schweppes', 'soidades-de-onte': 'Soidades de onte', 'djone': 'Djone', 'ayeaye': 'AYE AYE', 'pedrapas': 'Pedra Pas', 'greece': 'Greece', 'portugal': 'Portugal', 'nothing-to-see-here': 'Nothing to see here', 'studio-girls': 'Studio' };
   var INSTAGRAM = 'https://www.instagram.com/p/DUYB457D3x5/embed/';
   // Instagram's embed card is header (54px) + media + footer with likes/comments (154px); only the media is shown
   var IG_HEAD = 54, IG_FOOT = 154;
@@ -31,6 +33,11 @@
     '.x-toggle svg{width:16px;height:16px;fill:currentColor}',
     'main[data-gal="grid"]{flex-direction:column!important;height:auto!important;min-height:0!important}',
     'main[data-gal="grid"]>:not([data-xg]):not(.x-toggle){flex:none!important;width:605px!important;max-width:100%!important;height:auto!important;position:relative!important;top:auto!important}',
+    // grid view on wide screens: title/role/year on the left, description beside it instead of one tall narrow column
+    '@media(min-width:811px){main[data-gal="grid"]>:not([data-xg]):not(.x-toggle){width:100%!important;max-width:none!important}',
+    'main[data-gal="grid"]>:not([data-xg]):not(.x-toggle)>*{width:100%!important;max-width:none!important;height:auto!important;flex-direction:row!important;align-items:flex-start!important;gap:80px!important}',
+    'main[data-gal="grid"]>:not([data-xg]):not(.x-toggle)>*>:first-child{flex:none!important;width:320px!important}',
+    'main[data-gal="grid"]>:not([data-xg]):not(.x-toggle)>*>:last-child{flex:1 1 0!important;width:auto!important;max-width:760px!important}}',
     'main[data-gal="grid"]>[data-xg]{flex:none!important}',
     'main[data-gal="grid"] [data-xg]{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;align-items:start;width:100%!important;height:auto!important;min-height:0!important;padding:20px!important;box-sizing:border-box}',
     'main[data-gal="grid"] [data-xg]>*{width:100%!important;max-width:none!important;height:var(--gh,auto)!important}',
@@ -55,9 +62,10 @@
     '.x-reel-ctl svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}',
     // schweppes full-screen video: fills the viewport (cropping the sides a little) on screens up to 16:9,
     // and shows the whole frame, full width, on wider or portrait screens
-    '.x-yt{position:relative;width:100%;height:100vh;overflow:hidden;background:#000}',
+    '.x-yt{position:relative;width:calc(100% - 40px);height:calc(100vh - 40px);margin:20px;overflow:hidden;background:#000;border-radius:20px}',
     '.x-yt iframe{position:absolute;top:50%;left:50%;width:max(100vw,177.78vh);height:max(100vh,56.25vw);transform:translate(-50%,-50%);border:0}',
-    '@media(min-aspect-ratio:16/9),(max-aspect-ratio:1/1){.x-yt{height:56.25vw}.x-yt iframe{top:0;left:0;width:100%;height:100%;transform:none}}'
+    '@media(min-aspect-ratio:16/9),(max-aspect-ratio:1/1){.x-yt{height:calc((100vw - 40px) * .5625)}.x-yt iframe{top:0;left:0;width:100%;height:100%;transform:none}}',
+    '[data-xs]{display:none!important}'
   ].join('\n');
   var style = document.createElement('style');
   style.textContent = css;
@@ -343,13 +351,35 @@
     reel.f = reel.wrap = reel.btn = null;
   }
 
+  // ---- the "Coming soon" project is gone: no card on the home page, footer links skip it, its URL goes home
+  function dropComingSoon(p) {
+    if (p === 'coming-soon') { location.replace('/'); return; }
+    var i, a, links = document.querySelectorAll('a[href$="coming-soon"]');
+    for (i = 0; i < links.length; i++) {
+      a = links[i];
+      if (p === 'home') {
+        // hide the whole card: climb to the element that sits among the other cards
+        var c = a;
+        while (c.parentElement && c.parentElement.children.length < 4 && c.parentElement !== document.body) c = c.parentElement;
+        setAttr(c, 'data-xs', '');
+      } else if (a.closest('section')) {
+        // project footer: "↳ Coming soon" (next) and "Coming soon ↵" (previous)
+        var next = /^\s*↳/.test(a.textContent), slug = next ? 'china' : 'lexus-singapore';
+        setAttr(a, 'href', './' + slug);
+        var label = next ? '↳ ' + TITLES[slug] : TITLES[slug] + ' ↵';
+        if (a.textContent !== label) a.textContent = label;
+      }
+    }
+    if (p !== 'home') unset('[data-xs]', 'data-xs');
+  }
+
   function apply() {
     var p = pageKey();
     setAttr(document.documentElement, 'data-xp', p);
 
     var m = mainEl();
     var g = m && galleryEl(m);
-    var proj = !!m && PROJECTS.indexOf(p) !== -1;
+    var proj = !!m && NOT_PROJECTS.indexOf(p) === -1 && m.children.length >= 2;
     var isGallery = proj && !!(g && g.children.length >= 3 && g.querySelector('img'));
 
     if (proj) {
@@ -375,6 +405,8 @@
     }
 
     if (isGallery) tagCorners(g); else unset('[data-xc]', 'data-xc');
+    watchColumn(isGallery ? g : null);
+    dropComingSoon(p);
     setupTilt(p === 'contact');
     setupReel(p === 'home');
 
@@ -388,7 +420,19 @@
     timer = setTimeout(function () { timer = 0; try { apply(); } catch (e) {} }, 120);
   }
 
-  new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true });
+  new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['href'] });
+  // sizes change without any DOM change (window resize, zoom, breakpoint switch): watch the column itself
+  var sizeWatch = typeof ResizeObserver === 'function' ? new ResizeObserver(schedule) : null;
+  var watched = null;
+  function watchColumn(g) {
+    if (!sizeWatch || watched === g) return;
+    sizeWatch.disconnect();
+    watched = g;
+    if (g) {
+      sizeWatch.observe(g);
+      for (var i = 0; i < g.children.length && i < 3; i++) if (!g.children[i].hasAttribute('data-x')) { sizeWatch.observe(g.children[i]); break; }
+    }
+  }
   addEventListener('resize', schedule);
   addEventListener('popstate', schedule);
   schedule();

@@ -6,7 +6,10 @@ those parameters and ships the originals. This caps the long side at 2048px, re-
 (lossless when that is not much bigger than lossy, so flat graphics and text stay crisp) and
 rewrites every reference to the renamed files. Files that would not get meaningfully smaller are kept.
 
-usage: scripts/optimize-images.py <site-root>
+usage: scripts/optimize-images.py <site-root> [--only <file with image file names>]
+
+WebP files that are already within the size cap are left alone, so re-running is cheap; --only restricts the run to
+the listed file names (e.g. images that were just added).
 """
 import io, os, re, sys
 from PIL import Image
@@ -18,6 +21,9 @@ LOSSY_Q = 86
 TEXT_EXT = ('.html', '.mjs', '.js', '.json', '.css')
 
 root = os.path.abspath(sys.argv[1])
+only = None
+if '--only' in sys.argv:
+    only = set(open(sys.argv[sys.argv.index('--only') + 1]).read().split())
 img_dir = os.path.join(root, 'framerusercontent.com', 'images')
 
 
@@ -40,11 +46,11 @@ for name in sorted(os.listdir(img_dir)):
     path = os.path.join(img_dir, name)
     size = os.path.getsize(path)
     before += size
-    if ext not in ('.png', '.jpg', '.jpeg', '.webp') or size < SKIP_BELOW:
+    if ext not in ('.png', '.jpg', '.jpeg', '.webp') or size < SKIP_BELOW or (only is not None and name not in only):
         after += size
         continue
     im = Image.open(path)
-    if getattr(im, 'n_frames', 1) > 1:          # animated: leave alone
+    if getattr(im, 'n_frames', 1) > 1 or (ext == '.webp' and max(im.size) <= MAX_SIDE):   # animated or already small enough
         after += size
         continue
     im.load()
