@@ -39,6 +39,20 @@
     '.x-insta,.x-img{position:relative;flex:none;overflow:hidden}',
     '.x-insta iframe{position:absolute;left:0;top:-' + IG_HEAD + 'px;width:100%;height:calc(100% + ' + (IG_HEAD + IG_FOOT) + 'px);border:0}',
     '.x-img img{display:block;width:100%;height:100%;object-fit:cover}',
+    // project galleries: only the outer corners of the column (or of the grid) are rounded
+    '[data-xc]{overflow:hidden}',
+    '[data-xc~="tl"]{border-top-left-radius:20px}',
+    '[data-xc~="tr"]{border-top-right-radius:20px}',
+    '[data-xc~="bl"]{border-bottom-left-radius:20px}',
+    '[data-xc~="br"]{border-bottom-right-radius:20px}',
+    // contact portrait: 3D tilt on hover
+    '[data-x3d]{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) scale(var(--s,1))!important;transition:transform .2s ease-out,box-shadow .3s;will-change:transform;box-shadow:0 0 0 rgba(20,60,100,0)}',
+    '[data-x3d][data-hot]{box-shadow:0 28px 55px rgba(20,60,100,.32);transition:transform .08s linear,box-shadow .3s}',
+    // home reel: no YouTube UI (iframe is enlarged inside its clipping box) and our own sound button
+    '[data-xv]{transform:scale(1.16)!important;transform-origin:50% 50%}',
+    '.x-reel-ctl{position:absolute;right:16px;bottom:16px;z-index:5;width:44px;height:44px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.45);color:#fff;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);pointer-events:auto;transition:background .2s}',
+    '.x-reel-ctl:hover{background:rgba(0,0,0,.65)}',
+    '.x-reel-ctl svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}',
     // schweppes full-screen video: fills the viewport (cropping the sides a little) on screens up to 16:9,
     // and shows the whole frame, full width, on wider or portrait screens
     '.x-yt{position:relative;width:100%;height:100vh;overflow:hidden;background:#000}',
@@ -212,6 +226,123 @@
     }
   }
 
+
+  // ---- rounded corners: only the outer corners of the image column (single view) or of the grid
+  function tagCorners(g) {
+    var kids = g.children, n = kids.length, i;
+    var cols = 1;
+    if (mode === 'grid' && getComputedStyle(g).display === 'grid') {
+      cols = Math.max(1, getComputedStyle(g).gridTemplateColumns.split(' ').length);
+    }
+    var lastRow = Math.floor((n - 1) / cols);
+    for (i = 0; i < n; i++) {
+      var row = Math.floor(i / cols), col = i % cols, c = [];
+      if (i === 0) c.push('tl');
+      if (row === 0 && (col === cols - 1 || i === n - 1)) c.push('tr');
+      if (row === lastRow && col === 0) c.push('bl');
+      if (i === n - 1) c.push('br');
+      if (cols === 1) { c = []; if (i === 0) c.push('tl', 'tr'); if (i === n - 1) c.push('bl', 'br'); }
+      var v = c.join(' ');
+      if (v) setAttr(kids[i], 'data-xc', v); else kids[i].removeAttribute('data-xc');
+    }
+  }
+
+  // ---- contact portrait: 3D tilt following the mouse
+  // Framer shrinks this portrait to a third of its size on hover; the tilt replaces that, so it is applied to
+  // the same container (image > div > container) and overrides Framer's inline transform.
+  var tilt = { el: null, rect: null, raf: 0, x: -1, y: -1 };
+  function setupTilt(on) {
+    var img = on ? document.querySelector('img[alt="About Me"]') : null;
+    var el = img && img.parentElement && img.parentElement.parentElement;
+    var old = document.querySelectorAll('[data-x3d]');
+    for (var i = 0; i < old.length; i++) if (old[i] !== el) {
+      old[i].removeAttribute('data-x3d'); old[i].removeAttribute('data-hot');
+      old[i].style.removeProperty('--rx'); old[i].style.removeProperty('--ry'); old[i].style.removeProperty('--s');
+    }
+    if (el) setAttr(el, 'data-x3d', '');
+    tilt.el = el || null;
+  }
+  function tiltFrame() {
+    tilt.raf = 0;
+    var el = tilt.el;
+    if (!el || !el.isConnected) return;
+    var hot = el.hasAttribute('data-hot');
+    if (!hot || !tilt.rect) tilt.rect = el.getBoundingClientRect();   // at rest the box is untransformed
+    var r = tilt.rect;
+    var inside = tilt.x >= r.left && tilt.x <= r.right && tilt.y >= r.top && tilt.y <= r.bottom;
+    if (inside) {
+      var px = (tilt.x - r.left) / r.width, py = (tilt.y - r.top) / r.height;
+      el.style.setProperty('--ry', ((px - 0.5) * 18).toFixed(2) + 'deg');
+      el.style.setProperty('--rx', ((0.5 - py) * 18).toFixed(2) + 'deg');
+      el.style.setProperty('--s', '1.04');
+      setAttr(el, 'data-hot', '');
+    } else {
+      el.style.removeProperty('--ry'); el.style.removeProperty('--rx'); el.style.removeProperty('--s');
+      el.removeAttribute('data-hot');
+      tilt.rect = null;
+    }
+  }
+  addEventListener('pointermove', function (e) {
+    if (!tilt.el || e.pointerType === 'touch') return;
+    tilt.x = e.clientX; tilt.y = e.clientY;
+    if (!tilt.raf) tilt.raf = requestAnimationFrame(tiltFrame);
+  }, { passive: true });
+  document.addEventListener('pointerleave', function () { tilt.x = tilt.y = -1; if (!tilt.raf) tilt.raf = requestAnimationFrame(tiltFrame); });
+
+  // ---- home reel: autoplay everywhere, no YouTube UI, own sound button inside the video
+  var reel = { f: null, wrap: null, btn: null, muted: true, io: null, timers: [] };
+  var ICON_OFF = '<svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m16 9 5 6M21 9l-5 6"/></svg>';
+  var ICON_ON = '<svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
+  function yt(func, args) {
+    var f = reel.f;
+    if (f && f.contentWindow) f.contentWindow.postMessage(JSON.stringify({ event: 'command', func: func, args: args || [] }), '*');
+  }
+  function reelPlay() { if (reel.muted) yt('mute'); yt('playVideo'); }
+  function paintReelBtn() {
+    if (!reel.btn) return;
+    reel.btn.innerHTML = reel.muted ? ICON_OFF : ICON_ON;
+    reel.btn.setAttribute('aria-label', reel.muted ? 'Turn sound on' : 'Turn sound off');
+  }
+  function setupReel(on) {
+    var f = on ? document.querySelector('iframe[src*="youtube.com/embed/NrxFBp4bl2Q"]') : null;
+    if (!f || !f.parentElement || !f.parentElement.parentElement) {
+      if (reel.f || reel.btn) teardownReel();
+      return;
+    }
+    if (reel.f === f && reel.btn && reel.btn.isConnected) return;
+    teardownReel();
+    reel.f = f; reel.wrap = f.parentElement.parentElement; reel.muted = true;
+    setAttr(f, 'data-xv', '');
+    reel.btn = document.createElement('button');
+    reel.btn.type = 'button';
+    reel.btn.className = 'x-reel-ctl';
+    reel.btn.addEventListener('click', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      reel.muted = !reel.muted;
+      if (reel.muted) yt('mute'); else { yt('unMute'); yt('setVolume', [100]); }
+      yt('playVideo');
+      paintReelBtn();
+    });
+    paintReelBtn();
+    reel.wrap.appendChild(reel.btn);
+    // start playback as soon as the player listens, and keep nudging it: some phones block the first attempt
+    [600, 1500, 3000, 6000].forEach(function (ms) { reel.timers.push(setTimeout(reelPlay, ms)); });
+    f.addEventListener('load', function () { setTimeout(reelPlay, 400); });
+    reel.io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) { if (en.isIntersecting) reelPlay(); else yt('pauseVideo'); });
+    }, { threshold: 0.25 });
+    reel.io.observe(reel.wrap);
+    var kick = function () { reelPlay(); };
+    ['pointerdown', 'touchstart', 'keydown', 'scroll'].forEach(function (t) { addEventListener(t, kick, { once: true, passive: true }); });
+  }
+  function teardownReel() {
+    reel.timers.forEach(clearTimeout); reel.timers = [];
+    if (reel.io) { reel.io.disconnect(); reel.io = null; }
+    if (reel.btn && reel.btn.parentNode) reel.btn.parentNode.removeChild(reel.btn);
+    if (reel.f) reel.f.removeAttribute('data-xv');
+    reel.f = reel.wrap = reel.btn = null;
+  }
+
   function apply() {
     var p = pageKey();
     setAttr(document.documentElement, 'data-xp', p);
@@ -242,6 +373,10 @@
       removeAll('.x-toggle'); removeAll('[data-x]');
       unset('[data-gal]', 'data-gal');
     }
+
+    if (isGallery) tagCorners(g); else unset('[data-xc]', 'data-xc');
+    setupTilt(p === 'contact');
+    setupReel(p === 'home');
 
     if (p === 'schweppes' && m) ensureYoutube(m);
     else { removeAll('.x-yt'); unset('[data-xh]', 'data-xh'); }
