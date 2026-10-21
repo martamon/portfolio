@@ -26,6 +26,8 @@ for f in "$RAW"/html/*.html; do
 done
 cp "$HERE/coming-soon/index.html" "$HERE/404.html"
 touch "$HERE/.nojekyll"
+# Root-domain builds need the CMS range service worker (see scripts/sw.js).
+[ -z "$PATH_PART" ] && python3 -I "$SCRIPTS/add-root-shim.py" "$HERE"
 [ "${OPTIMIZE:-1}" = 1 ] && python3 -I "$SCRIPTS/optimize-images.py" "$HERE"
 # Custom domain: GitHub Pages needs a CNAME file with the bare host.
 if [ -z "$PATH_PART" ]; then echo "${BASE#*://}" > "$HERE/CNAME"; else rm -f "$HERE/CNAME"; fi
