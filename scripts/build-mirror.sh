@@ -3,7 +3,8 @@
 # usage: scripts/build-mirror.sh <raw-dir> [BASE_URL]
 set -euo pipefail
 RAW="$1"; BASE="${2:-https://martamon.github.io/portfolio}"
-HERE="$(cd "$(dirname "$0")/.." && pwd)"
+HERE="${OUT_DIR:-$(cd "$(dirname "$0")/.." && pwd)}"; mkdir -p "$HERE"
+SCRIPTS="$(cd "$(dirname "$0")" && pwd)"
 for h in framerusercontent.com fonts.gstatic.com app.framerstatic.com; do
   rm -rf "$HERE/$h"; cp -r "$RAW/mirror/$h" "$HERE/$h"
 done
@@ -25,5 +26,8 @@ for f in "$RAW"/html/*.html; do
 done
 cp "$HERE/coming-soon/index.html" "$HERE/404.html"
 touch "$HERE/.nojekyll"
+# Root-domain builds need the CMS range service worker (see scripts/sw.js).
+[ -z "$PATH_PART" ] && python3 -I "$SCRIPTS/add-root-shim.py" "$HERE"
+[ "${OPTIMIZE:-1}" = 1 ] && python3 -I "$SCRIPTS/optimize-images.py" "$HERE"
 # Custom domain: GitHub Pages needs a CNAME file with the bare host.
 if [ -z "$PATH_PART" ]; then echo "${BASE#*://}" > "$HERE/CNAME"; else rm -f "$HERE/CNAME"; fi
