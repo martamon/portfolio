@@ -35,9 +35,9 @@
     'main[data-gal="grid"]>:not([data-xg]):not(.x-toggle){flex:none!important;width:605px!important;max-width:100%!important;height:auto!important;position:relative!important;top:auto!important}',
     // grid view on wide screens: title/role/year on the left, description beside it instead of one tall narrow column
     '@media(min-width:811px){main[data-gal="grid"]>:not([data-xg]):not(.x-toggle){width:100%!important;max-width:none!important}',
-    'main[data-gal="grid"]>:not([data-xg]):not(.x-toggle)>*{width:100%!important;max-width:none!important;height:auto!important;flex-direction:row!important;align-items:flex-start!important;gap:80px!important}',
+    'main[data-gal="grid"]>:not([data-xg]):not(.x-toggle)>*{width:100%!important;max-width:none!important;height:auto!important;flex-direction:row!important;align-items:flex-start!important;justify-content:flex-start!important;gap:80px!important}',
     'main[data-gal="grid"]>:not([data-xg]):not(.x-toggle)>*>:first-child{flex:none!important;width:320px!important}',
-    'main[data-gal="grid"]>:not([data-xg]):not(.x-toggle)>*>:last-child{flex:1 1 0!important;width:auto!important;max-width:760px!important}}',
+    'main[data-gal="grid"]>:not([data-xg]):not(.x-toggle)>*>:last-child{flex:1 1 0!important;width:auto!important;max-width:900px!important}}',
     'main[data-gal="grid"]>[data-xg]{flex:none!important}',
     'main[data-gal="grid"] [data-xg]{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;align-items:start;width:100%!important;height:auto!important;min-height:0!important;padding:20px!important;box-sizing:border-box}',
     'main[data-gal="grid"] [data-xg]>*{width:100%!important;max-width:none!important;height:var(--gh,auto)!important}',
