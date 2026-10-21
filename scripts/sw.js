@@ -8,8 +8,22 @@ self.addEventListener('fetch', e => {
   const u = new URL(e.request.url);
   if (u.origin === self.location.origin && u.pathname.endsWith('.framercms') && u.searchParams.has('range')) {
     e.respondWith(slice(u));
+  } else if (u.hostname === 'framerusercontent.com' && /^\/(images|assets)\//.test(u.pathname) && e.request.method === 'GET') {
+    e.respondWith(local(e.request, u));
   }
 });
+
+// Framer's CMS data points at https://framerusercontent.com/images/...; serve those from this site's copies
+// (optimized .webp when the original was converted) and only fall back to Framer's CDN if a file is missing.
+async function local(req, u) {
+  const base = self.location.origin + '/framerusercontent.com' + u.pathname;
+  const tries = [base];
+  if (/\.(png|jpe?g)$/i.test(base)) tries.push(base.replace(/\.(png|jpe?g)$/i, '.webp'));
+  for (const t of tries) {
+    try { const r = await fetch(t); if (r.ok) return r; } catch (err) { /* try the next one */ }
+  }
+  return fetch(req);
+}
 
 async function slice(u) {
   const ranges = u.searchParams.get('range').split(',').map(s => s.split('-').map(Number));
