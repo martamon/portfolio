@@ -43,6 +43,14 @@
     // dark: the menu's difference blend would tint the white type beige over the blue, so it is a plain light grey-blue instead
     'html[data-xdark] [data-xnc]{mix-blend-mode:normal!important}',
     'html[data-xdark] [data-xn]{color:var(--xfg)!important}',
+    // the menu's face is inverted to go with that blend; without the blend it stays as it is
+    'html[data-xdark] [data-xfi]{filter:none!important}',
+    // the MARTAMON wordmark of the home hero (white): in the dark it becomes the same grey-blue as the type (white -> #b4c2d5)
+    'img[src*="X22mGNitGaY93ZEObiQgYak"]{filter:brightness(calc(1 - .38 * var(--xtt))) sepia(var(--xtt)) hue-rotate(calc(175deg * var(--xtt))) saturate(calc(1 - .5 * var(--xtt)))}',
+    // the hair/face video of About has a light-blue backdrop of its own: it dims with the night
+    'html[data-xp="about"] video{filter:brightness(calc(1 - .5 * var(--xt))) saturate(calc(1 - .25 * var(--xt)))}',
+    // contact portrait: its tilt shadow turns from blue to black
+    '[data-x3d][data-hot]{box-shadow:0 28px 55px color-mix(in srgb,rgba(20,60,100,.32) calc((1 - var(--xtt)) * 100%),rgba(0,0,0,.55) calc(var(--xtt) * 100%))}',
     '[data-xtc]{color:color-mix(in srgb,var(--xo) calc((1 - var(--xtt)) * 100%),var(--xl) calc(var(--xtt) * 100%))!important}',
     '.x-dial{position:fixed;top:19px;right:150px;z-index:12;display:flex;align-items:center;gap:10px;color:var(--xfg);font:500 14px/1 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.025em;text-transform:uppercase;user-select:none;-webkit-user-select:none}',
     '.x-dial-time{min-width:3.2em;text-align:right;cursor:pointer}',
@@ -92,7 +100,7 @@
     '.x-img img{display:block;width:100%;height:100%;object-fit:cover}',
     // contact portrait: 3D tilt on hover
     '[data-x3d]{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) scale(var(--s,1))!important;transition:transform .2s ease-out,box-shadow .3s;will-change:transform;box-shadow:0 0 0 rgba(20,60,100,0)}',
-    '[data-x3d][data-hot]{box-shadow:0 28px 55px rgba(20,60,100,.32);transition:transform .08s linear,box-shadow .3s}',
+    '[data-x3d][data-hot]{transition:transform .08s linear,box-shadow .3s}',
     // home reel: our own sound button
     '.x-reel-ctl{position:absolute;right:16px;bottom:16px;z-index:5;width:44px;height:44px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.45);color:#fff;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);pointer-events:auto;transition:background .2s}',
     '.x-reel-ctl:hover{background:rgba(0,0,0,.65)}',
@@ -742,17 +750,39 @@
       e.style.setProperty('--xbgimg', g);
       e.setAttribute('data-xbgm', '');
     }
+    var faces = document.querySelectorAll('a[data-xf]');
+    for (i = 0; i < faces.length; i++) for (e = faces[i].parentElement; e && e !== document.body; e = e.parentElement) {
+      if (/invert/.test(getComputedStyle(e).filter) && !e.hasAttribute('data-xfi')) e.setAttribute('data-xfi', '');
+    }
     var all = document.body.querySelectorAll('*');
     for (i = 0; i < all.length; i++) {
       e = all[i];
       if (themeSeen && themeSeen.has(e)) continue;
       if (themeSeen) themeSeen.add(e);
+      // other light gradients (fades over the hero, the bar of the intro...): faded ones turn into the dark page colour,
+      // solid ones into a muted blue that still shows against it
+      if (!e.hasAttribute('data-xbgm') && !e.closest('.x-dial')) {
+        cs = getComputedStyle(e);
+        if (cs.backgroundImage.indexOf('gradient') > -1 && e.offsetWidth > 0) {
+          var faded = /rgba\([^)]*,\s*0(\.\d+)?\)/.test(cs.backgroundImage), any = false;
+          var g2 = cs.backgroundImage.replace(/rgba?\([^)]*\)/g, function (c) {
+            var rgb = parseRgb(c);
+            if (!rgb || lum(rgb) < 0.5) return c;
+            any = true;
+            var dk = faded ? darkOf(rgb) : (function () { var k = Math.max(0, Math.min(1, (lum(rgb) - 0.55) / 0.45)); return 'rgba(' + [0, 1, 2].map(function (n) { return Math.round([120, 138, 168][n] + ([96, 112, 142][n] - [120, 138, 168][n]) * k); }).join(',') + ',' + rgb[3] + ')'; })();
+            return 'color-mix(in srgb,' + c + ' calc((1 - var(--xt)) * 100%),' + dk + ' calc(var(--xt) * 100%))';
+          });
+          if (any) { e.style.setProperty('--xbgimg', g2); e.setAttribute('data-xbgm', ''); }
+        }
+      }
       var own = false;
       for (q = 0; q < e.childNodes.length; q++) if (e.childNodes[q].nodeType === 3 && e.childNodes[q].nodeValue.trim()) { own = true; break; }
       if (!own || e.closest('.x-dial,button,[data-xn]')) continue;
       cs = getComputedStyle(e);
       var c = parseRgb(cs.color);
-      if (!c || c[3] === 0 || lum(c) > 0.45) continue;
+      // white type of the About page (the big "Martamon" and its text) goes soft too; white type elsewhere sits on pictures and stays
+      var bigWhite = c && lum(c) > 0.9 && (parseFloat(cs.fontSize) >= 60 || pageKey() === 'about');
+      if (!c || c[3] === 0 || (lum(c) > 0.45 && !bigWhite)) continue;
       e.style.setProperty('--xo', cs.color);
       e.style.setProperty('--xl', 'rgba(179,194,214,' + c[3] + ')');
       e.setAttribute('data-xtc', '');
