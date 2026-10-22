@@ -37,10 +37,21 @@
     'main[data-xm]{height:auto!important;min-height:0!important}',
     '[data-xr]{height:auto!important;min-height:100vh!important}',
     '[data-xg]{height:auto!important}',
+    // light / dark theme (see "theme" below): --xt is how dark the page is (0..1), --xtt the same for the text, which switches sooner
+    ':root{--xt:0;--xtt:0;--xfg:color-mix(in srgb,#1b1b1b calc((1 - var(--xtt)) * 100%),#e7eef9 calc(var(--xtt) * 100%));--xfg55:color-mix(in srgb,rgba(20,20,20,.55) calc((1 - var(--xtt)) * 100%),rgba(231,238,249,.6) calc(var(--xtt) * 100%))}',
+    '[data-xbgm]{background-image:var(--xbgimg)!important}',
+    '[data-xtc]{color:color-mix(in srgb,var(--xo) calc((1 - var(--xtt)) * 100%),var(--xl) calc(var(--xtt) * 100%))!important}',
+    '.x-dial{position:fixed;top:19px;right:150px;z-index:12;display:flex;align-items:center;gap:10px;color:var(--xfg);font:500 14px/1 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.025em;text-transform:uppercase;user-select:none;-webkit-user-select:none}',
+    '.x-dial-time{min-width:3.2em;text-align:right;cursor:pointer}',
+    '.x-dial-ring{position:relative;width:40px;height:40px;box-sizing:border-box;border:1.5px solid currentColor;border-radius:50%;cursor:grab;touch-action:none}',
+    '.x-dial-ring:active{cursor:grabbing}',
+    '.x-dial-dot{position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:currentColor;pointer-events:none}',
+    '.x-dial-reset{cursor:pointer;opacity:.7}',
+    '.x-dial-reset[hidden]{display:none}',
     // view toggle
     // the view toggle is the first row of the image column (not floating), so it can never cover the text or the images
     '.x-toggle{display:flex;justify-content:flex-end;align-items:center;align-self:center;gap:4px;width:100%;height:32px;padding:0;box-sizing:border-box;flex:none}',
-    '.x-toggle button{width:32px;height:32px;display:grid;place-items:center;padding:0;border:0;background:none;color:#1b1b1b;opacity:.35;cursor:pointer;transition:opacity .2s}',
+    '.x-toggle button{width:32px;height:32px;display:grid;place-items:center;padding:0;border:0;background:none;color:var(--xfg,#1b1b1b);opacity:.35;cursor:pointer;transition:opacity .2s}',
     '.x-toggle button[aria-pressed="true"]{opacity:1}',
     '.x-toggle button:hover{opacity:.75}',
     '.x-toggle svg{width:16px;height:16px;fill:currentColor}',
@@ -58,8 +69,8 @@
     'main[data-gal="grid"] [data-xg]>:not(.x-toggle){position:absolute!important;left:var(--mx,0);top:var(--my,0);width:var(--mw,100%)!important;height:var(--gh,auto)!important;max-width:none!important;margin:0!important}',
     // project footer (prev/next row and © / contact row): Switzer, the typeface of nolan-barret.framer.website, small and quiet
     'main[data-xm]~section,main[data-xm]~section *,main[data-xm]~*:not(.x-yt) footer,main[data-xm]~*:not(.x-yt) footer *{font-family:"Switzer","Switzer Placeholder",sans-serif!important;font-weight:500!important;font-size:12.5px!important;letter-spacing:-.01em!important;line-height:1.35!important}',
-    'main[data-xm]~section a,main[data-xm]~section p,main[data-xm]~section span,main[data-xm]~*:not(.x-yt) footer a,main[data-xm]~*:not(.x-yt) footer p,main[data-xm]~*:not(.x-yt) footer span{color:rgba(20,20,20,.55)!important;transition:color .2s}',
-    'main[data-xm]~section a:hover,main[data-xm]~section a:hover *,main[data-xm]~*:not(.x-yt) footer a:hover,main[data-xm]~*:not(.x-yt) footer a:hover *{color:#141414!important}',
+    'main[data-xm]~section a,main[data-xm]~section p,main[data-xm]~section span,main[data-xm]~*:not(.x-yt) footer a,main[data-xm]~*:not(.x-yt) footer p,main[data-xm]~*:not(.x-yt) footer span{color:var(--xfg55,rgba(20,20,20,.55))!important;transition:color .2s}',
+    'main[data-xm]~section a:hover,main[data-xm]~section a:hover *,main[data-xm]~*:not(.x-yt) footer a:hover,main[data-xm]~*:not(.x-yt) footer a:hover *{color:var(--xfg,#141414)!important}',
     // home: the project list is a masonry like the project galleries (each card goes under the shortest column)
     'main[data-xhome]{display:block!important;position:relative!important;height:var(--hh)!important;min-height:0!important}',
     'main[data-xhome] [data-xhi]{position:absolute!important;left:var(--mx);top:var(--my);width:var(--mw)!important;margin:0!important}',
@@ -626,6 +637,124 @@
     if (p !== 'home') unset('[data-xs]', 'data-xs');
   }
 
+  // ---- theme: a time-of-day dial (copy of the "Local Time" dial of brandonyasin.com): dragging it around turns the page
+  // from the light blue (noon, top of the dial) to a dark blue with light type (midnight, bottom), through dusk and dawn
+  var HOUR_R = [[0, 44], [4, 44], [5, 96], [6, 133], [7, 165], [8, 206], [9, 248], [16, 248], [17, 206], [18, 165], [19, 124], [20, 83], [21, 44], [24, 44]];
+  var DAY_HOUR = 12;
+  var theme = { hour: DAY_HOUR, raf: 0 };
+  try { var savedHour = parseFloat(localStorage.getItem('xt-hour')); if (isFinite(savedHour)) theme.hour = ((savedHour % 24) + 24) % 24; } catch (e) {}
+  function darkness(h) {
+    var i = 0;
+    while (i < HOUR_R.length - 2 && HOUR_R[i + 1][0] <= h) i++;
+    var a = HOUR_R[i], b = HOUR_R[i + 1], r = a[1] + (b[1] - a[1]) * ((h - a[0]) / (b[0] - a[0]));
+    return Math.max(0, Math.min(1, 1 - (r - 44) / (248 - 44)));
+  }
+  function paintTheme() {
+    var t = darkness(theme.hour), tt = Math.max(0, Math.min(1, (t - 0.35) / 0.3));
+    var st = document.documentElement.style;
+    st.setProperty('--xt', t.toFixed(3)); st.setProperty('--xtt', tt.toFixed(3));
+    var d = document.querySelector('.x-dial');
+    if (d) {
+      var ang = (theme.hour - DAY_HOUR) * 15, rad = ang * Math.PI / 180, dot = d.querySelector('.x-dial-dot');
+      dot.style.transform = 'translate(' + (Math.sin(rad) * 18.25).toFixed(2) + 'px,' + (-Math.cos(rad) * 18.25).toFixed(2) + 'px)';
+      var hh = Math.floor(theme.hour), mm = Math.floor((theme.hour - hh) * 60);
+      d.querySelector('.x-dial-time').textContent = (hh < 10 ? '0' : '') + hh + '.' + (mm < 10 ? '0' : '') + mm;
+      d.querySelector('.x-dial-reset').hidden = Math.abs(theme.hour - DAY_HOUR) < 0.01;
+    }
+  }
+  function setHour(h, save) {
+    theme.hour = ((h % 24) + 24) % 24;
+    paintTheme();
+    if (save) { try { localStorage.setItem('xt-hour', String(theme.hour)); } catch (e) {} }
+  }
+  function tweenHour(to) {
+    cancelAnimationFrame(theme.raf);
+    var from = theme.hour, delta = ((to - from + 36) % 24) - 12, t0 = performance.now();
+    var step = function (now) {
+      var p = Math.min(1, (now - t0) / 700), e = 1 - Math.pow(1 - p, 3);
+      setHour(from + delta * e, p === 1);
+      if (p < 1) theme.raf = requestAnimationFrame(step);
+    };
+    theme.raf = requestAnimationFrame(step);
+  }
+  function ensureDial() {
+    var d = document.querySelector('.x-dial');
+    if (!d) {
+      d = document.createElement('div');
+      d.className = 'x-dial';
+      d.innerHTML = '<span class="x-dial-reset" title="Back to daylight" hidden>\u2715</span><span class="x-dial-time" title="Time of day"></span><div class="x-dial-ring" role="slider" aria-label="Time of day: drag to switch between light and dark" aria-valuemin="0" aria-valuemax="24" tabindex="0"><span class="x-dial-dot"></span></div>';
+      var ring = d.querySelector('.x-dial-ring');
+      var fromPointer = function (e) {
+        var r = ring.getBoundingClientRect(), dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+        if (Math.abs(dx) + Math.abs(dy) < 3) return;
+        var ang = Math.atan2(dx, -dy) * 180 / Math.PI;      // 0 = top (noon), clockwise
+        cancelAnimationFrame(theme.raf);
+        setHour(DAY_HOUR + ang / 15, true);
+      };
+      ring.addEventListener('pointerdown', function (e) { e.preventDefault(); ring.setPointerCapture(e.pointerId); ring.__drag = true; fromPointer(e); });
+      ring.addEventListener('pointermove', function (e) { if (ring.__drag) fromPointer(e); });
+      var end = function (e) { ring.__drag = false; try { ring.releasePointerCapture(e.pointerId); } catch (err) {} };
+      ring.addEventListener('pointerup', end); ring.addEventListener('pointercancel', end);
+      ring.addEventListener('keydown', function (e) {
+        var k = e.key === 'ArrowRight' || e.key === 'ArrowUp' ? 0.5 : e.key === 'ArrowLeft' || e.key === 'ArrowDown' ? -0.5 : 0;
+        if (k) { e.preventDefault(); setHour(theme.hour + k, true); }
+      });
+      var reset = function (e) { e.preventDefault(); tweenHour(DAY_HOUR); };
+      d.querySelector('.x-dial-reset').addEventListener('click', reset);
+      d.querySelector('.x-dial-time').addEventListener('click', function (e) { if (Math.abs(theme.hour - DAY_HOUR) > 0.01) reset(e); });
+      document.body.appendChild(d);
+      paintTheme();
+    }
+    // sit just left of the menu links
+    var link = document.querySelector('a[data-xn]');
+    if (link) {
+      var l = link.getBoundingClientRect().left;
+      if (l > 0) d.style.right = Math.round(innerWidth - l + 18) + 'px';
+    }
+  }
+  paintTheme();
+  var themeSeen = typeof WeakSet === 'function' ? new WeakSet() : null;
+  var NAVY_A = [24, 50, 92], NAVY_B = [8, 18, 36];
+  function lum(c) { return (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255; }
+  function parseRgb(str) { var m = /rgba?\(([^)]+)\)/.exec(str); if (!m) return null; var p = m[1].split(/[ ,\/]+/).filter(Boolean).map(parseFloat); return p.length < 3 ? null : [p[0], p[1], p[2], p.length > 3 ? p[3] : 1]; }
+  function darkOf(c) {
+    var k = Math.max(0, Math.min(1, (lum(c) - 0.5) / 0.45));
+    return 'rgba(' + [0, 1, 2].map(function (i) { return Math.round(NAVY_A[i] + (NAVY_B[i] - NAVY_A[i]) * k); }).join(',') + ',' + c[3] + ')';
+  }
+  // tag the page background (gradient) and the dark text, once each; the colours then follow --xt / --xtt from css
+  function themeTag() {
+    var i, e, cs, nodes = [document.body], q;
+    var top = document.body.children;
+    for (i = 0; i < top.length; i++) { nodes.push(top[i]); for (q = 0; q < top[i].children.length && q < 4; q++) nodes.push(top[i].children[q]); }
+    for (i = 0; i < nodes.length; i++) {
+      e = nodes[i];
+      if (e.hasAttribute('data-xbgm') || e.classList.contains('x-dial')) continue;
+      cs = getComputedStyle(e);
+      if (cs.backgroundImage.indexOf('gradient') < 0 || e.offsetWidth < innerWidth * 0.9 || e.offsetHeight < 300) continue;
+      var g = cs.backgroundImage.replace(/rgba?\([^)]*\)/g, function (c) {
+        var rgb = parseRgb(c);
+        return rgb ? 'color-mix(in srgb,' + c + ' calc((1 - var(--xt)) * 100%),' + darkOf(rgb) + ' calc(var(--xt) * 100%))' : c;
+      });
+      e.style.setProperty('--xbgimg', g);
+      e.setAttribute('data-xbgm', '');
+    }
+    var all = document.body.querySelectorAll('*');
+    for (i = 0; i < all.length; i++) {
+      e = all[i];
+      if (themeSeen && themeSeen.has(e)) continue;
+      if (themeSeen) themeSeen.add(e);
+      var own = false;
+      for (q = 0; q < e.childNodes.length; q++) if (e.childNodes[q].nodeType === 3 && e.childNodes[q].nodeValue.trim()) { own = true; break; }
+      if (!own || e.closest('.x-dial,button,[data-xn]')) continue;
+      cs = getComputedStyle(e);
+      var c = parseRgb(cs.color);
+      if (!c || c[3] === 0 || lum(c) > 0.45) continue;
+      e.style.setProperty('--xo', cs.color);
+      e.style.setProperty('--xl', 'rgba(231,238,249,' + c[3] + ')');
+      e.setAttribute('data-xtc', '');
+    }
+  }
+
   function apply() {
     var p = pageKey();
     setAttr(document.documentElement, 'data-xp', p);
@@ -659,6 +788,8 @@
 
     watchColumn(isGallery ? g : null);
     dropComingSoon(p);
+    themeTag();
+    ensureDial();
     styleMenu();
     styleCaptions(p === 'home');
     applyHome(p === 'home');
