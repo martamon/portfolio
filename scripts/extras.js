@@ -38,8 +38,11 @@
     '[data-xr]{height:auto!important;min-height:100vh!important}',
     '[data-xg]{height:auto!important}',
     // light / dark theme (see "theme" below): --xt is how dark the page is (0..1), --xtt the same for the text, which switches sooner
-    ':root{--xt:0;--xtt:0;--xfg:color-mix(in srgb,#1b1b1b calc((1 - var(--xtt)) * 100%),#e7eef9 calc(var(--xtt) * 100%));--xfg55:color-mix(in srgb,rgba(20,20,20,.55) calc((1 - var(--xtt)) * 100%),rgba(231,238,249,.6) calc(var(--xtt) * 100%))}',
+    ':root{--xt:0;--xtt:0;--xfg:color-mix(in srgb,#1b1b1b calc((1 - var(--xtt)) * 100%),#b3c2d6 calc(var(--xtt) * 100%));--xfg55:color-mix(in srgb,rgba(20,20,20,.55) calc((1 - var(--xtt)) * 100%),rgba(179,194,214,.6) calc(var(--xtt) * 100%))}',
     '[data-xbgm]{background-image:var(--xbgimg)!important}',
+    // dark: the menu's difference blend would tint the white type beige over the blue, so it is a plain light grey-blue instead
+    'html[data-xdark] [data-xnc]{mix-blend-mode:normal!important}',
+    'html[data-xdark] [data-xn]{color:var(--xfg)!important}',
     '[data-xtc]{color:color-mix(in srgb,var(--xo) calc((1 - var(--xtt)) * 100%),var(--xl) calc(var(--xtt) * 100%))!important}',
     '.x-dial{position:fixed;top:19px;right:150px;z-index:12;display:flex;align-items:center;gap:10px;color:var(--xfg);font:500 14px/1 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.025em;text-transform:uppercase;user-select:none;-webkit-user-select:none}',
     '.x-dial-time{min-width:3.2em;text-align:right;cursor:pointer}',
@@ -653,6 +656,7 @@
     var t = darkness(theme.hour), tt = Math.max(0, Math.min(1, (t - 0.35) / 0.3));
     var st = document.documentElement.style;
     st.setProperty('--xt', t.toFixed(3)); st.setProperty('--xtt', tt.toFixed(3));
+    if (tt > 0.5) { if (!document.documentElement.hasAttribute('data-xdark')) document.documentElement.setAttribute('data-xdark', ''); } else document.documentElement.removeAttribute('data-xdark');
     var d = document.querySelector('.x-dial');
     if (d) {
       var ang = (theme.hour - DAY_HOUR) * 15, rad = ang * Math.PI / 180, dot = d.querySelector('.x-dial-dot');
@@ -714,7 +718,7 @@
   }
   paintTheme();
   var themeSeen = typeof WeakSet === 'function' ? new WeakSet() : null;
-  var NAVY_A = [24, 50, 92], NAVY_B = [8, 18, 36];
+  var NAVY_A = [52, 74, 110], NAVY_B = [31, 45, 70];
   function lum(c) { return (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255; }
   function parseRgb(str) { var m = /rgba?\(([^)]+)\)/.exec(str); if (!m) return null; var p = m[1].split(/[ ,\/]+/).filter(Boolean).map(parseFloat); return p.length < 3 ? null : [p[0], p[1], p[2], p.length > 3 ? p[3] : 1]; }
   function darkOf(c) {
@@ -750,7 +754,7 @@
       var c = parseRgb(cs.color);
       if (!c || c[3] === 0 || lum(c) > 0.45) continue;
       e.style.setProperty('--xo', cs.color);
-      e.style.setProperty('--xl', 'rgba(231,238,249,' + c[3] + ')');
+      e.style.setProperty('--xl', 'rgba(179,194,214,' + c[3] + ')');
       e.setAttribute('data-xtc', '');
     }
   }
