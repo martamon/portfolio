@@ -64,6 +64,9 @@
     'main[data-xhome]{display:block!important;position:relative!important;height:var(--hh)!important;min-height:0!important}',
     'main[data-xhome] [data-xhi]{position:absolute!important;left:var(--mx);top:var(--my);width:var(--mw)!important;margin:0!important}',
     'main[data-xhome] [data-xhi][data-xs]{display:none!important}',
+    'main[data-xhome] [data-xhi]{overflow:hidden}',
+    // Framer's own hover effect on the cards (a zoom of the card or its picture) would pile up on ours and push the card past its column
+    'main[data-xhome] [data-xhi] a,main[data-xhome] [data-xhi] a>div,main[data-xhome] [data-xhi] a>div>div,main[data-xhome] [data-xhi] img{transform:none!important;scale:none!important;transition:none!important}',
     // hover: see placeHome (the layout is animated from script)
     // lexus extras: instagram video (cropped to the media only) and the RZ image
     '.x-insta,.x-img{position:relative;flex:none;overflow:hidden}',
@@ -72,10 +75,6 @@
     // contact portrait: 3D tilt on hover
     '[data-x3d]{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) scale(var(--s,1))!important;transition:transform .2s ease-out,box-shadow .3s;will-change:transform;box-shadow:0 0 0 rgba(20,60,100,0)}',
     '[data-x3d][data-hot]{box-shadow:0 28px 55px rgba(20,60,100,.32);transition:transform .08s linear,box-shadow .3s}',
-    // home reel: the video's edges are uneven, so they fade softly into the page (the sound button is outside this box)
-    '[data-xrm]{-webkit-mask-image:linear-gradient(to right,transparent,#000 7%,#000 93%,transparent),linear-gradient(to bottom,transparent,#000 10%,#000 90%,transparent);mask-image:linear-gradient(to right,transparent,#000 7%,#000 93%,transparent),linear-gradient(to bottom,transparent,#000 10%,#000 90%,transparent);-webkit-mask-composite:source-in;mask-composite:intersect}',
-    '[data-xrm]{background:#000}',
-    '[data-xrw]{background:transparent!important}',
     // home reel: our own sound button
     '.x-reel-ctl{position:absolute;right:16px;bottom:16px;z-index:5;width:44px;height:44px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.45);color:#fff;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);pointer-events:auto;transition:background .2s}',
     '.x-reel-ctl:hover{background:rgba(0,0,0,.65)}',
@@ -508,8 +507,6 @@
       if (reel.f || reel.btn) teardownReel();
       return;
     }
-    setAttr(f.parentElement, 'data-xrm', '');
-    if (f.parentElement.parentElement) setAttr(f.parentElement.parentElement, 'data-xrw', '');
     if (reel.f === f && reel.btn && reel.btn.isConnected) return;
     teardownReel();
     reel.f = f; reel.wrap = f.parentElement.parentElement; reel.muted = true;
