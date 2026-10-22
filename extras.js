@@ -64,6 +64,10 @@
     'main[data-xhome]{display:block!important;position:relative!important;height:var(--hh)!important;min-height:0!important}',
     'main[data-xhome] [data-xhi]{position:absolute!important;left:var(--mx);top:var(--my);width:var(--mw)!important;margin:0!important}',
     'main[data-xhome] [data-xhi][data-xs]{display:none!important}',
+    // captions sit on the picture's bottom-left corner, so cards are only as tall as their image
+    'main[data-xhome] [data-xhi] a{position:relative!important;height:auto!important}',
+    'main[data-xhome] [data-xhi] a>:last-child:not(:first-child){position:absolute!important;left:14px;bottom:10px;width:auto!important;height:auto!important;pointer-events:none}',
+    'main[data-xhome] [data-xcap]{color:#fff!important;text-shadow:0 1px 10px rgba(0,0,0,.45)}',
     // lexus extras: instagram video (cropped to the media only) and the RZ image
     '.x-insta,.x-img{position:relative;flex:none;overflow:hidden}',
     '.x-insta iframe{position:absolute;left:0;top:-' + IG_HEAD + 'px;width:100%;height:calc(100% + ' + (IG_HEAD + IG_FOOT) + 'px);border:0}',
@@ -284,8 +288,10 @@
       var cs = getComputedStyle(m);
       var tracks = cs.display === 'grid' ? cs.gridTemplateColumns.split(' ').map(parseFloat).filter(function (n) { return n > 0; }) : [];
       if (!tracks.length || !m.offsetWidth) continue;
-      var cols = tracks.length, colW = tracks[0], gapX = parseFloat(cs.columnGap) || 0, gapY = parseFloat(cs.rowGap) || 0;
-      var padL = parseFloat(cs.paddingLeft) || 0, padT = parseFloat(cs.paddingTop) || 0, padB = parseFloat(cs.paddingBottom) || 0;
+      // same rhythm as the project galleries: 12px between images, the page's own side padding
+      var cols = tracks.length, gap = 12;
+      var padL = parseFloat(cs.paddingLeft) || 0, padR = parseFloat(cs.paddingRight) || 0, padT = parseFloat(cs.paddingTop) || 0, padB = parseFloat(cs.paddingBottom) || 0;
+      var colW = Math.floor((m.clientWidth - padL - padR - gap * (cols - 1)) / cols);
       var kids = [], heights = [];
       // the cards may sit inside wrappers that have no box of their own (display: contents)
       var collect = function (el) {
@@ -295,25 +301,25 @@
         }
       };
       collect(m);
-      // a card's box has spare room under its caption: stack by the caption's bottom edge instead
       for (j = 0; j < kids.length; j++) {
-        var cap = kids[j].querySelector('[data-xcap]'), hh = kids[j].offsetHeight;
-        if (cap) hh = Math.min(hh, Math.round(cap.getBoundingClientRect().bottom - kids[j].getBoundingClientRect().top));
-        heights.push(hh);
+        kids[j].setAttribute('data-xhi', '');
+        kids[j].style.setProperty('--mw', colW + 'px');
       }
-      gapY = 18;
+      setAttr(m, 'data-xhome', '');
+      // only the picture takes room: the caption sits over it (see the css)
+      for (j = 0; j < kids.length; j++) {
+        var link = kids[j].querySelector('a'), pic = link && link.firstElementChild;
+        heights.push(Math.round((pic || kids[j]).getBoundingClientRect().height) || kids[j].offsetHeight);
+      }
       for (j = 0; j < cols; j++) tracks[j] = 0;
       for (j = 0; j < kids.length; j++) {
         var col = 0, k;
         for (k = 1; k < cols; k++) if (tracks[k] < tracks[col]) col = k;
-        kids[j].setAttribute('data-xhi', '');
-        kids[j].style.setProperty('--mx', (padL + col * (colW + gapX)) + 'px');
+        kids[j].style.setProperty('--mx', (padL + col * (colW + gap)) + 'px');
         kids[j].style.setProperty('--my', (padT + tracks[col]) + 'px');
-        kids[j].style.setProperty('--mw', colW + 'px');
-        tracks[col] += heights[j] + gapY;
+        tracks[col] += heights[j] + gap;
       }
-      m.style.setProperty('--hh', (padT + Math.max.apply(null, tracks) - gapY + padB) + 'px');
-      setAttr(m, 'data-xhome', '');
+      m.style.setProperty('--hh', (padT + Math.max.apply(null, tracks) - gap + padB) + 'px');
     }
   }
 
