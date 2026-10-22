@@ -113,8 +113,6 @@
     // contact portrait: 3D tilt on hover
     '[data-x3d]{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) scale(var(--s,1))!important;transition:transform .2s ease-out,box-shadow .3s;will-change:transform;box-shadow:0 0 0 rgba(20,60,100,0)}',
     '[data-x3d][data-hot]{transition:transform .08s linear,box-shadow .3s}',
-    // contact: the bee (a transparent canvas over the page that lets every click through)
-    '.x-bee{position:fixed;left:0;top:0;z-index:9;pointer-events:none}',
     // home reel: our own sound button
     '.x-reel-ctl{position:absolute;right:16px;bottom:16px;z-index:5;width:44px;height:44px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.45);color:#fff;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);pointer-events:auto;transition:background .2s}',
     '.x-reel-ctl:hover{background:rgba(0,0,0,.65)}',
@@ -587,19 +585,6 @@
     reel.f = reel.wrap = reel.btn = null;
   }
 
-  // ---- contact: a 3D bee that flies about with a soft shadow, chases the fruit you drop (extras/bee3d.js with three.js, loaded only on Contact)
-  var bee3 = { stop: null, loading: false, want: false };
-  function setupBee(on) {
-    bee3.want = on;
-    if (!on) { if (bee3.stop) { bee3.stop(); bee3.stop = null; } return; }
-    if (bee3.stop || bee3.loading) return;
-    bee3.loading = true;
-    import('/extras/bee3d.js').then(function (m) {
-      bee3.loading = false;
-      if (bee3.want && !bee3.stop) bee3.stop = m.start();
-    }).catch(function () { bee3.loading = false; });
-  }
-
   // ---- menu: letters roll up on hover (copy of the "rolling text" of paul-michel.framer.website)
   function rollify(a) {
     if (a.querySelector('.x-roll')) return;
@@ -949,7 +934,6 @@
     applyHome(p === 'home');
     setupTilt(p === 'contact');
     setupReel(p === 'home');
-    setupBee(p === 'contact');
 
     var faces = document.querySelectorAll('a[href="./#hero"],a[href="/#hero"],a[href="./"]');
     for (var q = 0; q < faces.length; q++) {
