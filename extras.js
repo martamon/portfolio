@@ -120,6 +120,20 @@
     // contact portrait: 3D tilt on hover
     '[data-x3d]{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) scale(var(--s,1))!important;transition:transform .2s ease-out,box-shadow .3s;will-change:transform;box-shadow:0 0 0 rgba(20,60,100,0)}',
     '[data-x3d][data-hot]{transition:transform .08s linear,box-shadow .3s}',
+    // contact: a plain page (after a reference the owner sent): no pictures, just the current texts, small and spaced in the menu's
+    // monospace, an arc of "GET IN TOUCH" and the swimming creature; Framer's own blocks are hidden
+    'html[data-xp="contact"] main{height:auto!important;min-height:calc(100vh - 83px)!important;min-height:calc(100dvh - 83px)!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:0 20px!important;box-sizing:border-box!important}',
+    'html[data-xp="contact"] main>:not(.x-contact){display:none!important}',
+    // the page box Framer sized for the pictures: let it end with the footer
+    'html[data-xp="contact"] [data-xcw]{height:auto!important;min-height:100vh!important;min-height:100dvh!important}',
+    '.x-contact{position:relative;width:min(560px,100%);height:440px;color:var(--xfg);font-family:"IBM Plex Mono","IBM Plex Mono Placeholder",monospace;font-weight:500}',
+    '.x-ct-arc{position:absolute;left:50%;top:6px;width:300px;height:120px;transform:translateX(-18%) rotate(14deg);overflow:visible}',
+    '.x-ct-arc text{fill:currentColor;font-size:15px;letter-spacing:.32em;text-transform:uppercase}',
+    '.x-ct-text{position:absolute;left:0;bottom:24px;font-size:12.5px;line-height:1.75;letter-spacing:.12em}',
+    '.x-ct-text a{color:inherit!important;text-decoration:none;background:linear-gradient(currentColor,currentColor) 0 100%/0 1px no-repeat;transition:background-size .35s ease}',
+    '.x-ct-text a:hover,.x-ct-text a:focus-visible{background-size:100% 1px}',
+    '.x-ct-social{display:flex;flex-wrap:wrap;gap:6px 22px;margin-top:18px;text-transform:uppercase}',
+    '@media(max-width:600px){.x-contact{height:400px}.x-ct-arc{width:250px;transform:translateX(-30%) rotate(12deg)}.x-ct-text{font-size:12px}}',
     // the little creature that drifts by now and then (see setupDrifter); a drop shadow behind it
     '.x-drift{position:fixed;left:0;top:0;z-index:9;display:none;background:url(/extras/blob-sprite.webp) 0 0/1000% 100% no-repeat;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;will-change:transform}',
     // its shadow: a soft blurred oval behind and below it (a gradient, not a copy of its silhouette, so it can never look like a second one)
@@ -825,6 +839,40 @@
   }
 
 
+  // ---- contact: the plain page. The texts are read from Framer's own blocks (so they stay what the page says); the e-mail and phone
+  // links are rebuilt from the text shown, since Framer's links point to placeholder addresses
+  function setupContact(on) {
+    var m = document.querySelector('main');
+    var cur = document.querySelector('.x-contact');
+    if (!on || !m) { if (cur) cur.parentNode.removeChild(cur); unset('[data-xcw]', 'data-xcw'); return; }
+    if (m.parentElement) setAttr(m.parentElement, 'data-xcw', '');
+    var info = m.querySelector('[data-framer-name="Contact Info"]');
+    if (!info) return;
+    if (cur && cur.parentNode === m && m.firstChild === cur) return;
+    var txt = function (el) { return el ? el.textContent.replace(/\s+/g, ' ').trim() : ''; };
+    var title = txt(info.querySelector('[data-framer-name="GET IN TOUCH"]')) || 'Get in touch';
+    var ep = info.querySelectorAll('[data-framer-name="Email and Phone"] a'), lines = [];
+    for (var i = 0; i < ep.length; i++) {
+      var t = txt(ep[i]);
+      if (!t) continue;
+      if (t.indexOf('@') > -1) lines.push('<a href="mailto:' + t + '">' + t + '</a>');
+      else lines.push('<a href="tel:' + t.replace(/[^+\d]/g, '') + '">' + t + '</a>');
+    }
+    var so = info.querySelectorAll('[data-framer-name="Social Media"] a[href]'), soc = [], seen = {};
+    for (i = 0; i < so.length; i++) {
+      var h = so[i].getAttribute('href'), n = txt(so[i]);
+      if (!n || seen[h]) continue; seen[h] = 1;
+      soc.push('<a href="' + h + '" target="_blank" rel="noopener">' + n + ' ↗</a>');
+    }
+    var esc = function (x) { return x.replace(/&/g, '&amp;').replace(/</g, '&lt;'); };
+    var c = cur || document.createElement('section');
+    c.className = 'x-contact';
+    c.innerHTML = '<svg class="x-ct-arc" viewBox="0 0 300 120" aria-hidden="true"><path id="x-ct-arcp" d="M20,112 A132,132 0 0 1 280,112" fill="none"/><text><textPath href="#x-ct-arcp" startOffset="50%" text-anchor="middle">' + esc(title) + '</textPath></text></svg>' +
+      '<h1 class="x-ct-sr" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">' + esc(title) + '</h1>' +
+      '<div class="x-ct-text">' + lines.join('<br>') + (soc.length ? '<div class="x-ct-social">' + soc.join('') + '</div>' : '') + '</div>';
+    m.insertBefore(c, m.firstChild);
+  }
+
   // ---- menu: letters roll up on hover (copy of the "rolling text" of paul-michel.framer.website)
   function rollify(a) {
     if (a.querySelector('.x-roll')) return;
@@ -1124,6 +1172,7 @@
     setupTilt(p === 'contact');
     setupReel(p === 'home');
     setupDrifter(p === 'contact');
+    setupContact(p === 'contact');
 
     var faces = document.querySelectorAll('a[href="./#hero"],a[href="/#hero"],a[href="./"]');
     for (var q = 0; q < faces.length; q++) {
