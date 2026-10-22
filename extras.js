@@ -23,18 +23,11 @@
     // menu and project captions in the typeface, colour and hover animation of paul-michel.framer.website
     '@font-face{font-family:"IBM Plex Mono";font-weight:500;font-style:normal;font-display:swap;src:url(/fonts.gstatic.com/s/ibmplexmono/v20/-F6qfjptAgt5VM-kVkqdyU8n3twJwlBFgg.woff2) format("woff2")}',
     '[data-xnc]{z-index:10!important}',
-    // ...except in the dusk/dawn range, where the page is a mid blue and a difference blend of any colour is a mid grey on it: there the menu
-    // is plain dark (then light) type, with its face as it is
-    'html[data-xdusk] [data-xnc]{mix-blend-mode:normal!important}',
-    'html[data-xdusk] [data-xn]{color:var(--xfg)!important}',
+    // the menu is never blended: each item takes the colour that contrasts with what is under it right now (see menuAdapt), and the plain page colour otherwise
+    '[data-xnc]{mix-blend-mode:normal!important}',
     // the face is never blended once the page leaves the light blue (its inversion only makes it natural against that)
     'html[data-xmid] [data-xfi]{filter:none!important;mix-blend-mode:normal!important}',
-    'html[data-xdusk] .x-dial{color:var(--xfg);mix-blend-mode:normal}',
-    // the whole menu (links, dial) is negative/positive (difference blend) as you scroll over the page and its pictures: white type, so by day it is
-    // almost black on the light blue and inverted over any picture; at night it is the page's light blue, which gives a softer grey-blue on the dark blue
-    '[data-xn]{color:#fff!important}',
-    'html[data-xnight] [data-xn]{color:rgb(203,237,255)!important}',
-    'html[data-xnight] .x-dial{color:rgb(203,237,255)}',
+    '[data-xn],.x-dial-label,.x-dial-time,.x-dial-ring{color:var(--xmc,var(--xfg))!important;transition:color .18s}',
     '[data-xn],[data-xcap]{font-family:"IBM Plex Mono","IBM Plex Mono Placeholder",monospace!important;font-size:14px!important;font-weight:500!important;letter-spacing:.025em!important;text-transform:uppercase!important;line-height:1.6em!important;text-decoration:none!important}',
     '[data-xcap]{color:#888!important}',
     '.x-roll{position:relative;display:inline-grid;overflow:hidden;white-space:pre;vertical-align:top}',
@@ -67,8 +60,7 @@
     // type colour: original -> (greys only) a darker grey while the page darkens, so they stay readable on the mid blues -> light type
     '[data-xtc]{color:color-mix(in srgb,color-mix(in srgb,var(--xo) calc((1 - var(--xtd)) * 100%),var(--xd) calc(var(--xtd) * 100%)) calc((1 - var(--xtt)) * 100%),var(--xl) calc(var(--xtt) * 100%))!important}',
     // the dial, as in the original: "LOCAL TIME" over the hours and minutes (a blinking dot between them) and a round dial with a ring inside
-    '.x-dial{position:fixed;top:12px;right:150px;z-index:12;display:flex;align-items:center;gap:22px;color:#fff;mix-blend-mode:difference;font:500 14px/1.25 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.025em;text-transform:uppercase;user-select:none;-webkit-user-select:none}',
-    // negative/positive like the menu: inverted against whatever is under it by day; in the dark theme the theme's own light type
+    '.x-dial{position:fixed;top:12px;right:150px;z-index:12;display:flex;align-items:center;gap:22px;color:var(--xfg);font:500 14px/1.25 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.025em;text-transform:uppercase;user-select:none;-webkit-user-select:none}',
     '.x-dial-txt{display:flex;flex-direction:column;white-space:nowrap}',
     '.x-dial-label{cursor:default}',
     '.x-dial.x-trav .x-dial-label{cursor:pointer}',
@@ -687,8 +679,6 @@
     var t = darkness(theme.hour), tt = Math.max(0, Math.min(1, (t - 0.575) / 0.03)), td = Math.max(0, Math.min(1, t / 0.45));
     var st = document.documentElement.style;
     st.setProperty('--xt', t.toFixed(3)); st.setProperty('--xtt', tt.toFixed(3)); st.setProperty('--xtd', td.toFixed(3));
-    if (t > 0.3 && t < 0.98) { if (!document.documentElement.hasAttribute('data-xdusk')) document.documentElement.setAttribute('data-xdusk', ''); } else document.documentElement.removeAttribute('data-xdusk');
-    if (t >= 0.98) { if (!document.documentElement.hasAttribute('data-xnight')) document.documentElement.setAttribute('data-xnight', ''); } else document.documentElement.removeAttribute('data-xnight');
     if (t > 0.15) { if (!document.documentElement.hasAttribute('data-xmid')) document.documentElement.setAttribute('data-xmid', ''); } else document.documentElement.removeAttribute('data-xmid');
     if (tt > 0.5) { if (!document.documentElement.hasAttribute('data-xdark')) document.documentElement.setAttribute('data-xdark', ''); } else document.documentElement.removeAttribute('data-xdark');
     var d = document.querySelector('.x-dial');
@@ -844,6 +834,64 @@
     }
   }
 
+  // ---- menu: negative/positive against whatever is under each item at that moment (pictures and videos as you scroll)
+  var mcv = document.createElement('canvas'); mcv.width = mcv.height = 12;
+  var mctx = mcv.getContext('2d', { willReadFrequently: true });
+  function mediaLum(el, r) {
+    if (el.__xtaint) return null;
+    var nw = el.tagName === 'VIDEO' ? el.videoWidth : el.naturalWidth, nh = el.tagName === 'VIDEO' ? el.videoHeight : el.naturalHeight;
+    if (!nw || !nh || (el.tagName === 'VIDEO' && el.readyState < 2)) return null;
+    var b = el.getBoundingClientRect(), fit = getComputedStyle(el).objectFit, cw = b.width, ch = b.height;
+    if (fit === 'contain' || fit === 'scale-down') { var sc = Math.min(b.width / nw, b.height / nh); if (fit === 'scale-down') sc = Math.min(sc, 1); cw = nw * sc; ch = nh * sc; }
+    else if (fit === 'cover') { var sv = Math.max(b.width / nw, b.height / nh); cw = nw * sv; ch = nh * sv; }
+    else if (fit === 'none') { cw = nw; ch = nh; }
+    var cx = b.left + (b.width - cw) / 2, cy = b.top + (b.height - ch) / 2;
+    var ix = Math.max(r.left, cx), iy = Math.max(r.top, cy), ax = Math.min(r.right, cx + cw), ay = Math.min(r.bottom, cy + ch);
+    if (ax - ix < 1 || ay - iy < 1) return null;
+    try {
+      mctx.drawImage(el, (ix - cx) / cw * nw, (iy - cy) / ch * nh, (ax - ix) / cw * nw, (ay - iy) / ch * nh, 0, 0, 12, 12);
+      var d = mctx.getImageData(0, 0, 12, 12).data, sum = 0, n = 0;
+      for (var k = 0; k < d.length; k += 4) if (d[k + 3] > 8) { sum += lum([d[k], d[k + 1], d[k + 2]]); n++; }
+      return n ? sum / n : null;
+    } catch (err) { el.__xtaint = true; return null; }
+  }
+  // luminance (0..1) of the picture/video under a rectangle, or null when it is just the page
+  function lumUnder(r, media) {
+    var cx = (r.left + r.right) / 2, cy = (r.top + r.bottom) / 2, hit = null;
+    for (var i = 0; i < media.length; i++) {
+      var b = media[i].getBoundingClientRect();
+      if (cx >= b.left && cx <= b.right && cy >= b.top && cy <= b.bottom) hit = media[i];
+    }
+    if (!hit) return null;
+    if (hit.tagName === 'IFRAME') return 0.12;       // embedded players cannot be read: they are dark
+    return mediaLum(hit, r);
+  }
+  var menuTimer = 0;
+  function menuAdapt() {
+    menuTimer = 0;
+    var els = document.querySelectorAll('a[data-xn],.x-dial-label,.x-dial-time,.x-dial-ring'), i;
+    if (!els.length) return;
+    var media = [], all = document.querySelectorAll('img,video,iframe');
+    for (i = 0; i < all.length; i++) {
+      var m = all[i], b = m.getBoundingClientRect();
+      if (b.width < 20 || b.bottom < 0 || b.top > 120 || m.closest('[data-xnc],.x-dial,a[data-xf],.x-reel-ctl')) continue;
+      if (m.tagName === 'IFRAME' && !m.closest('.x-yt')) continue;
+      media.push(m);
+    }
+    for (i = 0; i < els.length; i++) {
+      var e = els[i], r = e.getBoundingClientRect();
+      if (r.width < 2) continue;
+      var l = media.length ? lumUnder(r, media) : null, prev = e.__xdark;
+      if (l === null) { if (prev !== undefined) { e.__xdark = undefined; e.style.removeProperty('--xmc'); } continue; }
+      var dark = prev === undefined ? l > 0.5 : (prev ? l > 0.44 : l > 0.56);   // dark type on light pictures, light on dark ones (with a little hysteresis)
+      if (dark !== prev) { e.__xdark = dark; e.style.setProperty('--xmc', dark ? '#141414' : '#f4f7fb'); }
+    }
+  }
+  function menuSoon() { if (!menuTimer) menuTimer = setTimeout(menuAdapt, 40); }
+  addEventListener('scroll', menuSoon, { passive: true });
+  addEventListener('resize', menuSoon);
+  setInterval(menuAdapt, 400);
+
   function apply() {
     var p = pageKey();
     setAttr(document.documentElement, 'data-xp', p);
@@ -879,6 +927,7 @@
     dropComingSoon(p);
     themeTag();
     ensureDial();
+    menuSoon();
     ensureVideoFade(p === 'about');
     styleMenu();
     styleCaptions(p === 'home');
