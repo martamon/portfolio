@@ -57,15 +57,20 @@
     '[data-x3d][data-hot]{box-shadow:0 28px 55px color-mix(in srgb,rgba(20,60,100,.32) calc((1 - var(--xtt)) * 100%),rgba(0,0,0,.55) calc(var(--xtt) * 100%))}',
     // type colour: original -> (greys only) a darker grey while the page darkens, so they stay readable on the mid blues -> light type
     '[data-xtc]{color:color-mix(in srgb,color-mix(in srgb,var(--xo) calc((1 - var(--xtd)) * 100%),var(--xd) calc(var(--xtd) * 100%)) calc((1 - var(--xtt)) * 100%),var(--xl) calc(var(--xtt) * 100%))!important}',
-    '.x-dial{position:fixed;top:19px;right:150px;z-index:12;display:flex;align-items:center;gap:10px;color:#fff;mix-blend-mode:difference;font:500 14px/1 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.025em;text-transform:uppercase;user-select:none;-webkit-user-select:none}',
+    // the dial, as in the original: "LOCAL TIME" over the hours and minutes (a blinking dot between them) and a round dial with a ring inside
+    '.x-dial{position:fixed;top:12px;right:150px;z-index:12;display:flex;align-items:center;gap:22px;color:#fff;mix-blend-mode:difference;font:500 14px/1.25 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.025em;text-transform:uppercase;user-select:none;-webkit-user-select:none}',
     // negative/positive like the menu: inverted against whatever is under it by day; in the dark theme the theme's own light type
     'html[data-xmid] .x-dial{color:var(--xfg);mix-blend-mode:normal}',
-    '.x-dial-time{min-width:3.2em;text-align:right;cursor:pointer}',
-    '.x-dial-ring{position:relative;width:40px;height:40px;box-sizing:border-box;border:1.5px solid currentColor;border-radius:50%;cursor:grab;touch-action:none}',
+    '.x-dial-txt{display:flex;flex-direction:column;white-space:nowrap}',
+    '.x-dial-label{cursor:default}',
+    '.x-dial.x-trav .x-dial-label{cursor:pointer}',
+    '.x-dial-time b{font-weight:500}',
+    '.x-dial-time i{font-style:normal;display:inline-block;width:2.2em;text-align:center;animation:x-blink 1s step-end infinite}',
+    '@keyframes x-blink{50%{opacity:0}}',
+    '.x-dial-ring{position:relative;width:52px;height:52px;box-sizing:border-box;border:1.5px solid currentColor;border-radius:50%;cursor:grab;touch-action:none;flex:none}',
     '.x-dial-ring:active{cursor:grabbing}',
-    '.x-dial-dot{position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:currentColor;pointer-events:none}',
-    '.x-dial-reset{cursor:pointer;opacity:.7}',
-    '.x-dial-reset[hidden]{display:none}',
+    '.x-dial-dot{position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;box-sizing:border-box;border:1.5px solid currentColor;border-radius:50%;pointer-events:none}',
+    '@media(max-width:480px){.x-dial{gap:14px;font-size:12px}.x-dial-ring{width:44px;height:44px}}',
     // view toggle
     // the view toggle is the first row of the image column (not floating), so it can never cover the text or the images
     '.x-toggle{display:flex;justify-content:flex-end;align-items:center;align-self:center;gap:4px;width:100%;height:32px;padding:0;box-sizing:border-box;flex:none}',
@@ -679,13 +684,14 @@
     var d = document.querySelector('.x-dial');
     if (d) {
       var ang = (theme.hour - DAY_HOUR) * 15, rad = ang * Math.PI / 180, dot = d.querySelector('.x-dial-dot');
-      dot.style.transform = 'translate(' + (Math.sin(rad) * 18.25).toFixed(2) + 'px,' + (-Math.cos(rad) * 18.25).toFixed(2) + 'px)';
+      var ringR = d.querySelector('.x-dial-ring').offsetWidth / 2 * 0.6;   // the ring sits inside the dial, not on its edge
+      dot.style.transform = 'translate(' + (Math.sin(rad) * ringR).toFixed(2) + 'px,' + (-Math.cos(rad) * ringR).toFixed(2) + 'px)';
       var tot = Math.floor(theme.hour * 60 + 0.01), hh = Math.floor(tot / 60) % 24, mm = tot % 60;
-      var label = (hh < 10 ? '0' : '') + hh + '.' + (mm < 10 ? '0' : '') + mm;
-      var tEl = d.querySelector('.x-dial-time');
-      if (tEl.getAttribute('data-l') !== label) { tEl.setAttribute('data-l', label); tEl.textContent = label; }
-      d.classList.toggle('x-live', !theme.travel);
-      d.querySelector('.x-dial-reset').hidden = !theme.travel;
+      d.querySelector('.x-h').textContent = (hh < 10 ? '0' : '') + hh;
+      d.querySelector('.x-m').textContent = (mm < 10 ? '0' : '') + mm;
+      var lab = theme.travel ? 'Time travel \u2715' : 'Local time', lEl = d.querySelector('.x-dial-label');
+      if (lEl.textContent !== lab) lEl.textContent = lab;
+      d.classList.toggle('x-trav', theme.travel);
     }
   }
   function setHour(h, travel) {
@@ -713,7 +719,7 @@
     if (!d) {
       d = document.createElement('div');
       d.className = 'x-dial';
-      d.innerHTML = '<span class="x-dial-reset" title="Back to the real time" hidden>\u2715</span><span class="x-dial-time" title="Time of day"></span><div class="x-dial-ring" role="slider" aria-label="Time of day: drag to switch between light and dark" aria-valuemin="0" aria-valuemax="24" tabindex="0"><span class="x-dial-dot"></span></div>';
+      d.innerHTML = '<div class="x-dial-txt"><span class="x-dial-label"></span><span class="x-dial-time"><b class="x-h"></b><i>.</i><b class="x-m"></b></span></div><div class="x-dial-ring" role="slider" aria-label="Time of day: drag to switch between light and dark" aria-valuemin="0" aria-valuemax="24" tabindex="0"><span class="x-dial-dot"></span></div>';
       var ring = d.querySelector('.x-dial-ring');
       var fromPointer = function (e) {
         var r = ring.getBoundingClientRect(), dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
@@ -731,8 +737,7 @@
         if (k) { e.preventDefault(); setHour(theme.hour + k, true); }
       });
       var reset = function (e) { e.preventDefault(); tweenHour(localHour()); };
-      d.querySelector('.x-dial-reset').addEventListener('click', reset);
-      d.querySelector('.x-dial-time').addEventListener('click', function (e) { if (theme.travel) reset(e); });
+      d.querySelector('.x-dial-txt').addEventListener('click', function (e) { if (theme.travel) reset(e); });
       document.body.appendChild(d);
       paintTheme();
     }
