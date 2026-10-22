@@ -34,3 +34,14 @@ for f in files:
 for f in glob.glob(os.path.join(site, '*', '*.mjs')):
     if 'pageSize:10,query:Gr()' in open(f, encoding='utf-8', errors='ignore').read():
         edit(f, [('pageSize:10,query:Gr()', 'pageSize:100,query:Gr()')])
+
+# link preview (WhatsApp, social networks...): the 3D head of the About page instead of Framer's template picture
+import re
+SHARE = 'https://martamonteagudo.com/extras/og-head.jpg'
+for f in glob.glob(os.path.join(root, '**', 'index.html'), recursive=True):
+    if '/.claude/' in f:
+        continue
+    t = open(f, encoding='utf-8').read()
+    n = re.sub(r'(<meta (?:property="og:image"|name="twitter:image") content=")[^"]*(")', lambda m: m.group(1) + SHARE + m.group(2), t)
+    if n != t:
+        open(f, 'w', encoding='utf-8').write(n)
