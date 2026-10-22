@@ -66,6 +66,8 @@
     'main[data-xhome] [data-xhi][data-xs]{display:none!important}',
     'main[data-xhome] [data-xhi]{overflow:hidden}',
     // Framer's own hover effect on the cards (a zoom of the card or its picture) would pile up on ours and push the card past its column
+    // the cards can't be hovered at all (so neither Framer's script nor css can react to the pointer); clicks are routed by position, see below
+    'main[data-xhome] [data-xhi],main[data-xhome] [data-xhi] *{pointer-events:none!important}',
     // no hover effect at all on the home cards: nothing inside them moves, zooms, rotates, fades or animates (the play button of the video thumbnails keeps its centring)
     'main[data-xhome] [data-xhi]:hover,main[data-xhome] [data-xhi]:hover *:not(button):not(button *){transform:none!important;scale:none!important;rotate:none!important;translate:none!important;filter:none!important}',
     'main[data-xhome] [data-xhi] a,main[data-xhome] [data-xhi] a *:not(button):not(button *){transform:none!important;scale:none!important;rotate:none!important;filter:none!important;transition:none!important;animation:none!important}',
@@ -373,6 +375,36 @@
     };
     m.__raf = requestAnimationFrame(step);
   }
+  // home cards: find the card under a point (their own boxes ignore the pointer) and follow its link
+  function homeCardAt(x, y) {
+    var m = document.querySelector('main[data-xhome]');
+    if (!m) return null;
+    var ks = m.querySelectorAll('[data-xhi]'), i;
+    for (i = ks.length - 1; i >= 0; i--) {
+      var a = ks[i].querySelector('a[href]');
+      var pic = a && a.getBoundingClientRect(), cap = ks[i].querySelector('[data-xcap]');
+      if (!pic) continue;
+      var bottom = cap ? Math.max(pic.bottom, cap.getBoundingClientRect().bottom) : pic.bottom;
+      if (x >= pic.left && x <= pic.right && y >= pic.top && y <= bottom) return a;
+    }
+    return null;
+  }
+  addEventListener('click', function (e) {
+    if (!e.isTrusted || e.button || !e.target.closest) return;
+    var m = e.target.closest('main[data-xhome]');
+    if (!m || e.target.closest('[data-xhi]')) return;
+    var a = homeCardAt(e.clientX, e.clientY);
+    if (!a) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    if (e.metaKey || e.ctrlKey || e.shiftKey) window.open(a.href, '_blank'); else a.click();
+  }, true);
+  addEventListener('pointermove', function (e) {
+    var m = pageKey() === 'home' && document.querySelector('main[data-xhome]');
+    if (!m || e.pointerType === 'touch') return;
+    var c = homeCardAt(e.clientX, e.clientY) ? 'pointer' : '';
+    if (m.style.cursor !== c) m.style.cursor = c;
+  }, { passive: true });
+
   function ensureYoutube(m) {
     var sec = document.querySelector('.x-yt');
     if (!sec) {
