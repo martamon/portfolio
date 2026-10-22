@@ -114,7 +114,9 @@
     '[data-x3d]{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) scale(var(--s,1))!important;transition:transform .2s ease-out,box-shadow .3s;will-change:transform;box-shadow:0 0 0 rgba(20,60,100,0)}',
     '[data-x3d][data-hot]{transition:transform .08s linear,box-shadow .3s}',
     // the little creature that drifts by now and then (see setupDrifter); a drop shadow behind it
-    '.x-drift{position:fixed;left:0;top:0;z-index:9;display:none;background:url(/extras/blob-sprite.webp) 0 0/1000% 100% no-repeat;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;will-change:transform;-webkit-filter:drop-shadow(8px 12px 8px rgba(20,32,80,.28));filter:drop-shadow(8px 12px 8px rgba(20,32,80,.28))}',
+    '.x-drift{position:fixed;left:0;top:0;z-index:9;display:none;background:url(/extras/blob-sprite.webp) 0 0/1000% 100% no-repeat;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;will-change:transform}',
+    // its shadow: a soft blurred oval behind and below it (a gradient, not a copy of its silhouette, so it can never look like a second one)
+    '.x-drift::before{content:"";position:absolute;left:8%;right:-4%;top:62%;height:52%;z-index:-1;border-radius:50%;background:radial-gradient(closest-side,rgba(20,32,80,.32),rgba(20,32,80,.14) 55%,rgba(20,32,80,0));transform:translate(10%,18%);pointer-events:none}',
     '.x-drift.x-grab{cursor:grabbing}',
     // home reel: our own sound button
     '.x-reel-ctl{position:absolute;right:16px;bottom:16px;z-index:5;width:44px;height:44px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.45);color:#fff;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);pointer-events:auto;transition:background .2s}',
@@ -600,7 +602,10 @@
     JF.next = performance.now() + (now && first ? 300 : first ? 5000 + Math.random() * 7000 : 22000 + Math.random() * 38000);
   }
   function jfEnsureEl() {
-    if (JF.el) return JF.el;
+    if (JF.el && JF.el.isConnected) return JF.el;
+    // only ever one on the page
+    var old = document.querySelectorAll('.x-drift');
+    for (var oi = 0; oi < old.length; oi++) old[oi].parentNode.removeChild(old[oi]);
     var e = document.createElement('div');
     e.className = 'x-drift'; e.setAttribute('aria-hidden', 'true');
     e.addEventListener('pointerdown', function (ev) {
@@ -679,7 +684,9 @@
     JF.el.style.transform = 'translate3d(' + (JF.x - JF.w / 2).toFixed(1) + 'px,' + (JF.y - JF.h / 2).toFixed(1) + 'px,0) rotate(' + sway.toFixed(1) + 'deg) scale(' + sx.toFixed(3) + ',' + sy.toFixed(3) + ')';
   }
   function setupDrifter() {
-    if (JF.raf) return;
+    // one creature per page, even if this script happened to run twice
+    if (JF.raf || (window.__xDrift && window.__xDrift !== JF)) return;
+    window.__xDrift = JF;
     jfSchedule(true);
     JF.raf = requestAnimationFrame(jfFrame);
   }
