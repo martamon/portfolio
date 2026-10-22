@@ -336,7 +336,6 @@
 
   // positions for the current hover: hv is the hovered column (-1: none). The column weights are animated here, one
   // frame at a time for every card, so the cards can never be caught out of step with each other (overlapping).
-  var homeLeave = 0;
   function layoutHome(m, wts) {
     var L = m.__xl, cols = L.cols, sum = 0, c, j;
     for (c = 0; c < cols; c++) sum += wts[c];
@@ -372,27 +371,6 @@
     };
     m.__raf = requestAnimationFrame(step);
   }
-  // The hovered column follows the pointer's x position over the whole gallery (not the card under it), so crossing the
-  // gaps between rows doesn't reset the effect; the column edges are the ones of the layout being shown (no flicker).
-  function homeLeaveNow(m) { if (m.__hv >= 0) { m.__hv = -1; placeHome(m, -1); } }
-  addEventListener('pointermove', function (e) {
-    if (pageKey() !== 'home' || e.pointerType === 'touch' || !matchMedia('(hover:hover)').matches) return;
-    var m = document.querySelector('main[data-xhome]');
-    if (!m || !m.__xl || !m.__xl.geo) return;
-    var r = m.getBoundingClientRect();
-    if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) {
-      if (m.__hv >= 0 && !homeLeave) homeLeave = setTimeout(function () { homeLeave = 0; homeLeaveNow(m); }, 90);
-      return;
-    }
-    clearTimeout(homeLeave); homeLeave = 0;
-    var G = m.__xl.geo, x = e.clientX - r.left, col = G.xs.length - 1, c;
-    for (c = 0; c < G.xs.length - 1; c++) if (x < G.xs[c] + G.ws[c] + m.__xl.gap / 2) { col = c; break; }
-    if (m.__hv === col) return;
-    m.__hv = col;
-    placeHome(m, col);
-  }, { passive: true });
-  document.addEventListener('pointerleave', function () { var m = document.querySelector('main[data-xhome]'); if (m) homeLeaveNow(m); });
-
   function ensureYoutube(m) {
     var sec = document.querySelector('.x-yt');
     if (!sec) {
