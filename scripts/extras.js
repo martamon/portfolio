@@ -38,13 +38,13 @@
     '[data-xr]{height:auto!important;min-height:100vh!important}',
     '[data-xg]{height:auto!important}',
     // light / dark theme (see "theme" below): --xt is how dark the page is (0..1), --xtt the same for the text, which switches over later, where the dusk background is dark enough for light type
-    ':root{--xt:0;--xtt:0;--xfg:color-mix(in srgb,#1b1b1b calc((1 - var(--xtt)) * 100%),#b3c2d6 calc(var(--xtt) * 100%));--xfg55:color-mix(in srgb,rgba(20,20,20,.55) calc((1 - var(--xtt)) * 100%),rgba(179,194,214,.6) calc(var(--xtt) * 100%))}',
+    ':root{--xt:0;--xtt:0;--xtd:0;--xfg:color-mix(in srgb,#1b1b1b calc((1 - var(--xtt)) * 100%),#c2cfe0 calc(var(--xtt) * 100%));--xfg55:color-mix(in srgb,rgba(20,20,20,.55) calc((1 - var(--xtt)) * 100%),rgba(194,207,224,.7) calc(var(--xtt) * 100%))}',
     '[data-xbgm]{background-image:var(--xbgimg)!important}',
     // dark: the menu's difference blend would tint the white type beige over the blue, so it is a plain light grey-blue instead
-    'html[data-xdark] [data-xnc]{mix-blend-mode:normal!important}',
-    'html[data-xdark] [data-xn]{color:var(--xfg)!important}',
+    'html[data-xmid] [data-xnc]{mix-blend-mode:normal!important}',
+    'html[data-xmid] [data-xn]{color:var(--xfg)!important}',
     // the menu's face is inverted to go with that blend; without the blend it stays as it is
-    'html[data-xdark] [data-xfi]{filter:none!important}',
+    'html[data-xmid] [data-xfi]{filter:none!important}',
     // the MARTAMON wordmark of the home hero (white): in the dark it becomes the same grey-blue as the type (white -> #b4c2d5)
     'img[src*="X22mGNitGaY93ZEObiQgYak"]{filter:brightness(calc(1 - .38 * var(--xtt))) sepia(var(--xtt)) hue-rotate(calc(175deg * var(--xtt))) saturate(calc(1 - .5 * var(--xtt)))}',
     // the hair/face video of About has a light-blue backdrop of its own: at night a soft frame in the page colour (that of the
@@ -55,7 +55,8 @@
     'html[data-xdark][data-xp="about"] [data-xtc]{text-shadow:0 0 6px rgba(22,32,52,.8),0 0 18px rgba(22,32,52,.65)}',
     // contact portrait: its tilt shadow turns from blue to black
     '[data-x3d][data-hot]{box-shadow:0 28px 55px color-mix(in srgb,rgba(20,60,100,.32) calc((1 - var(--xtt)) * 100%),rgba(0,0,0,.55) calc(var(--xtt) * 100%))}',
-    '[data-xtc]{color:color-mix(in srgb,var(--xo) calc((1 - var(--xtt)) * 100%),var(--xl) calc(var(--xtt) * 100%))!important}',
+    // type colour: original -> (greys only) a darker grey while the page darkens, so they stay readable on the mid blues -> light type
+    '[data-xtc]{color:color-mix(in srgb,color-mix(in srgb,var(--xo) calc((1 - var(--xtd)) * 100%),var(--xd) calc(var(--xtd) * 100%)) calc((1 - var(--xtt)) * 100%),var(--xl) calc(var(--xtt) * 100%))!important}',
     '.x-dial{position:fixed;top:19px;right:150px;z-index:12;display:flex;align-items:center;gap:10px;color:var(--xfg);font:500 14px/1 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.025em;text-transform:uppercase;user-select:none;-webkit-user-select:none}',
     '.x-dial-time{min-width:3.2em;text-align:right;cursor:pointer}',
     '.x-dial-ring{position:relative;width:40px;height:40px;box-sizing:border-box;border:1.5px solid currentColor;border-radius:50%;cursor:grab;touch-action:none}',
@@ -665,9 +666,10 @@
     return Math.max(0, Math.min(1, 1 - (r - 44) / (248 - 44)));
   }
   function paintTheme() {
-    var t = darkness(theme.hour), tt = Math.max(0, Math.min(1, (t - 0.62) / 0.2));
+    var t = darkness(theme.hour), tt = Math.max(0, Math.min(1, (t - 0.575) / 0.03)), td = Math.max(0, Math.min(1, t / 0.45));
     var st = document.documentElement.style;
-    st.setProperty('--xt', t.toFixed(3)); st.setProperty('--xtt', tt.toFixed(3));
+    st.setProperty('--xt', t.toFixed(3)); st.setProperty('--xtt', tt.toFixed(3)); st.setProperty('--xtd', td.toFixed(3));
+    if (t > 0.15) { if (!document.documentElement.hasAttribute('data-xmid')) document.documentElement.setAttribute('data-xmid', ''); } else document.documentElement.removeAttribute('data-xmid');
     if (tt > 0.5) { if (!document.documentElement.hasAttribute('data-xdark')) document.documentElement.setAttribute('data-xdark', ''); } else document.documentElement.removeAttribute('data-xdark');
     var d = document.querySelector('.x-dial');
     if (d) {
@@ -786,12 +788,14 @@
       var c = parseRgb(cs.color);
       // white type of the About page (the big "Martamon" and its text) goes soft too; white type elsewhere sits on pictures and stays
       var bigWhite = c && lum(c) > 0.9 && (parseFloat(cs.fontSize) >= 60 || pageKey() === 'about');
-      if (!c || c[3] === 0 || (lum(c) > 0.45 && !bigWhite)) continue;
+      var gray = c && lum(c) > 0.45 && lum(c) < 0.85 && Math.max(c[0], c[1], c[2]) - Math.min(c[0], c[1], c[2]) < 40;
+      if (!c || c[3] === 0 || (lum(c) > 0.45 && !bigWhite && !gray)) continue;
       for (var an = e.parentElement; an && an !== document.body; an = an.parentElement) {
         if (getComputedStyle(an).mixBlendMode !== 'normal') { an.setAttribute('data-xbl', ''); break; }
       }
       e.style.setProperty('--xo', cs.color);
-      e.style.setProperty('--xl', 'rgba(179,194,214,' + c[3] + ')');
+      e.style.setProperty('--xd', gray ? 'rgba(58,68,86,' + c[3] + ')' : cs.color);
+      e.style.setProperty('--xl', gray ? 'rgba(176,189,209,' + c[3] + ')' : 'rgba(194,207,224,' + c[3] + ')');
       e.setAttribute('data-xtc', '');
     }
   }
