@@ -343,7 +343,7 @@
     var L = m.__xl;
     if (!L) return;
     var cols = L.cols, wts = [], sum = 0, c, j;
-    for (c = 0; c < cols; c++) { wts.push(cols > 1 && c === hv ? 1.5 : 1); sum += wts[c]; }
+    for (c = 0; c < cols; c++) { wts.push(cols > 1 && c === hv ? 1.28 : 1); sum += wts[c]; }
     var widths = [], xs = [], x = L.padL, tracks = [];
     for (c = 0; c < cols; c++) { widths.push(L.avail * wts[c] / sum); xs.push(x); x += widths[c] + L.gap; tracks.push(0); }
     for (j = 0; j < L.kids.length; j++) {
