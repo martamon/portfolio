@@ -140,7 +140,14 @@
     '.x-drift::before{content:"";position:absolute;left:8%;right:-4%;top:62%;height:52%;z-index:-1;border-radius:50%;background:radial-gradient(closest-side,rgba(20,32,80,.32),rgba(20,32,80,.14) 55%,rgba(20,32,80,0));transform:translate(calc(6% + var(--sd,.5) * 12%),calc(10% + var(--sd,.5) * 22%));pointer-events:none}',
     '.x-drift.x-grab{cursor:grabbing}',
     // it follows the time of day like the type: as the page darkens it turns paler and lighter (towards the light grey-blue of the night type)
-    '.x-drift{-webkit-filter:brightness(calc(1 + .5 * var(--xt))) saturate(calc(1 - .55 * var(--xt))) hue-rotate(calc(-8deg * var(--xt)));filter:brightness(calc(1 + .5 * var(--xt))) saturate(calc(1 - .55 * var(--xt))) hue-rotate(calc(-8deg * var(--xt)))}',
+    '.x-drift{-webkit-filter:brightness(calc(1 + .22 * var(--xt))) saturate(calc(1 - .25 * var(--xt))) hue-rotate(calc(-8deg * var(--xt))) drop-shadow(0 0 calc(10px * var(--xglow,0)) rgba(185,215,255,calc(.95 * var(--xglow,0)))) drop-shadow(0 0 calc(26px * var(--xglow,0)) rgba(120,170,255,calc(.8 * var(--xglow,0))));filter:brightness(calc(1 + .22 * var(--xt))) saturate(calc(1 - .25 * var(--xt))) hue-rotate(calc(-8deg * var(--xt))) drop-shadow(0 0 calc(10px * var(--xglow,0)) rgba(185,215,255,calc(.95 * var(--xglow,0)))) drop-shadow(0 0 calc(26px * var(--xglow,0)) rgba(120,170,255,calc(.8 * var(--xglow,0))))}',
+    // at night it glows: a soft halo around it that breathes
+    '.x-drift::after{content:"";position:absolute;left:-60%;top:-60%;width:220%;height:220%;z-index:-2;border-radius:50%;pointer-events:none;background:radial-gradient(closest-side,rgba(150,190,255,.42),rgba(110,155,255,.18) 45%,rgba(120,165,255,0) 72%);opacity:var(--xglow,0);animation:x-glow 2.8s ease-in-out infinite}',
+    '@keyframes x-glow{50%{transform:scale(1.18);filter:brightness(1.25)}}',
+    // home on phones: Framer shows a picture carousel above the reel; only the reel stays
+    '@media(max-width:809px){html[data-xp="home"] [data-framer-name="Hero"]>[data-xhg]{display:none!important}html[data-xp="home"] [data-framer-name="Hero"]{height:auto!important}}',
+    '[data-xmr] [data-xmh]{display:none!important}',
+    '[data-xmr] iframe.x-mreel{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}',
     // home reel: our own sound button
     '.x-reel-ctl{position:absolute;right:16px;bottom:16px;z-index:5;width:44px;height:44px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.45);color:#fff;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);pointer-events:auto;transition:background .2s}',
     '.x-reel-ctl:hover{background:rgba(0,0,0,.65)}',
@@ -575,8 +582,39 @@
     reel.btn.innerHTML = reel.muted ? ICON_OFF : ICON_ON;
     reel.btn.setAttribute('aria-label', reel.muted ? 'Turn sound on' : 'Turn sound off');
   }
+  // phones: hide the hero's picture carousel; Framer's phone reel component only makes its YouTube player on some devices, so if no
+  // player shows up the same muted, looping, autoplaying embed as on desktop is put in its place (it then gets the sound button)
+  function mobileHero() {
+    var hero = document.querySelector('[data-framer-name="Hero"]');
+    if (!hero) return;
+    var vbox = hero.querySelector('[data-framer-name^="V\u00eddeo YouTube"]') || hero.querySelector('[data-framer-name*="YouTube"]');
+    for (var i = 0; i < hero.children.length; i++) {
+      var c = hero.children[i];
+      if (c !== vbox && !c.contains(vbox) && !c.querySelector('iframe,video') && c.querySelector('img,section')) setAttr(c, 'data-xhg', '');
+    }
+    if (!vbox || innerWidth > 809) return;
+    var player = vbox.querySelector('[aria-label="YouTube video player"]');
+    if (!player || player.querySelector('iframe.x-mreel')) return;
+    if (player.querySelector('iframe')) return;            // Framer made its own player: keep it
+    if (!mobileHero.t0) mobileHero.t0 = performance.now();
+    if (performance.now() - mobileHero.t0 < 1500) { setTimeout(schedule, 1600); return; }
+    setAttr(player, 'data-xmr', '');
+    for (i = 0; i < player.children.length; i++) setAttr(player.children[i], 'data-xmh', '');
+    var host = vbox.querySelector('button[aria-label]');
+    if (host) setAttr(host, 'data-xmh', '');
+    var f = document.createElement('iframe');
+    f.className = 'x-mreel';
+    f.src = 'https://www.youtube.com/embed/NrxFBp4bl2Q?autoplay=1&mute=1&loop=1&playlist=NrxFBp4bl2Q&controls=0&disablekb=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1&origin=' + encodeURIComponent(location.origin);
+    f.title = 'Martamon reel'; f.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture'); f.setAttribute('playsinline', '');
+    var holder = document.createElement('div'); holder.style.cssText = 'position:absolute;inset:0';
+    holder.appendChild(f);
+    if (getComputedStyle(player).position === 'static') player.style.position = 'relative';
+    player.appendChild(holder);
+  }
+
   function setupReel(on) {
-    var f = on ? document.querySelector('iframe[src*="youtube.com/embed/NrxFBp4bl2Q"]') : null;
+    var fs = on ? document.querySelectorAll('iframe[src*="youtube.com/embed/NrxFBp4bl2Q"]') : [], f = null;
+    for (var fi = 0; fi < fs.length; fi++) if (fs[fi].getBoundingClientRect().width > 0) { f = fs[fi]; break; }
     if (!f || !f.parentElement || !f.parentElement.parentElement) {
       if (reel.f || reel.btn) teardownReel();
       return;
@@ -968,7 +1006,7 @@
   function paintTheme() {
     var t = darkness(theme.hour), tt = Math.max(0, Math.min(1, (t - 0.575) / 0.03)), td = Math.max(0, Math.min(1, t / 0.45));
     var st = document.documentElement.style;
-    st.setProperty('--xt', t.toFixed(3)); st.setProperty('--xtt', tt.toFixed(3)); st.setProperty('--xtd', td.toFixed(3));
+    st.setProperty('--xt', t.toFixed(3)); st.setProperty('--xtt', tt.toFixed(3)); st.setProperty('--xtd', td.toFixed(3)); st.setProperty('--xglow', Math.max(0, Math.min(1, (t - 0.55) / 0.4)).toFixed(3));
     if (t > 0.3 && t < 0.98) { if (!document.documentElement.hasAttribute('data-xdusk')) document.documentElement.setAttribute('data-xdusk', ''); } else document.documentElement.removeAttribute('data-xdusk');
     if (t >= 0.98) { if (!document.documentElement.hasAttribute('data-xnight')) document.documentElement.setAttribute('data-xnight', ''); } else document.documentElement.removeAttribute('data-xnight');
     if (t > 0.15) { if (!document.documentElement.hasAttribute('data-xmid')) document.documentElement.setAttribute('data-xmid', ''); } else document.documentElement.removeAttribute('data-xmid');
@@ -1172,6 +1210,7 @@
     styleCaptions(p === 'home');
     applyHome(p === 'home');
     setupTilt(p === 'contact');
+    if (p === 'home') mobileHero();
     setupReel(p === 'home');
     setupDrifter(p === 'contact');
     setupContact(p === 'contact');
