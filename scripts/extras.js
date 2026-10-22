@@ -657,7 +657,7 @@
   }
   // what it does when tapped: one of these, chosen at random (never the same twice in a row)
   var JF_ACTS = [
-    { n: 'sleep', d: 2.6 },   // shuts its eyes and dozes off, sinking slowly
+    { n: 'sleep', d: 4.2 },   // shuts its eyes, falls asleep and drops to the bottom of the screen, bounces, dozes, then swims back up
     { n: 'flee', d: 0 },     // dashes away from you off the screen, then swims back in a few seconds later
     { n: 'spin', d: 1.4 },   // spins round and round with a hop
     { n: 'dizzy', d: 2.3 },  // eyes roll about and it wobbles
@@ -701,12 +701,32 @@
       JF.tx = jfPtr.x; JF.ty = jfPtr.y; JF.tT = 2; JF.pulse = Math.min(JF.pulse, 0.7);
       return;    // swims as usual, towards the pointer and quicker
     }
+    if (a.n === 'sleep') {
+      // eyes shut; it drops like a stone (gravity), lands on the bottom of the screen with a squash and a little bounce, lies a
+      // little on its side and dozes, breathing; when it wakes it pushes off upwards and swims on
+      if (a.t > a.d) { JF.act = null; JF.vy = -260; JF.pulse = 0.1; return; }
+      var floor = innerHeight - JF.h * 0.55;
+      JF.fo = 9; JF.vx *= Math.exp(-3 * dt);
+      if (!a.landed) {
+        JF.vy += 1500 * dt; JF.y += JF.vy * dt; JF.x += JF.vx * dt;
+        JF.sq += (-0.06 - JF.sq) * k;                   // stretched a little as it falls
+        if (JF.y >= floor) {
+          JF.y = floor;
+          if (JF.vy > 240) { JF.vy = -JF.vy * 0.28; JF.sq = 0.3; }
+          else { JF.vy = 0; a.landed = true; a.lt = 0; }
+        }
+      } else {
+        a.lt += dt; JF.y = floor;
+        JF.sq += (0.12 + 0.04 * Math.sin(a.lt * 2.6) - JF.sq) * Math.min(1, dt * 6);   // squashed on the floor, breathing
+        a.tilt = (a.tilt || 0) + ((JF.dir > 0 ? -1 : 1) * 18 - (a.tilt || 0)) * Math.min(1, dt * 3);
+      }
+      JF.rot = a.tilt || 0;
+      return;
+    }
     if (a.t > a.d) { JF.act = null; return; }
     dr = Math.exp(-1.6 * dt); JF.vx *= dr; JF.vy *= dr;
     JF.x += JF.vx * dt; JF.y += JF.vy * dt;
-    if (a.n === 'sleep') {
-      JF.fo = 9; JF.vy += 26 * dt; JF.sq += (0.05 * Math.sin(a.t * 3) - JF.sq) * k;
-    } else if (a.n === 'spin') {
+    if (a.n === 'spin') {
       JF.rot = 720 * (1 - Math.pow(1 - u, 3)); JF.fo = Math.floor(a.t * 14) % 9;
       JF.km = 1 + 0.15 * Math.sin(u * Math.PI); if (a.t < 0.3) JF.vy -= 420 * dt;
     } else if (a.n === 'dizzy') {
