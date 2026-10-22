@@ -37,7 +37,7 @@ for f in glob.glob(os.path.join(site, '*', '*.mjs')):
 
 # link preview (WhatsApp, social networks...): the 3D head of the About page instead of Framer's template picture
 import re
-SHARE = 'https://martamonteagudo.com/extras/og-head.jpg'
+SHARE = 'https://martamonteagudo.com/extras/og-martamon.jpg'
 for f in glob.glob(os.path.join(root, '**', 'index.html'), recursive=True):
     if '/.claude/' in f:
         continue
