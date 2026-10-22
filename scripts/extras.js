@@ -63,7 +63,7 @@
     '.x-vfade{position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;opacity:var(--xt);background:color-mix(in srgb,rgb(181,197,217) calc((1 - var(--xt)) * 100%),rgb(41,60,89) calc(var(--xt) * 100%));-webkit-mask-image:radial-gradient(ellipse 40% 70% at 50% 47%,transparent 0,transparent 50%,#000 100%);mask-image:radial-gradient(ellipse 40% 70% at 50% 47%,transparent 0,transparent 50%,#000 100%)}',
     // phones: the hero box is tall and narrow, and covering it blew the head up and cut it at the sides; show the whole frame,
     // a little enlarged, and fit the night fade to it
-    '@media(max-width:809px){html[data-xp="about"] [data-framer-name="Hero Video"] video{object-fit:contain!important;transform:scale(1.75);transform-origin:50% 42%;-webkit-mask-image:linear-gradient(to bottom,transparent 36.5%,#000 40%,#000 57%,transparent 63.5%)!important;mask-image:linear-gradient(to bottom,transparent 36.5%,#000 40%,#000 57%,transparent 63.5%)!important}.x-vfade{-webkit-mask-image:radial-gradient(ellipse 36% 21% at 56% 52%,transparent 0,transparent 50%,#000 100%);mask-image:radial-gradient(ellipse 36% 21% at 56% 52%,transparent 0,transparent 50%,#000 100%)}}',
+    '@media(max-width:809px){html[data-xp="about"] [data-framer-name="Hero Video"] video{object-fit:contain!important;transform:scale(2.25);transform-origin:50% 47%;-webkit-mask-image:linear-gradient(to bottom,transparent calc(50% - 28.125vw),#000 calc(50% - 21vw),#000 calc(50% + 18vw),transparent calc(50% + 28.125vw))!important;mask-image:linear-gradient(to bottom,transparent calc(50% - 28.125vw),#000 calc(50% - 21vw),#000 calc(50% + 18vw),transparent calc(50% + 28.125vw))!important}.x-vfade{-webkit-mask-image:radial-gradient(ellipse 62% 31% at 58% 50%,transparent 0,transparent 60%,#000 100%);mask-image:radial-gradient(ellipse 62% 31% at 58% 50%,transparent 0,transparent 60%,#000 100%)}}',
     // text that sits on that video is blended with it (exclusion): in the dark it is plain light type instead, or it would vanish
     'html[data-xdark] [data-xbl]{mix-blend-mode:normal!important}',
     'html[data-xdark][data-xp="about"] [data-xtc]{text-shadow:0 0 6px rgba(22,32,52,.8),0 0 18px rgba(22,32,52,.65)}',
@@ -94,7 +94,7 @@
     '.x-dial-ring{cursor:pointer!important}',
     '.x-dial-ring.x-drag{cursor:ew-resize!important}',
     '.x-dial-ring:hover .x-rim{stroke-width:2.2}',
-    '@media(max-width:480px){.x-dial{gap:14px;font-size:12px}.x-dial-ring{width:44px;height:44px}}',
+    '@media(max-width:480px){.x-dial{gap:10px;font-size:10.5px;top:16px}.x-dial-ring{width:34px;height:34px}}',
     // view toggle
     // the view toggle is the first row of the image column (not floating), so it can never cover the text or the images
     '.x-toggle{display:flex;justify-content:flex-end;align-items:center;align-self:center;gap:4px;width:100%;height:32px;padding:0;box-sizing:border-box;flex:none}',
@@ -126,6 +126,7 @@
     // Framer's own hover effect on the cards (a zoom of the card or its picture) would pile up on ours and push the card past its column
     // the cards can't be hovered at all (so neither Framer's script nor css can react to the pointer); clicks are routed by position, see below
     'main[data-xhome] [data-xhi],main[data-xhome] [data-xhi] *{pointer-events:none!important}',
+    'main[data-xhome]{cursor:pointer;-webkit-tap-highlight-color:transparent}',
     // no hover effect at all on the home cards: nothing inside them moves, zooms, rotates, fades or animates (the play button of the video thumbnails keeps its centring)
     'main[data-xhome] [data-xhi]:hover,main[data-xhome] [data-xhi]:hover *:not(button):not(button *){transform:none!important;scale:none!important;rotate:none!important;translate:none!important;filter:none!important}',
     'main[data-xhome] [data-xhi] a,main[data-xhome] [data-xhi] a *:not(button):not(button *){transform:none!important;scale:none!important;rotate:none!important;filter:none!important;transition:none!important;animation:none!important}',
@@ -475,6 +476,23 @@
     }
     return null;
   }
+  // phones: Safari on iOS does not send a click to elements that are not themselves clickable, so a tap on a card (which ignores the
+  // pointer) never arrived; taps are followed on touchend instead
+  var homeTap = null, homeTapAt = 0;
+  addEventListener('touchstart', function (e) {
+    var t = e.touches[0];
+    homeTap = e.touches.length === 1 && e.target.closest && e.target.closest('main[data-xhome]') && !e.target.closest('[data-xhi]') ? { x: t.clientX, y: t.clientY, t: performance.now() } : null;
+  }, { passive: true });
+  addEventListener('touchend', function (e) {
+    var s0 = homeTap; homeTap = null;
+    if (!s0 || e.changedTouches.length !== 1) return;
+    var t = e.changedTouches[0];
+    if (Math.hypot(t.clientX - s0.x, t.clientY - s0.y) > 10 || performance.now() - s0.t > 600) return;
+    var a = homeCardAt(t.clientX, t.clientY);
+    if (!a) return;
+    e.preventDefault(); homeTapAt = performance.now();
+    a.click();
+  }, { passive: false });
   addEventListener('click', function (e) {
     if (!e.isTrusted || e.button || !e.target.closest) return;
     var m = e.target.closest('main[data-xhome]');
@@ -482,12 +500,13 @@
     var a = homeCardAt(e.clientX, e.clientY);
     if (!a) return;
     e.preventDefault(); e.stopImmediatePropagation();
+    if (performance.now() - homeTapAt < 800) return;   // already followed on touchend
     if (e.metaKey || e.ctrlKey || e.shiftKey) window.open(a.href, '_blank'); else a.click();
   }, true);
   addEventListener('pointermove', function (e) {
     var m = pageKey() === 'home' && document.querySelector('main[data-xhome]');
     if (!m || e.pointerType === 'touch') return;
-    var c = homeCardAt(e.clientX, e.clientY) ? 'pointer' : '';
+    var c = homeCardAt(e.clientX, e.clientY) ? 'pointer' : 'default';
     if (m.style.cursor !== c) m.style.cursor = c;
   }, { passive: true });
 
