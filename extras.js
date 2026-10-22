@@ -125,17 +125,6 @@
     // its shadow: a soft blurred oval behind and below it (a gradient, not a copy of its silhouette, so it can never look like a second one)
     '.x-drift::before{content:"";position:absolute;left:8%;right:-4%;top:62%;height:52%;z-index:-1;border-radius:50%;background:radial-gradient(closest-side,rgba(20,32,80,.32),rgba(20,32,80,.14) 55%,rgba(20,32,80,0));transform:translate(calc(6% + var(--sd,.5) * 12%),calc(10% + var(--sd,.5) * 22%));pointer-events:none}',
     '.x-drift.x-grab{cursor:grabbing}',
-    // the creature up close (double tap/click on it): the page blurred behind, the creature in the middle, an arrow at the top to close
-    '.x-view{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;background:rgba(214,232,250,.28);-webkit-backdrop-filter:blur(16px) saturate(1.1);backdrop-filter:blur(16px) saturate(1.1);opacity:0;transition:opacity .3s ease}',
-    'html[data-xmid] .x-view{background:rgba(24,36,64,.32)}',
-    '.x-view.x-open{opacity:1}',
-    '.x-view-stage{position:relative;width:min(64vmin,440px);aspect-ratio:324/237;background:url(/extras/blob-turn.webp) 0 0/3600% 100% no-repeat;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;outline:none;transform:scale(.6);transition:transform .45s cubic-bezier(.3,1.4,.5,1)}',
-    '.x-view.x-open .x-view-stage{transform:scale(1)}',
-    '.x-view-stage.x-grab{cursor:grabbing}',
-    '.x-view-stage::before{content:"";position:absolute;left:14%;right:14%;top:84%;height:24%;z-index:-1;border-radius:50%;background:radial-gradient(closest-side,rgba(20,32,80,.34),rgba(20,32,80,.12) 60%,rgba(20,32,80,0));pointer-events:none}',
-    '.x-view-close{position:absolute;top:22px;left:50%;transform:translateX(-50%);width:48px;height:48px;border:0;border-radius:50%;padding:0;display:grid;place-items:center;background:rgba(255,255,255,.55);color:#1b1b1b;cursor:pointer;transition:background .2s,transform .2s}',
-    '.x-view-close:hover{background:rgba(255,255,255,.85);transform:translateX(-50%) translateY(-2px)}',
-    '.x-view-close svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}',
     // home reel: our own sound button
     '.x-reel-ctl{position:absolute;right:16px;bottom:16px;z-index:5;width:44px;height:44px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.45);color:#fff;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);pointer-events:auto;transition:background .2s}',
     '.x-reel-ctl:hover{background:rgba(0,0,0,.65)}',
@@ -640,11 +629,10 @@
       if (Math.abs(JF.vx) > 60) JF.dir = JF.vx > 0 ? 1 : -1;
       JF.pulse = 0.6; JF.since = 1;
       // a tap (not a drag) makes it react, in a different way each time
-      // a double tap/click opens it big in the middle of the screen (see jfView); a single one waits a moment, then it reacts
+      // a double tap/click (not a drag) makes it react, in a different way each time
       if (ev.type === 'pointerup' && Math.hypot(ev.clientX - JF.dx0, ev.clientY - JF.dy0) < 8 && performance.now() - JF.d0 < 500) {
         var nowT = performance.now();
-        if (JF.tapAt && nowT - JF.tapAt < 380) { clearTimeout(JF.tapT); JF.tapAt = 0; jfView(true); }
-        else { JF.tapAt = nowT; clearTimeout(JF.tapT); JF.tapT = setTimeout(function () { JF.tapAt = 0; if (!JF.viewing) jfReact(); }, 380); }
+        if (JF.tapAt && nowT - JF.tapAt < 400) { JF.tapAt = 0; jfReact(); } else JF.tapAt = nowT;
       }
     };
     e.addEventListener('pointerup', drop); e.addEventListener('pointercancel', drop);
@@ -738,7 +726,7 @@
   function jfFrame(now) {
     JF.raf = requestAnimationFrame(jfFrame);
     var dt = Math.min(0.05, (now - (JF.last || now)) / 1000); JF.last = now;
-    if (document.hidden || JF.viewing) return;
+    if (document.hidden) return;
     if (!JF.on) { if (now > JF.next) jfLaunch(); else return; }
     var slow = matchMedia('(prefers-reduced-motion:reduce)').matches ? 0.5 : 1;
     JF.t += dt;
@@ -798,91 +786,8 @@
     if (!JF.on || JF.held || ev.target.closest('a,button,input,textarea,select,[role=button],.x-drift')) return;
     JF.tx = ev.clientX; JF.ty = ev.clientY; JF.tT = 6; JF.pulse = Math.min(JF.pulse, 0.05);
   }, { passive: true });
-  // ---- the creature up close: in the middle of the screen over a blurred page, turned round by dragging (36 pre-rendered views,
-  // extras/blob-turn.webp); the arrow at the top (or Escape / the up arrow key) puts it back
-  var JV = { el: null, stage: null, ang: 0, v: 0, drag: false, raf: 0, last: 0, idle: 0 };
-  var JV_N = 36;
-  function jvPaint() {
-    var f = ((Math.round(JV.ang / (360 / JV_N)) % JV_N) + JV_N) % JV_N;
-    if (JV.f !== f) { JV.f = f; JV.stage.style.backgroundPosition = (f / (JV_N - 1) * 100) + '% 0'; }
-  }
-  function jvFrame(now) {
-    JV.raf = requestAnimationFrame(jvFrame);
-    var dt = Math.min(0.05, (now - (JV.last || now)) / 1000); JV.last = now;
-    if (JV.drag) return;
-    JV.idle += dt;
-    // after a throw it keeps turning and slows down; left alone it turns slowly by itself
-    JV.v *= Math.exp(-2.2 * dt);
-    var auto = JV.idle > 1.2 ? 22 : 0;
-    JV.ang += (Math.abs(JV.v) > auto ? JV.v : (JV.v >= 0 ? 1 : -1) * auto) * dt;
-    jvPaint();
-  }
-  function jvBuild() {
-    if (JV.el && JV.el.isConnected) return;
-    var o = document.createElement('div');
-    o.className = 'x-view';
-    o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true'); o.setAttribute('aria-label', 'Martamon creature, drag to turn it');
-    o.innerHTML = '<button type="button" class="x-view-close" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M5 15l7-7 7 7"/></svg></button><div class="x-view-stage" tabindex="0"></div>';
-    var st = o.querySelector('.x-view-stage');
-    o.querySelector('.x-view-close').addEventListener('click', function (e) { e.preventDefault(); jfView(false); });
-    var lx = 0, lt = 0;
-    st.addEventListener('pointerdown', function (e) {
-      if (e.button) return;
-      e.preventDefault();
-      try { st.setPointerCapture(e.pointerId); } catch (err) {}
-      JV.drag = true; JV.v = 0; lx = e.clientX; lt = performance.now(); st.classList.add('x-grab');
-    });
-    st.addEventListener('pointermove', function (e) {
-      if (!JV.drag) return;
-      var now = performance.now(), dx = e.clientX - lx, d = 360 / Math.max(260, st.offsetWidth * 1.4);
-      JV.ang -= dx * d * 360 / 360;
-      JV.v = -dx * d / Math.max(0.008, (now - lt) / 1000);
-      lx = e.clientX; lt = now; jvPaint();
-    });
-    var up = function (e) {
-      if (!JV.drag) return;
-      JV.drag = false; JV.idle = 0; st.classList.remove('x-grab');
-      try { st.releasePointerCapture(e.pointerId); } catch (err) {}
-      if (performance.now() - lt > 80) JV.v = 0;
-      JV.v = Math.max(-900, Math.min(900, JV.v));
-    };
-    st.addEventListener('pointerup', up); st.addEventListener('pointercancel', up);
-    st.addEventListener('keydown', function (e) {
-      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); JV.idle = 0; JV.v = 0; JV.ang += e.key === 'ArrowLeft' ? 10 : -10; jvPaint(); }
-    });
-    document.body.appendChild(o);
-    JV.el = o; JV.stage = st; JV.f = -1;
-  }
-  function jvKey(e) { if (e.key === 'Escape' || e.key === 'ArrowUp') { e.preventDefault(); jfView(false); } }
-  function jfView(open) {
-    if (open) {
-      if (JF.viewing) return;
-      jvBuild();
-      JF.viewing = true; JF.held = false; JF.act = null;
-      if (JF.el) JF.el.style.visibility = 'hidden';
-      JV.ang = 0; JV.v = 0; JV.idle = 0; JV.last = 0; jvPaint();
-      JV.el.style.display = 'flex';
-      requestAnimationFrame(function () { JV.el.classList.add('x-open'); JV.stage.focus({ preventScroll: true }); });
-      addEventListener('keydown', jvKey);
-      if (!JV.raf) JV.raf = requestAnimationFrame(jvFrame);
-    } else {
-      if (!JF.viewing) return;
-      JF.viewing = false; JF.last = 0;
-      removeEventListener('keydown', jvKey);
-      if (JV.raf) { cancelAnimationFrame(JV.raf); JV.raf = 0; }
-      if (JV.el) {
-        JV.el.classList.remove('x-open');
-        var el = JV.el;
-        setTimeout(function () { if (!JF.viewing) el.style.display = 'none'; }, 320);
-      }
-      if (JF.el) JF.el.style.visibility = '';
-    }
-  }
-
   function setupDrifter(on) {
     if (!on) {
-      jfView(false);
-      if (JV.el && JV.el.parentNode) { JV.el.parentNode.removeChild(JV.el); JV.el = null; }
       // left the Contact page: remove it
       if (JF.raf) { cancelAnimationFrame(JF.raf); JF.raf = 0; }
       JF.on = false; JF.held = false; JF.last = 0;
