@@ -63,7 +63,7 @@
     '.x-vfade{position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;opacity:var(--xt);background:color-mix(in srgb,rgb(181,197,217) calc((1 - var(--xt)) * 100%),rgb(41,60,89) calc(var(--xt) * 100%));-webkit-mask-image:radial-gradient(ellipse 40% 70% at 50% 47%,transparent 0,transparent 50%,#000 100%);mask-image:radial-gradient(ellipse 40% 70% at 50% 47%,transparent 0,transparent 50%,#000 100%)}',
     // phones: the hero box is tall and narrow, and covering it blew the head up and cut it at the sides; show the whole frame,
     // a little enlarged, and fit the night fade to it
-    '@media(max-width:809px){html[data-xp="about"] [data-framer-name="Hero Video"] video{object-fit:contain!important;transform:scale(2.25);transform-origin:50% 47%;-webkit-mask-image:linear-gradient(to bottom,transparent calc(50% - 28.125vw),#000 calc(50% - 21vw),#000 calc(50% + 18vw),transparent calc(50% + 28.125vw))!important;mask-image:linear-gradient(to bottom,transparent calc(50% - 28.125vw),#000 calc(50% - 21vw),#000 calc(50% + 18vw),transparent calc(50% + 28.125vw))!important}.x-vfade{-webkit-mask-image:radial-gradient(ellipse 62% 31% at 58% 50%,transparent 0,transparent 60%,#000 100%);mask-image:radial-gradient(ellipse 62% 31% at 58% 50%,transparent 0,transparent 60%,#000 100%)}}',
+    '@media(max-width:809px){html[data-xp="about"] [data-framer-name="Hero Video"] video{object-fit:contain!important;transform:scale(2.25) translate(6vw,11vw);transform-origin:50% 47%;-webkit-mask-image:linear-gradient(to bottom,transparent calc(50% - 28.125vw),#000 calc(50% - 21vw),#000 calc(50% + 18vw),transparent calc(50% + 28.125vw))!important;mask-image:linear-gradient(to bottom,transparent calc(50% - 28.125vw),#000 calc(50% - 21vw),#000 calc(50% + 18vw),transparent calc(50% + 28.125vw))!important}.x-vfade{-webkit-mask-image:radial-gradient(ellipse 62% 31% at 58% 50%,transparent 0,transparent 60%,#000 100%);mask-image:radial-gradient(ellipse 62% 31% at 58% 50%,transparent 0,transparent 60%,#000 100%)}}',
     // text that sits on that video is blended with it (exclusion): in the dark it is plain light type instead, or it would vanish
     'html[data-xdark] [data-xbl]{mix-blend-mode:normal!important}',
     'html[data-xdark][data-xp="about"] [data-xtc]{text-shadow:0 0 6px rgba(22,32,52,.8),0 0 18px rgba(22,32,52,.65)}',
@@ -87,8 +87,9 @@
     '.x-dial-face .x-rim{fill:none;stroke:currentColor;stroke-width:1.5;stroke-linejoin:round}',
     '.x-dial-face .x-lit{fill:currentColor}',
     // a slow, small swell so it invites a click; still while hovered or dragged
-    '.x-dial-ring{animation:x-breathe 2.6s ease-in-out infinite}',
-    '@keyframes x-breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}',
+    // every now and then (not all the time) it swells and dims softly, like a slow blink, to invite a click
+    '.x-dial-ring{animation:x-blink 8s ease-in-out 3s infinite}',
+    '@keyframes x-blink{0%,72%,100%{transform:scale(1);opacity:1}82%{transform:scale(1.09);opacity:.55}92%{transform:scale(1.02);opacity:.9}}',
     '.x-dial-ring:hover,.x-dial-ring.x-drag{animation-play-state:paused}',
     '@media(prefers-reduced-motion:reduce){.x-dial-ring{animation:none}}',
     '.x-dial-ring{cursor:pointer!important}',
@@ -178,11 +179,14 @@
     // its height is set by apply() so that it ends at the bottom edge of the screen (at least 16:9); the video covers its box
     '.x-yt{position:relative;width:calc(100% - 40px);margin:40px 20px 20px;aspect-ratio:16/9;overflow:hidden;background:#000;container-type:size}',
     '.x-yt iframe{position:absolute;top:50%;left:50%;width:max(100cqw,177.78cqh);height:max(100cqh,56.25cqw);transform:translate(-50%,-50%);border:0}',
+    '@media(max-width:809px){.x-yt{width:calc(100% - 32px);margin:32px 16px 16px}.x-yt iframe{width:100%!important;height:100%!important}}',
     // face of the menu: turns around on hover
     '[data-xfc]{z-index:11!important}',
     // the link itself stays still (a turning link is edge-on half-way, the pointer leaves it and the click is lost): only its picture turns
     '[data-xf]>div{transition:transform .9s cubic-bezier(.3,1.2,.4,1);transform-origin:center}',
     '[data-xf]:hover>div{transform:perspective(500px) rotateY(360deg)}',
+    // About on phones: the intro text a little wider (fewer, longer lines) so it is not a tall thin column
+    '@media(max-width:809px){html[data-xp="about"] [data-framer-name="Caption"]{width:min(62vw,250px)!important;max-width:none!important}html[data-xp="about"] [data-framer-name="Caption"] p{width:100%!important}}',
     '[data-xs]{display:none!important}'
   ].join('\n');
   var style = document.createElement('style');
@@ -551,8 +555,13 @@
     sec.style.height = '';
     var minH = Math.round(sec.offsetWidth * 9 / 16);
     var room = Math.round(innerHeight - (sec.getBoundingClientRect().top + scrollY) - 20);
-    sec.style.aspectRatio = 'auto';
-    sec.style.height = Math.max(minH, room) + 'px';
+    if (innerWidth <= 809) {
+      // phones: the whole frame, full width, 16:9 (covering a tall box cut the sides off)
+      sec.style.aspectRatio = '16/9'; sec.style.height = '';
+    } else {
+      sec.style.aspectRatio = 'auto';
+      sec.style.height = Math.max(minH, room) + 'px';
+    }
     // the empty image column and the small copy of this video further down are replaced by the full-screen one
     var g = galleryEl(m);
     if (g && g.children.length === 0) setAttr(g, 'data-xh', '');
