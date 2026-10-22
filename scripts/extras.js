@@ -61,6 +61,9 @@
     // the hair/face video of About has a light-blue backdrop of its own: at night a soft frame in the page colour (that of the
     // page at the video's edges, so it follows the theme) covers the backdrop around the head, and the head itself stays untouched
     '.x-vfade{position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;opacity:var(--xt);background:color-mix(in srgb,rgb(181,197,217) calc((1 - var(--xt)) * 100%),rgb(41,60,89) calc(var(--xt) * 100%));-webkit-mask-image:radial-gradient(ellipse 40% 70% at 50% 47%,transparent 0,transparent 50%,#000 100%);mask-image:radial-gradient(ellipse 40% 70% at 50% 47%,transparent 0,transparent 50%,#000 100%)}',
+    // phones: the hero box is tall and narrow, and covering it blew the head up and cut it at the sides; show the whole frame,
+    // a little enlarged, and fit the night fade to it
+    '@media(max-width:809px){html[data-xp="about"] [data-framer-name="Hero Video"] video{object-fit:contain!important;transform:scale(1.75);transform-origin:50% 42%;-webkit-mask-image:linear-gradient(to bottom,transparent 36.5%,#000 40%,#000 57%,transparent 63.5%)!important;mask-image:linear-gradient(to bottom,transparent 36.5%,#000 40%,#000 57%,transparent 63.5%)!important}.x-vfade{-webkit-mask-image:radial-gradient(ellipse 36% 21% at 56% 52%,transparent 0,transparent 50%,#000 100%);mask-image:radial-gradient(ellipse 36% 21% at 56% 52%,transparent 0,transparent 50%,#000 100%)}}',
     // text that sits on that video is blended with it (exclusion): in the dark it is plain light type instead, or it would vanish
     'html[data-xdark] [data-xbl]{mix-blend-mode:normal!important}',
     'html[data-xdark][data-xp="about"] [data-xtc]{text-shadow:0 0 6px rgba(22,32,52,.8),0 0 18px rgba(22,32,52,.65)}',
