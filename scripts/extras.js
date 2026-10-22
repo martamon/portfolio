@@ -139,6 +139,8 @@
     // its shadow: a soft blurred oval behind and below it (a gradient, not a copy of its silhouette, so it can never look like a second one)
     '.x-drift::before{content:"";position:absolute;left:8%;right:-4%;top:62%;height:52%;z-index:-1;border-radius:50%;background:radial-gradient(closest-side,rgba(20,32,80,.32),rgba(20,32,80,.14) 55%,rgba(20,32,80,0));transform:translate(calc(6% + var(--sd,.5) * 12%),calc(10% + var(--sd,.5) * 22%));pointer-events:none}',
     '.x-drift.x-grab{cursor:grabbing}',
+    // it follows the time of day like the type: as the page darkens it turns paler and lighter (towards the light grey-blue of the night type)
+    '.x-drift{-webkit-filter:brightness(calc(1 + .5 * var(--xt))) saturate(calc(1 - .55 * var(--xt))) hue-rotate(calc(-8deg * var(--xt)));filter:brightness(calc(1 + .5 * var(--xt))) saturate(calc(1 - .55 * var(--xt))) hue-rotate(calc(-8deg * var(--xt)))}',
     // home reel: our own sound button
     '.x-reel-ctl{position:absolute;right:16px;bottom:16px;z-index:5;width:44px;height:44px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.45);color:#fff;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);pointer-events:auto;transition:background .2s}',
     '.x-reel-ctl:hover{background:rgba(0,0,0,.65)}',
