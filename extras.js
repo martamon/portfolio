@@ -113,6 +113,10 @@
     // contact portrait: 3D tilt on hover
     '[data-x3d]{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) scale(var(--s,1))!important;transition:transform .2s ease-out,box-shadow .3s;will-change:transform;box-shadow:0 0 0 rgba(20,60,100,0)}',
     '[data-x3d][data-hot]{transition:transform .08s linear,box-shadow .3s}',
+    // contact: the pufferfish (a canvas over the page, and a round hit area that follows it so it can be picked up)
+    '.x-fish{position:fixed;left:0;top:0;z-index:9;pointer-events:none}',
+    '.x-fish-hit{position:fixed;left:0;top:0;z-index:9;border-radius:50%;cursor:grab;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}',
+    '.x-fish-hit.x-grab{cursor:grabbing}',
     // home reel: our own sound button
     '.x-reel-ctl{position:absolute;right:16px;bottom:16px;z-index:5;width:44px;height:44px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.45);color:#fff;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);pointer-events:auto;transition:background .2s}',
     '.x-reel-ctl:hover{background:rgba(0,0,0,.65)}',
@@ -585,6 +589,189 @@
     reel.f = reel.wrap = reel.btn = null;
   }
 
+  // ---- contact: a matte pufferfish that swims about the page casting a soft shadow (after the bee of leoparpeix.com/about)
+  // It wanders on its own, looks at the pointer, can be picked up and carried, and puffs up (with a wobble and bubbles) while held.
+  var fish = { on: false, cv: null, ctx: null, hit: null, raf: 0, last: 0, W: 0, H: 0, dpr: 1, held: false, moved: false };
+  function fishInit() {
+    var R = innerWidth < 600 ? 40 : 54;
+    fish.R = R;
+    fish.x = innerWidth * 0.68; fish.y = innerHeight * 0.4; fish.vx = 0; fish.vy = 0;
+    fish.dir = -1; fish.face = -1; fish.t = 0; fish.ph = 0; fish.infl = 0; fish.inflV = 0; fish.pop = 0;
+    fish.ty = fish.y; fish.tyT = 0; fish.turnT = 3 + Math.random() * 4; fish.blink = 2; fish.blinkT = 0;
+    fish.ex = 0; fish.ey = 0; fish.px = innerWidth / 2; fish.py = innerHeight / 2; fish.rot = 0; fish.bubbles = [];
+    fish.bubT = 1.5; fish.gx = 0; fish.gy = 0;
+    fish.slow = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion:reduce)').matches ? 0.5 : 1;
+  }
+  function fishResize() {
+    var c = fish.cv; if (!c) return;
+    fish.dpr = Math.min(2, devicePixelRatio || 1);
+    fish.W = innerWidth; fish.H = innerHeight;
+    c.width = Math.round(fish.W * fish.dpr); c.height = Math.round(fish.H * fish.dpr);
+    c.style.width = fish.W + 'px'; c.style.height = fish.H + 'px';
+  }
+  function fishBubble(x, y, r, vy) { fish.bubbles.push({ x: x, y: y, r: r, vx: (Math.random() - 0.5) * 30, vy: vy, life: 0, max: 1.6 + Math.random() }); }
+  function fishPuff() { var n = 7, i; for (i = 0; i < n; i++) fishBubble(fish.x + (Math.random() - 0.5) * fish.R * 1.6, fish.y - fish.R * (0.6 + Math.random() * 0.6), 2 + Math.random() * 5, -(40 + Math.random() * 70)); }
+  function fishStep(dt) {
+    var f = fish, R = f.R, m = R * 1.6, i;
+    f.t += dt;
+    // swim: a pulse of speed with every tail beat, head turned the way it goes; wanders up and down slowly
+    f.turnT -= dt;
+    if (f.x < m) f.dir = 1; else if (f.x > f.W - m) f.dir = -1; else if (f.turnT < 0) { f.dir = -f.dir; f.turnT = 4 + Math.random() * 6; }
+    f.tyT -= dt;
+    if (f.tyT < 0) { f.ty = f.H * (0.14 + Math.random() * 0.7); f.tyT = 3 + Math.random() * 4; }
+    var beat = 0.55 + 0.45 * Math.max(0, Math.sin(f.ph * 0.5));
+    var sp = 70 * beat * f.slow * (1 - Math.min(0.75, f.infl * 0.5));
+    if (!f.held) {
+      f.vx += (f.dir * sp - f.vx) * Math.min(1, dt * 2.2);
+      f.vy += ((f.ty - f.y) * 0.8 - f.vy) * Math.min(1, dt * 1.6);
+      f.x += f.vx * dt; f.y += f.vy * dt + Math.sin(f.t * 1.7) * 6 * dt;
+    } else {
+      var tx = f.px - f.gx, ty = f.py - f.gy, k = Math.min(1, dt * 14), ox = f.x, oy = f.y;
+      f.x += (tx - f.x) * k; f.y += (ty - f.y) * k;
+      f.vx = (f.x - ox) / Math.max(dt, 0.001); f.vy = (f.y - oy) / Math.max(dt, 0.001);
+      f.dir = f.vx > 40 ? 1 : f.vx < -40 ? -1 : f.dir;
+    }
+    f.y = Math.max(R, Math.min(f.H - R, f.y));
+    f.x = Math.max(-R, Math.min(f.W + R, f.x));
+    f.face += (f.dir - f.face) * Math.min(1, dt * 4);
+    f.ph += dt * (7 + Math.min(10, Math.abs(f.vx) * 0.05) + (f.held ? 6 : 0));
+    // puff: an underdamped spring, so it overshoots and wobbles
+    var target = f.held ? 1 + 0.5 + 0.03 * Math.sin(f.t * 16) : 0;
+    f.inflV += ((target - f.infl) * 240 - f.inflV * 11) * dt;
+    f.infl += f.inflV * dt;
+    var rt = f.held ? Math.max(-0.5, Math.min(0.5, -(f.vx * f.face) / 900)) : Math.max(-0.2, Math.min(0.2, f.vy / 400));
+    f.rot += (rt - f.rot) * Math.min(1, dt * 8);
+    // eyes follow the pointer
+    var dx = f.px - f.x, dy = f.py - f.y, d = Math.hypot(dx, dy) || 1;
+    f.ex += (dx / d * Math.min(1, d / 160) - f.ex) * Math.min(1, dt * 8);
+    f.ey += (dy / d * Math.min(1, d / 160) - f.ey) * Math.min(1, dt * 8);
+    f.blink -= dt; if (f.blink < 0) { f.blinkT = 0.16; f.blink = 2 + Math.random() * 3; }
+    if (f.blinkT > 0) f.blinkT -= dt;
+    f.bubT -= dt;
+    if (f.bubT < 0 && !f.held) { fishBubble(f.x + f.face * R * 1.0, f.y + R * 0.1, 2 + Math.random() * 3, -(30 + Math.random() * 30)); f.bubT = 2 + Math.random() * 3; }
+    for (i = f.bubbles.length - 1; i >= 0; i--) {
+      var b = f.bubbles[i];
+      b.life += dt; b.x += (b.vx + Math.sin(b.life * 5 + i) * 14) * dt; b.y += b.vy * dt;
+      if (b.life > b.max) f.bubbles.splice(i, 1);
+    }
+    f.hit.style.transform = 'translate(' + (f.x - R * 1.15).toFixed(1) + 'px,' + (f.y - R * 1.1).toFixed(1) + 'px)';
+  }
+  function fishDraw() {
+    var f = fish, c = f.ctx, R = f.R, dpr = f.dpr, i;
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    c.clearRect(0, 0, f.W, f.H);
+    var pulse = 1 + Math.sin(f.ph) * 0.035;
+    var scale = Math.max(0.05, 1 + f.infl) * (f.pop < 1 ? f.pop * f.pop * (3 - 2 * f.pop) : 1);
+    var sx = pulse, sy = 2 - pulse;
+    // shadow on the "ground": it follows the fish, smaller and fainter the higher it is
+    var shY = f.y + R * 1.7 + 40 + (f.held ? 30 : 0), shS = (1 + (scale - 1) * 0.5) * (f.held ? 0.8 : 1);
+    c.save(); c.translate(f.x, Math.min(shY, f.H - 6)); c.scale(shS * 1.25, 0.26 * shS);
+    var g = c.createRadialGradient(0, 0, 0, 0, 0, R);
+    g.addColorStop(0, 'rgba(18,28,56,' + (f.held ? 0.22 : 0.32) + ')'); g.addColorStop(0.55, 'rgba(18,28,56,0.16)'); g.addColorStop(1, 'rgba(18,28,56,0)');
+    c.fillStyle = g; c.beginPath(); c.arc(0, 0, R, 0, 7); c.fill(); c.restore();
+    // bubbles
+    for (i = 0; i < f.bubbles.length; i++) {
+      var b = f.bubbles[i], a = 1 - Math.max(0, (b.life - b.max * 0.6) / (b.max * 0.4));
+      c.globalAlpha = 0.85 * a; c.lineWidth = 1.3; c.strokeStyle = 'rgba(255,255,255,.9)'; c.fillStyle = 'rgba(170,205,245,.28)';
+      c.beginPath(); c.arc(b.x, b.y, b.r, 0, 7); c.fill(); c.stroke();
+    }
+    c.globalAlpha = 1;
+    // the fish
+    c.save();
+    c.translate(f.x, f.y); c.rotate(f.rot * f.face); c.scale(f.face * scale * sx, scale * sy);
+    var tail = Math.sin(f.ph) * 0.5, fin = Math.sin(f.ph * 1.5) * 0.55;
+    // spikes (only visible when puffed up)
+    var sp = Math.max(0, Math.min(1, (scale - 1.08) / 0.4));
+    if (sp > 0.02) {
+      c.fillStyle = '#e5b9c6';
+      for (i = 0; i < 18; i++) {
+        var an = i / 18 * 6.2832, cx = Math.cos(an) * R, cy = Math.sin(an) * R * 0.94;
+        if (cx < -R * 0.6) continue;
+        c.save(); c.translate(cx, cy); c.rotate(an);
+        c.beginPath(); c.moveTo(0, -R * 0.07); c.lineTo(R * 0.2 * sp, 0); c.lineTo(0, R * 0.07); c.closePath(); c.fill(); c.restore();
+      }
+    }
+    // tail
+    c.save(); c.translate(-R * 0.86, R * 0.05); c.rotate(tail);
+    c.fillStyle = '#9fbfe6'; c.beginPath(); c.moveTo(R * 0.1, 0); c.bezierCurveTo(-R * 0.25, -R * 0.12, -R * 0.55, -R * 0.42, -R * 0.62, -R * 0.38);
+    c.bezierCurveTo(-R * 0.5, -R * 0.1, -R * 0.5, R * 0.14, -R * 0.62, R * 0.42); c.bezierCurveTo(-R * 0.5, R * 0.4, -R * 0.25, R * 0.14, R * 0.1, 0); c.fill(); c.restore();
+    // top fin
+    c.save(); c.translate(-R * 0.15, -R * 0.86); c.rotate(-0.15 + tail * 0.25);
+    c.fillStyle = '#a9c6e8'; c.beginPath(); c.moveTo(-R * 0.22, R * 0.08); c.quadraticCurveTo(-R * 0.1, -R * 0.38, R * 0.2, -R * 0.2); c.quadraticCurveTo(R * 0.12, -R * 0.02, R * 0.2, R * 0.1); c.closePath(); c.fill(); c.restore();
+    // body: matte pastel, blue on top, peach in the middle, lilac belly
+    var bg = c.createLinearGradient(0, -R, 0, R);
+    bg.addColorStop(0, '#d6e2f6'); bg.addColorStop(0.42, '#f6dcd8'); bg.addColorStop(0.7, '#e3acd4'); bg.addColorStop(1, '#bd78cf');
+    c.fillStyle = bg; c.beginPath(); c.ellipse(0, 0, R, R * 0.94, 0, 0, 7); c.fill();
+    var rim = c.createRadialGradient(R * 0.1, -R * 0.1, R * 0.55, 0, 0, R * 1.02);
+    rim.addColorStop(0, 'rgba(120,80,160,0)'); rim.addColorStop(1, 'rgba(120,80,160,.2)');
+    c.fillStyle = rim; c.beginPath(); c.ellipse(0, 0, R, R * 0.94, 0, 0, 7); c.fill();
+    // blush
+    var bl = c.createRadialGradient(R * 0.5, R * 0.24, 0, R * 0.5, R * 0.24, R * 0.3);
+    bl.addColorStop(0, 'rgba(255,125,165,.38)'); bl.addColorStop(1, 'rgba(255,125,165,0)');
+    c.fillStyle = bl; c.beginPath(); c.arc(R * 0.5, R * 0.24, R * 0.3, 0, 7); c.fill();
+    // side fin
+    c.save(); c.translate(-R * 0.08, R * 0.2); c.rotate(fin);
+    c.fillStyle = '#a9c6e8'; c.beginPath(); c.moveTo(0, -R * 0.1); c.quadraticCurveTo(-R * 0.34, -R * 0.12, -R * 0.4, R * 0.2); c.quadraticCurveTo(-R * 0.12, R * 0.2, 0, R * 0.1); c.closePath(); c.fill(); c.restore();
+    // mouth: a small pout, round when puffed
+    var mo = 0.5 + sp * 0.5;
+    c.fillStyle = '#e88fa0'; c.beginPath(); c.ellipse(R * 0.93, R * 0.16, R * 0.09, R * (0.06 + 0.07 * mo), 0, 0, 7); c.fill();
+    c.fillStyle = '#9b4a63'; c.beginPath(); c.ellipse(R * 0.95, R * 0.16, R * 0.035, R * (0.012 + 0.04 * mo), 0, 0, 7); c.fill();
+    // eyes
+    var bk = f.blinkT > 0 ? 1 - Math.abs(f.blinkT - 0.08) / 0.08 : 0;
+    var eyes = [[R * 0.06, -R * 0.34, R * 0.21], [R * 0.45, -R * 0.2, R * 0.27]];
+    for (i = 0; i < 2; i++) {
+      var e = eyes[i], er = e[2] * (1 + sp * 0.12), ex = e[0], ey = e[1];
+      c.fillStyle = '#fbeeea'; c.beginPath(); c.arc(ex, ey, er, 0, 7); c.fill();
+      c.strokeStyle = 'rgba(190,140,160,.55)'; c.lineWidth = 1.4; c.stroke();
+      var px = ex + f.ex * f.face * er * 0.38, py = ey + f.ey * er * 0.38;
+      c.fillStyle = '#1d1624'; c.beginPath(); c.arc(px, py, er * 0.42, 0, 7); c.fill();
+      if (bk > 0) { c.fillStyle = '#efcfd0'; c.save(); c.beginPath(); c.arc(ex, ey, er + 0.5, 0, 7); c.clip(); c.fillRect(ex - er - 1, ey - er - 1, er * 2 + 2, (er * 2 + 2) * bk); c.restore(); }
+    }
+    c.restore();
+  }
+  function fishFrame(now) {
+    fish.raf = requestAnimationFrame(fishFrame);
+    var dt = Math.min(0.05, (now - fish.last) / 1000 || 0.016);
+    fish.last = now;
+    if (fish.pop < 1) fish.pop = Math.min(1, fish.pop + dt * 1.6);
+    fishStep(dt); fishDraw();
+  }
+  function setupFish(on) {
+    if (!on) {
+      if (fish.on) { cancelAnimationFrame(fish.raf); if (fish.cv && fish.cv.parentNode) fish.cv.parentNode.removeChild(fish.cv); if (fish.hit && fish.hit.parentNode) fish.hit.parentNode.removeChild(fish.hit); fish.on = false; fish.held = false; }
+      return;
+    }
+    if (fish.on) return;
+    fish.on = true;
+    fishInit();
+    var c = document.createElement('canvas'); c.className = 'x-fish'; c.setAttribute('aria-hidden', 'true');
+    var h = document.createElement('div'); h.className = 'x-fish-hit'; h.setAttribute('aria-hidden', 'true');
+    h.style.width = fish.R * 2.3 + 'px'; h.style.height = fish.R * 2.2 + 'px';
+    document.body.appendChild(c); document.body.appendChild(h);
+    fish.cv = c; fish.ctx = c.getContext('2d'); fish.hit = h; fish.pop = 0;
+    fishResize();
+    h.addEventListener('pointerdown', function (e) {
+      if (e.button) return;
+      e.preventDefault();
+      try { h.setPointerCapture(e.pointerId); } catch (err) {}
+      fish.held = true; fish.px = e.clientX; fish.py = e.clientY; fish.gx = e.clientX - fish.x; fish.gy = e.clientY - fish.y;
+      h.classList.add('x-grab'); fishPuff();
+    });
+    h.addEventListener('pointermove', function (e) { fish.px = e.clientX; fish.py = e.clientY; });
+    var drop = function (e) {
+      if (!fish.held) return;
+      fish.held = false; h.classList.remove('x-grab');
+      try { h.releasePointerCapture(e.pointerId); } catch (err) {}
+      fish.vx = Math.max(-420, Math.min(420, fish.vx)); fish.vy = Math.max(-300, Math.min(300, fish.vy));
+      fish.inflV -= 2.5; fishPuff();
+    };
+    h.addEventListener('pointerup', drop); h.addEventListener('pointercancel', drop);
+    fish.last = performance.now();
+    fish.raf = requestAnimationFrame(fishFrame);
+  }
+  addEventListener('pointermove', function (e) { fish.px = e.clientX; fish.py = e.clientY; }, { passive: true });
+  addEventListener('resize', function () { if (fish.on) { fishResize(); fish.R = innerWidth < 600 ? 40 : 54; fish.hit.style.width = fish.R * 2.3 + 'px'; fish.hit.style.height = fish.R * 2.2 + 'px'; } });
+
   // ---- menu: letters roll up on hover (copy of the "rolling text" of paul-michel.framer.website)
   function rollify(a) {
     if (a.querySelector('.x-roll')) return;
@@ -934,6 +1121,7 @@
     applyHome(p === 'home');
     setupTilt(p === 'contact');
     setupReel(p === 'home');
+    setupFish(p === 'contact');
 
     var faces = document.querySelectorAll('a[href="./#hero"],a[href="/#hero"],a[href="./"]');
     for (var q = 0; q < faces.length; q++) {
