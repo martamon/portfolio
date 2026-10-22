@@ -18,6 +18,8 @@
 
   var css = [
     // about: soft edges for the hair video
+    // about: no photo tiles over the hero (Framer's "Tile" blocks), only the head video and the text
+    'html[data-xp="about"] [data-framer-name="Tile"]{display:none!important}',
     'html[data-xp="about"] video{-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 9%,#000 78%,transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 9%,#000 78%,transparent 100%)}',
     '[data-xh]{display:none!important}',
     // menu and project captions in the typeface, colour and hover animation of paul-michel.framer.website
