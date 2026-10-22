@@ -113,8 +113,9 @@
     // contact portrait: 3D tilt on hover
     '[data-x3d]{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) scale(var(--s,1))!important;transition:transform .2s ease-out,box-shadow .3s;will-change:transform;box-shadow:0 0 0 rgba(20,60,100,0)}',
     '[data-x3d][data-hot]{transition:transform .08s linear,box-shadow .3s}',
-    // contact: the blob (a transparent canvas over the page that lets every click through)
-    '.x-blob{position:fixed;left:0;top:0;z-index:9;pointer-events:none}',
+    // the little creature that drifts by now and then (see setupDrifter); a drop shadow behind it
+    '.x-drift{position:fixed;left:0;top:0;z-index:9;display:none;background:url(/extras/blob-sprite.webp) 0 0/1000% 100% no-repeat;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;will-change:transform;-webkit-filter:drop-shadow(8px 12px 8px rgba(20,32,80,.28));filter:drop-shadow(8px 12px 8px rgba(20,32,80,.28))}',
+    '.x-drift.x-grab{cursor:grabbing}',
     // home reel: our own sound button
     '.x-reel-ctl{position:absolute;right:16px;bottom:16px;z-index:5;width:44px;height:44px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.45);color:#fff;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);pointer-events:auto;transition:background .2s}',
     '.x-reel-ctl:hover{background:rgba(0,0,0,.65)}',
@@ -587,18 +588,102 @@
     reel.f = reel.wrap = reel.btn = null;
   }
 
-  // ---- contact: a glowing blue blob that hops about with a soft shadow (extras/blob3d.js with three.js, loaded only on Contact)
-  var blob3 = { stop: null, loading: false, want: false };
-  function setupBlob(on) {
-    blob3.want = on;
-    if (!on) { if (blob3.stop) { blob3.stop(); blob3.stop = null; } return; }
-    if (blob3.stop || blob3.loading) return;
-    blob3.loading = true;
-    import('/extras/blob3d.js').then(function (m) {
-      blob3.loading = false;
-      if (blob3.want && !blob3.stop) blob3.stop = m.start();
-    }).catch(function () { blob3.loading = false; });
+  // ---- the little blue creature (the blob of extras/blob-model.js, pre-rendered to extras/blob-sprite.webp: 10 frames, eyes looking
+  // up-left ... down-right and a blink). Now and then it drifts across the screen like a jellyfish: it pulses (squeezes, shoots
+  // forward a little, then glides and sinks), its eyes follow the pointer, and it can be caught and carried. Plain DOM, so any browser.
+  var JF = { el: null, on: false, raf: 0, last: 0, next: 0, held: false };
+  var JF_W = 224, JF_H = 183;
+  function jfSize() { return innerWidth < 600 ? 50 : 64; }
+  function jfSchedule(first) {
+    // ?drift in the address shows it right away (for checking)
+    var now = /[?&]drift\b/.test(location.search);
+    JF.next = performance.now() + (now && first ? 300 : first ? 5000 + Math.random() * 7000 : 22000 + Math.random() * 38000);
   }
+  function jfEnsureEl() {
+    if (JF.el) return JF.el;
+    var e = document.createElement('div');
+    e.className = 'x-drift'; e.setAttribute('aria-hidden', 'true');
+    e.addEventListener('pointerdown', function (ev) {
+      if (ev.button) return;
+      ev.preventDefault();
+      try { e.setPointerCapture(ev.pointerId); } catch (err) {}
+      JF.held = true; JF.gx = ev.clientX - JF.x; JF.gy = ev.clientY - JF.y; JF.px = ev.clientX; JF.py = ev.clientY;
+      JF.hx = JF.x; JF.hy = JF.y; e.classList.add('x-grab');
+    });
+    e.addEventListener('pointermove', function (ev) { if (JF.held) { JF.px = ev.clientX; JF.py = ev.clientY; } });
+    var drop = function (ev) {
+      if (!JF.held) return;
+      JF.held = false; e.classList.remove('x-grab');
+      try { e.releasePointerCapture(ev.pointerId); } catch (err) {}
+      JF.vx = Math.max(-500, Math.min(500, JF.vx)); JF.vy = Math.max(-500, Math.min(500, JF.vy));
+      if (Math.abs(JF.vx) > 60) JF.dir = JF.vx > 0 ? 1 : -1;
+      JF.pulse = 0.6; JF.since = 1;
+    };
+    e.addEventListener('pointerup', drop); e.addEventListener('pointercancel', drop);
+    document.body.appendChild(e);
+    JF.el = e;
+    return e;
+  }
+  function jfLaunch() {
+    var e = jfEnsureEl(), w = jfSize();
+    JF.w = w; JF.h = w * JF_H / JF_W;
+    JF.dir = Math.random() < 0.5 ? 1 : -1;
+    JF.x = JF.dir > 0 ? -w : innerWidth + w;
+    JF.y = innerHeight * (0.25 + Math.random() * 0.5);
+    JF.vx = JF.dir * 60; JF.vy = 0; JF.t = 0; JF.pulse = 0.2; JF.since = 1; JF.sq = 0; JF.blink = 2 + Math.random() * 2; JF.blinkT = 0;
+    JF.on = true;
+    e.style.width = w + 'px'; e.style.height = JF.h + 'px';
+    e.style.display = 'block';
+  }
+  function jfHide() { JF.on = false; JF.held = false; if (JF.el) JF.el.style.display = 'none'; jfSchedule(false); }
+  var jfPtr = { x: innerWidth / 2, y: innerHeight / 2 };
+  addEventListener('pointermove', function (ev) { jfPtr.x = ev.clientX; jfPtr.y = ev.clientY; }, { passive: true });
+  function jfFrame(now) {
+    JF.raf = requestAnimationFrame(jfFrame);
+    var dt = Math.min(0.05, (now - (JF.last || now)) / 1000); JF.last = now;
+    if (document.hidden) return;
+    if (!JF.on) { if (now > JF.next) jfLaunch(); else return; }
+    var slow = matchMedia('(prefers-reduced-motion:reduce)').matches ? 0.5 : 1;
+    JF.t += dt;
+    if (JF.held) {
+      var k = Math.min(1, dt * 16), ox = JF.x, oy = JF.y;
+      JF.x += (JF.px - JF.gx - JF.x) * k; JF.y += (JF.py - JF.gy - JF.y) * k;
+      JF.vx = (JF.x - ox) / Math.max(dt, 0.001); JF.vy = (JF.y - oy) / Math.max(dt, 0.001);
+      JF.sq += ((0.08 * Math.sin(JF.t * 18)) - JF.sq) * Math.min(1, dt * 10);
+    } else {
+      // jellyfish swimming: a pulse every ~1.7 s; the squeeze shoots it forward and a little up, then it glides and sinks slowly
+      JF.pulse -= dt * slow;
+      if (JF.pulse <= 0) { JF.pulse = 1.5 + Math.random() * 0.5; JF.since = 0; JF.vx += JF.dir * 95 * slow; JF.vy -= (30 + Math.random() * 40) * slow; }
+      JF.since += dt * slow;
+      var squeeze = JF.since < 0.4 ? Math.sin(JF.since / 0.4 * Math.PI) : 0;
+      JF.sq += (Math.max(0, squeeze) * 0.16 - JF.sq) * Math.min(1, dt * 12);
+      JF.vx += (JF.dir * 28 * slow - JF.vx) * Math.min(1, dt * 0.9);
+      JF.vy += (14 * slow - JF.vy) * Math.min(1, dt * 0.8);
+      // keep it on screen vertically
+      if (JF.y < innerHeight * 0.12) JF.vy += 60 * dt; else if (JF.y > innerHeight * 0.88) JF.vy -= 120 * dt;
+      JF.x += JF.vx * dt; JF.y += JF.vy * dt;
+      if ((JF.dir > 0 && JF.x > innerWidth + JF.w * 1.5) || (JF.dir < 0 && JF.x < -JF.w * 1.5)) { jfHide(); return; }
+    }
+    // eyes: nine frames for the pointer direction, one for the blink
+    JF.blink -= dt; if (JF.blink < 0) { JF.blinkT = 0.14; JF.blink = 2.5 + Math.random() * 3; }
+    var fr;
+    if (JF.blinkT > 0) { JF.blinkT -= dt; fr = 9; }
+    else {
+      var dx = jfPtr.x - JF.x, dy = jfPtr.y - JF.y, d = Math.hypot(dx, dy);
+      var cx = d < 30 ? 1 : (dx < -d * 0.45 ? 0 : dx > d * 0.45 ? 2 : 1), cy = d < 30 ? 1 : (dy < -d * 0.45 ? 0 : dy > d * 0.45 ? 2 : 1);
+      fr = cy * 3 + cx;
+    }
+    if (JF.fr !== fr) { JF.fr = fr; JF.el.style.backgroundPosition = (fr / 9 * 100) + '% 0'; }
+    var sway = Math.sin(JF.t * 1.3) * 5 + Math.max(-12, Math.min(12, JF.vx * 0.03));
+    var sx = 1 - JF.sq * 0.9, sy = 1 + JF.sq;
+    JF.el.style.transform = 'translate3d(' + (JF.x - JF.w / 2).toFixed(1) + 'px,' + (JF.y - JF.h / 2).toFixed(1) + 'px,0) rotate(' + sway.toFixed(1) + 'deg) scale(' + sx.toFixed(3) + ',' + sy.toFixed(3) + ')';
+  }
+  function setupDrifter() {
+    if (JF.raf) return;
+    jfSchedule(true);
+    JF.raf = requestAnimationFrame(jfFrame);
+  }
+
 
   // ---- menu: letters roll up on hover (copy of the "rolling text" of paul-michel.framer.website)
   function rollify(a) {
@@ -949,7 +1034,7 @@
     applyHome(p === 'home');
     setupTilt(p === 'contact');
     setupReel(p === 'home');
-    setupBlob(p === 'contact');
+    setupDrifter();
 
     var faces = document.querySelectorAll('a[href="./#hero"],a[href="/#hero"],a[href="./"]');
     for (var q = 0; q < faces.length; q++) {
