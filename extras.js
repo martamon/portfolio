@@ -57,7 +57,9 @@
     '[data-x3d][data-hot]{box-shadow:0 28px 55px color-mix(in srgb,rgba(20,60,100,.32) calc((1 - var(--xtt)) * 100%),rgba(0,0,0,.55) calc(var(--xtt) * 100%))}',
     // type colour: original -> (greys only) a darker grey while the page darkens, so they stay readable on the mid blues -> light type
     '[data-xtc]{color:color-mix(in srgb,color-mix(in srgb,var(--xo) calc((1 - var(--xtd)) * 100%),var(--xd) calc(var(--xtd) * 100%)) calc((1 - var(--xtt)) * 100%),var(--xl) calc(var(--xtt) * 100%))!important}',
-    '.x-dial{position:fixed;top:19px;right:150px;z-index:12;display:flex;align-items:center;gap:10px;color:var(--xfg);font:500 14px/1 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.025em;text-transform:uppercase;user-select:none;-webkit-user-select:none}',
+    '.x-dial{position:fixed;top:19px;right:150px;z-index:12;display:flex;align-items:center;gap:10px;color:#fff;mix-blend-mode:difference;font:500 14px/1 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.025em;text-transform:uppercase;user-select:none;-webkit-user-select:none}',
+    // negative/positive like the menu: inverted against whatever is under it by day; in the dark theme the theme's own light type
+    'html[data-xmid] .x-dial{color:var(--xfg);mix-blend-mode:normal}',
     '.x-dial-time{min-width:3.2em;text-align:right;cursor:pointer}',
     '.x-dial-ring{position:relative;width:40px;height:40px;box-sizing:border-box;border:1.5px solid currentColor;border-radius:50%;cursor:grab;touch-action:none}',
     '.x-dial-ring:active{cursor:grabbing}',
@@ -656,9 +658,12 @@
   // ---- theme: a time-of-day dial (copy of the "Local Time" dial of brandonyasin.com): dragging it around turns the page
   // from the light blue (noon, top of the dial) to a dark blue with light type (midnight, bottom), through dusk and dawn
   var HOUR_R = [[0, 44], [4, 44], [5, 96], [6, 133], [7, 165], [8, 206], [9, 248], [16, 248], [17, 206], [18, 165], [19, 124], [20, 83], [21, 44], [24, 44]];
-  var DAY_HOUR = 12;
-  var theme = { hour: DAY_HOUR, raf: 0 };
-  try { var savedHour = parseFloat(localStorage.getItem('xt-hour')); if (isFinite(savedHour)) theme.hour = ((savedHour % 24) + 24) % 24; } catch (e) {}
+  var DAY_HOUR = 12;   // the dial's top
+  // Like the original, the dial shows the visitor's own time and the page takes the colours of that hour; dragging the
+  // dial "time travels" (kept for the visit in sessionStorage) and the \u2715 brings it back to the real time.
+  function localHour() { var n = new Date(); return n.getHours() + n.getMinutes() / 60 + n.getSeconds() / 3600; }
+  var theme = { hour: localHour(), travel: false, raf: 0 };
+  try { var savedHour = parseFloat(sessionStorage.getItem('xt-travel')); if (isFinite(savedHour)) { theme.hour = ((savedHour % 24) + 24) % 24; theme.travel = true; } } catch (e) {}
   function darkness(h) {
     var i = 0;
     while (i < HOUR_R.length - 2 && HOUR_R[i + 1][0] <= h) i++;
@@ -675,38 +680,46 @@
     if (d) {
       var ang = (theme.hour - DAY_HOUR) * 15, rad = ang * Math.PI / 180, dot = d.querySelector('.x-dial-dot');
       dot.style.transform = 'translate(' + (Math.sin(rad) * 18.25).toFixed(2) + 'px,' + (-Math.cos(rad) * 18.25).toFixed(2) + 'px)';
-      var hh = Math.floor(theme.hour), mm = Math.floor((theme.hour - hh) * 60);
-      d.querySelector('.x-dial-time').textContent = (hh < 10 ? '0' : '') + hh + '.' + (mm < 10 ? '0' : '') + mm;
-      d.querySelector('.x-dial-reset').hidden = Math.abs(theme.hour - DAY_HOUR) < 0.01;
+      var tot = Math.floor(theme.hour * 60 + 0.01), hh = Math.floor(tot / 60) % 24, mm = tot % 60;
+      var label = (hh < 10 ? '0' : '') + hh + '.' + (mm < 10 ? '0' : '') + mm;
+      var tEl = d.querySelector('.x-dial-time');
+      if (tEl.getAttribute('data-l') !== label) { tEl.setAttribute('data-l', label); tEl.textContent = label; }
+      d.classList.toggle('x-live', !theme.travel);
+      d.querySelector('.x-dial-reset').hidden = !theme.travel;
     }
   }
-  function setHour(h, save) {
+  function setHour(h, travel) {
     theme.hour = ((h % 24) + 24) % 24;
+    if (travel) { theme.travel = true; try { sessionStorage.setItem('xt-travel', String(theme.hour)); } catch (e) {} }
     paintTheme();
-    if (save) { try { localStorage.setItem('xt-hour', String(theme.hour)); } catch (e) {} }
   }
+  // back to the real time, turning the dial the short way round
   function tweenHour(to) {
     cancelAnimationFrame(theme.raf);
     var from = theme.hour, delta = ((to - from + 36) % 24) - 12, t0 = performance.now();
     var step = function (now) {
       var p = Math.min(1, (now - t0) / 700), e = 1 - Math.pow(1 - p, 3);
-      setHour(from + delta * e, p === 1);
-      if (p < 1) theme.raf = requestAnimationFrame(step);
+      if (p < 1) { setHour(from + delta * e, false); theme.raf = requestAnimationFrame(step); return; }
+      theme.raf = 0;
+      theme.travel = false;
+      try { sessionStorage.removeItem('xt-travel'); } catch (err) {}
+      setHour(localHour(), false);
     };
     theme.raf = requestAnimationFrame(step);
   }
+  setInterval(function () { if (!theme.travel && !theme.raf) { theme.hour = localHour(); paintTheme(); } }, 15000);
   function ensureDial() {
     var d = document.querySelector('.x-dial');
     if (!d) {
       d = document.createElement('div');
       d.className = 'x-dial';
-      d.innerHTML = '<span class="x-dial-reset" title="Back to daylight" hidden>\u2715</span><span class="x-dial-time" title="Time of day"></span><div class="x-dial-ring" role="slider" aria-label="Time of day: drag to switch between light and dark" aria-valuemin="0" aria-valuemax="24" tabindex="0"><span class="x-dial-dot"></span></div>';
+      d.innerHTML = '<span class="x-dial-reset" title="Back to the real time" hidden>\u2715</span><span class="x-dial-time" title="Time of day"></span><div class="x-dial-ring" role="slider" aria-label="Time of day: drag to switch between light and dark" aria-valuemin="0" aria-valuemax="24" tabindex="0"><span class="x-dial-dot"></span></div>';
       var ring = d.querySelector('.x-dial-ring');
       var fromPointer = function (e) {
         var r = ring.getBoundingClientRect(), dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
         if (Math.abs(dx) + Math.abs(dy) < 3) return;
         var ang = Math.atan2(dx, -dy) * 180 / Math.PI;      // 0 = top (noon), clockwise
-        cancelAnimationFrame(theme.raf);
+        cancelAnimationFrame(theme.raf); theme.raf = 0;
         setHour(DAY_HOUR + ang / 15, true);
       };
       ring.addEventListener('pointerdown', function (e) { e.preventDefault(); ring.setPointerCapture(e.pointerId); ring.__drag = true; fromPointer(e); });
@@ -717,9 +730,9 @@
         var k = e.key === 'ArrowRight' || e.key === 'ArrowUp' ? 0.5 : e.key === 'ArrowLeft' || e.key === 'ArrowDown' ? -0.5 : 0;
         if (k) { e.preventDefault(); setHour(theme.hour + k, true); }
       });
-      var reset = function (e) { e.preventDefault(); tweenHour(DAY_HOUR); };
+      var reset = function (e) { e.preventDefault(); tweenHour(localHour()); };
       d.querySelector('.x-dial-reset').addEventListener('click', reset);
-      d.querySelector('.x-dial-time').addEventListener('click', function (e) { if (Math.abs(theme.hour - DAY_HOUR) > 0.01) reset(e); });
+      d.querySelector('.x-dial-time').addEventListener('click', function (e) { if (theme.travel) reset(e); });
       document.body.appendChild(d);
       paintTheme();
     }
