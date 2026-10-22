@@ -30,8 +30,11 @@
     // the face is never blended once the page leaves the light blue (its inversion only makes it natural against that)
     'html[data-xmid] [data-xfi]{filter:none!important;mix-blend-mode:normal!important}',
     'html[data-xdusk] .x-dial{color:var(--xfg);mix-blend-mode:normal}',
-    // the whole menu (links, dial) is negative/positive at every hour: the type is the light blue of the page, so the difference blend is almost black on it and a soft light grey-blue on the dark blue
-    '[data-xn]{color:rgb(203,237,255)!important}',
+    // the whole menu (links, dial) is negative/positive (difference blend) as you scroll over the page and its pictures: white type, so by day it is
+    // almost black on the light blue and inverted over any picture; at night it is the page's light blue, which gives a softer grey-blue on the dark blue
+    '[data-xn]{color:#fff!important}',
+    'html[data-xnight] [data-xn]{color:rgb(203,237,255)!important}',
+    'html[data-xnight] .x-dial{color:rgb(203,237,255)}',
     '[data-xn],[data-xcap]{font-family:"IBM Plex Mono","IBM Plex Mono Placeholder",monospace!important;font-size:14px!important;font-weight:500!important;letter-spacing:.025em!important;text-transform:uppercase!important;line-height:1.6em!important;text-decoration:none!important}',
     '[data-xcap]{color:#888!important}',
     '.x-roll{position:relative;display:inline-grid;overflow:hidden;white-space:pre;vertical-align:top}',
@@ -64,7 +67,7 @@
     // type colour: original -> (greys only) a darker grey while the page darkens, so they stay readable on the mid blues -> light type
     '[data-xtc]{color:color-mix(in srgb,color-mix(in srgb,var(--xo) calc((1 - var(--xtd)) * 100%),var(--xd) calc(var(--xtd) * 100%)) calc((1 - var(--xtt)) * 100%),var(--xl) calc(var(--xtt) * 100%))!important}',
     // the dial, as in the original: "LOCAL TIME" over the hours and minutes (a blinking dot between them) and a round dial with a ring inside
-    '.x-dial{position:fixed;top:12px;right:150px;z-index:12;display:flex;align-items:center;gap:22px;color:rgb(203,237,255);mix-blend-mode:difference;font:500 14px/1.25 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.025em;text-transform:uppercase;user-select:none;-webkit-user-select:none}',
+    '.x-dial{position:fixed;top:12px;right:150px;z-index:12;display:flex;align-items:center;gap:22px;color:#fff;mix-blend-mode:difference;font:500 14px/1.25 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.025em;text-transform:uppercase;user-select:none;-webkit-user-select:none}',
     // negative/positive like the menu: inverted against whatever is under it by day; in the dark theme the theme's own light type
     '.x-dial-txt{display:flex;flex-direction:column;white-space:nowrap}',
     '.x-dial-label{cursor:default}',
@@ -685,6 +688,7 @@
     var st = document.documentElement.style;
     st.setProperty('--xt', t.toFixed(3)); st.setProperty('--xtt', tt.toFixed(3)); st.setProperty('--xtd', td.toFixed(3));
     if (t > 0.3 && t < 0.98) { if (!document.documentElement.hasAttribute('data-xdusk')) document.documentElement.setAttribute('data-xdusk', ''); } else document.documentElement.removeAttribute('data-xdusk');
+    if (t >= 0.98) { if (!document.documentElement.hasAttribute('data-xnight')) document.documentElement.setAttribute('data-xnight', ''); } else document.documentElement.removeAttribute('data-xnight');
     if (t > 0.15) { if (!document.documentElement.hasAttribute('data-xmid')) document.documentElement.setAttribute('data-xmid', ''); } else document.documentElement.removeAttribute('data-xmid');
     if (tt > 0.5) { if (!document.documentElement.hasAttribute('data-xdark')) document.documentElement.setAttribute('data-xdark', ''); } else document.documentElement.removeAttribute('data-xdark');
     var d = document.querySelector('.x-dial');
