@@ -21,6 +21,13 @@ jobs:
       - uses: actions/configure-pages@v5
         with:
           enablement: true
+      # every page loads /extras.js; give it the file's hash as a version so browsers that keep scripts longer (Safari) fetch the new one
+      # as soon as the page itself is refreshed
+      - name: Version extras.js
+        run: |
+          v=$(sha1sum extras.js | cut -c1-10)
+          find . -name '*.html' -not -path './.git/*' -print0 | xargs -0 sed -i "s#src=\"/extras.js\"#src=\"/extras.js?v=$v\"#g"
+          grep -rl "extras.js?v=$v" --include='*.html' . | wc -l
       - uses: actions/upload-pages-artifact@v3
         with:
           path: .
