@@ -64,11 +64,11 @@
     'main[data-xhome]{display:block!important;position:relative!important;height:var(--hh)!important;min-height:0!important}',
     'main[data-xhome] [data-xhi]{position:absolute!important;left:var(--mx);top:var(--my);width:var(--mw)!important;margin:0!important}',
     'main[data-xhome] [data-xhi][data-xs]{display:none!important}',
-    // hover: the card under the pointer grows and the others shrink a little, smoothly (the picture's link turns, so Framer's own reveal animation on the card is left alone)
-    'main[data-xhome] [data-xhi] a{transition:transform .65s cubic-bezier(.22,.8,.2,1);transform-origin:50% 40%;will-change:transform}',
-    '@media(hover:hover){main[data-xhome] [data-xhi]:hover{z-index:3}',
-    'main[data-xhome] [data-xhi]:hover a{transform:scale(1.16)!important}',
-    'main[data-xhome]:has([data-xhi]:hover) [data-xhi]:not(:hover) a{transform:scale(.93)!important}}',
+    // hover: the column of the hovered card widens and the others narrow to the space left; every picture keeps its
+    // proportions, so the cards below move up or down. Position, width and height animate.
+    'main[data-xnt],main[data-xnt] [data-xhi]{transition:none!important}',
+    'main[data-xhome]{transition:height .7s cubic-bezier(.22,.8,.2,1)}',
+    'main[data-xhome] [data-xhi]{transition:left .7s cubic-bezier(.22,.8,.2,1),top .7s cubic-bezier(.22,.8,.2,1),width .7s cubic-bezier(.22,.8,.2,1)}',
     // lexus extras: instagram video (cropped to the media only) and the RZ image
     '.x-insta,.x-img{position:relative;flex:none;overflow:hidden}',
     '.x-insta iframe{position:absolute;left:0;top:-' + IG_HEAD + 'px;width:100%;height:calc(100% + ' + (IG_HEAD + IG_FOOT) + 'px);border:0}',
@@ -284,6 +284,7 @@
     for (i = 0; i < mains.length; i++) {
       var m = mains[i];
       if (!on || !m.querySelector('a[href^="./"] img')) { m.removeAttribute('data-xhome'); continue; }
+      if (m.__xl && m.__hv >= 0) continue;   // hovering: keep the layout still
       // read the grid as Framer lays it out (hidden breakpoint variants have no grid and are skipped); only when the
       // window width changed, because taking the layout off for a moment can throw the page's scroll position to the top
       if (!m.__xg || m.__xg.w !== innerWidth) {
@@ -294,6 +295,7 @@
         m.__xg = tr.length && m.offsetWidth ? { w: innerWidth, cols: tr.length, padL: parseFloat(cs.paddingLeft) || 0, padR: parseFloat(cs.paddingRight) || 0, padT: parseFloat(cs.paddingTop) || 0, padB: parseFloat(cs.paddingBottom) || 0, sy: sy } : null;
         if (!m.__xg) continue;
       }
+      setAttr(m, 'data-xnt', '');   // no animation while the layout is (re)measured
       var G = m.__xg, tracks = [];
       // same rhythm as the project galleries: 12px between columns, 18px between rows (room for the captions), the page's own side padding
       var cols = G.cols, gap = 12, rowGap = 18, padL = G.padL, padR = G.padR, padT = G.padT, padB = G.padB;
@@ -318,18 +320,62 @@
         if (cap) hh = Math.min(hh, Math.round(cap.getBoundingClientRect().bottom - kids[j].getBoundingClientRect().top));
         heights.push(hh);
       }
+      // model: each card's column (fixed, so nothing jumps between columns on hover), picture ratio and caption height
       for (j = 0; j < cols; j++) tracks[j] = 0;
+      var L = { kids: kids, col: [], r: [], capH: [], cols: cols, gap: gap, rowGap: rowGap, padL: padL, padT: padT, padB: padB, avail: Math.min(m.clientWidth, innerWidth) - padL - padR - gap * (cols - 1) };
       for (j = 0; j < kids.length; j++) {
-        var col = 0, k;
+        var col = 0, k, link = kids[j].querySelector('a'), pic = link && link.firstElementChild;
         for (k = 1; k < cols; k++) if (tracks[k] < tracks[col]) col = k;
-        kids[j].style.setProperty('--mx', (padL + col * (colW + gap)) + 'px');
-        kids[j].style.setProperty('--my', (padT + tracks[col]) + 'px');
+        var ph = Math.min(heights[j], Math.round(pic ? pic.getBoundingClientRect().height : heights[j]));
+        L.col.push(col); L.r.push(ph / colW); L.capH.push(heights[j] - ph);
         tracks[col] += heights[j] + rowGap;
       }
+      m.__xl = L;
       if (G.sy != null) { if (Math.abs(scrollY - G.sy) > 1) scrollTo(0, G.sy); G.sy = null; }
-      m.style.setProperty('--hh', (padT + Math.max.apply(null, tracks) - rowGap + padB) + 'px');
+      placeHome(m, m.__hv == null ? -1 : m.__hv);
+      m.offsetHeight;
+      requestAnimationFrame(function () { m.removeAttribute('data-xnt'); });
     }
   }
+
+  // positions for the current hover: hv is the hovered column (-1: none)
+  function placeHome(m, hv) {
+    var L = m.__xl;
+    if (!L) return;
+    var cols = L.cols, wts = [], sum = 0, c, j;
+    for (c = 0; c < cols; c++) { wts.push(cols > 1 && c === hv ? 1.5 : 1); sum += wts[c]; }
+    var widths = [], xs = [], x = L.padL, tracks = [];
+    for (c = 0; c < cols; c++) { widths.push(L.avail * wts[c] / sum); xs.push(x); x += widths[c] + L.gap; tracks.push(0); }
+    for (j = 0; j < L.kids.length; j++) {
+      c = L.col[j];
+      var k = L.kids[j];
+      k.style.setProperty('--mx', xs[c].toFixed(1) + 'px');
+      k.style.setProperty('--my', (L.padT + tracks[c]).toFixed(1) + 'px');
+      k.style.setProperty('--mw', widths[c].toFixed(1) + 'px');
+      tracks[c] += L.r[j] * widths[c] + L.capH[j] + L.rowGap;
+    }
+    m.style.setProperty('--hh', (L.padT + Math.max.apply(null, tracks) - L.rowGap + L.padB).toFixed(1) + 'px');
+  }
+  var homeLeave = 0;
+  document.addEventListener('mouseover', function (e) {
+    if (pageKey() !== 'home' || !e.target.closest || !matchMedia('(hover:hover)').matches) return;
+    var k = e.target.closest('[data-xhi]');
+    var m = k && k.closest('main[data-xhome]');
+    if (!m || !m.__xl) return;
+    clearTimeout(homeLeave);
+    var idx = m.__xl.kids.indexOf(k);
+    if (idx < 0 || m.__hv === m.__xl.col[idx]) return;
+    m.__hv = m.__xl.col[idx];
+    placeHome(m, m.__hv);
+  }, true);
+  document.addEventListener('mouseout', function (e) {
+    var m = e.target.closest && e.target.closest('main[data-xhome]');
+    if (!m || m.__hv == null || m.__hv < 0) return;
+    var to = e.relatedTarget;
+    if (to && to.closest && to.closest('[data-xhi]')) return;
+    clearTimeout(homeLeave);
+    homeLeave = setTimeout(function () { m.__hv = -1; placeHome(m, -1); }, 120);
+  }, true);
 
   function ensureYoutube(m) {
     var sec = document.querySelector('.x-yt');
