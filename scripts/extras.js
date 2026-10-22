@@ -37,7 +37,7 @@
     'main[data-xm]{height:auto!important;min-height:0!important}',
     '[data-xr]{height:auto!important;min-height:100vh!important}',
     '[data-xg]{height:auto!important}',
-    // light / dark theme (see "theme" below): --xt is how dark the page is (0..1), --xtt the same for the text, which switches sooner
+    // light / dark theme (see "theme" below): --xt is how dark the page is (0..1), --xtt the same for the text, which switches over later, where the dusk background is dark enough for light type
     ':root{--xt:0;--xtt:0;--xfg:color-mix(in srgb,#1b1b1b calc((1 - var(--xtt)) * 100%),#b3c2d6 calc(var(--xtt) * 100%));--xfg55:color-mix(in srgb,rgba(20,20,20,.55) calc((1 - var(--xtt)) * 100%),rgba(179,194,214,.6) calc(var(--xtt) * 100%))}',
     '[data-xbgm]{background-image:var(--xbgimg)!important}',
     // dark: the menu's difference blend would tint the white type beige over the blue, so it is a plain light grey-blue instead
@@ -653,7 +653,7 @@
     return Math.max(0, Math.min(1, 1 - (r - 44) / (248 - 44)));
   }
   function paintTheme() {
-    var t = darkness(theme.hour), tt = Math.max(0, Math.min(1, (t - 0.35) / 0.3));
+    var t = darkness(theme.hour), tt = Math.max(0, Math.min(1, (t - 0.62) / 0.2));
     var st = document.documentElement.style;
     st.setProperty('--xt', t.toFixed(3)); st.setProperty('--xtt', tt.toFixed(3));
     if (tt > 0.5) { if (!document.documentElement.hasAttribute('data-xdark')) document.documentElement.setAttribute('data-xdark', ''); } else document.documentElement.removeAttribute('data-xdark');
