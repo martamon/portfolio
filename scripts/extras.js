@@ -78,8 +78,9 @@
     '.x-yt iframe{position:absolute;top:50%;left:50%;width:max(100cqw,177.78cqh);height:max(100cqh,56.25cqw);transform:translate(-50%,-50%);border:0}',
     // face of the menu: turns around on hover
     '[data-xfc]{z-index:11!important}',
-    '[data-xf]{display:block;transition:transform .9s cubic-bezier(.3,1.2,.4,1);transform-origin:center}',
-    '[data-xf]:hover{transform:perspective(500px) rotateY(360deg)}',
+    // the link itself stays still (a turning link is edge-on half-way, the pointer leaves it and the click is lost): only its picture turns
+    '[data-xf]>div{transition:transform .9s cubic-bezier(.3,1.2,.4,1);transform-origin:center}',
+    '[data-xf]:hover>div{transform:perspective(500px) rotateY(360deg)}',
     '[data-xs]{display:none!important}'
   ].join('\n');
   var style = document.createElement('style');
@@ -543,8 +544,8 @@
 
   // the face in the menu: on project pages Framer only scrolls to #hero, so go to the home page ourselves
   addEventListener('click', function (e) {
-    var a = e.target.closest && e.target.closest('a[data-xf]');
-    if (!a || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey) return;
+    var a = e.target.closest && e.target.closest('a[href$="#hero"],a[data-xf]');
+    if (!a || !a.querySelector('img') || a.closest('main') || e.button || e.metaKey || e.ctrlKey || e.shiftKey) return;
     if (pageKey() === 'home') return;
     e.preventDefault(); e.stopImmediatePropagation();
     location.href = '/';
