@@ -120,6 +120,11 @@
     // contact portrait: 3D tilt on hover
     '[data-x3d]{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) scale(var(--s,1))!important;transition:transform .2s ease-out,box-shadow .3s;will-change:transform;box-shadow:0 0 0 rgba(20,60,100,0)}',
     '[data-x3d][data-hot]{transition:transform .08s linear,box-shadow .3s}',
+    // the little creature that drifts by now and then (see setupDrifter); a drop shadow behind it
+    '.x-drift{position:fixed;left:0;top:0;z-index:9;display:none;background:url(/extras/blob-sprite.webp) 0 0/1000% 100% no-repeat;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;will-change:transform}',
+    // its shadow: a soft blurred oval behind and below it (a gradient, not a copy of its silhouette, so it can never look like a second one)
+    '.x-drift::before{content:"";position:absolute;left:8%;right:-4%;top:62%;height:52%;z-index:-1;border-radius:50%;background:radial-gradient(closest-side,rgba(20,32,80,.32),rgba(20,32,80,.14) 55%,rgba(20,32,80,0));transform:translate(calc(6% + var(--sd,.5) * 12%),calc(10% + var(--sd,.5) * 22%));pointer-events:none}',
+    '.x-drift.x-grab{cursor:grabbing}',
     // home reel: our own sound button
     '.x-reel-ctl{position:absolute;right:16px;bottom:16px;z-index:5;width:44px;height:44px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.45);color:#fff;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);pointer-events:auto;transition:background .2s}',
     '.x-reel-ctl:hover{background:rgba(0,0,0,.65)}',
@@ -592,6 +597,210 @@
     reel.f = reel.wrap = reel.btn = null;
   }
 
+  // ---- the little blue creature (the blob of extras/blob-model.js, pre-rendered to extras/blob-sprite.webp: 10 frames, eyes looking
+  // up-left ... down-right and a blink). On the Contact page only, it swims about the page like a jellyfish: it pulses (squeezes,
+  // shoots on a little towards where it is heading, then glides and sinks), wanders between spots, drifts towards and away from the
+  // viewer (bigger, with its shadow further off), its eyes follow the pointer, a click sends it over, and it can be caught and carried.
+  // Plain DOM, so any browser.
+  var JF = { el: null, on: false, raf: 0, last: 0, next: 0, held: false, tx: 0, ty: 0, tT: 0, act: null, last_act: '', rot: 0, km: 1, fo: -1 };
+  var JF_W = 224, JF_H = 183;
+  function jfSize() { return innerWidth < 600 ? 50 : 64; }
+  function jfEnsureEl() {
+    if (JF.el && JF.el.isConnected) return JF.el;
+    // only ever one on the page
+    var old = document.querySelectorAll('.x-drift');
+    for (var oi = 0; oi < old.length; oi++) old[oi].parentNode.removeChild(old[oi]);
+    var e = document.createElement('div');
+    e.className = 'x-drift'; e.setAttribute('aria-hidden', 'true');
+    e.addEventListener('pointerdown', function (ev) {
+      if (ev.button) return;
+      ev.preventDefault();
+      try { e.setPointerCapture(ev.pointerId); } catch (err) {}
+      JF.held = true; JF.gx = ev.clientX - JF.x; JF.gy = ev.clientY - JF.y; JF.px = ev.clientX; JF.py = ev.clientY;
+      JF.hx = JF.x; JF.hy = JF.y; e.classList.add('x-grab');
+      JF.dx0 = ev.clientX; JF.dy0 = ev.clientY; JF.d0 = performance.now(); JF.act = null;
+    });
+    e.addEventListener('pointermove', function (ev) { if (JF.held) { JF.px = ev.clientX; JF.py = ev.clientY; } });
+    var drop = function (ev) {
+      if (!JF.held) return;
+      JF.held = false; e.classList.remove('x-grab');
+      try { e.releasePointerCapture(ev.pointerId); } catch (err) {}
+      JF.vx = Math.max(-500, Math.min(500, JF.vx)); JF.vy = Math.max(-500, Math.min(500, JF.vy));
+      if (Math.abs(JF.vx) > 60) JF.dir = JF.vx > 0 ? 1 : -1;
+      JF.pulse = 0.6; JF.since = 1;
+      // a tap (not a drag) makes it react, in a different way each time
+      if (ev.type === 'pointerup' && Math.hypot(ev.clientX - JF.dx0, ev.clientY - JF.dy0) < 8 && performance.now() - JF.d0 < 500) jfReact();
+    };
+    e.addEventListener('pointerup', drop); e.addEventListener('pointercancel', drop);
+    document.body.appendChild(e);
+    JF.el = e;
+    return e;
+  }
+  function jfLaunch() {
+    var e = jfEnsureEl(), w = jfSize();
+    JF.w = w; JF.h = w * JF_H / JF_W;
+    JF.dir = Math.random() < 0.5 ? 1 : -1;
+    JF.x = JF.dir > 0 ? -w : innerWidth + w;
+    JF.y = innerHeight * (0.25 + Math.random() * 0.5);
+    JF.vx = JF.dir * 60; JF.vy = 0; JF.t = 0; JF.pulse = 0.2; jfPick(); JF.since = 1; JF.sq = 0; JF.blink = 2 + Math.random() * 2; JF.blinkT = 0;
+    JF.on = true;
+    e.style.width = w + 'px'; e.style.height = JF.h + 'px';
+    e.style.display = 'block';
+  }
+  // the next spot it swims to: anywhere on the page, not too close to the edges
+  function jfPick() {
+    JF.tx = innerWidth * (0.08 + Math.random() * 0.84); JF.ty = innerHeight * (0.12 + Math.random() * 0.76); JF.tT = 4 + Math.random() * 4;
+  }
+  // what it does when tapped: one of these, chosen at random (never the same twice in a row)
+  var JF_ACTS = [
+    { n: 'sleep', d: 2.6 },   // shuts its eyes and dozes off, sinking slowly
+    { n: 'flee', d: 0 },     // dashes away from you off the screen, then swims back in a few seconds later
+    { n: 'spin', d: 1.4 },   // spins round and round with a hop
+    { n: 'dizzy', d: 2.3 },  // eyes roll about and it wobbles
+    { n: 'puff', d: 1.1 },   // squeezes, then pops up bigger and settles
+    { n: 'shy', d: 2.6 },    // shrinks and looks away
+    { n: 'chase', d: 4.5 }   // swims after the pointer
+  ];
+  function jfReact() {
+    var a;
+    do { a = JF_ACTS[Math.floor(Math.random() * JF_ACTS.length)]; } while (a.n === JF.last_act);
+    JF.last_act = a.n;
+    JF.act = { n: a.n, d: a.d, t: 0, gone: false };
+    if (a.n === 'flee') {
+      var fx = JF.x - jfPtr.x, fy = JF.y - jfPtr.y, fd = Math.hypot(fx, fy);
+      if (fd < 1) { fx = Math.random() < 0.5 ? 1 : -1; fy = -0.3; fd = 1; }
+      JF.act.ux = fx / fd; JF.act.uy = fy / fd;
+    } else if (a.n === 'puff') { JF.vy -= 160; }
+    JF.pulse = 1.5;
+  }
+  // it comes back in from a random edge after fleeing
+  function jfEnter() {
+    JF.dir = Math.random() < 0.5 ? 1 : -1;
+    JF.x = JF.dir > 0 ? -JF.w : innerWidth + JF.w; JF.y = innerHeight * (0.25 + Math.random() * 0.5);
+    JF.vx = JF.dir * 80; JF.vy = 0; JF.sq = 0; JF.since = 1; JF.pulse = 0.2; JF.act = null; jfPick();
+    JF.el.style.display = 'block';
+  }
+  function jfActStep(dt) {
+    var a = JF.act, u = a.d ? Math.min(1, a.t / a.d) : 0, k = Math.min(1, dt * 10), dr;
+    a.t += dt;
+    if (a.n === 'flee') {
+      if (a.gone) { if (a.t > 2.5) jfEnter(); return; }
+      var sp = Math.min(1, a.t / 0.5) * 760;
+      JF.vx += (a.ux * sp - JF.vx) * Math.min(1, dt * 6); JF.vy += (a.uy * sp - JF.vy) * Math.min(1, dt * 6);
+      JF.x += JF.vx * dt; JF.y += JF.vy * dt;
+      JF.sq += (0.1 * Math.sin(a.t * 26) - JF.sq) * k; JF.fo = a.t < 0.12 ? 9 : -1;
+      if (JF.x < -JF.w * 1.5 || JF.x > innerWidth + JF.w * 1.5 || JF.y < -JF.h * 1.5 || JF.y > innerHeight + JF.h * 1.5) { a.gone = true; a.t = 0; JF.el.style.display = 'none'; }
+      return;
+    }
+    if (a.n === 'chase') {
+      if (a.t > a.d) { JF.act = null; return; }
+      JF.tx = jfPtr.x; JF.ty = jfPtr.y; JF.tT = 2; JF.pulse = Math.min(JF.pulse, 0.7);
+      return;    // swims as usual, towards the pointer and quicker
+    }
+    if (a.t > a.d) { JF.act = null; return; }
+    dr = Math.exp(-1.6 * dt); JF.vx *= dr; JF.vy *= dr;
+    JF.x += JF.vx * dt; JF.y += JF.vy * dt;
+    if (a.n === 'sleep') {
+      JF.fo = 9; JF.vy += 26 * dt; JF.sq += (0.05 * Math.sin(a.t * 3) - JF.sq) * k;
+    } else if (a.n === 'spin') {
+      JF.rot = 720 * (1 - Math.pow(1 - u, 3)); JF.fo = Math.floor(a.t * 14) % 9;
+      JF.km = 1 + 0.15 * Math.sin(u * Math.PI); if (a.t < 0.3) JF.vy -= 420 * dt;
+    } else if (a.n === 'dizzy') {
+      JF.fo = Math.floor(a.t * 11) % 9; JF.rot = Math.sin(a.t * 9) * 16 * (1 - u); JF.sq += (0.05 * Math.sin(a.t * 12) - JF.sq) * k;
+    } else if (a.n === 'puff') {
+      if (u < 0.25) JF.sq += (0.34 - JF.sq) * k;
+      else { var q = (u - 0.25) / 0.75; JF.km = 1 + 0.55 * Math.sin(Math.min(1, q * 1.15) * Math.PI); JF.sq += (0 - JF.sq) * k; if (q < 0.15) JF.vy -= 520 * dt; }
+    } else if (a.n === 'shy') {
+      var e = u < 0.15 ? u / 0.15 : u > 0.85 ? (1 - u) / 0.15 : 1;
+      JF.km = 1 - 0.45 * e;
+      var sdx = JF.x - jfPtr.x, sdy = JF.y - jfPtr.y, sd = Math.hypot(sdx, sdy) || 1;   // looks away from the pointer
+      JF.fo = (sdy < -sd * 0.45 ? 0 : sdy > sd * 0.45 ? 2 : 1) * 3 + (sdx < -sd * 0.45 ? 0 : sdx > sd * 0.45 ? 2 : 1);
+    }
+  }
+  var jfPtr = { x: innerWidth / 2, y: innerHeight / 2 };
+  addEventListener('pointermove', function (ev) { jfPtr.x = ev.clientX; jfPtr.y = ev.clientY; }, { passive: true });
+  function jfFrame(now) {
+    JF.raf = requestAnimationFrame(jfFrame);
+    var dt = Math.min(0.05, (now - (JF.last || now)) / 1000); JF.last = now;
+    if (document.hidden) return;
+    if (!JF.on) { if (now > JF.next) jfLaunch(); else return; }
+    var slow = matchMedia('(prefers-reduced-motion:reduce)').matches ? 0.5 : 1;
+    JF.t += dt;
+    if (JF.held) {
+      var k = Math.min(1, dt * 16), ox = JF.x, oy = JF.y;
+      JF.x += (JF.px - JF.gx - JF.x) * k; JF.y += (JF.py - JF.gy - JF.y) * k;
+      JF.vx = (JF.x - ox) / Math.max(dt, 0.001); JF.vy = (JF.y - oy) / Math.max(dt, 0.001);
+      JF.sq += ((0.08 * Math.sin(JF.t * 18)) - JF.sq) * Math.min(1, dt * 10);
+    } else if (JF.act && JF.act.n !== 'chase') {
+      JF.rot = 0; JF.km = 1; JF.fo = -1;
+      jfActStep(dt);
+    } else {
+      if (JF.act) jfActStep(dt);
+      JF.rot = 0; JF.km = 1; JF.fo = -1;
+      // jellyfish swimming: a pulse every ~1.7 s; the squeeze shoots it on towards the spot it is heading for, then it glides and sinks slowly
+      JF.tT -= dt;
+      var ddx = JF.tx - JF.x, ddy = JF.ty - JF.y, dd = Math.hypot(ddx, ddy) || 1;
+      if (!JF.act && (dd < JF.w * 1.2 || JF.tT < 0)) jfPick();
+      JF.pulse -= dt * slow;
+      if (JF.pulse <= 0) {
+        JF.pulse = 1.4 + Math.random() * 0.6; JF.since = 0;
+        var pw = (85 + Math.min(70, dd * 0.12)) * slow;
+        JF.vx += ddx / dd * pw; JF.vy += ddy / dd * pw - 18 * slow;
+        if (Math.abs(ddx) > JF.w * 0.4) JF.dir = ddx > 0 ? 1 : -1;
+      }
+      JF.since += dt * slow;
+      var squeeze = JF.since < 0.4 ? Math.sin(JF.since / 0.4 * Math.PI) : 0;
+      JF.sq += (Math.max(0, squeeze) * 0.16 - JF.sq) * Math.min(1, dt * 12);
+      var dr = Math.exp(-0.9 * dt); JF.vx *= dr; JF.vy *= dr;
+      JF.vy += 12 * slow * dt;
+      JF.vx += Math.sin(JF.t * 0.7) * 6 * slow * dt;
+      JF.x += JF.vx * dt; JF.y += JF.vy * dt;
+      // stay on the page: turn back softly at the edges
+      var mx = JF.w * 0.6, my = JF.h * 0.6;
+      if (JF.x < mx) JF.vx += (mx - JF.x) * 3 * dt; else if (JF.x > innerWidth - mx) JF.vx -= (JF.x - (innerWidth - mx)) * 3 * dt;
+      if (JF.y < my) JF.vy += (my - JF.y) * 3 * dt; else if (JF.y > innerHeight - my) JF.vy -= (JF.y - (innerHeight - my)) * 3 * dt;
+    }
+    // eyes: nine frames for the pointer direction, one for the blink
+    JF.blink -= dt; if (JF.blink < 0) { JF.blinkT = 0.14; JF.blink = 2.5 + Math.random() * 3; }
+    var fr;
+    if (JF.fo >= 0) fr = JF.fo;
+    else if (JF.blinkT > 0) { JF.blinkT -= dt; fr = 9; }
+    else {
+      var dx = jfPtr.x - JF.x, dy = jfPtr.y - JF.y, d = Math.hypot(dx, dy);
+      var cx = d < 30 ? 1 : (dx < -d * 0.45 ? 0 : dx > d * 0.45 ? 2 : 1), cy = d < 30 ? 1 : (dy < -d * 0.45 ? 0 : dy > d * 0.45 ? 2 : 1);
+      fr = cy * 3 + cx;
+    }
+    if (JF.fr !== fr) { JF.fr = fr; JF.el.style.backgroundPosition = (fr / 9 * 100) + '% 0'; }
+    var sway = Math.sin(JF.t * 1.3) * 5 + Math.max(-16, Math.min(16, JF.vx * 0.06));
+    var near = Math.sin(JF.t * 0.45) * 0.7 + Math.sin(JF.t * 1.1 + 1) * 0.3;   // -1 far ... 1 near the viewer
+    var sx = (1 - JF.sq * 0.9) * (1 + 0.1 * near) * JF.km, sy = (1 + JF.sq) * (1 + 0.1 * near) * JF.km;
+    JF.el.style.setProperty('--sd', (0.5 + 0.5 * near).toFixed(2));
+    JF.el.style.transform = 'translate3d(' + (JF.x - JF.w / 2).toFixed(1) + 'px,' + (JF.y - JF.h / 2).toFixed(1) + 'px,0) rotate(' + (sway + JF.rot).toFixed(1) + 'deg) scale(' + sx.toFixed(3) + ',' + sy.toFixed(3) + ')';
+  }
+  // a click or tap on the page sends it swimming over there
+  addEventListener('pointerdown', function (ev) {
+    if (!JF.on || JF.held || ev.target.closest('a,button,input,textarea,select,[role=button],.x-drift')) return;
+    JF.tx = ev.clientX; JF.ty = ev.clientY; JF.tT = 6; JF.pulse = Math.min(JF.pulse, 0.05);
+  }, { passive: true });
+  function setupDrifter(on) {
+    if (!on) {
+      // left the Contact page: remove it
+      if (JF.raf) { cancelAnimationFrame(JF.raf); JF.raf = 0; }
+      JF.on = false; JF.held = false; JF.last = 0;
+      var old = document.querySelectorAll('.x-drift');
+      for (var oi = 0; oi < old.length; oi++) old[oi].parentNode.removeChild(old[oi]);
+      JF.el = null;
+      if (window.__xDrift === JF) window.__xDrift = null;
+      return;
+    }
+    // one creature per page, even if this script happened to run twice
+    if (JF.raf || (window.__xDrift && window.__xDrift !== JF)) return;
+    window.__xDrift = JF;
+    JF.next = performance.now() + 600;
+    JF.raf = requestAnimationFrame(jfFrame);
+  }
+
+
   // ---- menu: letters roll up on hover (copy of the "rolling text" of paul-michel.framer.website)
   function rollify(a) {
     if (a.querySelector('.x-roll')) return;
@@ -890,6 +1099,7 @@
     applyHome(p === 'home');
     setupTilt(p === 'contact');
     setupReel(p === 'home');
+    setupDrifter(p === 'contact');
 
     var faces = document.querySelectorAll('a[href="./#hero"],a[href="/#hero"],a[href="./"]');
     for (var q = 0; q < faces.length; q++) {
