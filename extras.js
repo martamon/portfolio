@@ -64,11 +64,7 @@
     'main[data-xhome]{display:block!important;position:relative!important;height:var(--hh)!important;min-height:0!important}',
     'main[data-xhome] [data-xhi]{position:absolute!important;left:var(--mx);top:var(--my);width:var(--mw)!important;margin:0!important}',
     'main[data-xhome] [data-xhi][data-xs]{display:none!important}',
-    // hover: the column of the hovered card widens and the others narrow to the space left; every picture keeps its
-    // proportions, so the cards below move up or down. Position, width and height animate.
-    'main[data-xnt],main[data-xnt] [data-xhi]{transition:none!important}',
-    'main[data-xhome]{transition:height .7s cubic-bezier(.22,.8,.2,1)}',
-    'main[data-xhome] [data-xhi]{transition:left .7s cubic-bezier(.22,.8,.2,1),top .7s cubic-bezier(.22,.8,.2,1),width .7s cubic-bezier(.22,.8,.2,1)}',
+    // hover: see placeHome (the layout is animated from script)
     // lexus extras: instagram video (cropped to the media only) and the RZ image
     '.x-insta,.x-img{position:relative;flex:none;overflow:hidden}',
     '.x-insta iframe{position:absolute;left:0;top:-' + IG_HEAD + 'px;width:100%;height:calc(100% + ' + (IG_HEAD + IG_FOOT) + 'px);border:0}',
@@ -295,7 +291,6 @@
         m.__xg = tr.length && m.offsetWidth ? { w: innerWidth, cols: tr.length, padL: parseFloat(cs.paddingLeft) || 0, padR: parseFloat(cs.paddingRight) || 0, padT: parseFloat(cs.paddingTop) || 0, padB: parseFloat(cs.paddingBottom) || 0, sy: sy } : null;
         if (!m.__xg) continue;
       }
-      setAttr(m, 'data-xnt', '');   // no animation while the layout is (re)measured
       var G = m.__xg, tracks = [];
       // same rhythm as the project galleries: 12px between columns, 18px between rows (room for the captions), the page's own side padding
       var cols = G.cols, gap = 12, rowGap = 18, padL = G.padL, padR = G.padR, padT = G.padT, padB = G.padB;
@@ -332,18 +327,15 @@
       }
       m.__xl = L;
       if (G.sy != null) { if (Math.abs(scrollY - G.sy) > 1) scrollTo(0, G.sy); G.sy = null; }
-      placeHome(m, m.__hv == null ? -1 : m.__hv);
-      m.offsetHeight;
-      requestAnimationFrame(function () { m.removeAttribute('data-xnt'); });
+      placeHome(m, m.__hv == null ? -1 : m.__hv, true);
     }
   }
 
-  // positions for the current hover: hv is the hovered column (-1: none)
-  function placeHome(m, hv) {
-    var L = m.__xl;
-    if (!L) return;
-    var cols = L.cols, wts = [], sum = 0, c, j;
-    for (c = 0; c < cols; c++) { wts.push(cols > 1 && c === hv ? 1.28 : 1); sum += wts[c]; }
+  // positions for the current hover: hv is the hovered column (-1: none). The column weights are animated here, one
+  // frame at a time for every card, so the cards can never be caught out of step with each other (overlapping).
+  function layoutHome(m, wts) {
+    var L = m.__xl, cols = L.cols, sum = 0, c, j;
+    for (c = 0; c < cols; c++) sum += wts[c];
     var widths = [], xs = [], x = L.padL, tracks = [];
     for (c = 0; c < cols; c++) { widths.push(L.avail * wts[c] / sum); xs.push(x); x += widths[c] + L.gap; tracks.push(0); }
     for (j = 0; j < L.kids.length; j++) {
@@ -355,6 +347,23 @@
       tracks[c] += L.r[j] * widths[c] + L.capH[j] + L.rowGap;
     }
     m.style.setProperty('--hh', (L.padT + Math.max.apply(null, tracks) - L.rowGap + L.padB).toFixed(1) + 'px');
+  }
+  function placeHome(m, hv, instant) {
+    var L = m.__xl;
+    if (!L) return;
+    var cols = L.cols, target = [], c;
+    for (c = 0; c < cols; c++) target.push(cols > 1 && c === hv ? 1.28 : 1);
+    if (m.__raf) { cancelAnimationFrame(m.__raf); m.__raf = 0; }
+    if (!L.cw || L.cw.length !== cols) { L.cw = target.slice(); instant = true; }
+    if (instant || matchMedia('(prefers-reduced-motion:reduce)').matches) { L.cw = target.slice(); layoutHome(m, L.cw); return; }
+    var from = L.cw.slice(), t0 = performance.now(), dur = 650;
+    var step = function (now) {
+      var p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+      for (var q = 0; q < cols; q++) L.cw[q] = from[q] + (target[q] - from[q]) * e;
+      layoutHome(m, L.cw);
+      m.__raf = p < 1 ? requestAnimationFrame(step) : 0;
+    };
+    m.__raf = requestAnimationFrame(step);
   }
   var homeLeave = 0;
   document.addEventListener('mouseover', function (e) {
