@@ -47,8 +47,12 @@
     'html[data-xdark] [data-xfi]{filter:none!important}',
     // the MARTAMON wordmark of the home hero (white): in the dark it becomes the same grey-blue as the type (white -> #b4c2d5)
     'img[src*="X22mGNitGaY93ZEObiQgYak"]{filter:brightness(calc(1 - .38 * var(--xtt))) sepia(var(--xtt)) hue-rotate(calc(175deg * var(--xtt))) saturate(calc(1 - .5 * var(--xtt)))}',
-    // the hair/face video of About has a light-blue backdrop of its own: it dims with the night
-    'html[data-xp="about"] video{filter:brightness(calc(1 - .5 * var(--xt))) saturate(calc(1 - .25 * var(--xt)))}',
+    // the hair/face video of About has a light-blue backdrop of its own: at night a soft frame in the page colour (that of the
+    // page at the video's edges, so it follows the theme) covers the backdrop around the head, and the head itself stays untouched
+    '.x-vfade{position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;opacity:var(--xt);background:color-mix(in srgb,rgb(181,197,217) calc((1 - var(--xt)) * 100%),rgb(41,60,89) calc(var(--xt) * 100%));-webkit-mask-image:radial-gradient(ellipse 40% 70% at 50% 47%,transparent 0,transparent 50%,#000 100%);mask-image:radial-gradient(ellipse 40% 70% at 50% 47%,transparent 0,transparent 50%,#000 100%)}',
+    // text that sits on that video is blended with it (exclusion): in the dark it is plain light type instead, or it would vanish
+    'html[data-xdark] [data-xbl]{mix-blend-mode:normal!important}',
+    'html[data-xdark][data-xp="about"] [data-xtc]{text-shadow:0 0 6px rgba(22,32,52,.8),0 0 18px rgba(22,32,52,.65)}',
     // contact portrait: its tilt shadow turns from blue to black
     '[data-x3d][data-hot]{box-shadow:0 28px 55px color-mix(in srgb,rgba(20,60,100,.32) calc((1 - var(--xtt)) * 100%),rgba(0,0,0,.55) calc(var(--xtt) * 100%))}',
     '[data-xtc]{color:color-mix(in srgb,var(--xo) calc((1 - var(--xtt)) * 100%),var(--xl) calc(var(--xtt) * 100%))!important}',
@@ -783,9 +787,28 @@
       // white type of the About page (the big "Martamon" and its text) goes soft too; white type elsewhere sits on pictures and stays
       var bigWhite = c && lum(c) > 0.9 && (parseFloat(cs.fontSize) >= 60 || pageKey() === 'about');
       if (!c || c[3] === 0 || (lum(c) > 0.45 && !bigWhite)) continue;
+      for (var an = e.parentElement; an && an !== document.body; an = an.parentElement) {
+        if (getComputedStyle(an).mixBlendMode !== 'normal') { an.setAttribute('data-xbl', ''); break; }
+      }
       e.style.setProperty('--xo', cs.color);
       e.style.setProperty('--xl', 'rgba(179,194,214,' + c[3] + ')');
       e.setAttribute('data-xtc', '');
+    }
+  }
+
+  // About: the frame that hides the video's light backdrop at night (see the css)
+  function ensureVideoFade(on) {
+    var heroes = document.querySelectorAll('[data-framer-name="Hero Video"]'), i;
+    for (i = 0; i < heroes.length; i++) {
+      var h = heroes[i], f = h.querySelector(':scope > .x-vfade');
+      if (!on || !h.querySelector('video')) { if (f) h.removeChild(f); continue; }
+      if (!f) {
+        f = document.createElement('div');
+        f.className = 'x-vfade';
+        var vids = h.querySelectorAll(':scope > [data-framer-name^="Video"]');
+        var last = vids.length ? vids[vids.length - 1] : null;
+        h.insertBefore(f, last ? last.nextSibling : h.firstChild);
+      }
     }
   }
 
@@ -824,6 +847,7 @@
     dropComingSoon(p);
     themeTag();
     ensureDial();
+    ensureVideoFade(p === 'about');
     styleMenu();
     styleCaptions(p === 'home');
     applyHome(p === 'home');
