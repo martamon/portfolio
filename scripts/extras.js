@@ -736,7 +736,7 @@
     if (fish.pop < 1) fish.pop = Math.min(1, fish.pop + dt * 1.6);
     fishStep(dt); fishDraw();
   }
-  function setupFish(on) {
+  function setupFish2d(on) {
     if (!on) {
       if (fish.on) { cancelAnimationFrame(fish.raf); if (fish.cv && fish.cv.parentNode) fish.cv.parentNode.removeChild(fish.cv); if (fish.hit && fish.hit.parentNode) fish.hit.parentNode.removeChild(fish.hit); fish.on = false; fish.held = false; }
       return;
@@ -768,6 +768,23 @@
     h.addEventListener('pointerup', drop); h.addEventListener('pointercancel', drop);
     fish.last = performance.now();
     fish.raf = requestAnimationFrame(fishFrame);
+  }
+  // the 3D fish (extras/fish3d.js with three.js, loaded only on Contact); the flat canvas one above is the fallback when WebGL is unavailable
+  var fish3 = { stop: null, loading: false, want: false };
+  function setupFish(on) {
+    fish3.want = on;
+    if (!on) {
+      if (fish3.stop) { fish3.stop(); fish3.stop = null; }
+      setupFish2d(false);
+      return;
+    }
+    if (fish3.stop || fish3.loading || fish.on) return;
+    fish3.loading = true;
+    import('/extras/fish3d.js').then(function (m) {
+      fish3.loading = false;
+      if (!fish3.want || fish3.stop) return;
+      fish3.stop = m.start();
+    }).catch(function () { fish3.loading = false; if (fish3.want) setupFish2d(true); });
   }
   addEventListener('pointermove', function (e) { fish.px = e.clientX; fish.py = e.clientY; }, { passive: true });
   addEventListener('resize', function () { if (fish.on) { fishResize(); fish.R = innerWidth < 600 ? 40 : 54; fish.hit.style.width = fish.R * 2.3 + 'px'; fish.hit.style.height = fish.R * 2.2 + 'px'; } });
