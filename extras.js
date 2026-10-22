@@ -116,7 +116,7 @@
     // the little creature that drifts by now and then (see setupDrifter); a drop shadow behind it
     '.x-drift{position:fixed;left:0;top:0;z-index:9;display:none;background:url(/extras/blob-sprite.webp) 0 0/1000% 100% no-repeat;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;will-change:transform}',
     // its shadow: a soft blurred oval behind and below it (a gradient, not a copy of its silhouette, so it can never look like a second one)
-    '.x-drift::before{content:"";position:absolute;left:8%;right:-4%;top:62%;height:52%;z-index:-1;border-radius:50%;background:radial-gradient(closest-side,rgba(20,32,80,.32),rgba(20,32,80,.14) 55%,rgba(20,32,80,0));transform:translate(10%,18%);pointer-events:none}',
+    '.x-drift::before{content:"";position:absolute;left:8%;right:-4%;top:62%;height:52%;z-index:-1;border-radius:50%;background:radial-gradient(closest-side,rgba(20,32,80,.32),rgba(20,32,80,.14) 55%,rgba(20,32,80,0));transform:translate(calc(6% + var(--sd,.5) * 12%),calc(10% + var(--sd,.5) * 22%));pointer-events:none}',
     '.x-drift.x-grab{cursor:grabbing}',
     // home reel: our own sound button
     '.x-reel-ctl{position:absolute;right:16px;bottom:16px;z-index:5;width:44px;height:44px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.45);color:#fff;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);pointer-events:auto;transition:background .2s}',
@@ -591,16 +591,13 @@
   }
 
   // ---- the little blue creature (the blob of extras/blob-model.js, pre-rendered to extras/blob-sprite.webp: 10 frames, eyes looking
-  // up-left ... down-right and a blink). Now and then it drifts across the screen like a jellyfish: it pulses (squeezes, shoots
-  // forward a little, then glides and sinks), its eyes follow the pointer, and it can be caught and carried. Plain DOM, so any browser.
-  var JF = { el: null, on: false, raf: 0, last: 0, next: 0, held: false };
+  // up-left ... down-right and a blink). On the Contact page only, it swims about the page like a jellyfish: it pulses (squeezes,
+  // shoots on a little towards where it is heading, then glides and sinks), wanders between spots, drifts towards and away from the
+  // viewer (bigger, with its shadow further off), its eyes follow the pointer, a click sends it over, and it can be caught and carried.
+  // Plain DOM, so any browser.
+  var JF = { el: null, on: false, raf: 0, last: 0, next: 0, held: false, tx: 0, ty: 0, tT: 0 };
   var JF_W = 224, JF_H = 183;
   function jfSize() { return innerWidth < 600 ? 50 : 64; }
-  function jfSchedule(first) {
-    // ?drift in the address shows it right away (for checking)
-    var now = /[?&]drift\b/.test(location.search);
-    JF.next = performance.now() + (now && first ? 300 : first ? 5000 + Math.random() * 7000 : 22000 + Math.random() * 38000);
-  }
   function jfEnsureEl() {
     if (JF.el && JF.el.isConnected) return JF.el;
     // only ever one on the page
@@ -635,12 +632,15 @@
     JF.dir = Math.random() < 0.5 ? 1 : -1;
     JF.x = JF.dir > 0 ? -w : innerWidth + w;
     JF.y = innerHeight * (0.25 + Math.random() * 0.5);
-    JF.vx = JF.dir * 60; JF.vy = 0; JF.t = 0; JF.pulse = 0.2; JF.since = 1; JF.sq = 0; JF.blink = 2 + Math.random() * 2; JF.blinkT = 0;
+    JF.vx = JF.dir * 60; JF.vy = 0; JF.t = 0; JF.pulse = 0.2; jfPick(); JF.since = 1; JF.sq = 0; JF.blink = 2 + Math.random() * 2; JF.blinkT = 0;
     JF.on = true;
     e.style.width = w + 'px'; e.style.height = JF.h + 'px';
     e.style.display = 'block';
   }
-  function jfHide() { JF.on = false; JF.held = false; if (JF.el) JF.el.style.display = 'none'; jfSchedule(false); }
+  // the next spot it swims to: anywhere on the page, not too close to the edges
+  function jfPick() {
+    JF.tx = innerWidth * (0.08 + Math.random() * 0.84); JF.ty = innerHeight * (0.12 + Math.random() * 0.76); JF.tT = 4 + Math.random() * 4;
+  }
   var jfPtr = { x: innerWidth / 2, y: innerHeight / 2 };
   addEventListener('pointermove', function (ev) { jfPtr.x = ev.clientX; jfPtr.y = ev.clientY; }, { passive: true });
   function jfFrame(now) {
@@ -656,18 +656,28 @@
       JF.vx = (JF.x - ox) / Math.max(dt, 0.001); JF.vy = (JF.y - oy) / Math.max(dt, 0.001);
       JF.sq += ((0.08 * Math.sin(JF.t * 18)) - JF.sq) * Math.min(1, dt * 10);
     } else {
-      // jellyfish swimming: a pulse every ~1.7 s; the squeeze shoots it forward and a little up, then it glides and sinks slowly
+      // jellyfish swimming: a pulse every ~1.7 s; the squeeze shoots it on towards the spot it is heading for, then it glides and sinks slowly
+      JF.tT -= dt;
+      var ddx = JF.tx - JF.x, ddy = JF.ty - JF.y, dd = Math.hypot(ddx, ddy) || 1;
+      if (dd < JF.w * 1.2 || JF.tT < 0) jfPick();
       JF.pulse -= dt * slow;
-      if (JF.pulse <= 0) { JF.pulse = 1.5 + Math.random() * 0.5; JF.since = 0; JF.vx += JF.dir * 95 * slow; JF.vy -= (30 + Math.random() * 40) * slow; }
+      if (JF.pulse <= 0) {
+        JF.pulse = 1.4 + Math.random() * 0.6; JF.since = 0;
+        var pw = (85 + Math.min(70, dd * 0.12)) * slow;
+        JF.vx += ddx / dd * pw; JF.vy += ddy / dd * pw - 18 * slow;
+        if (Math.abs(ddx) > JF.w * 0.4) JF.dir = ddx > 0 ? 1 : -1;
+      }
       JF.since += dt * slow;
       var squeeze = JF.since < 0.4 ? Math.sin(JF.since / 0.4 * Math.PI) : 0;
       JF.sq += (Math.max(0, squeeze) * 0.16 - JF.sq) * Math.min(1, dt * 12);
-      JF.vx += (JF.dir * 28 * slow - JF.vx) * Math.min(1, dt * 0.9);
-      JF.vy += (14 * slow - JF.vy) * Math.min(1, dt * 0.8);
-      // keep it on screen vertically
-      if (JF.y < innerHeight * 0.12) JF.vy += 60 * dt; else if (JF.y > innerHeight * 0.88) JF.vy -= 120 * dt;
+      var dr = Math.exp(-0.9 * dt); JF.vx *= dr; JF.vy *= dr;
+      JF.vy += 12 * slow * dt;
+      JF.vx += Math.sin(JF.t * 0.7) * 6 * slow * dt;
       JF.x += JF.vx * dt; JF.y += JF.vy * dt;
-      if ((JF.dir > 0 && JF.x > innerWidth + JF.w * 1.5) || (JF.dir < 0 && JF.x < -JF.w * 1.5)) { jfHide(); return; }
+      // stay on the page: turn back softly at the edges
+      var mx = JF.w * 0.6, my = JF.h * 0.6;
+      if (JF.x < mx) JF.vx += (mx - JF.x) * 3 * dt; else if (JF.x > innerWidth - mx) JF.vx -= (JF.x - (innerWidth - mx)) * 3 * dt;
+      if (JF.y < my) JF.vy += (my - JF.y) * 3 * dt; else if (JF.y > innerHeight - my) JF.vy -= (JF.y - (innerHeight - my)) * 3 * dt;
     }
     // eyes: nine frames for the pointer direction, one for the blink
     JF.blink -= dt; if (JF.blink < 0) { JF.blinkT = 0.14; JF.blink = 2.5 + Math.random() * 3; }
@@ -679,15 +689,32 @@
       fr = cy * 3 + cx;
     }
     if (JF.fr !== fr) { JF.fr = fr; JF.el.style.backgroundPosition = (fr / 9 * 100) + '% 0'; }
-    var sway = Math.sin(JF.t * 1.3) * 5 + Math.max(-12, Math.min(12, JF.vx * 0.03));
-    var sx = 1 - JF.sq * 0.9, sy = 1 + JF.sq;
+    var sway = Math.sin(JF.t * 1.3) * 5 + Math.max(-16, Math.min(16, JF.vx * 0.06));
+    var near = Math.sin(JF.t * 0.45) * 0.7 + Math.sin(JF.t * 1.1 + 1) * 0.3;   // -1 far ... 1 near the viewer
+    var sx = (1 - JF.sq * 0.9) * (1 + 0.1 * near), sy = (1 + JF.sq) * (1 + 0.1 * near);
+    JF.el.style.setProperty('--sd', (0.5 + 0.5 * near).toFixed(2));
     JF.el.style.transform = 'translate3d(' + (JF.x - JF.w / 2).toFixed(1) + 'px,' + (JF.y - JF.h / 2).toFixed(1) + 'px,0) rotate(' + sway.toFixed(1) + 'deg) scale(' + sx.toFixed(3) + ',' + sy.toFixed(3) + ')';
   }
-  function setupDrifter() {
+  // a click or tap on the page sends it swimming over there
+  addEventListener('pointerdown', function (ev) {
+    if (!JF.on || JF.held || ev.target.closest('a,button,input,textarea,select,[role=button],.x-drift')) return;
+    JF.tx = ev.clientX; JF.ty = ev.clientY; JF.tT = 6; JF.pulse = Math.min(JF.pulse, 0.05);
+  }, { passive: true });
+  function setupDrifter(on) {
+    if (!on) {
+      // left the Contact page: remove it
+      if (JF.raf) { cancelAnimationFrame(JF.raf); JF.raf = 0; }
+      JF.on = false; JF.held = false; JF.last = 0;
+      var old = document.querySelectorAll('.x-drift');
+      for (var oi = 0; oi < old.length; oi++) old[oi].parentNode.removeChild(old[oi]);
+      JF.el = null;
+      if (window.__xDrift === JF) window.__xDrift = null;
+      return;
+    }
     // one creature per page, even if this script happened to run twice
     if (JF.raf || (window.__xDrift && window.__xDrift !== JF)) return;
     window.__xDrift = JF;
-    jfSchedule(true);
+    JF.next = performance.now() + 600;
     JF.raf = requestAnimationFrame(jfFrame);
   }
 
@@ -1041,7 +1068,7 @@
     applyHome(p === 'home');
     setupTilt(p === 'contact');
     setupReel(p === 'home');
-    setupDrifter();
+    setupDrifter(p === 'contact');
 
     var faces = document.querySelectorAll('a[href="./#hero"],a[href="/#hero"],a[href="./"]');
     for (var q = 0; q < faces.length; q++) {
