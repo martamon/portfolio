@@ -25,6 +25,11 @@
     '[data-xnc]{z-index:10!important}',
     // the whole menu (links, dial) is negative/positive: white type with the header's difference blend, so it inverts against whatever is under it as you
     // scroll (almost black on the light blue, light over dark pictures); at night the type is the page's light blue for a softer grey-blue on the dark blue
+    // ...except through dusk and dawn: over the mid blues a difference blend of white turns into a tan/brown that hardly shows, so there the menu
+    // is plain type (dark, then light) in the page's own text colour
+    'html[data-xdusk] [data-xnc]{mix-blend-mode:normal!important}',
+    'html[data-xdusk] [data-xn]{color:var(--xfg)!important}',
+    'html[data-xdusk] .x-dial{color:var(--xfg);mix-blend-mode:normal}',
     '[data-xn]{color:#fff!important}',
     'html[data-xnight] [data-xn]{color:rgb(203,237,255)!important}',
     'html[data-xnight] .x-dial{color:rgb(203,237,255)}',
@@ -815,6 +820,7 @@
     var t = darkness(theme.hour), tt = Math.max(0, Math.min(1, (t - 0.575) / 0.03)), td = Math.max(0, Math.min(1, t / 0.45));
     var st = document.documentElement.style;
     st.setProperty('--xt', t.toFixed(3)); st.setProperty('--xtt', tt.toFixed(3)); st.setProperty('--xtd', td.toFixed(3));
+    if (t > 0.3 && t < 0.98) { if (!document.documentElement.hasAttribute('data-xdusk')) document.documentElement.setAttribute('data-xdusk', ''); } else document.documentElement.removeAttribute('data-xdusk');
     if (t >= 0.98) { if (!document.documentElement.hasAttribute('data-xnight')) document.documentElement.setAttribute('data-xnight', ''); } else document.documentElement.removeAttribute('data-xnight');
     if (t > 0.15) { if (!document.documentElement.hasAttribute('data-xmid')) document.documentElement.setAttribute('data-xmid', ''); } else document.documentElement.removeAttribute('data-xmid');
     if (tt > 0.5) { if (!document.documentElement.hasAttribute('data-xdark')) document.documentElement.setAttribute('data-xdark', ''); } else document.documentElement.removeAttribute('data-xdark');
