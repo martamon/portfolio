@@ -66,7 +66,9 @@
     'main[data-xhome] [data-xhi][data-xs]{display:none!important}',
     'main[data-xhome] [data-xhi]{overflow:hidden}',
     // Framer's own hover effect on the cards (a zoom of the card or its picture) would pile up on ours and push the card past its column
-    'main[data-xhome] [data-xhi] a,main[data-xhome] [data-xhi] a>div,main[data-xhome] [data-xhi] a>div>div,main[data-xhome] [data-xhi] img{transform:none!important;scale:none!important;transition:none!important}',
+    // no hover effect at all on the home cards: nothing inside them moves, zooms, rotates, fades or animates (the play button of the video thumbnails keeps its centring)
+    'main[data-xhome] [data-xhi]:hover,main[data-xhome] [data-xhi]:hover *:not(button):not(button *){transform:none!important;scale:none!important;rotate:none!important;translate:none!important;filter:none!important}',
+    'main[data-xhome] [data-xhi] a,main[data-xhome] [data-xhi] a *:not(button):not(button *){transform:none!important;scale:none!important;rotate:none!important;filter:none!important;transition:none!important;animation:none!important}',
     // hover: see placeHome (the layout is animated from script)
     // lexus extras: instagram video (cropped to the media only) and the RZ image
     '.x-insta,.x-img{position:relative;flex:none;overflow:hidden}',
