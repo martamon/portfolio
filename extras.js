@@ -886,7 +886,7 @@
     }
   }
   paintTheme();
-  var themeSeen = typeof WeakSet === 'function' ? new WeakSet() : null;
+  var themeSeen = typeof WeakMap === 'function' ? new WeakMap() : null, gradSeen = typeof WeakSet === 'function' ? new WeakSet() : null;
   var NAVY_A = [52, 74, 110], NAVY_B = [31, 45, 70];
   function lum(c) { return (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255; }
   function parseRgb(str) { var m = /rgba?\(([^)]+)\)/.exec(str); if (!m) return null; var p = m[1].split(/[ ,\/]+/).filter(Boolean).map(parseFloat); return p.length < 3 ? null : [p[0], p[1], p[2], p.length > 3 ? p[3] : 1]; }
@@ -918,11 +918,12 @@
     var all = document.body.querySelectorAll('*');
     for (i = 0; i < all.length; i++) {
       e = all[i];
-      if (themeSeen && themeSeen.has(e)) continue;
-      if (themeSeen) themeSeen.add(e);
+      if (e.hasAttribute('data-xtc')) continue;
+      var gradDone = gradSeen && gradSeen.has(e);
+      if (gradSeen) gradSeen.add(e);
       // other light gradients (fades over the hero, the bar of the intro...): faded ones turn into the dark page colour,
       // solid ones into a muted blue that still shows against it
-      if (!e.hasAttribute('data-xbgm') && !e.closest('.x-dial')) {
+      if (!gradDone && !e.hasAttribute('data-xbgm') && !e.closest('.x-dial')) {
         cs = getComputedStyle(e);
         if (cs.backgroundImage.indexOf('gradient') > -1 && e.offsetWidth > 0) {
           var faded = /rgba\([^)]*,\s*0(\.\d+)?\)/.test(cs.backgroundImage), any = false;
@@ -938,7 +939,12 @@
       }
       var own = false;
       for (q = 0; q < e.childNodes.length; q++) if (e.childNodes[q].nodeType === 3 && e.childNodes[q].nodeValue.trim()) { own = true; break; }
-      if (!own || e.closest('.x-dial,button,[data-xn]')) continue;
+      if (!own) continue;      // text that has not been rendered yet (the intro's captions) is looked at again on the next pass
+      // captions fade/animate in with another colour at first (white on the intro, say): look again a few times, a second apart
+      var ts = themeSeen && themeSeen.get(e), nowT = performance.now();
+      if (ts && (ts.n >= 8 || nowT - ts.t < 1000)) continue;
+      if (themeSeen) themeSeen.set(e, { n: ts ? ts.n + 1 : 1, t: nowT });
+      if (e.closest('.x-dial,button,[data-xn]')) continue;
       cs = getComputedStyle(e);
       var c = parseRgb(cs.color);
       // white type of the About page (the big "Martamon" and its text) goes soft too; white type elsewhere sits on pictures and stays
