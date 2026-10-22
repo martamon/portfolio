@@ -113,6 +113,8 @@
     // contact portrait: 3D tilt on hover
     '[data-x3d]{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) scale(var(--s,1))!important;transition:transform .2s ease-out,box-shadow .3s;will-change:transform;box-shadow:0 0 0 rgba(20,60,100,0)}',
     '[data-x3d][data-hot]{transition:transform .08s linear,box-shadow .3s}',
+    // contact: the blob (a transparent canvas over the page that lets every click through)
+    '.x-blob{position:fixed;left:0;top:0;z-index:9;pointer-events:none}',
     // home reel: our own sound button
     '.x-reel-ctl{position:absolute;right:16px;bottom:16px;z-index:5;width:44px;height:44px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.45);color:#fff;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);pointer-events:auto;transition:background .2s}',
     '.x-reel-ctl:hover{background:rgba(0,0,0,.65)}',
@@ -585,6 +587,19 @@
     reel.f = reel.wrap = reel.btn = null;
   }
 
+  // ---- contact: a glowing blue blob that hops about with a soft shadow (extras/blob3d.js with three.js, loaded only on Contact)
+  var blob3 = { stop: null, loading: false, want: false };
+  function setupBlob(on) {
+    blob3.want = on;
+    if (!on) { if (blob3.stop) { blob3.stop(); blob3.stop = null; } return; }
+    if (blob3.stop || blob3.loading) return;
+    blob3.loading = true;
+    import('/extras/blob3d.js').then(function (m) {
+      blob3.loading = false;
+      if (blob3.want && !blob3.stop) blob3.stop = m.start();
+    }).catch(function () { blob3.loading = false; });
+  }
+
   // ---- menu: letters roll up on hover (copy of the "rolling text" of paul-michel.framer.website)
   function rollify(a) {
     if (a.querySelector('.x-roll')) return;
@@ -934,6 +949,7 @@
     applyHome(p === 'home');
     setupTilt(p === 'contact');
     setupReel(p === 'home');
+    setupBlob(p === 'contact');
 
     var faces = document.querySelectorAll('a[href="./#hero"],a[href="/#hero"],a[href="./"]');
     for (var q = 0; q < faces.length; q++) {
