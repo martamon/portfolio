@@ -81,6 +81,9 @@
     '.x-dial-face{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}',
     '.x-dial-face .x-rim{fill:none;stroke:currentColor;stroke-width:1.5}',
     '.x-dial-face .x-lit{fill:currentColor}',
+    '.x-dial-ring{cursor:pointer!important}',
+    '.x-dial-ring.x-drag{cursor:ew-resize!important}',
+    '.x-dial-ring:hover .x-rim{stroke-width:2.2}',
     '@media(max-width:480px){.x-dial{gap:14px;font-size:12px}.x-dial-ring{width:44px;height:44px}}',
     // view toggle
     // the view toggle is the first row of the image column (not floating), so it can never cover the text or the images
@@ -1021,7 +1024,7 @@
       // goes the other way in the morning
       var lit = 1 - 0.88 * darkness(theme.hour), side = theme.hour >= 12 ? -1 : 1;
       var lc = d.querySelector('.x-lit');
-      if (lc) lc.setAttribute('cx', (side * (1 - lit) * 2 * 24.25).toFixed(2));
+      if (lc) lc.setAttribute('d', moonPath(25, side * (1 - lit) * 2 * 25));
       var tot = Math.floor(theme.hour * 60 + 0.01), hh = Math.floor(tot / 60) % 24, mm = tot % 60;
       d.querySelector('.x-h').textContent = (hh < 10 ? '0' : '') + hh;
       d.querySelector('.x-m').textContent = (mm < 10 ? '0' : '') + mm;
@@ -1029,6 +1032,26 @@
       if (lEl.textContent !== lab) lEl.textContent = lab;
       d.classList.toggle('x-trav', theme.travel);
     }
+  }
+  // the lit part of the moon: the lens where a disc of radius r and the same disc moved by cx overlap (no clipping, so no seam)
+  function moonPath(r, cx) {
+    if (Math.abs(cx) < 0.05) return 'M' + -r + ',0A' + r + ',' + r + ' 0 1 0 ' + r + ',0A' + r + ',' + r + ' 0 1 0 ' + -r + ',0Z';
+    if (Math.abs(cx) >= 2 * r - 0.05) return '';
+    var f = cx > 0 ? -1 : 1, c = Math.abs(cx) * -1, h = c / 2, y = Math.sqrt(r * r - h * h);
+    var p = function (x, yy) { return (x * f).toFixed(2) + ',' + yy.toFixed(2); };
+    var sw = f > 0 ? 0 : 1;
+    return 'M' + p(h, -y) + 'A' + r + ',' + r + ' 0 ' + (h > 0 ? 1 : 0) + ' ' + sw + ' ' + p(h, y) + 'A' + r + ',' + r + ' 0 ' + (h < c ? 1 : 0) + ' ' + sw + ' ' + p(h, -y) + 'Z';
+  }
+  // jump to day or night (a tap on the moon), the moon turning on its way
+  function tweenTravel(to) {
+    cancelAnimationFrame(theme.raf);
+    var from = theme.hour, delta = ((to - from + 36) % 24) - 12, t0 = performance.now();
+    var step = function (now) {
+      var p = Math.min(1, (now - t0) / 900), e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+      setHour(from + delta * e, true);
+      theme.raf = p < 1 ? requestAnimationFrame(step) : 0;
+    };
+    theme.raf = requestAnimationFrame(step);
   }
   function setHour(h, travel) {
     theme.hour = ((h % 24) + 24) % 24;
@@ -1055,22 +1078,38 @@
     if (!d) {
       d = document.createElement('div');
       d.className = 'x-dial';
-      d.innerHTML = '<div class="x-dial-txt"><span class="x-dial-label"></span><span class="x-dial-time"><b class="x-h"></b><i>.</i><b class="x-m"></b></span></div><div class="x-dial-ring" role="slider" aria-label="Time of day: drag to switch between light and dark" aria-valuemin="0" aria-valuemax="24" tabindex="0"><svg class="x-dial-face" viewBox="-26 -26 52 52" aria-hidden="true"><defs><clipPath id="x-moon"><circle r="23.2"/></clipPath></defs><circle class="x-lit" r="23.2" clip-path="url(#x-moon)"/><circle class="x-rim" r="24.25"/></svg></div>';
+      d.innerHTML = '<div class="x-dial-txt"><span class="x-dial-label"></span><span class="x-dial-time"><b class="x-h"></b><i>.</i><b class="x-m"></b></span></div><div class="x-dial-ring" role="slider" aria-label="Time of day: tap to switch day and night, drag sideways to change the hour" aria-valuemin="0" aria-valuemax="24" tabindex="0"><svg class="x-dial-face" viewBox="-26 -26 52 52" aria-hidden="true"><path class="x-lit"/><circle class="x-rim" r="24.25"/></svg></div>';
       var ring = d.querySelector('.x-dial-ring');
-      var fromPointer = function (e) {
-        var r = ring.getBoundingClientRect(), dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
-        if (Math.abs(dx) + Math.abs(dy) < 3) return;
-        var ang = Math.atan2(dx, -dy) * 180 / Math.PI;      // 0 = top (noon), clockwise
-        cancelAnimationFrame(theme.raf); theme.raf = 0;
-        setHour(DAY_HOUR + ang / 15, true);
+      // a tap on the moon switches day <-> night; dragging it left or right winds the time back or on (about 7 px an hour);
+      // the mouse wheel and the arrow keys do the same, Enter or Space switches
+      var drag = null;
+      ring.addEventListener('pointerdown', function (e) {
+        e.preventDefault(); try { ring.setPointerCapture(e.pointerId); } catch (err) {}
+        drag = { x: e.clientX, h: theme.hour, moved: false };
+      });
+      ring.addEventListener('pointermove', function (e) {
+        if (!drag) return;
+        var dx = e.clientX - drag.x;
+        if (!drag.moved && Math.abs(dx) < 4) return;
+        if (!drag.moved) { drag.moved = true; cancelAnimationFrame(theme.raf); theme.raf = 0; ring.classList.add('x-drag'); }
+        setHour(drag.h + dx / 7, true);
+      });
+      var end = function (e) {
+        if (!drag) return;
+        var tap = !drag.moved && e.type === 'pointerup';
+        drag = null; ring.classList.remove('x-drag');
+        try { ring.releasePointerCapture(e.pointerId); } catch (err) {}
+        if (tap) tweenTravel(darkness(theme.hour) < 0.5 ? 22 : 12);
       };
-      ring.addEventListener('pointerdown', function (e) { e.preventDefault(); ring.setPointerCapture(e.pointerId); ring.__drag = true; fromPointer(e); });
-      ring.addEventListener('pointermove', function (e) { if (ring.__drag) fromPointer(e); });
-      var end = function (e) { ring.__drag = false; try { ring.releasePointerCapture(e.pointerId); } catch (err) {} };
       ring.addEventListener('pointerup', end); ring.addEventListener('pointercancel', end);
+      ring.addEventListener('wheel', function (e) {
+        e.preventDefault(); cancelAnimationFrame(theme.raf); theme.raf = 0;
+        setHour(theme.hour + (e.deltaY || e.deltaX) / 60, true);
+      }, { passive: false });
       ring.addEventListener('keydown', function (e) {
         var k = e.key === 'ArrowRight' || e.key === 'ArrowUp' ? 0.5 : e.key === 'ArrowLeft' || e.key === 'ArrowDown' ? -0.5 : 0;
         if (k) { e.preventDefault(); setHour(theme.hour + k, true); }
+        else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tweenTravel(darkness(theme.hour) < 0.5 ? 22 : 12); }
       });
       var reset = function (e) { e.preventDefault(); tweenHour(localHour()); };
       d.querySelector('.x-dial-txt').addEventListener('click', function (e) { if (theme.travel) reset(e); });
