@@ -125,8 +125,9 @@
     'main[data-xhome] [data-xhi]{overflow:hidden}',
     // Framer's own hover effect on the cards (a zoom of the card or its picture) would pile up on ours and push the card past its column
     // the cards can't be hovered at all (so neither Framer's script nor css can react to the pointer); clicks are routed by position, see below
-    'main[data-xhome] [data-xhi],main[data-xhome] [data-xhi] *{pointer-events:none!important}',
-    'main[data-xhome]{cursor:pointer;-webkit-tap-highlight-color:transparent}',
+    // (only where there is a mouse: on phones the cards stay real links, so a tap always opens the project)
+    '@media(hover:hover) and (pointer:fine){main[data-xhome] [data-xhi],main[data-xhome] [data-xhi] *{pointer-events:none!important}}',
+    '@media(hover:hover) and (pointer:fine){main[data-xhome]{cursor:pointer}}',
     // no hover effect at all on the home cards: nothing inside them moves, zooms, rotates, fades or animates (the play button of the video thumbnails keeps its centring)
     'main[data-xhome] [data-xhi]:hover,main[data-xhome] [data-xhi]:hover *:not(button):not(button *){transform:none!important;scale:none!important;rotate:none!important;translate:none!important;filter:none!important}',
     'main[data-xhome] [data-xhi] a,main[data-xhome] [data-xhi] a *:not(button):not(button *){transform:none!important;scale:none!important;rotate:none!important;filter:none!important;transition:none!important;animation:none!important}',
@@ -162,6 +163,8 @@
     // at night it glows: a soft halo around it that breathes
     '.x-drift::after{content:"";position:absolute;left:-60%;top:-60%;width:220%;height:220%;z-index:-2;border-radius:50%;pointer-events:none;background:radial-gradient(closest-side,rgba(150,190,255,.42),rgba(110,155,255,.18) 45%,rgba(120,165,255,0) 72%);opacity:var(--xglow,0);animation:x-glow 2.8s ease-in-out infinite}',
     '@keyframes x-glow{50%{transform:scale(1.18);filter:brightness(1.25)}}',
+    // home on phones: the "Regular Studio" caption under the reel reads "Martamon", centred
+    '@media(max-width:809px){html[data-xp="home"] [data-framer-name="Info"]{left:0!important;right:0!important;width:100%!important;text-align:center!important;align-items:center!important;justify-content:center!important}html[data-xp="home"] [data-framer-name="Info"]>*{width:100%!important;text-align:center!important}html[data-xp="home"] [data-framer-name="Info"] p{text-align:center!important;--framer-text-alignment:center!important}}',
     // home on phones: Framer shows a picture carousel above the reel; only the reel stays
     '@media(max-width:809px){html[data-xp="home"] [data-framer-name="Hero"]>[data-xhg]{display:none!important}html[data-xp="home"] [data-framer-name="Hero"]{height:auto!important}}',
     '[data-xmr] [data-xmh]{display:none!important}',
@@ -1313,7 +1316,11 @@
     styleCaptions(p === 'home');
     applyHome(p === 'home');
     setupTilt(p === 'contact');
-    if (p === 'home') mobileHero();
+    if (p === 'home') {
+      mobileHero();
+      var ti = document.querySelectorAll('[data-framer-name="Info"] [data-framer-name="Title"] p');
+      for (var tq = 0; tq < ti.length; tq++) if (ti[tq].textContent.trim() === 'Regular Studio') ti[tq].textContent = 'Martamon';
+    }
     setupReel(p === 'home');
     setupDrifter(p === 'contact');
     setupContact(p === 'contact');
