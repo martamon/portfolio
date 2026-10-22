@@ -60,6 +60,10 @@
     'main[data-xm]~section,main[data-xm]~section *,main[data-xm]~*:not(.x-yt) footer,main[data-xm]~*:not(.x-yt) footer *{font-family:"Switzer","Switzer Placeholder",sans-serif!important;font-weight:500!important;font-size:12.5px!important;letter-spacing:-.01em!important;line-height:1.35!important}',
     'main[data-xm]~section a,main[data-xm]~section p,main[data-xm]~section span,main[data-xm]~*:not(.x-yt) footer a,main[data-xm]~*:not(.x-yt) footer p,main[data-xm]~*:not(.x-yt) footer span{color:rgba(20,20,20,.55)!important;transition:color .2s}',
     'main[data-xm]~section a:hover,main[data-xm]~section a:hover *,main[data-xm]~*:not(.x-yt) footer a:hover,main[data-xm]~*:not(.x-yt) footer a:hover *{color:#141414!important}',
+    // home: the project list is a masonry like the project galleries (each card goes under the shortest column)
+    'main[data-xhome]{display:block!important;position:relative!important;height:var(--hh)!important;min-height:0!important}',
+    'main[data-xhome] [data-xhi]{position:absolute!important;left:var(--mx);top:var(--my);width:var(--mw)!important;margin:0!important}',
+    'main[data-xhome] [data-xhi][data-xs]{display:none!important}',
     // lexus extras: instagram video (cropped to the media only) and the RZ image
     '.x-insta,.x-img{position:relative;flex:none;overflow:hidden}',
     '.x-insta iframe{position:absolute;left:0;top:-' + IG_HEAD + 'px;width:100%;height:calc(100% + ' + (IG_HEAD + IG_FOOT) + 'px);border:0}',
@@ -267,6 +271,50 @@
       heights[col] += h + gap;
     }
     g.style.setProperty('--ch', (top + pad + Math.max.apply(null, heights) - gap) + 'px');
+  }
+
+  // ---- home: masonry of the project cards, with the columns and gaps Framer's grid had at this breakpoint
+  function applyHome(on) {
+    var mains = document.querySelectorAll('main'), i, j;
+    for (i = 0; i < mains.length; i++) {
+      var m = mains[i];
+      if (!on || !m.querySelector('a[href^="./"] img')) { m.removeAttribute('data-xhome'); continue; }
+      // read the grid as Framer lays it out (hidden breakpoint variants have no grid and are skipped)
+      m.removeAttribute('data-xhome');
+      var cs = getComputedStyle(m);
+      var tracks = cs.display === 'grid' ? cs.gridTemplateColumns.split(' ').map(parseFloat).filter(function (n) { return n > 0; }) : [];
+      if (!tracks.length || !m.offsetWidth) continue;
+      var cols = tracks.length, colW = tracks[0], gapX = parseFloat(cs.columnGap) || 0, gapY = parseFloat(cs.rowGap) || 0;
+      var padL = parseFloat(cs.paddingLeft) || 0, padT = parseFloat(cs.paddingTop) || 0, padB = parseFloat(cs.paddingBottom) || 0;
+      var kids = [], heights = [];
+      // the cards may sit inside wrappers that have no box of their own (display: contents)
+      var collect = function (el) {
+        for (var q = 0; q < el.children.length; q++) {
+          var c = el.children[q], d = getComputedStyle(c).display;
+          if (d === 'contents' || (d !== 'none' && c.querySelectorAll('a[href^="./"]').length >= 3)) collect(c); else if (d !== 'none') kids.push(c);
+        }
+      };
+      collect(m);
+      // a card's box has spare room under its caption: stack by the caption's bottom edge instead
+      for (j = 0; j < kids.length; j++) {
+        var cap = kids[j].querySelector('[data-xcap]'), hh = kids[j].offsetHeight;
+        if (cap) hh = Math.min(hh, Math.round(cap.getBoundingClientRect().bottom - kids[j].getBoundingClientRect().top));
+        heights.push(hh);
+      }
+      gapY = 18;
+      for (j = 0; j < cols; j++) tracks[j] = 0;
+      for (j = 0; j < kids.length; j++) {
+        var col = 0, k;
+        for (k = 1; k < cols; k++) if (tracks[k] < tracks[col]) col = k;
+        kids[j].setAttribute('data-xhi', '');
+        kids[j].style.setProperty('--mx', (padL + col * (colW + gapX)) + 'px');
+        kids[j].style.setProperty('--my', (padT + tracks[col]) + 'px');
+        kids[j].style.setProperty('--mw', colW + 'px');
+        tracks[col] += heights[j] + gapY;
+      }
+      m.style.setProperty('--hh', (padT + Math.max.apply(null, tracks) - gapY + padB) + 'px');
+      setAttr(m, 'data-xhome', '');
+    }
   }
 
   function ensureYoutube(m) {
@@ -525,6 +573,7 @@
     dropComingSoon(p);
     styleMenu();
     styleCaptions(p === 'home');
+    applyHome(p === 'home');
     setupTilt(p === 'contact');
     setupReel(p === 'home');
 
@@ -567,7 +616,7 @@
 
   new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['href', 'class', 'data-gal', 'data-xg', 'data-xm'] });
   // images and videos finishing their load change the ratios the grid needs
-  document.addEventListener('load', function (e) { var t = e.target; if (t && (t.tagName === 'IMG' || t.tagName === 'VIDEO') && mode === 'grid') schedule(); }, true);
+  document.addEventListener('load', function (e) { var t = e.target; if (t && (t.tagName === 'IMG' || t.tagName === 'VIDEO') && (mode === 'grid' || pageKey() === 'home')) schedule(); }, true);
   document.addEventListener('loadedmetadata', function (e) { if (mode === 'grid') schedule(); }, true);
   addEventListener('load', function () { schedule(); });
   [400, 1000, 2000, 4000].forEach(function (ms) { setTimeout(schedule, ms); });
