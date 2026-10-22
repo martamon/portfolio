@@ -74,9 +74,19 @@
     '.x-dial-time b{font-weight:500}',
     '.x-dial-time i{font-style:normal;display:inline-block;width:2.2em;text-align:center;animation:x-blink 1s step-end infinite}',
     '@keyframes x-blink{50%{opacity:0}}',
-    '.x-dial-ring{position:relative;width:52px;height:52px;box-sizing:border-box;border:1.5px solid currentColor;border-radius:50%;cursor:grab;touch-action:none;flex:none}',
+    // the dial: a 24-hour clock face (no ring: a tick for every hour, longer at 0, 6, 12 and 18, and a dot in the middle) with a sun
+    // going round it by day that turns into a crescent moon at night
+    '.x-dial-ring{position:relative;width:52px;height:52px;box-sizing:border-box;border-radius:50%;cursor:grab;touch-action:none;flex:none}',
+    '.x-dial-face{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}',
+    '.x-dial-face line{stroke:currentColor;stroke-width:1.3;stroke-linecap:round}',
+    '.x-dial-face line.x-q{stroke-width:1.8}',
+    '.x-dial-face circle{fill:currentColor}',
     '.x-dial-ring:active{cursor:grabbing}',
-    '.x-dial-dot{position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;box-sizing:border-box;border:1.5px solid currentColor;border-radius:50%;pointer-events:none}',
+    '.x-dial-dot{position:absolute;left:50%;top:50%;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;box-sizing:border-box;border-radius:50%;background:currentColor;pointer-events:none;transition:background .4s,box-shadow .4s}',
+    // sun: a filled dot with a faint halo; moon: the same dot hollowed into a crescent
+    '.x-dial-dot::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1px dotted currentColor;opacity:.7;transition:opacity .4s}',
+    'html[data-xdark] .x-dial-dot{background:transparent;box-shadow:inset -3px -1px 0 0 currentColor}',
+    'html[data-xdark] .x-dial-dot::after{opacity:0}',
     '@media(max-width:480px){.x-dial{gap:14px;font-size:12px}.x-dial-ring{width:44px;height:44px}}',
     // view toggle
     // the view toggle is the first row of the image column (not floating), so it can never cover the text or the images
@@ -1014,7 +1024,7 @@
     var d = document.querySelector('.x-dial');
     if (d) {
       var ang = (theme.hour - DAY_HOUR) * 15, rad = ang * Math.PI / 180, dot = d.querySelector('.x-dial-dot');
-      var ringR = d.querySelector('.x-dial-ring').offsetWidth / 2 * 0.6;   // the ring sits inside the dial, not on its edge
+      var ringR = d.querySelector('.x-dial-ring').offsetWidth / 2 * 0.56;   // the sun / moon goes round inside the hour ticks
       dot.style.transform = 'translate(' + (Math.sin(rad) * ringR).toFixed(2) + 'px,' + (-Math.cos(rad) * ringR).toFixed(2) + 'px)';
       var tot = Math.floor(theme.hour * 60 + 0.01), hh = Math.floor(tot / 60) % 24, mm = tot % 60;
       d.querySelector('.x-h').textContent = (hh < 10 ? '0' : '') + hh;
@@ -1049,7 +1059,7 @@
     if (!d) {
       d = document.createElement('div');
       d.className = 'x-dial';
-      d.innerHTML = '<div class="x-dial-txt"><span class="x-dial-label"></span><span class="x-dial-time"><b class="x-h"></b><i>.</i><b class="x-m"></b></span></div><div class="x-dial-ring" role="slider" aria-label="Time of day: drag to switch between light and dark" aria-valuemin="0" aria-valuemax="24" tabindex="0"><span class="x-dial-dot"></span></div>';
+      d.innerHTML = '<div class="x-dial-txt"><span class="x-dial-label"></span><span class="x-dial-time"><b class="x-h"></b><i>.</i><b class="x-m"></b></span></div><div class="x-dial-ring" role="slider" aria-label="Time of day: drag to switch between light and dark" aria-valuemin="0" aria-valuemax="24" tabindex="0"><svg class="x-dial-face" viewBox="0 0 52 52" aria-hidden="true"><line class="x-q" x1="26.0" y1="1.0" x2="26.0" y2="6.5"/><line x1="32.5" y1="1.9" x2="31.7" y2="4.7"/><line x1="38.5" y1="4.3" x2="37.0" y2="6.9"/><line x1="43.7" y1="8.3" x2="41.6" y2="10.4"/><line x1="47.7" y1="13.5" x2="45.1" y2="15.0"/><line x1="50.1" y1="19.5" x2="47.3" y2="20.3"/><line class="x-q" x1="51.0" y1="26.0" x2="45.5" y2="26.0"/><line x1="50.1" y1="32.5" x2="47.3" y2="31.7"/><line x1="47.7" y1="38.5" x2="45.1" y2="37.0"/><line x1="43.7" y1="43.7" x2="41.6" y2="41.6"/><line x1="38.5" y1="47.7" x2="37.0" y2="45.1"/><line x1="32.5" y1="50.1" x2="31.7" y2="47.3"/><line class="x-q" x1="26.0" y1="51.0" x2="26.0" y2="45.5"/><line x1="19.5" y1="50.1" x2="20.3" y2="47.3"/><line x1="13.5" y1="47.7" x2="15.0" y2="45.1"/><line x1="8.3" y1="43.7" x2="10.4" y2="41.6"/><line x1="4.3" y1="38.5" x2="6.9" y2="37.0"/><line x1="1.9" y1="32.5" x2="4.7" y2="31.7"/><line class="x-q" x1="1.0" y1="26.0" x2="6.5" y2="26.0"/><line x1="1.9" y1="19.5" x2="4.7" y2="20.3"/><line x1="4.3" y1="13.5" x2="6.9" y2="15.0"/><line x1="8.3" y1="8.3" x2="10.4" y2="10.4"/><line x1="13.5" y1="4.3" x2="15.0" y2="6.9"/><line x1="19.5" y1="1.9" x2="20.3" y2="4.7"/><circle cx="26" cy="26" r="1.4"/></svg><span class="x-dial-dot"></span></div>';
       var ring = d.querySelector('.x-dial-ring');
       var fromPointer = function (e) {
         var r = ring.getBoundingClientRect(), dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
