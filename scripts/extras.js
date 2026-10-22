@@ -64,10 +64,11 @@
     'main[data-xhome]{display:block!important;position:relative!important;height:var(--hh)!important;min-height:0!important}',
     'main[data-xhome] [data-xhi]{position:absolute!important;left:var(--mx);top:var(--my);width:var(--mw)!important;margin:0!important}',
     'main[data-xhome] [data-xhi][data-xs]{display:none!important}',
-    // captions sit on the picture's bottom-left corner, so cards are only as tall as their image
-    'main[data-xhome] [data-xhi] a{position:relative!important;height:auto!important}',
-    'main[data-xhome] [data-xhi] a>:last-child:not(:first-child){position:absolute!important;left:14px;bottom:10px;width:auto!important;height:auto!important;pointer-events:none}',
-    'main[data-xhome] [data-xcap]{color:#fff!important;text-shadow:0 1px 10px rgba(0,0,0,.45)}',
+    // hover: the card under the pointer grows and the others shrink a little, smoothly (the picture's link turns, so Framer's own reveal animation on the card is left alone)
+    'main[data-xhome] [data-xhi] a{transition:transform .65s cubic-bezier(.22,.8,.2,1);transform-origin:50% 40%;will-change:transform}',
+    '@media(hover:hover){main[data-xhome] [data-xhi]:hover{z-index:3}',
+    'main[data-xhome] [data-xhi]:hover a{transform:scale(1.16)!important}',
+    'main[data-xhome]:has([data-xhi]:hover) [data-xhi]:not(:hover) a{transform:scale(.93)!important}}',
     // lexus extras: instagram video (cropped to the media only) and the RZ image
     '.x-insta,.x-img{position:relative;flex:none;overflow:hidden}',
     '.x-insta iframe{position:absolute;left:0;top:-' + IG_HEAD + 'px;width:100%;height:calc(100% + ' + (IG_HEAD + IG_FOOT) + 'px);border:0}',
@@ -283,15 +284,20 @@
     for (i = 0; i < mains.length; i++) {
       var m = mains[i];
       if (!on || !m.querySelector('a[href^="./"] img')) { m.removeAttribute('data-xhome'); continue; }
-      // read the grid as Framer lays it out (hidden breakpoint variants have no grid and are skipped)
-      m.removeAttribute('data-xhome');
-      var cs = getComputedStyle(m);
-      var tracks = cs.display === 'grid' ? cs.gridTemplateColumns.split(' ').map(parseFloat).filter(function (n) { return n > 0; }) : [];
-      if (!tracks.length || !m.offsetWidth) continue;
-      // same rhythm as the project galleries: 12px between images, the page's own side padding
-      var cols = tracks.length, gap = 12;
-      var padL = parseFloat(cs.paddingLeft) || 0, padR = parseFloat(cs.paddingRight) || 0, padT = parseFloat(cs.paddingTop) || 0, padB = parseFloat(cs.paddingBottom) || 0;
-      var colW = Math.floor((m.clientWidth - padL - padR - gap * (cols - 1)) / cols);
+      // read the grid as Framer lays it out (hidden breakpoint variants have no grid and are skipped); only when the
+      // window width changed, because taking the layout off for a moment can throw the page's scroll position to the top
+      if (!m.__xg || m.__xg.w !== innerWidth) {
+        var sy = scrollY;
+        m.removeAttribute('data-xhome');
+        var cs = getComputedStyle(m);
+        var tr = cs.display === 'grid' ? cs.gridTemplateColumns.split(' ').map(parseFloat).filter(function (n) { return n > 0; }) : [];
+        m.__xg = tr.length && m.offsetWidth ? { w: innerWidth, cols: tr.length, padL: parseFloat(cs.paddingLeft) || 0, padR: parseFloat(cs.paddingRight) || 0, padT: parseFloat(cs.paddingTop) || 0, padB: parseFloat(cs.paddingBottom) || 0, sy: sy } : null;
+        if (!m.__xg) continue;
+      }
+      var G = m.__xg, tracks = [];
+      // same rhythm as the project galleries: 12px between columns, 18px between rows (room for the captions), the page's own side padding
+      var cols = G.cols, gap = 12, rowGap = 18, padL = G.padL, padR = G.padR, padT = G.padT, padB = G.padB;
+      var colW = Math.floor((Math.min(m.clientWidth, innerWidth) - padL - padR - gap * (cols - 1)) / cols);
       var kids = [], heights = [];
       // the cards may sit inside wrappers that have no box of their own (display: contents)
       var collect = function (el) {
@@ -306,10 +312,11 @@
         kids[j].style.setProperty('--mw', colW + 'px');
       }
       setAttr(m, 'data-xhome', '');
-      // only the picture takes room: the caption sits over it (see the css)
+      // a card is its picture plus the caption row under it; the box has spare room below the caption, which is cut off
       for (j = 0; j < kids.length; j++) {
-        var link = kids[j].querySelector('a'), pic = link && link.firstElementChild;
-        heights.push(Math.round((pic || kids[j]).getBoundingClientRect().height) || kids[j].offsetHeight);
+        var cap = kids[j].querySelector('[data-xcap]'), hh = kids[j].offsetHeight;
+        if (cap) hh = Math.min(hh, Math.round(cap.getBoundingClientRect().bottom - kids[j].getBoundingClientRect().top));
+        heights.push(hh);
       }
       for (j = 0; j < cols; j++) tracks[j] = 0;
       for (j = 0; j < kids.length; j++) {
@@ -317,9 +324,10 @@
         for (k = 1; k < cols; k++) if (tracks[k] < tracks[col]) col = k;
         kids[j].style.setProperty('--mx', (padL + col * (colW + gap)) + 'px');
         kids[j].style.setProperty('--my', (padT + tracks[col]) + 'px');
-        tracks[col] += heights[j] + gap;
+        tracks[col] += heights[j] + rowGap;
       }
-      m.style.setProperty('--hh', (padT + Math.max.apply(null, tracks) - gap + padB) + 'px');
+      if (G.sy != null) { if (Math.abs(scrollY - G.sy) > 1) scrollTo(0, G.sy); G.sy = null; }
+      m.style.setProperty('--hh', (padT + Math.max.apply(null, tracks) - rowGap + padB) + 'px');
     }
   }
 
