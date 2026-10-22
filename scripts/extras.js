@@ -79,7 +79,7 @@
     '.x-dial-ring{position:relative;width:52px;height:52px;box-sizing:border-box;border-radius:50%;cursor:grab;touch-action:none;flex:none}',
     '.x-dial-ring:active{cursor:grabbing}',
     '.x-dial-face{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}',
-    '.x-dial-face .x-rim{fill:none;stroke:currentColor;stroke-width:1.5}',
+    '.x-dial-face .x-rim{fill:none;stroke:currentColor;stroke-width:1.5;stroke-linejoin:round}',
     '.x-dial-face .x-lit{fill:currentColor}',
     // a slow, small swell so it invites a click; still while hovered or dragged
     '.x-dial-ring{animation:x-breathe 2.6s ease-in-out infinite}',
@@ -1028,8 +1028,7 @@
       // lit part of the moon: all of it by day, a sliver (12%) in the night; the shadow comes in from the right in the evening (the sliver left on the left) and
       // goes the other way in the morning
       var lit = 1 - 0.88 * darkness(theme.hour), side = theme.hour >= 12 ? -1 : 1;
-      var lc = d.querySelector('.x-lit');
-      if (lc) lc.setAttribute('d', moonPath(25, side * (1 - lit) * 2 * 25));
+      theme.moonDx = side * (1 - lit) * 2 * 25.5; moonDraw();
       var tot = Math.floor(theme.hour * 60 + 0.01), hh = Math.floor(tot / 60) % 24, mm = tot % 60;
       d.querySelector('.x-h').textContent = (hh < 10 ? '0' : '') + hh;
       d.querySelector('.x-m').textContent = (mm < 10 ? '0' : '') + mm;
@@ -1058,6 +1057,35 @@
     };
     theme.raf = requestAnimationFrame(step);
   }
+  // the moon is not a perfect circle: a soft pebble shape whose outline keeps changing slowly (a few low waves round its edge, each
+  // drifting at its own pace). The lit part is the same shape moved sideways, clipped to the shape.
+  var MW = [[2, 0.045, 0.31, 0.4], [3, 0.035, -0.23, 2.1], [5, 0.018, 0.47, 4.3]];
+  function blob(R, t, dx) {
+    var n = 48, d = '', i, k;
+    for (i = 0; i <= n; i++) {
+      var a = i / n * Math.PI * 2, r = R;
+      for (k = 0; k < MW.length; k++) r += R * MW[k][1] * Math.sin(MW[k][0] * a + MW[k][2] * t + MW[k][3]);
+      d += (i ? 'L' : 'M') + (Math.sin(a) * r + dx).toFixed(2) + ',' + (-Math.cos(a) * r).toFixed(2);
+    }
+    return d + 'Z';
+  }
+  var moonT = 0, moonRaf = 0;
+  function moonDraw() {
+    var d = document.querySelector('.x-dial');
+    if (!d) return;
+    var t = moonT, rim = d.querySelector('.x-rim'), cl = d.querySelector('.x-clip'), lit = d.querySelector('.x-lit');
+    if (!rim) return;
+    rim.setAttribute('d', blob(24.25, t, 0));
+    cl.setAttribute('d', blob(25, t, 0));        // to the outer edge of the outline, so the fill meets it without a seam
+    var dx = theme.moonDx || 0;
+    lit.setAttribute('d', Math.abs(dx) >= 50 ? '' : blob(25.5, t, dx));
+  }
+  function moonTick(now) {
+    moonRaf = requestAnimationFrame(moonTick);
+    if (document.hidden) return;
+    moonT = now / 1000 * (matchMedia('(prefers-reduced-motion:reduce)').matches ? 0 : 1);
+    moonDraw();
+  }
   function setHour(h, travel) {
     theme.hour = ((h % 24) + 24) % 24;
     if (travel) { theme.travel = true; try { sessionStorage.setItem('xt-travel', String(theme.hour)); } catch (e) {} }
@@ -1083,7 +1111,7 @@
     if (!d) {
       d = document.createElement('div');
       d.className = 'x-dial';
-      d.innerHTML = '<div class="x-dial-txt"><span class="x-dial-label"></span><span class="x-dial-time"><b class="x-h"></b><i>.</i><b class="x-m"></b></span></div><div class="x-dial-ring" role="slider" aria-label="Time of day: tap to switch day and night, drag sideways to change the hour" aria-valuemin="0" aria-valuemax="24" tabindex="0"><svg class="x-dial-face" viewBox="-26 -26 52 52" aria-hidden="true"><path class="x-lit"/><circle class="x-rim" r="24.25"/></svg></div>';
+      d.innerHTML = '<div class="x-dial-txt"><span class="x-dial-label"></span><span class="x-dial-time"><b class="x-h"></b><i>.</i><b class="x-m"></b></span></div><div class="x-dial-ring" role="slider" aria-label="Time of day: tap to switch day and night, drag sideways to change the hour" aria-valuemin="0" aria-valuemax="24" tabindex="0"><svg class="x-dial-face" viewBox="-26 -26 52 52" aria-hidden="true"><defs><clipPath id="x-moonclip"><path class="x-clip"/></clipPath></defs><g clip-path="url(#x-moonclip)"><path class="x-lit"/></g><path class="x-rim"/></svg></div>';
       var ring = d.querySelector('.x-dial-ring');
       // a tap on the moon switches day <-> night; dragging it left or right winds the time back or on (about 7 px an hour);
       // the mouse wheel and the arrow keys do the same, Enter or Space switches
@@ -1120,6 +1148,7 @@
       d.querySelector('.x-dial-txt').addEventListener('click', function (e) { if (theme.travel) reset(e); });
       document.body.appendChild(d);
       paintTheme();
+      if (!moonRaf) moonRaf = requestAnimationFrame(moonTick);
     }
     // sit just left of the menu links
     var link = document.querySelector('a[data-xn]');
