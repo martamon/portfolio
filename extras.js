@@ -1,7 +1,7 @@
 // Site-specific additions on top of the mirrored Framer pages. Loaded on every page (see add-root-shim.py).
 //  - about: the hair video fades into the page background at the top and bottom edges
 //  - lexus-singapore: Instagram reel appended to the image column
-//  - schweppes: full-screen landscape YouTube video right under the text
+//  - schweppes: YouTube video below the text, with a sound button
 //  - project pages: toggle between the single-column list and a grid, like nolan-barret.framer.website/playground
 // Framer re-renders on navigation, so everything is applied by an idempotent apply() that is re-run on DOM changes.
 (function () {
@@ -71,18 +71,14 @@
     '.x-reel-ctl{position:absolute;right:16px;bottom:16px;z-index:5;width:44px;height:44px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.45);color:#fff;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);pointer-events:auto;transition:background .2s}',
     '.x-reel-ctl:hover{background:rgba(0,0,0,.65)}',
     '.x-reel-ctl svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}',
-    // schweppes full-screen video: fills the viewport (cropping the sides a little) on screens up to 16:9,
-    // and shows the whole frame, full width, on wider or portrait screens
-    // schweppes: on landscape screens the video is the page background (behind the menu and the text, with a 20px margin);
-    // on portrait screens it sits below the text, full width at 16:9. Its size follows its box, whatever the screen.
+    // schweppes: text on top like the other projects, the video below it (16:9, full width) with some air and its own sound button
     '[data-xr]{isolation:isolate}',
-    '.x-yt{position:relative;width:calc(100% - 40px);margin:20px;aspect-ratio:16/9;overflow:hidden;background:#000;container-type:size}',
-    '.x-yt iframe{position:absolute;top:50%;left:50%;width:max(100vw,177.78vh);height:max(100vh,56.25vw);transform:translate(-50%,-50%);border:0}',
-    '.x-yt iframe{width:max(100cqw,177.78cqh);height:max(100cqh,56.25cqw)}',
-    '@media(min-aspect-ratio:1/1){.x-yt{position:absolute;z-index:-1;top:20px;left:20px;right:20px;width:auto;margin:0;aspect-ratio:auto;height:calc(100vh - 40px);height:calc(100dvh - 40px)}',
-    'main[data-xy]{min-height:100vh!important;min-height:100dvh!important}',
-    'main[data-xy]>:first-child{margin-left:20px}',
-    'main[data-xy] *{color:#fff!important;text-shadow:0 1px 14px rgba(0,0,0,.35)}}',
+    '.x-yt{position:relative;width:calc(100% - 40px);margin:56px 20px 20px;aspect-ratio:16/9;overflow:hidden;background:#000}',
+    '.x-yt iframe{position:absolute;inset:0;width:100%;height:100%;border:0}',
+    // face of the menu: turns around on hover
+    '[data-xfc]{z-index:11!important}',
+    '[data-xf]{display:block;transition:transform .9s cubic-bezier(.3,1.2,.4,1);transform-origin:center}',
+    '[data-xf]:hover{transform:perspective(500px) rotateY(360deg)}',
     '[data-xs]{display:none!important}'
   ].join('\n');
   var style = document.createElement('style');
@@ -215,17 +211,34 @@
     }
   });
 
+  function knownRatio(c) {
+    if (c.hasAttribute('data-x')) return 0;
+    var im = c.querySelector('img'), v = c.querySelector('video');
+    if (im) {
+      var mm = /[?&]width=(\d+)&height=(\d+)/.exec(im.getAttribute('src') || '');
+      if (mm && +mm[1] && +mm[2]) return +mm[2] / +mm[1];
+      if (im.complete && im.naturalWidth) return im.naturalHeight / im.naturalWidth;
+    }
+    if (v && v.videoWidth) return v.videoHeight / v.videoWidth;
+    return 0;
+  }
+
   function applyGrid(m, g) {
     var kids = items(g), i, c;
     // remember each item's height/width ratio from the single-column layout
+    // images carry their pixel size in the URL (width=..&height=..): exact even before they load
     var missing = false;
-    for (i = 0; i < kids.length; i++) if (!kids[i].getAttribute('data-r')) missing = true;
+    for (i = 0; i < kids.length; i++) {
+      var kr = knownRatio(kids[i]);
+      if (kr) kids[i].setAttribute('data-r', String(kr));
+      else if (!kids[i].getAttribute('data-r')) missing = true;
+    }
     if (missing) {
       var was = m.getAttribute('data-gal');
       m.removeAttribute('data-gal');
       for (i = 0; i < kids.length; i++) {
         c = kids[i];
-        if (!c.getAttribute('data-r') && c.offsetWidth) c.setAttribute('data-r', String(c.offsetHeight / c.offsetWidth));
+        if (!c.getAttribute('data-r') && c.offsetWidth && c.offsetHeight > 20) c.setAttribute('data-r', String(c.offsetHeight / c.offsetWidth));
       }
       if (was) m.setAttribute('data-gal', was);
     }
@@ -260,16 +273,33 @@
       sec = document.createElement('div');
       sec.className = 'x-yt';
       var f = document.createElement('iframe');
-      f.src = 'https://www.youtube-nocookie.com/embed/' + YOUTUBE + '?autoplay=1&mute=1&loop=1&playlist=' + YOUTUBE + '&rel=0&modestbranding=1&playsinline=1';
+      f.src = 'https://www.youtube-nocookie.com/embed/' + YOUTUBE + '?autoplay=1&mute=1&loop=1&playlist=' + YOUTUBE + '&rel=0&modestbranding=1&playsinline=1&enablejsapi=1';
       f.title = 'Schweppes';
       f.allowFullscreen = true;
       f.setAttribute('allow', 'autoplay; encrypted-media; fullscreen; picture-in-picture');
       sec.appendChild(f);
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'x-reel-ctl';
+      var muted = true;
+      var paint = function () {
+        b.innerHTML = muted ? ICON_OFF : ICON_ON;
+        b.setAttribute('aria-label', muted ? 'Turn sound on' : 'Turn sound off');
+      };
+      b.addEventListener('click', function (e) {
+        e.preventDefault(); e.stopPropagation();
+        muted = !muted;
+        if (muted) yt('mute', [], f); else { yt('unMute', [], f); yt('setVolume', [100], f); }
+        yt('playVideo', [], f);
+        paint();
+      });
+      paint();
+      sec.appendChild(b);
       m.parentNode.insertBefore(sec, m.nextSibling);
     }
     setAttr(m, 'data-xy', '');
-    // Framer lays the page blocks out with CSS `order` (it changes per breakpoint): sit right after the text
-    var ord = String((parseInt(getComputedStyle(m).order, 10) || 0) + 1);
+    // Framer lays the page blocks out with CSS `order` (it changes per breakpoint): same order as the text block and right after it in the DOM, so it lands just below the text
+    var ord = String(parseInt(getComputedStyle(m).order, 10) || 0);
     if (sec.style.order !== ord) sec.style.order = ord;
     // the empty image column and the small copy of this video further down are replaced by the full-screen one
     var g = galleryEl(m);
@@ -329,8 +359,8 @@
   var reel = { f: null, wrap: null, btn: null, muted: true, io: null, timers: [] };
   var ICON_OFF = '<svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m16 9 5 6M21 9l-5 6"/></svg>';
   var ICON_ON = '<svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
-  function yt(func, args) {
-    var f = reel.f;
+  function yt(func, args, frame) {
+    var f = frame || reel.f;
     if (f && f.contentWindow) f.contentWindow.postMessage(JSON.stringify({ event: 'command', func: func, args: args || [] }), '*');
   }
   function reelPlay() { if (reel.muted) yt('mute'); yt('playVideo'); }
@@ -490,9 +520,28 @@
     setupTilt(p === 'contact');
     setupReel(p === 'home');
 
+    var faces = document.querySelectorAll('a[href="./#hero"],a[href="/#hero"],a[href="./"]');
+    for (var q = 0; q < faces.length; q++) {
+      if (!faces[q].querySelector('img') || faces[q].closest('main')) continue;
+      setAttr(faces[q], 'data-xf', '');
+      // the header (z-index 10) spans the whole width and sat on top of the face, swallowing its clicks
+      for (var fe = faces[q].parentElement; fe && fe !== document.body; fe = fe.parentElement) {
+        if (getComputedStyle(fe).position === 'fixed') { setAttr(fe, 'data-xfc', ''); break; }
+      }
+    }
+
     if (p === 'schweppes' && m) ensureYoutube(m);
     else { removeAll('.x-yt'); unset('[data-xh]', 'data-xh'); unset('[data-xy]', 'data-xy'); }
   }
+
+  // the face in the menu: on project pages Framer only scrolls to #hero, so go to the home page ourselves
+  addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[data-xf]');
+    if (!a || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey) return;
+    if (pageKey() === 'home') return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    location.href = '/';
+  }, true);
 
   // links rewritten by dropComingSoon: Framer's router would still go to its own (original) target
   addEventListener('click', function (e) {
@@ -508,7 +557,12 @@
     timer = setTimeout(function () { timer = 0; try { apply(); } catch (e) {} }, 120);
   }
 
-  new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['href'] });
+  new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['href', 'class', 'data-gal', 'data-xg', 'data-xm'] });
+  // images and videos finishing their load change the ratios the grid needs
+  document.addEventListener('load', function (e) { var t = e.target; if (t && (t.tagName === 'IMG' || t.tagName === 'VIDEO') && mode === 'grid') schedule(); }, true);
+  document.addEventListener('loadedmetadata', function (e) { if (mode === 'grid') schedule(); }, true);
+  addEventListener('load', function () { schedule(); });
+  [400, 1000, 2000, 4000].forEach(function (ms) { setTimeout(schedule, ms); });
   // sizes change without any DOM change (window resize, zoom, breakpoint switch): watch the column itself
   var sizeWatch = typeof ResizeObserver === 'function' ? new ResizeObserver(schedule) : null;
   var watched = null;
