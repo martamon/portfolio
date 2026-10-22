@@ -73,8 +73,9 @@
     '.x-reel-ctl svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}',
     // schweppes: text on top like the other projects, the video below it (16:9, full width) with some air and its own sound button
     '[data-xr]{isolation:isolate}',
-    '.x-yt{position:relative;width:calc(100% - 40px);margin:56px 20px 20px;aspect-ratio:16/9;overflow:hidden;background:#000}',
-    '.x-yt iframe{position:absolute;inset:0;width:100%;height:100%;border:0}',
+    // its height is set by apply() so that it ends at the bottom edge of the screen (at least 16:9); the video covers its box
+    '.x-yt{position:relative;width:calc(100% - 40px);margin:40px 20px 20px;aspect-ratio:16/9;overflow:hidden;background:#000;container-type:size}',
+    '.x-yt iframe{position:absolute;top:50%;left:50%;width:max(100cqw,177.78cqh);height:max(100cqh,56.25cqw);transform:translate(-50%,-50%);border:0}',
     // face of the menu: turns around on hover
     '[data-xfc]{z-index:11!important}',
     '[data-xf]{display:block;transition:transform .9s cubic-bezier(.3,1.2,.4,1);transform-origin:center}',
@@ -301,6 +302,12 @@
     // Framer lays the page blocks out with CSS `order` (it changes per breakpoint): same order as the text block and right after it in the DOM, so it lands just below the text
     var ord = String(parseInt(getComputedStyle(m).order, 10) || 0);
     if (sec.style.order !== ord) sec.style.order = ord;
+    // reach the bottom of the screen: all the room left under the text, but never flatter than 16:9
+    sec.style.height = '';
+    var minH = Math.round(sec.offsetWidth * 9 / 16);
+    var room = Math.round(innerHeight - (sec.getBoundingClientRect().top + scrollY) - 20);
+    sec.style.aspectRatio = 'auto';
+    sec.style.height = Math.max(minH, room) + 'px';
     // the empty image column and the small copy of this video further down are replaced by the full-screen one
     var g = galleryEl(m);
     if (g && g.children.length === 0) setAttr(g, 'data-xh', '');
