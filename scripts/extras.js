@@ -81,6 +81,11 @@
     '.x-dial-face{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}',
     '.x-dial-face .x-rim{fill:none;stroke:currentColor;stroke-width:1.5}',
     '.x-dial-face .x-lit{fill:currentColor}',
+    // a slow, small swell so it invites a click; still while hovered or dragged
+    '.x-dial-ring{animation:x-breathe 2.6s ease-in-out infinite}',
+    '@keyframes x-breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}',
+    '.x-dial-ring:hover,.x-dial-ring.x-drag{animation-play-state:paused}',
+    '@media(prefers-reduced-motion:reduce){.x-dial-ring{animation:none}}',
     '.x-dial-ring{cursor:pointer!important}',
     '.x-dial-ring.x-drag{cursor:ew-resize!important}',
     '.x-dial-ring:hover .x-rim{stroke-width:2.2}',
