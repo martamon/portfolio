@@ -72,6 +72,10 @@
     // contact portrait: 3D tilt on hover
     '[data-x3d]{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) scale(var(--s,1))!important;transition:transform .2s ease-out,box-shadow .3s;will-change:transform;box-shadow:0 0 0 rgba(20,60,100,0)}',
     '[data-x3d][data-hot]{box-shadow:0 28px 55px rgba(20,60,100,.32);transition:transform .08s linear,box-shadow .3s}',
+    // home reel: the video's edges are uneven, so they fade softly into the page (the sound button is outside this box)
+    '[data-xrm]{-webkit-mask-image:linear-gradient(to right,transparent,#000 7%,#000 93%,transparent),linear-gradient(to bottom,transparent,#000 10%,#000 90%,transparent);mask-image:linear-gradient(to right,transparent,#000 7%,#000 93%,transparent),linear-gradient(to bottom,transparent,#000 10%,#000 90%,transparent);-webkit-mask-composite:source-in;mask-composite:intersect}',
+    '[data-xrm]{background:#000}',
+    '[data-xrw]{background:transparent!important}',
     // home reel: our own sound button
     '.x-reel-ctl{position:absolute;right:16px;bottom:16px;z-index:5;width:44px;height:44px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.45);color:#fff;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);pointer-events:auto;transition:background .2s}',
     '.x-reel-ctl:hover{background:rgba(0,0,0,.65)}',
@@ -333,6 +337,7 @@
 
   // positions for the current hover: hv is the hovered column (-1: none). The column weights are animated here, one
   // frame at a time for every card, so the cards can never be caught out of step with each other (overlapping).
+  var homeLeave = 0;
   function layoutHome(m, wts) {
     var L = m.__xl, cols = L.cols, sum = 0, c, j;
     for (c = 0; c < cols; c++) sum += wts[c];
@@ -353,6 +358,9 @@
     if (!L) return;
     var cols = L.cols, target = [], c;
     for (c = 0; c < cols; c++) target.push(cols > 1 && c === hv ? 1.28 : 1);
+    var tsum = 0, tx = L.padL; L.geo = { xs: [], ws: [] };
+    for (c = 0; c < cols; c++) tsum += target[c];
+    for (c = 0; c < cols; c++) { var tw = L.avail * target[c] / tsum; L.geo.xs.push(tx); L.geo.ws.push(tw); tx += tw + L.gap; }
     if (m.__raf) { cancelAnimationFrame(m.__raf); m.__raf = 0; }
     if (!L.cw || L.cw.length !== cols) { L.cw = target.slice(); instant = true; }
     if (instant || matchMedia('(prefers-reduced-motion:reduce)').matches) { L.cw = target.slice(); layoutHome(m, L.cw); return; }
@@ -365,26 +373,26 @@
     };
     m.__raf = requestAnimationFrame(step);
   }
-  var homeLeave = 0;
-  document.addEventListener('mouseover', function (e) {
-    if (pageKey() !== 'home' || !e.target.closest || !matchMedia('(hover:hover)').matches) return;
-    var k = e.target.closest('[data-xhi]');
-    var m = k && k.closest('main[data-xhome]');
-    if (!m || !m.__xl) return;
-    clearTimeout(homeLeave);
-    var idx = m.__xl.kids.indexOf(k);
-    if (idx < 0 || m.__hv === m.__xl.col[idx]) return;
-    m.__hv = m.__xl.col[idx];
-    placeHome(m, m.__hv);
-  }, true);
-  document.addEventListener('mouseout', function (e) {
-    var m = e.target.closest && e.target.closest('main[data-xhome]');
-    if (!m || m.__hv == null || m.__hv < 0) return;
-    var to = e.relatedTarget;
-    if (to && to.closest && to.closest('[data-xhi]')) return;
-    clearTimeout(homeLeave);
-    homeLeave = setTimeout(function () { m.__hv = -1; placeHome(m, -1); }, 120);
-  }, true);
+  // The hovered column follows the pointer's x position over the whole gallery (not the card under it), so crossing the
+  // gaps between rows doesn't reset the effect; the column edges are the ones of the layout being shown (no flicker).
+  function homeLeaveNow(m) { if (m.__hv >= 0) { m.__hv = -1; placeHome(m, -1); } }
+  addEventListener('pointermove', function (e) {
+    if (pageKey() !== 'home' || e.pointerType === 'touch' || !matchMedia('(hover:hover)').matches) return;
+    var m = document.querySelector('main[data-xhome]');
+    if (!m || !m.__xl || !m.__xl.geo) return;
+    var r = m.getBoundingClientRect();
+    if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) {
+      if (m.__hv >= 0 && !homeLeave) homeLeave = setTimeout(function () { homeLeave = 0; homeLeaveNow(m); }, 90);
+      return;
+    }
+    clearTimeout(homeLeave); homeLeave = 0;
+    var G = m.__xl.geo, x = e.clientX - r.left, col = G.xs.length - 1, c;
+    for (c = 0; c < G.xs.length - 1; c++) if (x < G.xs[c] + G.ws[c] + m.__xl.gap / 2) { col = c; break; }
+    if (m.__hv === col) return;
+    m.__hv = col;
+    placeHome(m, col);
+  }, { passive: true });
+  document.addEventListener('pointerleave', function () { var m = document.querySelector('main[data-xhome]'); if (m) homeLeaveNow(m); });
 
   function ensureYoutube(m) {
     var sec = document.querySelector('.x-yt');
@@ -500,6 +508,8 @@
       if (reel.f || reel.btn) teardownReel();
       return;
     }
+    setAttr(f.parentElement, 'data-xrm', '');
+    if (f.parentElement.parentElement) setAttr(f.parentElement.parentElement, 'data-xrw', '');
     if (reel.f === f && reel.btn && reel.btn.isConnected) return;
     teardownReel();
     reel.f = f; reel.wrap = f.parentElement.parentElement; reel.muted = true;
