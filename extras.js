@@ -41,7 +41,7 @@
     '[data-xcap]{color:#888!important}',
     '.x-roll{position:relative;display:inline-grid;overflow:hidden;white-space:pre;vertical-align:top}',
     '.x-roll>span{grid-area:1/1;display:inline-flex}',
-    '.x-roll i{font-style:normal;display:inline-block;transition:transform .55s cubic-bezier(.3,1.35,.5,1);transition-delay:calc(var(--i) * 40ms)}',
+    '.x-roll i{font-style:normal;display:inline-block;transition:transform .9s cubic-bezier(.22,.8,.24,1);transition-delay:calc(var(--i) * 45ms)}',
     '.x-roll .x-b i{transform:translateY(112%)}',
     '[data-xn]:hover .x-roll .x-a i,[data-xn]:focus-visible .x-roll .x-a i{transform:translateY(-112%)}',
     '[data-xn]:hover .x-roll .x-b i,[data-xn]:focus-visible .x-roll .x-b i{transform:translateY(0)}',
@@ -99,7 +99,7 @@
     // view toggle
     // the view toggle is the first row of the image column (not floating), so it can never cover the text or the images
     '.x-toggle{display:flex;justify-content:flex-end;align-items:center;align-self:center;gap:4px;width:100%;height:32px;padding:0;box-sizing:border-box;flex:none}',
-    '.x-toggle button{width:32px;height:32px;display:grid;place-items:center;padding:0;border:0;background:none;color:var(--xfg,#1b1b1b);opacity:.35;cursor:pointer;transition:opacity .2s}',
+    '.x-toggle button{width:32px;height:32px;display:grid;place-items:center;padding:0;border:0;background:none;color:var(--xfg,#1b1b1b);opacity:.35;cursor:pointer;transition:opacity .45s ease}',
     '.x-toggle button[aria-pressed="true"]{opacity:1}',
     '.x-toggle button:hover{opacity:.75}',
     '.x-toggle svg{width:16px;height:16px;fill:currentColor}',
@@ -117,7 +117,7 @@
     'main[data-gal="grid"] [data-xg]>:not(.x-toggle){position:absolute!important;left:var(--mx,0);top:var(--my,0);width:var(--mw,100%)!important;height:var(--gh,auto)!important;max-width:none!important;margin:0!important}',
     // project footer (prev/next row and © / contact row): Switzer, the typeface of nolan-barret.framer.website, small and quiet
     'main[data-xm]~section,main[data-xm]~section *,main[data-xm]~*:not(.x-yt) footer,main[data-xm]~*:not(.x-yt) footer *{font-family:"Switzer","Switzer Placeholder",sans-serif!important;font-weight:500!important;font-size:12.5px!important;letter-spacing:-.01em!important;line-height:1.35!important}',
-    'main[data-xm]~section a,main[data-xm]~section p,main[data-xm]~section span,main[data-xm]~*:not(.x-yt) footer a,main[data-xm]~*:not(.x-yt) footer p,main[data-xm]~*:not(.x-yt) footer span{color:var(--xfg55,rgba(20,20,20,.55))!important;transition:color .2s}',
+    'main[data-xm]~section a,main[data-xm]~section p,main[data-xm]~section span,main[data-xm]~*:not(.x-yt) footer a,main[data-xm]~*:not(.x-yt) footer p,main[data-xm]~*:not(.x-yt) footer span{color:var(--xfg55,rgba(20,20,20,.55))!important;transition:color .5s ease}',
     'main[data-xm]~section a:hover,main[data-xm]~section a:hover *,main[data-xm]~*:not(.x-yt) footer a:hover,main[data-xm]~*:not(.x-yt) footer a:hover *{color:var(--xfg,#141414)!important}',
     // home: the project list is a masonry like the project galleries (each card goes under the shortest column)
     'main[data-xhome]{display:block!important;position:relative!important;height:var(--hh)!important;min-height:0!important}',
@@ -138,8 +138,8 @@
     '.x-insta iframe{position:absolute;left:0;top:-' + IG_HEAD + 'px;width:100%;height:calc(100% + ' + (IG_HEAD + IG_FOOT) + 'px);border:0}',
     '.x-img img{display:block;width:100%;height:100%;object-fit:cover}',
     // contact portrait: 3D tilt on hover
-    '[data-x3d]{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) scale(var(--s,1))!important;transition:transform .2s ease-out,box-shadow .3s;will-change:transform;box-shadow:0 0 0 rgba(20,60,100,0)}',
-    '[data-x3d][data-hot]{transition:transform .08s linear,box-shadow .3s}',
+    '[data-x3d]{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) scale(var(--s,1))!important;transition:transform .5s cubic-bezier(.22,.8,.24,1),box-shadow .6s ease;will-change:transform;box-shadow:0 0 0 rgba(20,60,100,0)}',
+    '[data-x3d][data-hot]{transition:transform .18s ease-out,box-shadow .6s ease}',
     // contact: a plain page (after a reference the owner sent): no pictures, just the current texts, small and spaced in the menu's
     // monospace, an arc of "GET IN TOUCH" and the swimming creature; Framer's own blocks are hidden
     'html[data-xp="contact"] main{height:auto!important;min-height:calc(100vh - 83px)!important;min-height:calc(100dvh - 83px)!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:0 20px!important;box-sizing:border-box!important}',
@@ -150,7 +150,7 @@
     '.x-ct-arc{position:absolute;left:50%;top:6px;width:300px;height:120px;transform:translateX(-18%) rotate(14deg);overflow:visible}',
     '.x-ct-arc text{fill:currentColor;font-size:15px;letter-spacing:.32em;text-transform:uppercase}',
     '.x-ct-text{position:absolute;left:0;bottom:24px;font-size:12.5px;line-height:1.75;letter-spacing:.12em}',
-    '.x-ct-text a{color:inherit!important;text-decoration:none;background:linear-gradient(currentColor,currentColor) 0 100%/0 1px no-repeat;transition:background-size .35s ease}',
+    '.x-ct-text a{color:inherit!important;text-decoration:none;background:linear-gradient(currentColor,currentColor) 0 100%/0 1px no-repeat;transition:background-size .7s cubic-bezier(.22,.8,.24,1)}',
     '.x-ct-text a:hover,.x-ct-text a:focus-visible{background-size:100% 1px}',
     '.x-ct-social{display:flex;flex-wrap:wrap;gap:6px 22px;margin-top:18px;text-transform:uppercase}',
     '@media(max-width:600px){.x-contact{height:400px}.x-ct-arc{width:250px;transform:translateX(-30%) rotate(12deg)}.x-ct-text{font-size:12px}}',
@@ -171,7 +171,7 @@
     '[data-xmr] [data-xmh]{display:none!important}',
     '[data-xmr] iframe.x-mreel{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}',
     // home reel: our own sound button
-    '.x-reel-ctl{position:absolute;right:16px;bottom:16px;z-index:5;width:44px;height:44px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.45);color:#fff;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);pointer-events:auto;transition:background .2s}',
+    '.x-reel-ctl{position:absolute;right:16px;bottom:16px;z-index:5;width:44px;height:44px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.45);color:#fff;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);pointer-events:auto;transition:background .5s ease}',
     '.x-reel-ctl:hover{background:rgba(0,0,0,.65)}',
     '.x-reel-ctl svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}',
     // schweppes: text on top like the other projects, the video below it (16:9, full width) with some air and its own sound button
@@ -193,12 +193,12 @@
     'html[data-xarr] [data-xg]>:nth-child(2){animation-delay:.2s}html[data-xarr] [data-xg]>:nth-child(3){animation-delay:.3s}html[data-xarr] [data-xg]>:nth-child(4){animation-delay:.4s}html[data-xarr] [data-xg]>:nth-child(n+5){animation-delay:.5s}',
     // project pictures open full screen over the blurred page (see the lightbox below)
     '[data-xg] img{cursor:zoom-in}',
-    '.x-lb{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(214,232,250,.35);-webkit-backdrop-filter:blur(22px) saturate(1.1);backdrop-filter:blur(22px) saturate(1.1);opacity:0;transition:opacity .28s ease;touch-action:pan-y}',
+    '.x-lb{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(214,232,250,.35);-webkit-backdrop-filter:blur(22px) saturate(1.1);backdrop-filter:blur(22px) saturate(1.1);opacity:0;transition:opacity .6s cubic-bezier(.4,0,.2,1);touch-action:pan-y}',
     'html[data-xmid] .x-lb{background:rgba(22,32,56,.5)}',
     '.x-lb.x-open{opacity:1}',
-    '.x-lb-img{max-width:min(94vw,1800px);max-height:88vh;max-height:88dvh;width:auto;height:auto;object-fit:contain;box-shadow:0 20px 70px rgba(10,20,50,.35);transform:scale(.96);transition:transform .35s cubic-bezier(.2,.9,.3,1),opacity .2s;user-select:none;-webkit-user-select:none;-webkit-user-drag:none}',
+    '.x-lb-img{max-width:min(94vw,1800px);max-height:88vh;max-height:88dvh;width:auto;height:auto;object-fit:contain;box-shadow:0 20px 70px rgba(10,20,50,.35);transform:scale(.97);transition:transform .7s cubic-bezier(.22,.8,.24,1),opacity .5s ease;user-select:none;-webkit-user-select:none;-webkit-user-drag:none}',
     '.x-lb.x-open .x-lb-img{transform:scale(1)}',
-    '.x-lb button{position:absolute;width:44px;height:44px;border:0;border-radius:50%;padding:0;display:grid;place-items:center;background:rgba(255,255,255,.55);color:#1b1b1b;cursor:pointer;transition:background .2s}',
+    '.x-lb button{position:absolute;width:44px;height:44px;border:0;border-radius:50%;padding:0;display:grid;place-items:center;background:rgba(255,255,255,.55);color:#1b1b1b;cursor:pointer;transition:background .5s ease}',
     '.x-lb button:hover{background:rgba(255,255,255,.9)}',
     '.x-lb button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}',
     '.x-lb-close{top:18px;right:18px}',
@@ -209,7 +209,7 @@
     // face of the menu: turns around on hover
     '[data-xfc]{z-index:11!important}',
     // the link itself stays still (a turning link is edge-on half-way, the pointer leaves it and the click is lost): only its picture turns
-    '[data-xf]>div{transition:transform .9s cubic-bezier(.3,1.2,.4,1);transform-origin:center}',
+    '[data-xf]>div{transition:transform 1.2s cubic-bezier(.22,.8,.24,1);transform-origin:center}',
     '[data-xf]:hover>div{transform:perspective(500px) rotateY(360deg)}',
     // About on phones: title and text sit over the turning head as negative/positive type (difference blend), white so it inverts against the head and the page
     '@media(max-width:809px){html[data-xp="about"] [data-framer-name="Caption"],html[data-xp="about"] [data-framer-name="Wordmark"]{mix-blend-mode:difference!important;isolation:auto!important}html[data-xp="about"] [data-framer-name="Caption"] *,html[data-xp="about"] [data-framer-name="Wordmark"] *{color:#fff!important;text-shadow:none!important}html[data-xp="about"] [data-framer-name="Hero Video"]{isolation:auto!important}html[data-xp="about"] [data-framer-name="Hero Video"]>div[class*="framer-"]:not([data-framer-name^="Video"]){mix-blend-mode:difference}}',
@@ -666,7 +666,7 @@
     document.documentElement.style.overflow = '';
     removeEventListener('keydown', lbKey, true);
     var el = LB.el;
-    setTimeout(function () { if (!LB.open) el.style.display = 'none'; }, 300);
+    setTimeout(function () { if (!LB.open) el.style.display = 'none'; }, 650);
   }
   function lbKey(e) {
     if (e.key === 'Escape' || e.key === 'ArrowUp') { e.preventDefault(); lbClose(); }
@@ -1233,7 +1233,7 @@
     cancelAnimationFrame(theme.raf);
     var from = theme.hour, delta = ((to - from + 36) % 24) - 12, t0 = performance.now();
     var step = function (now) {
-      var p = Math.min(1, (now - t0) / 900), e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+      var p = Math.min(1, (now - t0) / 1500), e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
       setHour(from + delta * e, true);
       theme.raf = p < 1 ? requestAnimationFrame(step) : 0;
     };
