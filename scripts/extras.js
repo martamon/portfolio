@@ -177,13 +177,10 @@
     // schweppes: text on top like the other projects, the video below it (16:9, full width) with some air and its own sound button
     '[data-xr]{isolation:isolate}',
     // its height is set by apply() so that it ends at the bottom edge of the screen (at least 16:9); the video covers its box
-    '.x-yt{position:relative;width:calc(100% - 40px);margin:40px 20px 20px;aspect-ratio:16/9;overflow:hidden;background:#000;container-type:size}',
-    '.x-yt iframe{position:absolute;top:50%;left:50%;width:max(100cqw,177.78cqh);height:max(100cqh,56.25cqw);transform:translate(-50%,-50%);border:0}',
-    '@media(max-width:809px){.x-yt{width:calc(100% - 32px);margin:32px 16px 16px}.x-yt iframe{width:100%!important;height:100%!important}}',
-    // schweppes: the stills of the campaign under the video, full width, in the order of the film
-    '.x-sg{display:flex;flex-direction:column;gap:12px;width:calc(100% - 40px);margin:0 20px 24px}',
-    '.x-sg img{display:block;width:100%;height:auto;background:#101010}',
-    '@media(max-width:809px){.x-sg{width:calc(100% - 32px);margin:0 16px 20px;gap:10px}}',
+    // schweppes: the video and the campaign stills are items of the project's image column, like the pictures of every other project
+    '.x-si{position:relative;flex:none;width:100%;overflow:hidden;background:#101010}',
+    '.x-si>img{display:block;width:100%;height:100%;object-fit:cover}',
+    '.x-si>iframe{position:absolute;inset:0;width:100%;height:100%;border:0}',
     // face of the menu: turns around on hover
     '[data-xfc]{z-index:11!important}',
     // the link itself stays still (a turning link is edge-on half-way, the pointer leaves it and the click is lost): only its picture turns
@@ -524,10 +521,14 @@
   }, { passive: true });
 
   function ensureYoutube(m) {
-    var sec = document.querySelector('.x-yt');
-    if (!sec) {
-      sec = document.createElement('div');
-      sec.className = 'x-yt';
+    var g = galleryEl(m);
+    if (!g) return;
+    // the empty image column gets the video (with its sound button) and the five stills (extras/schweppes/1-5.webp, 2000 px wide,
+    // near-lossless): the whole page then works like any other project (column beside the text, single / grid view)
+    if (!g.querySelector(':scope > .x-yt')) {
+      var sec = document.createElement('div');
+      sec.className = 'x-si x-yt';
+      sec.setAttribute('data-r', String(9 / 16)); sec.style.aspectRatio = '16 / 9';
       var f = document.createElement('iframe');
       f.src = 'https://www.youtube-nocookie.com/embed/' + YOUTUBE + '?autoplay=1&mute=1&loop=1&playlist=' + YOUTUBE + '&rel=0&modestbranding=1&playsinline=1&enablejsapi=1';
       f.title = 'Schweppes';
@@ -551,46 +552,26 @@
       });
       paint();
       sec.appendChild(b);
-      m.parentNode.insertBefore(sec, m.nextSibling);
-    }
-    setAttr(m, 'data-xy', '');
-    // Framer lays the page blocks out with CSS `order` (it changes per breakpoint): same order as the text block and right after it in the DOM, so it lands just below the text
-    var ord = String(parseInt(getComputedStyle(m).order, 10) || 0);
-    if (sec.style.order !== ord) sec.style.order = ord;
-    // the stills (extras/schweppes/1-5.webp, 2000 px wide, near-lossless) go right after the video
-    var sg = document.querySelector('.x-sg');
-    if (!sg) {
-      sg = document.createElement('div');
-      sg.className = 'x-sg';
-      var SG_ALT = ['Schweppes leopard at the party', 'Schweppes leopard, portrait', 'The leopard\'s paw on a brass door handle', 'The paw opening a Schweppes tonic water', 'Win a NYE party, Schweppes.com'];
+      g.appendChild(sec);
+      var ALT = ['Schweppes leopard at the party', 'Schweppes leopard, portrait', 'The leopard\'s paw on a brass door handle', 'The paw opening a Schweppes tonic water', 'Win a NYE party, Schweppes.com'];
+      var HGT = [1135, 1168, 1130, 1113, 1126];
       for (var gi = 1; gi <= 5; gi++) {
+        var box = document.createElement('div');
+        box.className = 'x-si';
+        box.setAttribute('data-r', String(HGT[gi - 1] / 2000)); box.style.aspectRatio = '2000 / ' + HGT[gi - 1];
         var gim = document.createElement('img');
-        gim.src = '/extras/schweppes/' + gi + '.webp'; gim.alt = SG_ALT[gi - 1]; gim.width = 2000; gim.height = [1135, 1168, 1130, 1113, 1126][gi - 1];
+        gim.src = '/extras/schweppes/' + gi + '.webp'; gim.alt = ALT[gi - 1]; gim.width = 2000; gim.height = HGT[gi - 1];
         gim.loading = gi > 2 ? 'lazy' : 'eager'; gim.decoding = 'async';
-        sg.appendChild(gim);
+        box.appendChild(gim);
+        g.appendChild(box);
       }
-      sec.parentNode.insertBefore(sg, sec.nextSibling);
     }
-    if (sg.style.order !== sec.style.order) sg.style.order = sec.style.order;
-    // reach the bottom of the screen: all the room left under the text, but never flatter than 16:9
-    sec.style.height = '';
-    var minH = Math.round(sec.offsetWidth * 9 / 16);
-    var room = Math.round(innerHeight - (sec.getBoundingClientRect().top + scrollY) - 20);
-    if (innerWidth <= 809) {
-      // phones: the whole frame, full width, 16:9 (covering a tall box cut the sides off)
-      sec.style.aspectRatio = '16/9'; sec.style.height = '';
-    } else {
-      sec.style.aspectRatio = 'auto';
-      sec.style.height = Math.max(minH, room) + 'px';
-    }
-    // the empty image column and the small copy of this video further down are replaced by the full-screen one
-    var g = galleryEl(m);
-    if (g && g.children.length === 0) setAttr(g, 'data-xh', '');
+    // the small copy of the video further down the page is not needed
     var img = document.querySelector('img[src*="' + YOUTUBE + '"]');
-    if (img && !sec.contains(img)) {
+    if (img && !g.contains(img)) {
       var blk = img;
       while (blk.parentElement && blk.parentElement !== m.parentNode) blk = blk.parentElement;
-      if (blk !== m && blk !== sec) setAttr(blk, 'data-xh', '');
+      if (blk !== m && blk !== g) setAttr(blk, 'data-xh', '');
     }
   }
 
@@ -1409,7 +1390,7 @@
     }
 
     if (p === 'schweppes' && m) ensureYoutube(m);
-    else { removeAll('.x-yt'); removeAll('.x-sg'); unset('[data-xh]', 'data-xh'); unset('[data-xy]', 'data-xy'); }
+    else { removeAll('.x-yt'); removeAll('.x-si'); unset('[data-xh]', 'data-xh'); unset('[data-xy]', 'data-xy'); }
   }
 
   // the face in the menu: on project pages Framer only scrolls to #hero, so go to the home page ourselves
