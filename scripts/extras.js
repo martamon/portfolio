@@ -182,9 +182,15 @@
     '.x-si>img{display:block;width:100%;height:100%;object-fit:cover}',
     '.x-si>iframe{position:absolute;inset:0;width:100%;height:100%;border:0}',
     // transition from the home gallery into a project: the page blurs and tints, the project clears from the blur
-    '.x-tr{position:fixed;inset:0;z-index:80;pointer-events:none;background:rgba(180,215,245,0);-webkit-backdrop-filter:blur(0);backdrop-filter:blur(0);transition:background .55s ease,-webkit-backdrop-filter .55s ease,backdrop-filter .55s ease,opacity .7s ease}',
+    '.x-tr{position:fixed;inset:0;z-index:80;pointer-events:none;background:rgba(180,215,245,0);-webkit-backdrop-filter:blur(0);backdrop-filter:blur(0);transition:background .8s cubic-bezier(.4,0,.2,1),-webkit-backdrop-filter .8s cubic-bezier(.4,0,.2,1),backdrop-filter .8s cubic-bezier(.4,0,.2,1),opacity 1.1s cubic-bezier(.4,0,.2,1)}',
     '.x-tr.x-go,.x-tr.x-in{background:rgba(180,215,245,.9);-webkit-backdrop-filter:blur(26px);backdrop-filter:blur(26px)}',
     '.x-tr.x-in.x-out{opacity:0}',
+    // on arrival the project's blocks rise out of the blur one after another
+    '@keyframes x-rise{from{opacity:0;transform:translate3d(0,26px,0);filter:blur(12px)}to{opacity:1;transform:none;filter:blur(0)}}',
+    'html[data-xarr] main[data-xm]>*,html[data-xarr] main[data-xm]~*{animation:x-rise 1.1s cubic-bezier(.22,.8,.24,1) backwards}',
+    'html[data-xarr] main[data-xm]>:nth-child(2){animation-delay:.12s}html[data-xarr] main[data-xm]>:nth-child(3){animation-delay:.24s}html[data-xarr] main[data-xm]>:nth-child(n+4){animation-delay:.36s}html[data-xarr] main[data-xm]~*{animation-delay:.5s}',
+    'html[data-xarr] [data-xg]>*{animation:x-rise 1.2s cubic-bezier(.22,.8,.24,1) backwards}',
+    'html[data-xarr] [data-xg]>:nth-child(2){animation-delay:.2s}html[data-xarr] [data-xg]>:nth-child(3){animation-delay:.3s}html[data-xarr] [data-xg]>:nth-child(4){animation-delay:.4s}html[data-xarr] [data-xg]>:nth-child(n+5){animation-delay:.5s}',
     // project pictures open full screen over the blurred page (see the lightbox below)
     '[data-xg] img{cursor:zoom-in}',
     '.x-lb{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(214,232,250,.35);-webkit-backdrop-filter:blur(22px) saturate(1.1);backdrop-filter:blur(22px) saturate(1.1);opacity:0;transition:opacity .28s ease;touch-action:pan-y}',
@@ -503,15 +509,17 @@
     try { sessionStorage.setItem('xt-tr', String(Date.now())); } catch (err) {}
     void o.offsetWidth;
     o.classList.add('x-go');
-    setTimeout(go, 600);
+    setTimeout(go, 750);
   }
   (function () {
     var t = 0;
     try { t = parseInt(sessionStorage.getItem('xt-tr'), 10); sessionStorage.removeItem('xt-tr'); } catch (e) {}
     if (!t || Date.now() - t > 7000 || pageKey() === 'home') return;
+    document.documentElement.setAttribute('data-xarr', '');
+    setTimeout(function () { document.documentElement.removeAttribute('data-xarr'); }, 3000);
     var o = document.createElement('div');
     o.className = 'x-tr x-in';
-    var add = function () { if (!document.body) return setTimeout(add, 10); document.body.appendChild(o); setTimeout(function () { o.classList.add('x-out'); setTimeout(function () { if (o.parentNode) o.parentNode.removeChild(o); }, 800); }, 250); };
+    var add = function () { if (!document.body) return setTimeout(add, 10); document.body.appendChild(o); setTimeout(function () { o.classList.add('x-out'); setTimeout(function () { if (o.parentNode) o.parentNode.removeChild(o); }, 1200); }, 200); };
     add();
   })();
 
