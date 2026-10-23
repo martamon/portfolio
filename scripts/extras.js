@@ -181,6 +181,21 @@
     '.x-si{position:relative;flex:none;width:100%;overflow:hidden;background:#101010}',
     '.x-si>img{display:block;width:100%;height:100%;object-fit:cover}',
     '.x-si>iframe{position:absolute;inset:0;width:100%;height:100%;border:0}',
+    // project pictures open full screen over the blurred page (see the lightbox below)
+    '[data-xg] img{cursor:zoom-in}',
+    '.x-lb{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(214,232,250,.35);-webkit-backdrop-filter:blur(22px) saturate(1.1);backdrop-filter:blur(22px) saturate(1.1);opacity:0;transition:opacity .28s ease;touch-action:pan-y}',
+    'html[data-xmid] .x-lb{background:rgba(22,32,56,.5)}',
+    '.x-lb.x-open{opacity:1}',
+    '.x-lb-img{max-width:min(94vw,1800px);max-height:88vh;max-height:88dvh;width:auto;height:auto;object-fit:contain;box-shadow:0 20px 70px rgba(10,20,50,.35);transform:scale(.96);transition:transform .35s cubic-bezier(.2,.9,.3,1),opacity .2s;user-select:none;-webkit-user-select:none;-webkit-user-drag:none}',
+    '.x-lb.x-open .x-lb-img{transform:scale(1)}',
+    '.x-lb button{position:absolute;width:44px;height:44px;border:0;border-radius:50%;padding:0;display:grid;place-items:center;background:rgba(255,255,255,.55);color:#1b1b1b;cursor:pointer;transition:background .2s}',
+    '.x-lb button:hover{background:rgba(255,255,255,.9)}',
+    '.x-lb button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}',
+    '.x-lb-close{top:18px;right:18px}',
+    '.x-lb-prev{left:18px;top:50%;margin-top:-22px}',
+    '.x-lb-next{right:18px;top:50%;margin-top:-22px}',
+    '.x-lb-count{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);font:500 12px/1 "IBM Plex Mono",monospace;letter-spacing:.08em;color:var(--xfg)}',
+    '@media(max-width:809px){.x-lb-prev,.x-lb-next{display:none}.x-lb-img{max-width:96vw}}',
     // face of the menu: turns around on hover
     '[data-xfc]{z-index:11!important}',
     // the link itself stays still (a turning link is edge-on half-way, the pointer leaves it and the click is lost): only its picture turns
@@ -575,6 +590,86 @@
     }
   }
 
+
+  // ---- lightbox: a click on a project picture shows it full screen over the blurred page; arrows / swipe go through the pictures,
+  // the cross, Esc, the up arrow or a click outside the picture close it
+  var LB = { el: null, list: [], i: 0, open: false, tx: 0, ty: 0 };
+  function lbList() {
+    var out = [], gs = document.querySelectorAll('[data-xg]'), i, k, ims;
+    for (i = 0; i < gs.length; i++) {
+      ims = gs[i].querySelectorAll('img');
+      for (k = 0; k < ims.length; k++) if (!ims[k].closest('.x-insta,.x-toggle,button') && ims[k].getBoundingClientRect().width > 40) out.push(ims[k]);
+    }
+    return out;
+  }
+  function lbSrc(im) { return im.getAttribute('src') || im.currentSrc; }
+  function lbShow(n) {
+    LB.i = (n + LB.list.length) % LB.list.length;
+    var im = LB.list[LB.i], v = LB.el.querySelector('.x-lb-img');
+    v.style.opacity = '0';
+    v.onload = function () { v.style.opacity = ''; };
+    v.src = lbSrc(im); v.alt = im.alt || '';
+    LB.el.querySelector('.x-lb-count').textContent = (LB.i + 1) + ' / ' + LB.list.length;
+    var multi = LB.list.length > 1;
+    LB.el.querySelector('.x-lb-prev').style.visibility = multi ? '' : 'hidden';
+    LB.el.querySelector('.x-lb-next').style.visibility = multi ? '' : 'hidden';
+    // warm up the neighbours
+    [LB.i - 1, LB.i + 1].forEach(function (j) { var q = LB.list[(j + LB.list.length) % LB.list.length]; if (q) new Image().src = lbSrc(q); });
+  }
+  function lbClose() {
+    if (!LB.open) return;
+    LB.open = false;
+    LB.el.classList.remove('x-open');
+    document.documentElement.style.overflow = '';
+    removeEventListener('keydown', lbKey, true);
+    var el = LB.el;
+    setTimeout(function () { if (!LB.open) el.style.display = 'none'; }, 300);
+  }
+  function lbKey(e) {
+    if (e.key === 'Escape' || e.key === 'ArrowUp') { e.preventDefault(); lbClose(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); lbShow(LB.i + 1); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); lbShow(LB.i - 1); }
+  }
+  function lbOpen(im) {
+    LB.list = lbList();
+    var n = LB.list.indexOf(im);
+    if (n < 0) return;
+    if (!LB.el) {
+      var o = document.createElement('div');
+      o.className = 'x-lb';
+      o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true'); o.setAttribute('aria-label', 'Picture');
+      var ar = function (d) { return '<svg viewBox="0 0 24 24"><path d="' + d + '"/></svg>'; };
+      o.innerHTML = '<img class="x-lb-img" alt="" draggable="false"><button type="button" class="x-lb-close" aria-label="Close">' + ar('M6 6l12 12M18 6L6 18') + '</button><button type="button" class="x-lb-prev" aria-label="Previous">' + ar('M15 5l-7 7 7 7') + '</button><button type="button" class="x-lb-next" aria-label="Next">' + ar('M9 5l7 7-7 7') + '</button><span class="x-lb-count"></span>';
+      o.addEventListener('click', function (e) {
+        if (e.target.closest('.x-lb-close') || e.target === o) lbClose();
+        else if (e.target.closest('.x-lb-prev')) lbShow(LB.i - 1);
+        else if (e.target.closest('.x-lb-next')) lbShow(LB.i + 1);
+      });
+      o.addEventListener('touchstart', function (e) { if (e.touches.length === 1) { LB.tx = e.touches[0].clientX; LB.ty = e.touches[0].clientY; } }, { passive: true });
+      o.addEventListener('touchend', function (e) {
+        var t = e.changedTouches[0], dx = t.clientX - LB.tx, dy = t.clientY - LB.ty;
+        if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.4) lbShow(LB.i + (dx < 0 ? 1 : -1));
+        else if (dy < -70 && Math.abs(dy) > Math.abs(dx) * 1.4) lbClose();
+      }, { passive: true });
+      document.body.appendChild(o);
+      LB.el = o;
+    }
+    LB.open = true;
+    lbShow(n);
+    LB.el.style.display = 'flex';
+    document.documentElement.style.overflow = 'hidden';
+    requestAnimationFrame(function () { LB.el.classList.add('x-open'); });
+    addEventListener('keydown', lbKey, true);
+  }
+  addEventListener('click', function (e) {
+    if (LB.open || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey) return;
+    var im = e.target.closest && e.target.closest('[data-xg] img');
+    if (!im || im.closest('.x-insta,.x-toggle,button,a')) return;
+    e.preventDefault(); e.stopPropagation();
+    lbOpen(im);
+  }, true);
+  // leaving the page (or going to another project) closes it
+  addEventListener('popstate', lbClose);
 
   // ---- contact portrait: 3D tilt following the mouse
   // Framer shrinks this portrait to a third of its size on hover; the tilt replaces that, so it is applied to
