@@ -180,6 +180,10 @@
     '.x-yt{position:relative;width:calc(100% - 40px);margin:40px 20px 20px;aspect-ratio:16/9;overflow:hidden;background:#000;container-type:size}',
     '.x-yt iframe{position:absolute;top:50%;left:50%;width:max(100cqw,177.78cqh);height:max(100cqh,56.25cqw);transform:translate(-50%,-50%);border:0}',
     '@media(max-width:809px){.x-yt{width:calc(100% - 32px);margin:32px 16px 16px}.x-yt iframe{width:100%!important;height:100%!important}}',
+    // schweppes: the stills of the campaign under the video, full width, in the order of the film
+    '.x-sg{display:flex;flex-direction:column;gap:12px;width:calc(100% - 40px);margin:0 20px 24px}',
+    '.x-sg img{display:block;width:100%;height:auto;background:#101010}',
+    '@media(max-width:809px){.x-sg{width:calc(100% - 32px);margin:0 16px 20px;gap:10px}}',
     // face of the menu: turns around on hover
     '[data-xfc]{z-index:11!important}',
     // the link itself stays still (a turning link is edge-on half-way, the pointer leaves it and the click is lost): only its picture turns
@@ -553,6 +557,21 @@
     // Framer lays the page blocks out with CSS `order` (it changes per breakpoint): same order as the text block and right after it in the DOM, so it lands just below the text
     var ord = String(parseInt(getComputedStyle(m).order, 10) || 0);
     if (sec.style.order !== ord) sec.style.order = ord;
+    // the stills (extras/schweppes/1-5.webp, 2000 px wide, near-lossless) go right after the video
+    var sg = document.querySelector('.x-sg');
+    if (!sg) {
+      sg = document.createElement('div');
+      sg.className = 'x-sg';
+      var SG_ALT = ['Schweppes leopard at the party', 'Schweppes leopard, portrait', 'The leopard\'s paw on a brass door handle', 'The paw opening a Schweppes tonic water', 'Win a NYE party, Schweppes.com'];
+      for (var gi = 1; gi <= 5; gi++) {
+        var gim = document.createElement('img');
+        gim.src = '/extras/schweppes/' + gi + '.webp'; gim.alt = SG_ALT[gi - 1]; gim.width = 2000; gim.height = [1135, 1168, 1130, 1113, 1126][gi - 1];
+        gim.loading = gi > 2 ? 'lazy' : 'eager'; gim.decoding = 'async';
+        sg.appendChild(gim);
+      }
+      sec.parentNode.insertBefore(sg, sec.nextSibling);
+    }
+    if (sg.style.order !== sec.style.order) sg.style.order = sec.style.order;
     // reach the bottom of the screen: all the room left under the text, but never flatter than 16:9
     sec.style.height = '';
     var minH = Math.round(sec.offsetWidth * 9 / 16);
@@ -1390,7 +1409,7 @@
     }
 
     if (p === 'schweppes' && m) ensureYoutube(m);
-    else { removeAll('.x-yt'); unset('[data-xh]', 'data-xh'); unset('[data-xy]', 'data-xy'); }
+    else { removeAll('.x-yt'); removeAll('.x-sg'); unset('[data-xh]', 'data-xh'); unset('[data-xy]', 'data-xy'); }
   }
 
   // the face in the menu: on project pages Framer only scrolls to #hero, so go to the home page ourselves
