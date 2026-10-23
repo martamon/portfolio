@@ -95,7 +95,7 @@
     '.x-dial-ring{cursor:pointer!important}',
     '.x-dial-ring.x-drag{cursor:ew-resize!important}',
     '.x-dial-ring:hover .x-rim{stroke-width:2.2}',
-    '@media(max-width:480px){.x-dial{gap:10px;font-size:10.5px;top:16px}.x-dial-ring{width:34px;height:34px}}',
+    '@media(max-width:480px){.x-dial{gap:10px;font-size:10.5px;top:23px}.x-dial-ring{width:34px;height:34px}}',
     // view toggle
     // the view toggle is the first row of the image column (not floating), so it can never cover the text or the images
     '.x-toggle{display:flex;justify-content:flex-end;align-items:center;align-self:center;gap:4px;width:100%;height:32px;padding:0;box-sizing:border-box;flex:none}',
