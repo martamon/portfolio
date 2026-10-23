@@ -182,8 +182,8 @@
     '.x-si>img{display:block;width:100%;height:100%;object-fit:cover}',
     '.x-si>iframe{position:absolute;inset:0;width:100%;height:100%;border:0}',
     // transition from the home gallery into a project: the page blurs and tints, the project clears from the blur
-    '.x-tr{position:fixed;inset:0;z-index:80;pointer-events:none;background:rgba(180,215,245,0);-webkit-backdrop-filter:blur(0);backdrop-filter:blur(0);transition:background .8s cubic-bezier(.4,0,.2,1),-webkit-backdrop-filter .8s cubic-bezier(.4,0,.2,1),backdrop-filter .8s cubic-bezier(.4,0,.2,1),opacity 1.1s cubic-bezier(.4,0,.2,1)}',
-    '.x-tr.x-go,.x-tr.x-in{background:rgba(180,215,245,.9);-webkit-backdrop-filter:blur(26px);backdrop-filter:blur(26px)}',
+    '.x-tr{position:fixed;inset:0;z-index:80;pointer-events:none;background:color-mix(in srgb,rgba(180,215,245,0) calc((1 - var(--xt)) * 100%),rgba(31,45,70,0) calc(var(--xt) * 100%));-webkit-backdrop-filter:blur(0);backdrop-filter:blur(0);transition:background .8s cubic-bezier(.4,0,.2,1),-webkit-backdrop-filter .8s cubic-bezier(.4,0,.2,1),backdrop-filter .8s cubic-bezier(.4,0,.2,1),opacity 1.1s cubic-bezier(.4,0,.2,1)}',
+    '.x-tr.x-go,.x-tr.x-in{background:color-mix(in srgb,rgba(180,215,245,.9) calc((1 - var(--xt)) * 100%),rgba(31,45,70,.93) calc(var(--xt) * 100%));-webkit-backdrop-filter:blur(26px);backdrop-filter:blur(26px)}',
     '.x-tr.x-in.x-out{opacity:0}',
     // on arrival the project's blocks rise out of the blur one after another
     '@keyframes x-rise{from{opacity:0;transform:translate3d(0,26px,0);filter:blur(12px)}to{opacity:1;transform:none;filter:blur(0)}}',
