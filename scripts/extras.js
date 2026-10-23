@@ -63,7 +63,7 @@
     '.x-vfade{position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;opacity:var(--xt);background:color-mix(in srgb,rgb(181,197,217) calc((1 - var(--xt)) * 100%),rgb(41,60,89) calc(var(--xt) * 100%));-webkit-mask-image:radial-gradient(ellipse 40% 70% at 50% 47%,transparent 0,transparent 50%,#000 100%);mask-image:radial-gradient(ellipse 40% 70% at 50% 47%,transparent 0,transparent 50%,#000 100%)}',
     // phones: the hero box is tall and narrow, and covering it blew the head up and cut it at the sides; show the whole frame,
     // a little enlarged, and fit the night fade to it
-    '@media(max-width:809px){html[data-xp="about"] [data-framer-name="Hero Video"] video{object-fit:contain!important;transform:scale(2.25) translate(0,1.3vw);transform-origin:50% 47%;-webkit-mask-image:linear-gradient(to bottom,transparent calc(50% - 110px),#000 calc(50% - 88px),#000 calc(50% + 88px),transparent calc(50% + 110px)),radial-gradient(ellipse 165px 150px at 50% 50%,#000 0,#000 66%,rgba(0,0,0,.5) 84%,transparent 100%)!important;mask-image:linear-gradient(to bottom,transparent calc(50% - 110px),#000 calc(50% - 88px),#000 calc(50% + 88px),transparent calc(50% + 110px)),radial-gradient(ellipse 165px 150px at 50% 50%,#000 0,#000 66%,rgba(0,0,0,.5) 84%,transparent 100%)!important;-webkit-mask-composite:source-in!important;mask-composite:intersect!important}html[data-xp="about"] .x-vfade{display:none!important}}',
+    '@media(max-width:809px){html[data-xp="about"] [data-framer-name="Hero Video"] video{object-fit:contain!important;transform:scale(var(--xhs,2.25)) translate(0,var(--xhy,5px));transform-origin:50% 47%;-webkit-mask-image:linear-gradient(to bottom,transparent calc(50% - 28.125vw),#000 calc(50% - 22.5vw),#000 calc(50% + 22.5vw),transparent calc(50% + 28.125vw)),radial-gradient(ellipse 42.3vw 38.5vw at 50% 50%,#000 0,#000 66%,rgba(0,0,0,.5) 84%,transparent 100%)!important;mask-image:linear-gradient(to bottom,transparent calc(50% - 28.125vw),#000 calc(50% - 22.5vw),#000 calc(50% + 22.5vw),transparent calc(50% + 28.125vw)),radial-gradient(ellipse 42.3vw 38.5vw at 50% 50%,#000 0,#000 66%,rgba(0,0,0,.5) 84%,transparent 100%)!important;-webkit-mask-composite:source-in!important;mask-composite:intersect!important}html[data-xp="about"] .x-vfade{display:none!important}}',
     // text that sits on that video is blended with it (exclusion): in the dark it is plain light type instead, or it would vanish
     'html[data-xdark] [data-xbl]{mix-blend-mode:normal!important}',
     'html[data-xdark][data-xp="about"] [data-xtc]{text-shadow:0 0 6px rgba(22,32,52,.8),0 0 18px rgba(22,32,52,.65)}',
@@ -1036,6 +1036,12 @@
       }
     }
     if (p !== 'home') unset('[data-xs]', 'data-xs');
+    // the previous/next links of a project page: go there with a normal page load (Framer's own client-side hop to a CMS page
+    // ended on the wrong page or on the home page on phones)
+    if (p !== 'home' && NOT_PROJECTS.indexOf(p) === -1) {
+      var pn = document.querySelectorAll('section a[href^="./"]');
+      for (i = 0; i < pn.length; i++) if (/^\.\/[a-z0-9-]+$/.test(pn[i].getAttribute('href')) && pn[i].closest('[data-framer-name="Previous/Next"]')) setAttr(pn[i], 'data-xl', '');
+    }
   }
 
   // ---- theme: a time-of-day dial (copy of the "Local Time" dial of brandonyasin.com): dragging it around turns the page
@@ -1287,6 +1293,42 @@
     }
   }
 
+  // About on phones / narrow windows: size and place the head from the screen itself, so it neither crowds the top nor leaves a gap
+  // under it at any shape: its height is the smaller of 1.16 x the width and 58% of the screen, and its foot sits 70 px above the bottom
+  function aboutHead() {
+    var vids = [], i, v, hero = null, heroes = document.querySelectorAll('[data-framer-name="Hero Video"]');
+    for (i = 0; i < heroes.length; i++) if (heroes[i].getBoundingClientRect().width > 0) { hero = heroes[i]; break; }
+    var all = document.querySelectorAll('[data-framer-name="Hero Video"] video');
+    for (i = 0; i < all.length; i++) vids.push(all[i]);
+    if (!hero || !vids.length) return;
+    if (innerWidth <= 809 && hero.offsetHeight) {
+      var W = innerWidth, H = innerHeight, frame = W * 9 / 16, top = hero.offsetTop, height = hero.offsetHeight;
+      var Ht = Math.min(1.16 * W, 0.58 * height), sc = Math.max(1, Math.min(2.4, Ht / (0.92 * frame)));
+      var yc = H - 70 - Ht / 2, originY = top + 0.47 * height, centre = top + height / 2;
+      var ty = (yc - originY) / sc - (centre - originY);
+      var st = document.documentElement.style;
+      st.setProperty('--xhs', sc.toFixed(3)); st.setProperty('--xhy', ty.toFixed(1) + 'px');
+    }
+    // the footage must keep playing: browsers on phones are strict about it (and reloading used to leave the head blank)
+    for (i = 0; i < vids.length; i++) {
+      v = vids[i];
+      if (!v.__xk) {
+        v.__xk = 1; v.muted = true; v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', ''); v.preload = 'auto';
+      }
+      if (v.paused && getComputedStyle(v).visibility !== 'hidden' && document.visibilityState === 'visible') { var pr = v.play(); if (pr && pr.catch) pr.catch(function () {}); }
+    }
+  }
+  (function () {
+    var kick = function () { if (pageKey() === 'about') { var all = document.querySelectorAll('[data-framer-name="Hero Video"] video'); for (var i = 0; i < all.length; i++) if (getComputedStyle(all[i]).visibility !== 'hidden') { var p = all[i].play(); if (p && p.catch) p.catch(function () {}); } } };
+    ['touchstart', 'pointerdown', 'scroll', 'keydown'].forEach(function (t) { addEventListener(t, kick, { once: true, passive: true }); });
+    document.addEventListener('visibilitychange', kick);
+    // a reload keeps the scroll position, and on this page that can leave the head scrolled away: start from the top
+    try {
+      var nav = performance.getEntriesByType('navigation')[0];
+      if (nav && nav.type === 'reload') { if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; if (pageKey() === 'about') scrollTo(0, 0); }
+    } catch (e) {}
+  })();
+
   function apply() {
     var p = pageKey();
     setAttr(document.documentElement, 'data-xp', p);
@@ -1327,6 +1369,7 @@
     styleCaptions(p === 'home');
     applyHome(p === 'home');
     setupTilt(p === 'contact');
+    if (p === 'about') aboutHead();
     if (p === 'home') {
       mobileHero();
       var ti = document.querySelectorAll('[data-framer-name="Info"] [data-framer-name="Title"] p');
