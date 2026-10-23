@@ -1294,7 +1294,7 @@
   }
 
   // About on phones / narrow windows: size and place the head from the screen itself, so it neither crowds the top nor leaves a gap
-  // under it at any shape: its height is the smaller of 1.16 x the width and 58% of the screen, and its foot sits 70 px above the bottom
+  // under it at any shape: its height is the smaller of 1.16 x the width and 58% of the screen, and its foot sits 22 px above the bottom
   function aboutHead() {
     var vids = [], i, v, hero = null, heroes = document.querySelectorAll('[data-framer-name="Hero Video"]');
     for (i = 0; i < heroes.length; i++) if (heroes[i].getBoundingClientRect().width > 0) { hero = heroes[i]; break; }
@@ -1303,8 +1303,8 @@
     if (!hero || !vids.length) return;
     if (innerWidth <= 809 && hero.offsetHeight) {
       var W = innerWidth, H = innerHeight, frame = W * 9 / 16, top = hero.offsetTop, height = hero.offsetHeight;
-      var Ht = Math.min(1.16 * W, 0.58 * height), sc = Math.max(1, Math.min(2.4, Ht / (0.92 * frame)));
-      var yc = H - 70 - Ht / 2, originY = top + 0.47 * height, centre = top + height / 2;
+      var Ht = Math.min(1.3 * W, 0.66 * height), sc = Math.max(1, Math.min(2.7, Ht / (0.92 * frame)));
+      var yc = H - 22 - Ht / 2, originY = top + 0.47 * height, centre = top + height / 2;
       var ty = (yc - originY) / sc - (centre - originY);
       var st = document.documentElement.style;
       st.setProperty('--xhs', sc.toFixed(3)); st.setProperty('--xhy', ty.toFixed(1) + 'px');
