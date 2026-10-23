@@ -499,8 +499,7 @@
   }
   // home cards: find the card under a point (their own boxes ignore the pointer) and follow its link
   // ---- opening a project from the home gallery: the page blurs and tints, the project page opens under the same veil and it clears
-  function goProject(a) {
-    var href = a.href;
+  function goPage(href) {
     var go = function () { location.href = href; };
     if (matchMedia('(prefers-reduced-motion:reduce)').matches || document.querySelector('.x-tr')) { go(); return; }
     var o = document.createElement('div');
@@ -514,7 +513,7 @@
   (function () {
     var t = 0;
     try { t = parseInt(sessionStorage.getItem('xt-tr'), 10); sessionStorage.removeItem('xt-tr'); } catch (e) {}
-    if (!t || Date.now() - t > 7000 || pageKey() === 'home') return;
+    if (!t || Date.now() - t > 7000) return;
     document.documentElement.setAttribute('data-xarr', '');
     setTimeout(function () { document.documentElement.removeAttribute('data-xarr'); }, 3000);
     var o = document.createElement('div');
@@ -561,7 +560,7 @@
     if (!a) return;
     e.preventDefault(); e.stopImmediatePropagation();
     if (performance.now() - homeTapAt < 800) return;   // already followed on touchend
-    if (e.metaKey || e.ctrlKey || e.shiftKey) window.open(a.href, '_blank'); else goProject(a);
+    if (e.metaKey || e.ctrlKey || e.shiftKey) window.open(a.href, '_blank'); else goPage(a.href);
   }, true);
   // phones: the cards are real links; a tap on one gets the same transition
   addEventListener('click', function (e) {
@@ -569,7 +568,7 @@
     var a = e.target.closest('main[data-xhome] [data-xhi] a[href]');
     if (!a) return;
     e.preventDefault(); e.stopImmediatePropagation();
-    goProject(a);
+    goPage(a.href);
   }, true);
   addEventListener('pointermove', function (e) {
     var m = pageKey() === 'home' && document.querySelector('main[data-xhome]');
@@ -1537,15 +1536,27 @@
     if (!a || !a.querySelector('img') || a.closest('main') || e.button || e.metaKey || e.ctrlKey || e.shiftKey) return;
     if (pageKey() === 'home') return;
     e.preventDefault(); e.stopImmediatePropagation();
-    location.href = '/';
+    goPage(location.origin + '/');
   }, true);
+
+  // the menu links (About, Contact, ...): same veil, then a normal page load
+  addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[data-xn][href]');
+    if (!a || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || a.target === '_blank') return;
+    var u; try { u = new URL(a.href, location.href); } catch (err) { return; }
+    if (u.origin !== location.origin || u.hash || u.pathname.replace(/\/+$/, '') === location.pathname.replace(/\/+$/, '')) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    goPage(u.href);
+  }, true);
+  // coming back with the browser's back button must not show the veil again
+  addEventListener('pageshow', function (e) { if (e.persisted) { var v = document.querySelectorAll('.x-tr'); for (var i = 0; i < v.length; i++) v[i].parentNode.removeChild(v[i]); } });
 
   // links rewritten by dropComingSoon: Framer's router would still go to its own (original) target
   addEventListener('click', function (e) {
     var a = e.target.closest && e.target.closest('a[data-xl]');
     if (!a || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey) return;
     e.preventDefault(); e.stopImmediatePropagation();
-    location.href = a.href;
+    goPage(a.href);
   }, true);
 
   var timer = 0;
