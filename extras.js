@@ -181,6 +181,14 @@
     '.x-si{position:relative;flex:none;width:100%;overflow:hidden;background:#101010}',
     '.x-si>img{display:block;width:100%;height:100%;object-fit:cover}',
     '.x-si>iframe{position:absolute;inset:0;width:100%;height:100%;border:0}',
+    // transition from the home gallery into a project
+    '.x-tr{position:fixed;inset:0;z-index:80;pointer-events:none;background:rgba(0,0,0,0);transition:background .6s ease}',
+    '.x-tr.x-go{background:rgba(10,20,40,.35)}',
+    '.x-tr-img{position:fixed;background-size:cover;background-position:center;background-repeat:no-repeat;transition:left .62s cubic-bezier(.7,0,.2,1),top .62s cubic-bezier(.7,0,.2,1),width .62s cubic-bezier(.7,0,.2,1),height .62s cubic-bezier(.7,0,.2,1);box-shadow:0 30px 80px rgba(10,20,50,.35)}',
+    '.x-tr.x-in{background:transparent;transition:opacity .85s ease .05s}',
+    '.x-tr.x-in .x-tr-img{transition:transform .85s cubic-bezier(.2,.8,.2,1);transform:scale(1.0)}',
+    '.x-tr.x-in.x-out{opacity:0}',
+    '.x-tr.x-in.x-out .x-tr-img{transform:scale(1.06)}',
     // project pictures open full screen over the blurred page (see the lightbox below)
     '[data-xg] img{cursor:zoom-in}',
     '.x-lb{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(214,232,250,.35);-webkit-backdrop-filter:blur(22px) saturate(1.1);backdrop-filter:blur(22px) saturate(1.1);opacity:0;transition:opacity .28s ease;touch-action:pan-y}',
@@ -488,6 +496,40 @@
     m.__raf = requestAnimationFrame(step);
   }
   // home cards: find the card under a point (their own boxes ignore the pointer) and follow its link
+  // ---- opening a project from the home gallery: the picture grows from its place in the grid to fill the screen (the rest of
+  // the page falls away), the project page opens under the same picture and it fades out to reveal it
+  function goProject(a) {
+    var href = a.href, im = a.querySelector('img');
+    var go = function () { location.href = href; };
+    if (!im || !im.complete || !im.naturalWidth || matchMedia('(prefers-reduced-motion:reduce)').matches || document.querySelector('.x-tr')) { go(); return; }
+    var r = im.getBoundingClientRect(), src = im.currentSrc || im.src;
+    var o = document.createElement('div');
+    o.className = 'x-tr';
+    var d = document.createElement('div');
+    d.className = 'x-tr-img';
+    d.style.cssText = 'left:' + r.left + 'px;top:' + r.top + 'px;width:' + r.width + 'px;height:' + r.height + 'px;background-image:url("' + src.replace(/"/g, '%22') + '")';
+    o.appendChild(d);
+    document.body.appendChild(o);
+    try { sessionStorage.setItem('xt-tr', JSON.stringify({ src: src, t: Date.now() })); } catch (err) {}
+    void d.offsetWidth;
+    o.classList.add('x-go');
+    d.style.left = '0px'; d.style.top = '0px'; d.style.width = innerWidth + 'px'; d.style.height = innerHeight + 'px';
+    var done = false, fin = function () { if (done) return; done = true; go(); };
+    d.addEventListener('transitionend', function (e) { if (e.propertyName === 'width') fin(); });
+    setTimeout(fin, 900);
+  }
+  // arriving from such a click: show that picture full screen at once, then let it dissolve away
+  (function () {
+    var t = null;
+    try { t = JSON.parse(sessionStorage.getItem('xt-tr') || 'null'); sessionStorage.removeItem('xt-tr'); } catch (e) {}
+    if (!t || Date.now() - t.t > 7000 || pageKey() === 'home') return;
+    var o = document.createElement('div');
+    o.className = 'x-tr x-in';
+    o.innerHTML = '<div class="x-tr-img" style="left:0;top:0;width:100vw;height:100vh;height:100dvh;background-image:url(&quot;' + t.src.replace(/"/g, '%22') + '&quot;)"></div>';
+    var add = function () { if (!document.body) return setTimeout(add, 10); document.body.appendChild(o); setTimeout(function () { o.classList.add('x-out'); setTimeout(function () { if (o.parentNode) o.parentNode.removeChild(o); }, 900); }, 450); };
+    add();
+  })();
+
   function homeCardAt(x, y) {
     var m = document.querySelector('main[data-xhome]');
     if (!m) return null;
@@ -526,7 +568,15 @@
     if (!a) return;
     e.preventDefault(); e.stopImmediatePropagation();
     if (performance.now() - homeTapAt < 800) return;   // already followed on touchend
-    if (e.metaKey || e.ctrlKey || e.shiftKey) window.open(a.href, '_blank'); else a.click();
+    if (e.metaKey || e.ctrlKey || e.shiftKey) window.open(a.href, '_blank'); else goProject(a);
+  }, true);
+  // phones: the cards are real links; a tap on one gets the same transition
+  addEventListener('click', function (e) {
+    if (!e.isTrusted || e.button || e.metaKey || e.ctrlKey || e.shiftKey || !e.target.closest) return;
+    var a = e.target.closest('main[data-xhome] [data-xhi] a[href]');
+    if (!a) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    goProject(a);
   }, true);
   addEventListener('pointermove', function (e) {
     var m = pageKey() === 'home' && document.querySelector('main[data-xhome]');
