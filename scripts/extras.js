@@ -633,6 +633,25 @@
   }
 
 
+  // China: two more pictures (extras/china-1.webp, china-2.webp) sit right after the project's first picture
+  var CHINA = [[1080, 1805, 'Girl in a white dress running through a forest, motion blur'], [1080, 1620, 'Close-up of the girl running, forest in motion blur']];
+  function ensureChina(m) {
+    var g = galleryEl(m);
+    if (!g || g.querySelector(':scope > .x-si')) return;
+    var its = items(g), first = its.length ? its[0] : null, i;
+    if (!first) return;
+    for (i = CHINA.length - 1; i >= 0; i--) {
+      var box = document.createElement('div');
+      box.className = 'x-si';
+      box.setAttribute('data-r', String(CHINA[i][1] / CHINA[i][0])); box.style.aspectRatio = CHINA[i][0] + ' / ' + CHINA[i][1];
+      var im = document.createElement('img');
+      im.src = '/extras/china-' + (i + 1) + '.webp'; im.alt = CHINA[i][2]; im.width = CHINA[i][0]; im.height = CHINA[i][1];
+      im.loading = 'lazy'; im.decoding = 'async';
+      box.appendChild(im);
+      g.insertBefore(box, first.nextSibling);
+    }
+  }
+
   // ---- lightbox: a click on a project picture shows it full screen over the blurred page; arrows / swipe go through the pictures,
   // the cross, Esc, the up arrow or a click outside the picture close it
   var LB = { el: null, list: [], i: 0, open: false, tx: 0, ty: 0 };
@@ -1526,8 +1545,9 @@
       }
     }
 
+    if (p === 'china' && m) ensureChina(m);
     if (p === 'schweppes' && m) ensureYoutube(m);
-    else { removeAll('.x-yt'); removeAll('.x-si'); unset('[data-xh]', 'data-xh'); unset('[data-xy]', 'data-xy'); }
+    else { removeAll('.x-yt'); if (p !== 'china') removeAll('.x-si'); unset('[data-xh]', 'data-xh'); unset('[data-xy]', 'data-xy'); }
   }
 
   // the face in the menu: on project pages Framer only scrolls to #hero, so go to the home page ourselves
