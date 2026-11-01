@@ -633,14 +633,14 @@
   }
 
 
-  // China: two more pictures (extras/china-1.webp, china-2.webp) sit right after the project's first picture
-  var CHINA = [[1080, 1805, 'Girl in a white dress running through a forest, motion blur'], [1080, 1620, 'Close-up of the girl running, forest in motion blur']];
+  // China: two more pictures (extras/china-1.webp, china-2.webp) that become the 4th and the 8th of the project's column
+  var CHINA = [[1080, 1805, 'Girl in a white dress running through a forest, motion blur', 4], [1080, 1620, 'Close-up of the girl running, forest in motion blur', 8]];
   function ensureChina(m) {
     var g = galleryEl(m);
     if (!g || g.querySelector(':scope > .x-si')) return;
-    var its = items(g), first = its.length ? its[0] : null, i;
-    if (!first) return;
-    for (i = CHINA.length - 1; i >= 0; i--) {
+    var its = items(g), i;
+    if (its.length < 3) return;
+    for (i = 0; i < CHINA.length; i++) {
       var box = document.createElement('div');
       box.className = 'x-si';
       box.setAttribute('data-r', String(CHINA[i][1] / CHINA[i][0])); box.style.aspectRatio = CHINA[i][0] + ' / ' + CHINA[i][1];
@@ -648,7 +648,9 @@
       im.src = '/extras/china-' + (i + 1) + '.webp'; im.alt = CHINA[i][2]; im.width = CHINA[i][0]; im.height = CHINA[i][1];
       im.loading = 'lazy'; im.decoding = 'async';
       box.appendChild(im);
-      g.insertBefore(box, first.nextSibling);
+      // CHINA[i][3] is its final place (1 = first): it goes after the original item that precedes that place
+      var before = its[CHINA[i][3] - 2 - i];
+      if (before) g.insertBefore(box, before.nextSibling); else g.appendChild(box);
     }
   }
 
