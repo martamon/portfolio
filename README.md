@@ -17,3 +17,12 @@ Static mirror of https://martamonteagudo.com (Framer site), served via GitHub Pa
 - Without a service worker (in-app browsers such as LinkedIn's) the inline script at the top of every page's `<head>` (`FETCH_PATCH` in `scripts/add-root-shim.py`) cuts the `?range=` slices out of the `.framercms` files itself; otherwise Framer stops with "Unexpected response length" and the home page is empty. `?xdebug` prints what the browser reports, `?xoff` switches `extras.js` off.
 - YouTube embeds and social links still point to their original hosts.
 - The `clone-website` skill is installed in `.claude/skills/`.
+
+## The planet of O Freixo (Contact page)
+
+Three clicks (or taps) on the blue creature of the Contact page open `extras/freixo.js`, a small 3D planet of the coast of Outes (A Coruña) built with
+three.js (`extras/three.module.min.js`, loaded only then): the villages of Muros (with its arcades), Esteiro (its inlet, mole, footbridge and sand spit),
+O Freixo (pier, houses, boats) and Outes, the road with moving cars, sailing boats, birds, rotating clouds, and Monte Louro across the water. It opens on top
+of the page (no new tab); the cross at the top right, Esc or the browser's back gesture close it. Drag to turn, wheel / pinch to zoom, N (or the button) for
+day / night, arrows for the next / previous place. `?xplanet` on any URL opens it at once. The text that turns round the creature on hover ("click 3 times")
+is `jfHint` in `extras.js`. When `extras/freixo.js` changes, bump the `?v=` on its import in `extras.js`.
