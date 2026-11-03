@@ -320,6 +320,81 @@ function routeAt(r, u) {
   return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, Math.atan2(-(b[1] - a[1]), b[0] - a[0])];
 }
 
+
+// ---- sound: all of it is made here with the Web Audio API (no files): a soft pad, a music-box melody, the sea, and little chimes and splashes
+function makeAudio(night0) {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return null;
+  let ctx; try { ctx = new AC(); } catch (e) { return null; }
+  const out = ctx.createGain(); out.gain.value = 0; out.connect(ctx.destination);
+  const dryB = ctx.createGain(); dryB.gain.value = .8; dryB.connect(out);
+  // a long, soft reverb made from decaying noise
+  const len = ctx.sampleRate * 3.2, ir = ctx.createBuffer(2, len, ctx.sampleRate);
+  for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6); }
+  const rev = ctx.createConvolver(); rev.buffer = ir; const revG = ctx.createGain(); revG.gain.value = .75; rev.connect(revG); revG.connect(out);
+  const tone = ctx.createBiquadFilter(); tone.type = 'lowpass'; tone.frequency.value = 5200; tone.connect(dryB); tone.connect(rev);
+  let night = !!night0, muted = false, alive = true, last = {};
+  const NOTE = (m) => 440 * Math.pow(2, (m - 69) / 12);
+  const CH = [[48, 55, 59, 64], [45, 52, 57, 64], [41, 48, 55, 64], [43, 50, 57, 62], [48, 55, 59, 67], [45, 52, 60, 64]];   // Cmaj7 · Am7 · Fmaj7 · G6 · ...
+  let ci = 0;
+  function pad() {
+    if (!alive) return;
+    const ch = CH[ci++ % CH.length], t = ctx.currentTime, dur = 9;
+    for (const m of ch) for (const dt of [-4, 4]) {
+      const o = ctx.createOscillator(), g = ctx.createGain(), f = ctx.createBiquadFilter();
+      o.type = 'triangle'; o.frequency.value = NOTE(m + (night ? -12 : 0) + (m < 50 ? 0 : 0)); o.detune.value = dt;
+      f.type = 'lowpass'; f.frequency.value = night ? 520 : 800;
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.022, t + 3.5); g.gain.linearRampToValueAtTime(0, t + dur + 3);
+      o.connect(f); f.connect(g); g.connect(tone); o.start(t); o.stop(t + dur + 3.2);
+    }
+  }
+  const PENT = [72, 74, 76, 79, 81, 84, 79, 76], PENTN = [69, 72, 74, 76, 79, 81, 76, 72];
+  let pi = 0;
+  function note(m, vol, hold) {
+    const t = ctx.currentTime, o = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'sine'; o.frequency.value = NOTE(m); o2.type = 'sine'; o2.frequency.value = NOTE(m) * 2.01;
+    const g2 = ctx.createGain(); g2.gain.value = .22;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .012); g.gain.exponentialRampToValueAtTime(.0008, t + (hold || 2.6));
+    o.connect(g); o2.connect(g2); g2.connect(g); g.connect(tone); o.start(t); o2.start(t); o.stop(t + (hold || 2.6) + .1); o2.stop(t + (hold || 2.6) + .1);
+  }
+  function melody() {
+    if (!alive) return;
+    const sc = night ? PENTN : PENT, n = sc[Math.floor(Math.random() * sc.length)];
+    note(n - (Math.random() < .25 ? 12 : 0), .05 + Math.random() * .02, 2.8);
+    if (Math.random() < .3) setTimeout(() => alive && note(sc[(sc.indexOf(n) + 2) % sc.length], .035, 2.4), 380 + Math.random() * 300);
+    mt = setTimeout(melody, 2400 + Math.random() * 3600);
+  }
+  // the sea: filtered noise that swells and recedes
+  const nb = ctx.createBuffer(1, ctx.sampleRate * 4, ctx.sampleRate), nd = nb.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+  const ns = ctx.createBufferSource(); ns.buffer = nb; ns.loop = true;
+  const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 520; bp.Q.value = .4;
+  const sg = ctx.createGain(); sg.gain.value = .05;
+  const lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = .11; lg.gain.value = .035; lfo.connect(lg); lg.connect(sg.gain);
+  ns.connect(bp); bp.connect(sg); sg.connect(out); ns.start(); lfo.start();
+  let mt = 0, pt = 0;
+  const api = {
+    start() { if (ctx.state === 'suspended') ctx.resume(); out.gain.cancelScheduledValues(ctx.currentTime); out.gain.setTargetAtTime(muted ? 0 : .9, ctx.currentTime, 1.6); pad(); pt = setInterval(pad, 8200); mt = setTimeout(melody, 1800); },
+    mute(m) { muted = m; out.gain.setTargetAtTime(m ? 0 : .9, ctx.currentTime, .35); if (!m && ctx.state === 'suspended') ctx.resume(); },
+    setNight(n) { night = n; bp.frequency.setTargetAtTime(n ? 340 : 520, ctx.currentTime, 2); sg.gain.setTargetAtTime(n ? .07 : .05, ctx.currentTime, 2); },
+    sfx(name) {
+      if (muted || !alive) return;
+      const now = performance.now(); if (last[name] && now - last[name] < (name === 'splash' ? 1500 : 150)) return; last[name] = now;
+      if (name === 'open') { note(72, .07, 2.4); setTimeout(() => note(76, .06, 2.4), 140); setTimeout(() => note(79, .06, 2.8), 290); }
+      else if (name === 'close') { note(79, .05, 1.6); setTimeout(() => note(72, .05, 2.2), 150); }
+      else if (name === 'day') { note(79, .06, 2.2); setTimeout(() => note(84, .05, 2.6), 130); }
+      else if (name === 'night') { note(69, .07, 2.6); setTimeout(() => note(64, .06, 3), 160); }
+      else if (name === 'tick') note(88, .03, .9);
+      else if (name === 'splash') {
+        const t = ctx.currentTime, b = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = ctx.createGain(); b.buffer = nb; fl.type = 'bandpass'; fl.frequency.setValueAtTime(2200, t); fl.frequency.exponentialRampToValueAtTime(700, t + .5); fl.Q.value = .8;
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.045, t + .03); g.gain.exponentialRampToValueAtTime(.0005, t + .6); b.connect(fl); fl.connect(g); g.connect(tone); b.start(t, Math.random() * 2); b.stop(t + .7);
+      }
+    },
+    stop() { alive = false; clearTimeout(mt); clearInterval(pt); out.gain.setTargetAtTime(0, ctx.currentTime, .5); setTimeout(() => { try { ctx.close(); } catch (e) {} }, 2200); },
+    get muted() { return muted; }
+  };
+  return api;
+}
+
 export function open(opts) {
   opts = opts || {};
   injectCss();
@@ -328,7 +403,7 @@ export function open(opts) {
   root.setAttribute('role', 'dialog'); root.setAttribute('aria-label', 'Ría de Muros e Noia');
   root.innerHTML = '<canvas class="x-pl-cv"></canvas><div class="x-pl-ts x-pl-ts-t"></div><div class="x-pl-ts x-pl-ts-b"></div>' +
     '<div class="x-pl-top"><div class="x-pl-t"><b>Ría de Muros e Noia</b><span>A Coruña</span></div><div class="x-pl-btns">' +
-    '<button type="button" class="x-pl-dn" aria-label="Day / night"></button>' +
+    '<button type="button" class="x-pl-mu" aria-label="Sound"></button><button type="button" class="x-pl-dn" aria-label="Day / night"></button>' +
     '<button type="button" class="x-pl-x" aria-label="Close"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button></div></div>' +
     '<div class="x-pl-hint">Drag to turn · scroll to zoom · N for day / night</div>';
   document.body.appendChild(root);
@@ -892,8 +967,14 @@ export function open(opts) {
   // ---- day / night
   const DAY = { bg: C(0xcfe9f4), hemi: 1.05, sun: 2.5, sunC: C(0xfff2dc), sky: C(0xeaf6ff), sea: C(0x4ab5c4) };
   const NIGHT = { bg: C(0x0a1430), hemi: .5, sun: .6, sunC: C(0x8fb0ff), sky: C(0x6f8ad0), sea: C(0x1b3a63) };
-  let night = opts.night ? 1 : 0, nightT = night;
+  let night = opts.night ? 1 : 0, nightT = night; const night0 = night;
   const dnBtn = root.querySelector('.x-pl-dn');
+  let muteSaved = false; try { muteSaved = localStorage.getItem('xpl-mute') === '1'; } catch (e) {}
+  const audio = makeAudio(!!opts.night), muBtn = root.querySelector('.x-pl-mu');
+  const paintMu = () => { const m = audio ? audio.muted : true; muBtn.innerHTML = m ? '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l4 6M21 9l-4 6"/></svg>' : '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>'; muBtn.setAttribute('aria-pressed', m ? 'true' : 'false'); };
+  if (!audio) muBtn.style.display = 'none'; else { if (muteSaved) audio.mute(true); audio.start(); audio.sfx('open'); paintMu(); }
+  muBtn.addEventListener('click', () => { if (!audio) return; audio.mute(!audio.muted); try { localStorage.setItem('xpl-mute', audio.muted ? '1' : '0'); } catch (e) {} paintMu(); if (!audio.muted) audio.sfx('tick'); });
+  let lastNight = night0;
   const paintBtn = () => { dnBtn.innerHTML = nightT > .5 ? '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/></svg>' : '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>'; root.classList.toggle('x-night', nightT > .5); };
   const bgc = new THREE.Color();
   const light = (k) => {
@@ -970,6 +1051,7 @@ export function open(opts) {
   const loop = (now) => {
     raf = requestAnimationFrame(loop);
     const dt = Math.min(.05, (now - last) / 1000); last = now; t += dt; frame++;
+    if (audio && night !== lastNight) { lastNight = night; audio.setNight(!!night); audio.sfx(night ? 'night' : 'day'); }
     nightT += (night - nightT) * (1 - Math.exp(-dt * 2.2)); if (Math.abs(night - nightT) < .002) nightT = night;
     light(nightT); if ((nightT > .5) !== root.classList.contains('x-night')) paintBtn();
     dist += (distT - dist) * (1 - Math.exp(-dt * 3.4));
@@ -1003,6 +1085,7 @@ export function open(opts) {
       const yaw = Math.atan2(-tz, tx);
       if (o.kind === 'dol') {                          // swims under the surface, then leaps in an arc and dives back in
         const c = (t * .42 + o.ph) % 3.2, leap = c < 1 ? Math.sin(c * PI) : 0, vy = c < 1 ? Math.cos(c * PI) : 0;
+        if (c < 1 && !o.up) { o.up = 1; if (audio && Math.random() < .5) audio.sfx('splash'); } else if (c >= 1) o.up = 0;
         put(o.w, o.cx + o.rx * Math.cos(o.a) + Math.sin(o.a) * 0, o.cz + o.rz * Math.sin(o.a) + o.off, yaw, -.09 + leap * .42, true);
         o.d.g.rotation.z = c < 1 ? vy * -.7 : Math.sin(t * 2 + o.ph) * .04; o.d.tail.rotation.z = Math.sin(t * 7 + o.ph) * .35;
       } else if (o.kind === 'turtle') {
@@ -1055,6 +1138,7 @@ export function open(opts) {
 
   function close() {
     if (closed) return; closed = true;
+    if (audio) { audio.sfx('close'); setTimeout(() => audio.stop(), 450); }
     cancelAnimationFrame(raf); removeEventListener('keydown', onKey, true); removeEventListener('resize', size);
     root.classList.remove('x-in');
     setTimeout(() => {
@@ -1089,9 +1173,9 @@ function injectCss() {
     '.x-pl-t span{opacity:.7;font-size:12px}',
     '.x-pl-btns{display:flex;gap:10px;pointer-events:auto}',
     '.x-pl button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}',
-    '.x-pl-dn,.x-pl-x{width:44px;height:44px;border-radius:50%;border:0;padding:0;display:grid;place-items:center;background:rgba(255,255,255,.7);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 2px 10px rgba(20,50,80,.12);transition:background .5s ease,transform .5s cubic-bezier(.22,.8,.24,1)}',
-    '.x-pl.x-night .x-pl-dn,.x-pl.x-night .x-pl-x{background:rgba(20,34,66,.65)}',
-    '.x-pl-dn:hover,.x-pl-x:hover{transform:scale(1.06)}',
+    '.x-pl-dn,.x-pl-x,.x-pl-mu{width:44px;height:44px;border-radius:50%;border:0;padding:0;display:grid;place-items:center;background:rgba(255,255,255,.7);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 2px 10px rgba(20,50,80,.12);transition:background .5s ease,transform .5s cubic-bezier(.22,.8,.24,1)}',
+    '.x-pl.x-night .x-pl-dn,.x-pl.x-night .x-pl-x,.x-pl.x-night .x-pl-mu{background:rgba(20,34,66,.65)}',
+    '.x-pl-dn:hover,.x-pl-x:hover,.x-pl-mu:hover{transform:scale(1.06)}',
     '.x-pl-pins{position:absolute;inset:0;pointer-events:none;overflow:hidden}',
     '.x-pl-pin{position:absolute;left:0;top:0;margin:0;padding:0;border:0;background:none;display:flex;align-items:center;transition:opacity .4s ease;will-change:transform;white-space:nowrap}',
     '.x-pl-pin i{flex:none;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;background:#b9623f;color:#fff;font:600 11px/26px "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;font-style:normal;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.25);transition:transform .4s cubic-bezier(.22,.8,.24,1)}',
