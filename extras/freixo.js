@@ -828,14 +828,17 @@ export function open(opts) {
   // ---- Ézaro, on the south shore: a granite village under the mountain and the waterfall of the river Xallas, falling straight into the sea
   const falls = [];
   { const ex = -1.2, [fx, fz] = onShoreS(ex, 3.95), yaw = seaYawS(fx), g = new THREE.Group(), gr = [0xaaa391, 0xb8b19f, 0x9b968a];
-    for (const [bx, by, bz, sc, k] of [[0, .35, -.25, .62, 0], [-.35, .28, -.05, .45, 1], [.38, .3, -.05, .48, 2], [-.1, .8, -.3, .5, 1], [.15, 1.05, -.35, .38, 0], [0, .15, .15, .4, 2], [-.55, .12, .1, .3, 1], [.58, .12, .12, .3, 0]]) {
+    for (const [bx, by, bz, sc, k] of [[0, .35, -.25, .62, 0], [-.35, .28, -.05, .45, 1], [.38, .3, -.05, .48, 2], [-.1, .8, -.3, .5, 1], [.15, 1.05, -.35, .38, 0], [0, .15, -.1, .4, 2], [-.55, .12, .1, .3, 1], [.58, .12, .12, .3, 0]]) {
       const m = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 2), std(gr[k], { flatShading: false })); m.scale.set(sc * 1.05, sc * 1.1, sc); m.position.set(bx, by, bz); m.castShadow = true; g.add(m);
     }
-    const wm = std(0xeaf7ff, { transparent: true, opacity: .7, roughness: .3 });
-    const wf = box(.2, 1.0, .05, wm); wf.position.set(0, .56, .33); g.add(wf);
-    for (let k = 0; k < 6; k++) { const st = box(.17, .1, .06, std(0xffffff, { transparent: true, opacity: .9 })); st.position.set(0, .9, .34); g.add(st); falls.push({ m: st, k }); }
-    const pool = box(.44, .03, .22, std(0x69b9d0, { transparent: true, opacity: .85 })); pool.position.set(0, 1.04, .02); g.add(pool);
-    const mist = new THREE.Mesh(new THREE.SphereGeometry(.28, 12, 8), std(0xffffff, { transparent: true, opacity: .45, roughness: 1 })); mist.position.set(0, .1, .42); mist.scale.y = .55; g.add(mist); falls.push({ mist });
+    // the water: three soft ribbons that keep sliding down, white streaks, foam rolling at the foot and a fine spray
+    const sheet = (x, w, c, o) => { const m = box(w, 1.0, .045, std(c, { transparent: true, opacity: o, roughness: .25, emissive: 0x5b8fa8, emissiveIntensity: .12 })); m.position.set(x, .56, .62); g.add(m); return m; };
+    sheet(0, .2, 0xd9f1fb, .55); sheet(-.075, .07, 0xffffff, .5); sheet(.08, .06, 0xffffff, .45);
+    for (let k = 0; k < 14; k++) { const st = box(.025 + (k % 3) * .012, .16 + (k % 4) * .05, .05, std(0xffffff, { transparent: true, opacity: .9 })); st.position.set(((k * 37) % 17 - 8) * .0125, .9, .64); g.add(st); falls.push({ m: st, k, sp: .8 + (k % 5) * .12, x0: st.position.x }); }
+    const pool = box(.46, .03, .24, std(0x69b9d0, { transparent: true, opacity: .85 })); pool.position.set(0, 1.04, .3); g.add(pool);
+    for (let k = 0; k < 11; k++) { const fo = new THREE.Mesh(new THREE.IcosahedronGeometry(.055 + (k % 3) * .02, 1), std(0xffffff, { transparent: true, opacity: .85, roughness: 1 })); g.add(fo); falls.push({ foam: fo, k, a: k * .6 }); }
+    const mist = new THREE.Mesh(new THREE.SphereGeometry(.3, 12, 8), std(0xffffff, { transparent: true, opacity: .4, roughness: 1 })); mist.position.set(0, .12, .72); mist.scale.y = .5; g.add(mist); falls.push({ mist });
+    for (let k = 0; k < 12; k++) { const sp = new THREE.Mesh(new THREE.SphereGeometry(.014, 5, 4), std(0xffffff, { transparent: true, opacity: .8 })); g.add(sp); falls.push({ spray: sp, k, ph: rnd() }); }
     W(put(g, fx, fz, yaw, -.08));
     for (const x of [-3.7, -2.9, -2.2, .4, 1.1, 1.8]) hhS(x, .9 + rnd() * .3, 1 + (hc % 2), { stone: true });
     const [cx, cz] = onShoreS(-3.4, 3.1); W(put(church(.9), cx, cz, seaYawS(cx), -.03)); }
@@ -856,7 +859,7 @@ export function open(opts) {
     const hs = house({ w: .42, d: .36, floors: 1, wall: 0xf7f1e4, roof: ROOF[0], gal: false, shut: 0x2f6fa8, fr: 2, door: 0x2f6fa8 }); W(put(hs, ix, iz - .1, .5, -.02));
     for (let k = 0; k < 3; k++) { const q = new THREE.Group(); q.add(box(.3, .4, .3, std(0xb2ac9c))); const c = box(.34, .05, .34, std(0xd0cabb)); c.position.y = .22; q.add(c); W(put(q, ix, sz - .05 + k * .3, 0, .02, true)); }
     const bt = boat(0xc9473a, 0xf2efe6, 'fisher'); bt.scale.setScalar(.7); const bw = new THREE.Group(); bw.add(bt); put(bw, ix + .45, sz + .55, PI / 2, 0, true); W(bw); boats.push({ w: bw, b: bt, ph: 1.3, base: 0 });
-    for (const [hx, hz, c, mn, ry] of [[-.9, .35, 0x7a4a2e, 0x2a1a10, .6], [.95, -.2, 0xf1ece0, 0x8a7a66, 3.4]]) { const h = horse(c, mn), w = new THREE.Group(); w.add(h.g); const x = ix + hx, z = iz + hz; put(w, x, z, ry, -.02); W(w); horses.push({ h, ph: rnd() * 6 }); } }
+    for (const [hx, hz, c, mn, ry] of [[-.9, .35, 0x7a4a2e, 0x2a1a10, .6], [.95, -.2, 0xf1ece0, 0x8a7a66, 3.4]]) { const h = horse(c, mn), w = new THREE.Group(); h.g.scale.setScalar(.5); w.add(h.g); const x = ix + hx, z = iz + hz; put(w, x, z, ry, -.02); W(w); horses.push({ h, ph: rnd() * 6 }); } }
 
   // rocks on the tips of the capes (puntas)
   for (const cx of [-2.3, 14.1, 17.1, 20.3, -21.4]) for (let k = 0; k < 3; k++) {
@@ -1073,7 +1076,12 @@ export function open(opts) {
     }
     foamMat.opacity = .42 + Math.sin(t * 1.4) * .16;
     for (const o of horses) { const g = Math.max(0, Math.sin(t * .5 + o.ph)); o.h.head.rotation.z = -g * .9 + Math.sin(t * 2 + o.ph) * .03; }
-    for (const f of falls) { if (f.mist) { f.mist.scale.setScalar(1 + Math.sin(t * 2) * .08); f.mist.material.opacity = .4 + Math.sin(t * 1.6) * .08; } else { const u = ((t * .9 + f.k / 6) % 1); f.m.position.y = 1.0 - u * .92; f.m.material.opacity = .95 - u * .4; } }
+    for (const f of falls) {
+      if (f.mist) { f.mist.scale.setScalar(1 + Math.sin(t * 2) * .08); f.mist.material.opacity = .36 + Math.sin(t * 1.6) * .07; }
+      else if (f.foam) { const u = (t * .5 + f.k / 11) % 1, r = .12 + u * .42; f.foam.position.set(Math.cos(f.a + f.k) * r * .8 + Math.sin(t * 1.3 + f.k) * .03, .035 + Math.sin(t * 4 + f.k) * .012, .72 + Math.abs(Math.sin(f.a + f.k * 2)) * r * .9); f.foam.material.opacity = .9 * (1 - u); f.foam.scale.setScalar(.7 + u * .8); }
+      else if (f.spray) { const u = (t * .9 + f.ph) % 1, ang = f.k * 1.1; f.spray.position.set(Math.cos(ang) * u * .22, .08 + Math.sin(u * PI) * .22, .7 + Math.sin(ang) * u * .18); f.spray.material.opacity = .8 * (1 - u); }
+      else { const u = ((t * f.sp * .9 + f.k / 14) % 1); f.m.position.set(f.x0 + Math.sin(t * 3 + f.k) * .008, 1.02 - u * .96, .64); f.m.material.opacity = .95 - u * .5; f.m.scale.y = .6 + u * .9; }
+    }
     for (const o of seaLife) {
       if (o.kind === 'fish') {                         // a shoal swims along the ría all together, its fish keeping their places with a little wobble
         o.a += o.sp * dt; const sg = Math.sign(o.sp), tx = -o.rx * Math.sin(o.a) * sg, tz = o.rz * Math.cos(o.a) * sg;
