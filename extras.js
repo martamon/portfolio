@@ -213,6 +213,12 @@
     // its shadow: a soft blurred oval behind and below it (a gradient, not a copy of its silhouette, so it can never look like a second one)
     '.x-drift::before{content:"";position:absolute;left:8%;right:-4%;top:62%;height:52%;z-index:-1;border-radius:50%;background:radial-gradient(closest-side,rgba(20,32,80,.32),rgba(20,32,80,.14) 55%,rgba(20,32,80,0));transform:translate(calc(6% + var(--sd,.5) * 12%),calc(10% + var(--sd,.5) * 22%));pointer-events:none}',
     '.x-drift.x-grab{cursor:grabbing}',
+    '.x-hint{position:fixed;left:0;top:0;z-index:8;pointer-events:none;opacity:0;transition:opacity .5s ease;color:var(--xfg,#1b1b1b)}',
+    '.x-hint.x-on{opacity:.95}',
+    '.x-hint svg{width:100%;height:100%;overflow:visible;animation:x-hint-spin 14s linear infinite}',
+    '.x-hint text{fill:currentColor;font:500 12.5px "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.14em}',
+    '@keyframes x-hint-spin{to{transform:rotate(360deg)}}',
+    'html[data-xnight] .x-hint,html[data-xdark] .x-hint{color:rgb(203,237,255)}',
     // it follows the time of day like the type: as the page darkens it turns paler and lighter (towards the light grey-blue of the night type)
     '.x-drift{-webkit-filter:brightness(calc(1 + .22 * var(--xt))) saturate(calc(1 - .25 * var(--xt))) hue-rotate(calc(-8deg * var(--xt))) drop-shadow(0 0 calc(10px * var(--xglow,0)) rgba(185,215,255,calc(.95 * var(--xglow,0)))) drop-shadow(0 0 calc(26px * var(--xglow,0)) rgba(120,170,255,calc(.8 * var(--xglow,0))));filter:brightness(calc(1 + .22 * var(--xt))) saturate(calc(1 - .25 * var(--xt))) hue-rotate(calc(-8deg * var(--xt))) drop-shadow(0 0 calc(10px * var(--xglow,0)) rgba(185,215,255,calc(.95 * var(--xglow,0)))) drop-shadow(0 0 calc(26px * var(--xglow,0)) rgba(120,170,255,calc(.8 * var(--xglow,0))))}',
     // at night it glows: a soft halo around it that breathes
@@ -949,13 +955,44 @@
       // a double tap/click (not a drag) makes it react, in a different way each time
       if (ev.type === 'pointerup' && Math.hypot(ev.clientX - JF.dx0, ev.clientY - JF.dy0) < 8 && performance.now() - JF.d0 < 500) {
         var nowT = performance.now();
-        if (JF.tapAt && nowT - JF.tapAt < 400) { JF.tapAt = 0; jfReact(); } else JF.tapAt = nowT;
+        // 2 taps in a row make it react (a moment after the second, in case a third follows), 3 open the planet of O Freixo
+        JF.tapN = JF.tapAt && nowT - JF.tapAt < 450 ? (JF.tapN || 0) + 1 : 1; JF.tapAt = nowT;
+        clearTimeout(JF.tapT);
+        if (JF.tapN >= 3) { JF.tapN = 0; JF.tapAt = 0; openPlanet(); }
+        else { if (JF.tapN === 1) jfHint(2200); JF.tapT = setTimeout(function () { if (JF.tapN === 2) jfReact(); JF.tapN = 0; }, 460); }
       }
     };
     e.addEventListener('pointerup', drop); e.addEventListener('pointercancel', drop);
+    e.addEventListener('pointerenter', function (ev) { if (ev.pointerType === 'mouse') jfHint(-1); });
+    e.addEventListener('pointerleave', function (ev) { if (ev.pointerType === 'mouse') jfHint(0); });
     document.body.appendChild(e);
     JF.el = e;
     return e;
+  }
+  // the message that turns round the creature: "click 3 times" (on hover with a mouse, a moment after a first tap on touch screens)
+  function jfHint(ms) {
+    var h = JF.hint;
+    if (!h || !h.isConnected) {
+      if (!ms) return;
+      h = JF.hint = document.createElement('div');
+      h.className = 'x-hint'; h.setAttribute('aria-hidden', 'true');
+      var t = 'CLICK 3 TIMES \u00b7 ', txt = t + t + t;
+      h.innerHTML = '<svg viewBox="0 0 200 200"><defs><path id="x-hint-p" d="M100,100 m-82,0 a82,82 0 1,1 164,0 a82,82 0 1,1 -164,0"/></defs><text><textPath href="#x-hint-p" textLength="505" lengthAdjust="spacing">' + txt + '</textPath></text></svg>';
+      document.body.appendChild(h);
+    }
+    clearTimeout(JF.hintT);
+    h.classList.toggle('x-on', !!ms);
+    if (ms > 0) JF.hintT = setTimeout(function () { h.classList.remove('x-on'); }, ms);
+  }
+  // opened on top of the page (nothing else changes): 3D module loaded the first time it is needed
+  var planet = null;
+  function openPlanet() {
+    if (planet) return;
+    planet = { loading: true };
+    jfHint(0);
+    import('/extras/freixo.js?v=1').then(function (m) {
+      planet = m.open({ night: document.documentElement.hasAttribute('data-xdark'), onClose: function () { planet = null; } });
+    }).catch(function () { planet = null; });
   }
   function jfLaunch() {
     var e = jfEnsureEl(), w = jfSize();
@@ -1117,6 +1154,7 @@
     var sx = (1 - JF.sq * 0.9) * (1 + 0.1 * near) * JF.km, sy = (1 + JF.sq) * (1 + 0.1 * near) * JF.km;
     JF.el.style.setProperty('--sd', (0.5 + 0.5 * near).toFixed(2));
     JF.el.style.transform = 'translate3d(' + (JF.x - JF.w / 2).toFixed(1) + 'px,' + (JF.y - JF.h / 2).toFixed(1) + 'px,0) rotate(' + (sway + JF.rot).toFixed(1) + 'deg) scale(' + sx.toFixed(3) + ',' + sy.toFixed(3) + ')';
+    if (JF.hint && JF.hint.isConnected) { var hs = Math.max(176, Math.max(JF.w, JF.h) * 1.7); JF.hint.style.width = JF.hint.style.height = hs.toFixed(0) + 'px'; JF.hint.style.transform = 'translate3d(' + (JF.x - hs / 2).toFixed(1) + 'px,' + (JF.y - hs / 2).toFixed(1) + 'px,0)'; }
   }
   // a click or tap on the page sends it swimming over there
   addEventListener('pointerdown', function (ev) {
@@ -1131,6 +1169,7 @@
       var old = document.querySelectorAll('.x-drift');
       for (var oi = 0; oi < old.length; oi++) old[oi].parentNode.removeChild(old[oi]);
       JF.el = null;
+      if (JF.hint) { JF.hint.parentNode && JF.hint.parentNode.removeChild(JF.hint); JF.hint = null; }
       if (window.__xDrift === JF) window.__xDrift = null;
       return;
     }
@@ -1635,6 +1674,8 @@
     e.preventDefault(); e.stopImmediatePropagation();
     goPage(a.href);
   }, true);
+
+  if (/[?&]xplanet\b/.test(location.search)) setTimeout(openPlanet, 1200);   // ?xplanet opens the planet at once (to share or test)
 
   var timer = 0;
   function schedule() {
