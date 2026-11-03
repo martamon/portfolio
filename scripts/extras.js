@@ -19,6 +19,15 @@
       addEventListener('error', function (e) { log('ERR ' + (e.message || (e.target && (e.target.src || e.target.href)) || '?') + (e.filename ? ' @' + e.filename.split('/').pop() + ':' + e.lineno : '')); }, true);
       addEventListener('unhandledrejection', function (e) { log('REJ ' + (e.reason && (e.reason.message || e.reason))); });
       var rep = function (tag) { try { var m = document.querySelector('main'); log(tag + ' inapp ' + INAPP + ' text ' + document.body.innerText.length + ' main ' + (m ? m.getBoundingClientRect().height | 0 : '-') + ' body ' + document.body.scrollHeight + ' imgs ' + document.images.length + ' bg ' + getComputedStyle(document.body).backgroundColor); } catch (err) { log('rep ' + err.message); } };
+      ['error', 'warn'].forEach(function (k) { var o = console[k]; console[k] = function () { try { log('c.' + k + ' ' + [].slice.call(arguments).map(function (a) { return a && a.message ? a.message : String(a); }).join(' ').slice(0, 220)); } catch (e) {} return o.apply(console, arguments); }; });
+      var res = function (tag) {
+        try {
+          var m = document.getElementById('main'), rs = performance.getEntriesByType('resource'), bad = [], mjs = 0, i;
+          for (i = 0; i < rs.length; i++) { if (/\.mjs/.test(rs[i].name)) mjs++; if (rs[i].responseStatus >= 400 || (rs[i].responseStatus === 0 && rs[i].transferSize === 0 && rs[i].decodedBodySize === 0 && /\.(mjs|js|json|framercms)/.test(rs[i].name))) bad.push(rs[i].name.split('/').pop().slice(0, 40) + ':' + rs[i].responseStatus); }
+          log(tag + ' main#' + (m ? m.children.length + ' kids ' + m.innerHTML.length + 'b' : 'none') + ' body kids ' + document.body.children.length + ' res ' + rs.length + ' mjs ' + mjs + ' bad ' + (bad.slice(0, 6).join(',') || '-'));
+        } catch (err) { log('res ' + err.message); }
+      };
+      setTimeout(function () { res('2s'); }, 2000); setTimeout(function () { res('6s'); }, 6000);
       setTimeout(function () { rep('1s'); }, 1000); setTimeout(function () { rep('4s'); }, 4000); setTimeout(function () { rep('9s'); }, 9000);
       show();
     })();
