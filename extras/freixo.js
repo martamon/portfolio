@@ -22,15 +22,23 @@ function planeOf(d) {
 }
 // land: the north shore (Muros to Outes), the south shore (Monte Louro) and two islets
 const ISL = [
-  { cx: 0, cz: -14, a: 24, b: 13, hh: 3.0 },
+  { cx: -1, cz: -14, a: 22, b: 13, hh: 3.0 },
   { cx: -4, cz: 17, a: 20, b: 7, hh: 3.2 },
   { cx: 17, cz: 9, a: 3.4, b: 2.5, hh: 1.5 },
   { cx: -22, cz: 6, a: 2.8, b: 2.1, hh: 1.3 }
 ];
+const gs = (x, c, sg) => Math.exp(-((x - c) * (x - c)) / (2 * sg * sg));
+// how far the shore is pushed out (+) or in (-) along the coast, in map units: gentle swells, named capes and bays
+function coastW(i, x) {
+  if (i === 0) return 1.1 * Math.sin(x * .31 + .8) + .75 * Math.sin(x * .52 + 2.1) + .4 * Math.sin(x * 1.1 + 1)
+    + 2.4 * gs(x, -2.3, .95) + 1.7 * gs(x, 14.1, .8) + 1.9 * gs(x, 17.1, .8) + 1.5 * gs(x, 20.3, .7) + 2.0 * gs(x, -21.4, .9) - 1.1 * gs(x, 15.6, .55) - 1.1 * gs(x, 18.7, .55);
+  if (i === 1) return 1.0 * Math.sin(x * .37 + 2.2) + .7 * Math.sin(x * .6 + .4) + 2.0 * gs(x, -12.5, 1.1) + 1.7 * gs(x, 0.5, 1.0) - 1.2 * gs(x, -5, .8) - 1.0 * gs(x, 7.5, .8);
+  return 0;
+}
 function isl(i, x, z) {
   const s = ISL[i], rx = (x - s.cx) / s.a, rz = (z - s.cz) / s.b, a = Math.atan2(rz, rx);
   const w = .34 * Math.sin(x * .43 + i * 2.1) + .27 * Math.sin(z * .5 + i) + .21 * Math.sin(x * 1.3 + z * .9 + i);
-  return Math.hypot(rx, rz) + .025 * Math.sin(a * 3 + 1 + i * 2) + .018 * Math.sin(a * 7 + i) + w / ((s.a + s.b) / 2);
+  return Math.hypot(rx, rz) + .025 * Math.sin(a * 3 + 1 + i * 2) + .018 * Math.sin(a * 7 + i) + w / ((s.a + s.b) / 2) - coastW(i, x) / ((s.a + s.b) / 2);
 }
 const whichIsl = (x, z) => { let b = 0, m = 9; for (let i = 0; i < ISL.length; i++) { const r = isl(i, x, z); if (r < m) { m = r; b = i; } } return b; };
 const islandR = (x, z) => { let m = 9; for (let i = 0; i < ISL.length; i++) m = Math.min(m, isl(i, x, z)); return m; };
@@ -42,11 +50,11 @@ function edge(i, x, dir) {                  // z of the shore of island i at x, 
 }
 const shore = (x) => edge(0, x, 1);          // the south shore of the north coast, where the villages are
 const shoreS = (x) => edge(1, x, -1);        // the north shore of the south coast (Louro)
-const COVES = [[-4.2, shore(-4.2) - .15], [3.9, shore(3.9) - .15], [-18.3, shoreS(-18.3) + .2], [-8.8, shoreS(-8.8) + .2]];
+const COVES = [[-4.2, shore(-4.2) - .15], [3.9, shore(3.9) - .15], [-19.0, shore(-19.0) - .15], [-8.8, shoreS(-8.8) + .2], [15.6, shore(15.6) - .15], [18.7, shore(18.7) - .15]];
 const INLET = [[-6.4, shore(-6.4) + .5], [-6.4, shore(-6.4) - .9], [-6.25, shore(-6.4) - 2.2], [-6.4, shore(-6.4) - 3.4]];     // Esteiro's inlet
 const INLET2 = [[5.8, shore(5.8) + .5], [5.8, shore(5.8) - 1.0], [5.65, shore(5.8) - 2.6], [5.8, shore(5.8) - 4.2]];            // the river of Outes
 const INLETS = [INLET, INLET2];
-const LOURO = [-13.5, shoreS(-13.5) + 2.7], LAG = [-18.6, shoreS(-18.3) + 1.9];
+const LOURO = [-19.8, shore(-19.8) - 3.0], LAG = [-19.0, shore(-19.0) - 1.9], HILL2 = [12.6, shore(12.6) - 8.5];
 function inletD(x, z) {
   let m = 9;
   for (const P of INLETS) for (let i = 0; i < P.length - 1; i++) {
@@ -62,14 +70,14 @@ function groundH(x, z) {
   if (r >= 1) return -.02 - .75 * sstep(1, 1.1, r);
   const k = 1 - r;
   let h = -.02 + .42 * Math.pow(k, .55) + ISL[i].hh * Math.pow(k, 1.3) * (.65 + .35 * n2(x + i * 7, z));
-  if (i === 1) h += 3.7 * Math.exp(-((x - LOURO[0]) ** 2 + (z - LOURO[1]) ** 2) / (2 * 2.3 * 2.3));
+  if (i === 0) h += 4.2 * Math.exp(-((x - LOURO[0]) ** 2 + (z - LOURO[1]) ** 2) / (2 * 2.6 * 2.6)) + 2.8 * Math.exp(-((x - HILL2[0]) ** 2 + (z - HILL2[1]) ** 2) / (2 * 2.4 * 2.4));
   const g = cove(x, z);
   if (g > 0) h = -.02 + (h + .02) * (1 - .8 * g);
   if (i === 0) { const c = 1 - sstep(.26, .5, inletD(x, z)); if (c > 0) h = h * (1 - c) - .16 * c; }
   const lg = 1 - sstep(.45, .8, Math.hypot(x - LAG[0], z - LAG[1])); if (lg > 0) h = h * (1 - lg) - .14 * lg;
   return h;
 }
-const Y = new THREE.Vector3(0, 1, 0);
+const Y = new THREE.Vector3(0, 1, 0), Zax = new THREE.Vector3(0, 0, 1);
 const _d = new THREE.Vector3(), _e = new THREE.Vector3(), _f = new THREE.Vector3(), _m = new THREE.Matrix4(), _q = new THREE.Quaternion();
 // stands an object on the planet at map position (x, z), facing yaw (0 = along the map's z axis), lift above the ground (sea = on the water)
 function put(obj, x, z, yaw, lift, sea) {
@@ -98,7 +106,7 @@ function buildTerrain() {
     if (r >= 1 || h < -.03) out.copy(SEABED_SHORE).lerp(SEABED_DEEP, sstep(0, .65, -h)).lerp(FAR, sstep(-.5, -.75, h));
     else {
       const nz = n2(x * 1.7, z * 1.7) * .5 + .5;
-      if (h < .15 || (cove(x, z) > .3 && h < .45)) out.copy(SAND);
+      if (h < .15 || (cove(x, z) > .3 && h < .45)) { out.copy(SAND); if (h < .045) out.multiplyScalar(.9); }
       else if (h > 2.5) out.copy(ROCK).lerp(ROCK_G, nz * .6);
       else {
         out.copy(GRASS_A).lerp(GRASS_B, nz);
@@ -317,11 +325,9 @@ export function open(opts) {
   root.className = 'x-pl';
   root.setAttribute('role', 'dialog'); root.setAttribute('aria-label', 'Ría de Muros e Noia');
   root.innerHTML = '<canvas class="x-pl-cv"></canvas><div class="x-pl-ts x-pl-ts-t"></div><div class="x-pl-ts x-pl-ts-b"></div>' +
-    '<div class="x-pl-top"><div class="x-pl-t"><b>Ría de Muros e Noia</b><span>Muros · Esteiro · O Freixo · Outes · A Coruña</span></div><div class="x-pl-btns">' +
+    '<div class="x-pl-top"><div class="x-pl-t"><b>Ría de Muros e Noia</b><span>A Coruña</span></div><div class="x-pl-btns">' +
     '<button type="button" class="x-pl-dn" aria-label="Day / night"></button>' +
     '<button type="button" class="x-pl-x" aria-label="Close"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button></div></div>' +
-    '<div class="x-pl-pins"></div>' +
-    '<div class="x-pl-card" hidden><div class="x-pl-n"></div><h2></h2><p></p><div class="x-pl-nav"><button type="button" class="x-pl-prev">Previous</button><button type="button" class="x-pl-next">Next</button><button type="button" class="x-pl-cx" aria-label="Close">✕</button></div></div>' +
     '<div class="x-pl-hint">Drag to turn · scroll to zoom · N for day / night</div>';
   document.body.appendChild(root);
   const prevOverflow = document.documentElement.style.overflow;
@@ -355,7 +361,7 @@ export function open(opts) {
   W(sea);
   const seaOrig = sea.geometry.attributes.position.array.slice();
   const spots = [];
-  const spot = (title, type, text, obj, zoom) => spots.push({ title, type, text, obj, zoom });
+  const spot = () => 0;                      // (the planet is only for looking at: no points to click)
   const hubAt = (x, z, lift) => { const o = new THREE.Object3D(); W(put(o, x, z, 0, lift)); return o; };
 
   // ---- the coast: houses, road, villages
@@ -417,8 +423,11 @@ export function open(opts) {
   { const [px, pz] = onShore(10.1, 4.8); const ch = church(1.3); W(put(ch, px, pz, seaYaw(px), -.03));
     const [hx, hz] = onShore(11.5, 4.3); const hr = horreo(); W(put(hr, hx, hz, seaYaw(hx) - .3, -.02));
     spot('Outes church', 'Iglesia', 'The church of Outes, on the slope above the houses, with the hills of the interior behind and the ría in front.', ch, .55); }
+  // a few houses behind the beaches of the east coast, and a farm
+  for (const x of [15.0, 15.9, 16.8, 17.7, 18.6, 19.3]) hh(x, 2.3 + rnd() * .3, 1 + (hc % 2));
+  for (const x of [15.4, 16.5, 17.6, 18.9]) hh(x, 3.4 + rnd() * .3, 2);
   // farms and hórreos between the villages
-  for (const [fx, inl] of [[-19.3, 3.4], [-8.9, 4.6], [-2.4, 4.0], [14.4, 3.2], [16.6, 3.8], [-1.4, 5.2], [-20.2, 4.6]]) {
+  for (const [fx, inl] of [[-8.9, 4.6], [-2.4, 4.4], [-1.4, 5.6], [20.0, 4.0]]) {
     hh(fx, inl, 2); hh(fx + .75, inl + .4, 1); const [hx, hz] = onShore(fx + .3, inl + 1.0); const hr = horreo(); W(put(hr, hx, hz, seaYaw(hx) + .2, -.02));
   }
 
@@ -448,14 +457,31 @@ export function open(opts) {
 
   // ---- roads (joined to every village), promenades and street lamps
   const smooth = (fn, a, b, off) => { const out = []; for (let x = a; x <= b; x += .22) { let zz = 0; for (let k = -3; k <= 3; k++) zz += fn(x + k * .22); out.push([x, zz / 7 + off]); } return out; };
-  const roadN = smooth(shore, -20.5, 18.5, -1.2), roadS = smooth(shoreS, -21, 13, 1.25);
-  const roadMat = std(0xd9d2c2, { roughness: 1 }), dashMat = std(0xffffff, { roughness: 1 }), pathMat = std(0xe9e0cc, { roughness: 1 });
+  const roadN = smooth(shore, -22, 15, -1.2), roadS = smooth(shoreS, -11.5, 7, 1.25);
+  const roadMat = std(0xcfc8b8, { roughness: 1, side: THREE.DoubleSide }), dashMat = std(0xffffff, { roughness: 1, side: THREE.DoubleSide }), pathMat = std(0xeee5d0, { roughness: 1, side: THREE.DoubleSide });
   W(ribbon(roadN, .3, roadMat, .014)); W(ribbon(roadN, .018, dashMat, .02, true)); W(ribbon(roadS, .3, roadMat, .014)); W(ribbon(roadS, .018, dashMat, .02, true));
   for (const [a, b] of [[-17.2, -9.6], [-9.2, -2.8], [-.9, 3.6], [7.4, 13.2]]) W(ribbon(smooth(shore, a, b, -.3), .14, pathMat, .012));
   const posts = [];
   for (let i = 3; i < roadN.length - 3; i += 7) if (inletD(roadN[i][0], roadN[i][1]) > .6) posts.push([roadN[i][0], roadN[i][1] - .2]);
   for (const [x, z] of posts) { const lp = new THREE.Group(); const pole = new THREE.Mesh(new THREE.CylinderGeometry(.012, .015, .34, 5), std(0x2b3036)); pole.position.y = .17; lp.add(pole); const lb = new THREE.Mesh(new THREE.SphereGeometry(.035, 8, 6), lampMat); lb.position.y = .36; lp.add(lb); W(put(lp, x, z, 0, 0)); }
-  const routes = [route(roadN), route(roadS)];
+  // mountain roads: winding up Monte Louro and the hill above Outes, with a little chapel at the top of each
+  const winding = (a, b, amp, turns) => {
+    const dx = b[0] - a[0], dz = b[1] - a[1], len = Math.hypot(dx, dz), nx = -dz / len, nz = dx / len, n = Math.round(len / .2), pts = [];
+    for (let i = 0; i <= n; i++) { const t = i / n, w = Math.sin(t * PI * 2 * turns) * amp * Math.min(1, t * 5) * (1 - t * .45); pts.push([a[0] + dx * t + nx * w, a[1] + dz * t + nz * w]); }
+    return pts;
+  };
+  const nearOn = (road, x) => road.reduce((m, p) => Math.abs(p[0] - x) < Math.abs(m[0] - x) ? p : m);
+  const mtRoads = [];
+  for (const [sx, top, amp, turns] of [[-18.2, LOURO, 1.0, 3], [13.4, HILL2, 1.0, 2.5]]) {
+    const pts = winding(nearOn(roadN, sx), top, amp, turns); mtRoads.push(route(pts));
+    W(ribbon(pts, .3, roadMat, .05)); W(ribbon(pts, .018, dashMat, .06, true));
+    const ch = house({ w: .3, d: .28, floors: 1, wall: 0xf7f1e4, roof: ROOF[0], gal: false, chim: false, fr: 2, door: 0x2f6fa8 });
+    const cr1 = box(.016, .12, .016, std(0xdddddd)); cr1.position.set(0, .3, 0); ch.add(cr1); const cr2 = box(.07, .016, .016, std(0xdddddd)); cr2.position.set(0, .33, 0); ch.add(cr2);
+    W(put(ch, top[0], top[1], .8, -.02));
+  }
+  const routes = [route(roadN), route(roadS), mtRoads[0], mtRoads[1]];
+  const foamMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .5, depthWrite: false, side: THREE.DoubleSide });
+  W(ribbon(smooth(shore, -22, 21, .07), .13, foamMat, .085)); W(ribbon(smooth(shoreS, -23, 15, -.07), .13, foamMat, .085));
   function car(color, bus) {
     const g = new THREE.Group(), L = bus ? .5 : .3;
     const bd = box(L, bus ? .12 : .07, bus ? .17 : .15, std(color)); bd.position.y = bus ? .09 : .07; g.add(bd);
@@ -465,10 +491,11 @@ export function open(opts) {
     return g;
   }
   const cars = [];
-  [[0xc23b2e, 0, .0, 1], [0xf2efe6, 0, .12, -1], [0x2f6fa8, 0, .24, 1], [0xe9b94a, 0, .36, -1], [0x3b8f6a, 0, .47, 1], [0xd0744a, 1, .58, -1], [0x3a3f47, 0, .7, 1], [0xf2efe6, 0, .83, -1], [0xc23b2e, 0, .93, 1],
-    [0x2f6fa8, 1, .1, 1], [0xf2efe6, 1, .35, -1], [0xe9b94a, 1, .62, 1], [0x3b8f6a, 1, .85, -1]].forEach((c, i) => {
-    const m = car(c[0], i === 5), w = new THREE.Group(); w.add(m); W(w);
-    const r = routes[c[1]]; cars.push({ w, r, u: c[2], v: (.42 + rnd() * .3) * c[3], off: c[3] > 0 ? .07 : -.07 });
+  [[0xc23b2e, 0, .0, 1], [0xf2efe6, 0, .13, -1], [0x2f6fa8, 0, .27, 1], [0xe9b94a, 0, .4, -1], [0x3b8f6a, 0, .53, 1], [0xd0744a, 0, .6, -1, 1], [0x3a3f47, 0, .67, 1], [0xf2efe6, 0, .8, -1], [0xc23b2e, 0, .92, 1],
+    [0x2f6fa8, 1, .1, 1], [0xf2efe6, 1, .5, -1], [0xe9b94a, 1, .8, 1],
+    [0xc23b2e, 2, .08, 1, 0, 1], [0xf2efe6, 2, .48, -1, 0, 1], [0x3b8f6a, 2, .86, 1, 0, 1], [0x2f6fa8, 3, .2, 1, 0, 1], [0xe9b94a, 3, .72, -1, 0, 1]].forEach((c) => {
+    const m = car(c[0], !!c[4]), w = new THREE.Group(); w.add(m); W(w);
+    const r = routes[c[1]]; cars.push({ w, r, u: c[2], v: (c[5] ? .28 + rnd() * .12 : .42 + rnd() * .3) * c[3], off: c[3] > 0 ? .07 : -.07, ping: !!c[5] });
   });
 
   // ---- the south coast across the ría: Louro, its dune beach and lagoon, the mountain, a second village and farms
@@ -477,8 +504,8 @@ export function open(opts) {
   for (const [fx, inl] of [[-17.0, 3.2], [-2.4, 3.0], [9.2, 2.8], [-14.8, 4.6]]) { hhS(fx, inl, 2); hhS(fx + .7, inl + .4, 1); const [hx, hz] = onShoreS(fx + .3, inl + 1.0); const hr = horreo(); W(put(hr, hx, hz, seaYawS(hx) + .2, -.02)); }
   for (let s = 0; s < 6; s++) { const x = 2.2 + s * .38, z = shoreS(x) - .12; const q = new THREE.Group(); q.add(box(.46, .5, .5, std(0xb2ac9c))); const c = box(.5, .06, .52, std(0xd0cabb)); c.position.y = .26; q.add(c); W(put(q, x, z, 0, .02, true)); }
 
-  // ---- boats: anchored with fishermen, moored, moving
-  const boats = [], sailers = [], persons = [];
+  // ---- boats: smaller than before; every one has its own place (anchored, moored) or its own lane, so none touches another
+  const boats = [], sailers = [], occupied = [];
   function boat(color, trim, kind) {
     const g = new THREE.Group();
     const sh = new THREE.Shape();
@@ -498,9 +525,16 @@ export function open(opts) {
     return g;
   }
   const BOATS = [[0xf2efe6, 0x2f6fa8], [0x2f6fa8, 0xf2efe6], [0xc9473a, 0xf2efe6], [0xe9b94a, 0x2f6fa8], [0x3b8f6a, 0xf2efe6], [0xf2efe6, 0xc9473a]];
+  const BAT = [[-17.5, 5.0, .15], [-15.8, 6.9, .1], [9.6, 3.6, -.1], [11.6, 5.4, 0], [13.4, 3.4, .1], [-16.2, 2.3, .2]];
+  for (const b of BAT) for (const dx of [-.7, 0, .7]) occupied.push([b[0] + dx, b[1]]);
   let bi = 0;
-  const moor = (x, z, yaw, sc, kind) => {
-    const bc = BOATS[bi++ % BOATS.length], b = boat(bc[0], bc[1], kind); b.scale.setScalar((sc || 1) * 1.45);
+  const free = (x, z, r) => occupied.every((o) => Math.hypot(o[0] - x, o[1] - z) > r);
+  const moor = (x, z, yaw, sc, kind, r) => {
+    r = r || .95;
+    for (let k = 0; k < 24 && !free(x, z, r); k++) { x += Math.cos(k * 2.4) * (.2 + k * .06); z += Math.sin(k * 2.4) * (.2 + k * .06); }
+    if (!free(x, z, r) || groundH(x, z) > -.03) return null;
+    occupied.push([x, z]);
+    const bc = BOATS[bi++ % BOATS.length], b = boat(bc[0], bc[1], kind); b.scale.setScalar(sc || 1);
     const w = new THREE.Group(); w.add(b);
     if (kind === 'fisher') {                          // a fisherman on the deck with his rod and line
       const p = person(SHIRTS[bi % SHIRTS.length], { hat: [0xf2c14a, 0xe9e2d2, 0x2f6fa8][bi % 3], skin: SKINS[bi % 4] }); p.position.set(.28, .13, .05); p.scale.setScalar(.9); b.add(p);
@@ -510,34 +544,37 @@ export function open(opts) {
     put(w, x, z, yaw, 0, true); W(w); boats.push({ w, b, ph: rnd() * 6.28, base: 0 });
     return w;
   };
-  // fishermen at anchor in the calm water of the ría and by the villages
-  [[-3.4, 1.6, 1.3], [-9.6, 2.2, 2.6], [-12.2, 1.9, .5], [4.6, 2.3, 1.9], [8.3, 1.7, .7], [-1.4, 3.3, 2.2], [0.2, 4.4, 1.0], [-5.8, 4.2, .2], [9.6, 4.4, 2.8], [-14.5, 3.4, 1.4], [-10.8, 7.5, .6], [3.5, 7.9, 2.0]].forEach((b) => moor(b[0], b[1], b[2], 1, 'fisher'));
-  const m1 = moor(pierX - .62, shoreZ + 1.2, PI / 2 + .06, 1); moor(pierX - .75, shoreZ + 2.6, PI / 2 - .05, 1.1); moor(pierX + .62, shoreZ + 1.6, PI / 2 - .08, 1); moor(pierX + .76, shoreZ + 3.3, PI / 2 + .04, .95); moor(pierX - .7, shoreZ + 4.2, PI / 2, 1);
-  for (const x of [-16.5, -15.4, -14.3, -12.6, -11.5]) moor(x, shore(x) + .72 + rnd() * .3, 1.6 + (rnd() - .5) * .4, .9);
-  for (let k = 0; k < 6; k++) moor(INLET[0][0] + (k % 2 ? .13 : -.13), shore(INLET[0][0]) - .3 - k * .38, PI / 2 + (rnd() - .5) * .25, .72);
-  for (let k = 0; k < 4; k++) moor(2.4 + k * .9, shoreS(2.4 + k * .9) - .55, 1.6, .9);
+  // fishermen at anchor in the calm water, well apart from each other
+  [[-3.4, .9, 1.3], [-9.6, .8, 2.6], [-12.2, .3, .5], [4.8, .8, 1.9], [8.0, .3, .7], [-1.0, 2.5, 2.2], [-6.0, 2.5, .2], [10.8, 1.0, 2.8], [-14.4, 1.0, 1.4], [-16.2, -.6, .6],
+    [-10.2, 9.1, .6], [3.5, 9.3, 2.0], [8.0, 9.2, .3], [-5.5, 9.4, 1.1]].forEach((b) => moor(b[0], b[1], b[2], 1, 'fisher', 1.5));
+  const m1 = moor(pierX - .55, shoreZ + 1.2, PI / 2 + .06, 1, undefined, .62); moor(pierX - .6, shoreZ + 2.2, PI / 2 - .05, 1, undefined, .62); moor(pierX + .55, shoreZ + 1.6, PI / 2 - .08, 1, undefined, .62); moor(pierX + .6, shoreZ + 2.7, PI / 2 + .04, 1, undefined, .62);
+  for (const x of [-16.5, -15.4, -14.3, -12.6, -11.5]) moor(x, shore(x) + .75, 1.6 + (rnd() - .5) * .3, .9, undefined, .7);
+  for (let k = 0; k < 6; k++) moor(INLET[0][0] + (k % 2 ? .12 : -.12), shore(INLET[0][0]) - .3 - k * .4, PI / 2 + (rnd() - .5) * .2, .7, undefined, .3);
+  for (let k = 0; k < 4; k++) moor(2.4 + k * .9, shoreS(2.4 + k * .9) - .55, 1.6, .9, undefined, .6);
+  // boats on the move, each kind on its own lane (a loop along the ría), equally spaced so that they never catch up with one another
   const sail = (kind, cx, cz, rx, rz, sp, ph, ci, sc) => {
     const bc = BOATS[ci % BOATS.length], b = kind === 'sail' ? boat(0xf2efe6, 0, 'sail') : boat(bc[0], bc[1]); b.scale.setScalar(sc);
     const w = new THREE.Group(); w.add(b); W(w);
     sailers.push({ w, b, cx, cz, rx, rz, sp, a: ph, ph: rnd() * 6.28 });
   };
-  sail('fish', -3, 2.2, 12.5, .8, .035, 0, 3, 1.5); sail('fish', -4, 2.6, 12, .9, -.03, 2, 4, 1.4); sail('fish', 2, 2.0, 9, .7, .04, 4, 2, 1.45);
-  sail('sail', -1, 5.6, 10, 1.3, -.03, 3, 0, 1.6); sail('sail', 3, 5.3, 7, 1.0, .04, 5, 0, 1.3); sail('sail', -9, 5.8, 5, 1.5, .05, 1, 0, 1.5);
-  sail('fish', -9, 4.9, 1.1, 3.9, .07, 0, 1, 1.5); sail('fish', 6.5, 5.0, 1.2, 3.4, -.08, 2, 5, 1.4);
-  sail('sail', 17, 3.5, 2.6, 1.2, .1, 0, 0, 1.2);
-  spot('Fishing boats', 'Pesca', 'Fishermen at anchor in the calm of the ría, rod in hand, while the small boats go back and forth between the villages and the other shore.', m1, .5);
+  const loopLane = (cx, cz, rx, rz, sp, n, kinds, sc) => { for (let k = 0; k < n; k++) sail(kinds[k % kinds.length], cx, cz, rx, rz, sp, k * 2 * PI / n, k + 2, sc); };
+  loopLane(-3.5, 4.4, 11, .4, .04, 3, ['fish'], .95);
+  loopLane(-3, 6.0, 10, .5, -.034, 3, ['sail'], 1.0);
+  loopLane(-3.5, 7.9, 8.5, .5, .04, 2, ['sail', 'fish'], .95);
+  loopLane(17.5, 9.0, 4.6, 3.4, .06, 2, ['sail', 'fish'], .95);
+  loopLane(-22, 6, 4, 3.2, -.06, 1, ['fish'], .95);
+  spot('Fishing boats', 'Pesca', '', m1, .5);
 
   // ---- bateas: the floating wooden rafts of the Galician rías, with their buoys
   const bateas = [];
-  for (const [x, z, yaw] of [[-11.5, 6.2, .15], [-9.2, 7.1, .1], [-6.8, 6.6, -.1], [1.5, 7.4, .2], [4.0, 7.0, 0], [8.2, 3.6, -.1]]) {
+  for (const [x, z, yaw] of BAT) {
     const g = new THREE.Group();
-    const deck = box(1.5, .06, .9, std(0x7a6650)); deck.position.y = .02; g.add(deck);
-    for (const [bx, bz] of [[-.7, -.4], [.7, -.4], [-.7, .4], [.7, .4], [0, -.43], [0, .43]]) { const bu = new THREE.Mesh(new THREE.IcosahedronGeometry(.07, 1), std(0xf2efe6)); bu.position.set(bx, .0, bz); g.add(bu); }
-    const hut2 = box(.28, .18, .22, std(0xe9b94a)); hut2.position.set(-.45, .14, 0); g.add(hut2);
+    const deck = box(1.3, .06, .8, std(0x7a6650)); deck.position.y = .02; g.add(deck);
+    for (const [bx, bz] of [[-.6, -.36], [.6, -.36], [-.6, .36], [.6, .36], [0, -.38], [0, .38]]) { const bu = new THREE.Mesh(new THREE.IcosahedronGeometry(.06, 1), std(0xf2efe6)); bu.position.set(bx, .0, bz); g.add(bu); }
+    const hut2 = box(.26, .17, .2, std(0xe9b94a)); hut2.position.set(-.4, .13, 0); g.add(hut2);
     const w = new THREE.Group(); w.add(g); put(w, x, z, yaw, 0, true); W(w);
     boats.push({ w, b: g, ph: rnd() * 6.28, base: 0, calm: true }); bateas.push(w);
   }
-  spot('Bateas', 'Mejillón', 'Floating wooden rafts, called bateas, are typical of the Galician rías. Ropes hang from them under the water.', bateas[0], .55);
 
   // ---- people on the beaches: sunbathers, parasols, swimmers and walkers along the water
   const swimmers = [], walkers = [];
@@ -567,17 +604,40 @@ export function open(opts) {
       const p = person(SHIRTS[(k * 2 + 5) % SHIRTS.length], { skin: SKINS[(k + 2) % 4] }); W(p);
       walkers.push({ p, cx, fn, sg, half: 1.0 + rnd() * .5, ph: rnd() * 6.28, sp: .13 + rnd() * .08, off: .1 + rnd() * .12 });
     }
+    // boardwalk along the back of the sand, tufts of dune grass, a lifeguard tower, a kiosk with an awning and a volleyball net
+    W(ribbon(smooth(wl, cx - 1.9, cx + 1.9, sg * 1.35), .1, std(0xb58c5c, { roughness: 1, side: THREE.DoubleSide }), .02));
+    for (let k = 0; k < 16; k++) { const x = cx + (rnd() - .5) * 3.6, z = wl(x) + sg * (1.45 + rnd() * .3); if (groundH(x, z) < .05) continue; const tu = new THREE.Group(); for (let b = 0; b < 3; b++) { const bl = new THREE.Mesh(new THREE.ConeGeometry(.018, .14, 4), std(0x8fb35a)); bl.position.set((b - 1) * .025, .07, (b % 2) * .02); bl.rotation.z = (b - 1) * .25; tu.add(bl); } W(put(tu, x, z, rnd() * 6, 0)); }
+    { const lx = cx - 1.0, lz = wl(lx) + sg * 1.05, g = new THREE.Group();
+      for (const [px, pz] of [[-.05, -.05], [.05, -.05], [-.05, .05], [.05, .05]]) { const lg = box(.016, .2, .016, std(0xf2efe6)); lg.position.set(px, .1, pz); g.add(lg); }
+      const cab = box(.13, .08, .13, std(0xe9e2d2)); cab.position.y = .24; g.add(cab); const rf = box(.16, .02, .16, std(0xc9473a)); rf.position.y = .3; g.add(rf);
+      W(put(g, lx, lz, 0, 0)); }
+    { const kx = cx + 1.1, kz = wl(kx) + sg * 1.25, g = new THREE.Group();
+      const kb = box(.22, .12, .16, std(0xf7f1e4)); kb.position.y = .06; g.add(kb); const aw = box(.26, .02, .1, std(0xc9473a)); aw.position.set(0, .15, .13); aw.rotation.x = .25; g.add(aw);
+      const aw2 = box(.065, .021, .1, std(0xf7f1e4)); aw2.position.set(-.06, .151, .13); aw2.rotation.x = .25; g.add(aw2); const aw3 = box(.065, .021, .1, std(0xf7f1e4)); aw3.position.set(.07, .151, .13); aw3.rotation.x = .25; g.add(aw3);
+      W(put(g, kx, kz, 0, 0)); }
+    { const vx = cx + .1, vz = wl(vx) + sg * .95, g = new THREE.Group();
+      for (const sx of [-.2, .2]) { const po = box(.012, .16, .012, std(0x6b4a2a)); po.position.set(sx, .08, 0); g.add(po); }
+      const net = box(.4, .06, .004, std(0xffffff, { transparent: true, opacity: .7 })); net.position.y = .13; g.add(net);
+      W(put(g, vx, vz, .4, 0)); }
     spot(title, type, text, hubAt(cx, wl(cx) + sg * .5, .05), .5);
   }
-  beach(-4.2, shore, -1, 14, 5, 3, 'Esteiro beach', 'Playa', 'A long white sand spit that closes the inlet of Esteiro, with pines behind it. People take the sun, swim and walk along the water.');
-  beach(3.9, shore, -1, 10, 4, 2, 'O Freixo beach', 'Playa', 'The sand of O Freixo, just beside the harbour: a few steps from the houses to the water.');
-  beach(-18.3, shoreS, 1, 9, 3, 2, 'Louro beach', 'Playa y laguna', 'Across the water, the long dune beach of Louro, with a lagoon behind the sand.');
+  beach(-4.2, shore, -1, 20, 7, 4, 'Area Maior beach', 'Playa', 'A long white sand spit that closes the inlet of Esteiro, with pines behind it. People take the sun, swim and walk along the water.');
+  beach(3.9, shore, -1, 14, 5, 3, 'O Freixo beach', 'Playa', 'The sand of O Freixo, just beside the harbour: a few steps from the houses to the water.');
+  beach(15.6, shore, -1, 16, 5, 3, 'Paramean beach', 'Playa', '');
+  beach(18.7, shore, -1, 14, 5, 3, 'Ancoradoiro beach', 'Playa', '');
+  beach(-19.0, shore, -1, 12, 4, 3, 'Louro beach', 'Playa y laguna', 'The long dune beach of Louro, with a lagoon behind the sand, at the foot of the mountain.');
   beach(-8.8, shoreS, 1, 6, 3, 1, 'Cove across the ría', 'Playa', 'A small beach on the other shore of the ría, in front of the fishermen’s houses.');
 
+  // rocks on the tips of the capes (puntas)
+  for (const cx of [-2.3, 14.1, 17.1, 20.3, -21.4]) for (let k = 0; k < 7; k++) {
+    const x = cx + (rnd() - .5) * 1.4, z = shore(x) + (rnd() - .35) * .5, g = new THREE.Mesh(new THREE.IcosahedronGeometry(.07 + rnd() * .1, 0), std(0x9a968a));
+    g.scale.y = .7; W(put(g, x, z, rnd() * 6, .0, groundH(x, z) < -.02));
+  }
   // ---- trees: round oaks, pines and eucalyptus, only where nobody lives or drives
   const forbid = (x, z) => {
     const s = shore(x);
-    if (x > -20.5 && x < 18.5 && z > s - 6.6 && z < s + .1) { for (const [a, b] of [[-17.4, -9.5], [-9.4, -2.8], [-1.2, 4.6], [7.4, 13.3]]) if (x > a && x < b && z > s - 5.8) return true; if (Math.abs(z - (s - 1.2)) < .45) return true; }
+    for (const rt of mtRoads) for (let q = 0; q < rt.pts.length; q += 2) if (Math.abs(rt.pts[q][0] - x) < .6 && Math.abs(rt.pts[q][1] - z) < .6) return true;
+    if (x > -23 && x < 17 && z > s - 6.6 && z < s + .1) { for (const [a, b] of [[-17.4, -9.5], [-9.4, -2.8], [-1.2, 4.6], [7.4, 13.3]]) if (x > a && x < b && z > s - 5.8) return true; if (Math.abs(z - (s - 1.2)) < .45) return true; }
     const t = shoreS(x); if (x > -21 && x < 13 && z > t - .2 && z < t + 1.9) return true;
     return false;
   };
@@ -674,14 +734,6 @@ export function open(opts) {
   dnBtn.addEventListener('click', () => { night = night ? 0 : 1; });
   light(nightT); paintBtn();
 
-  // ---- the pins and the card
-  const pinBox = root.querySelector('.x-pl-pins');
-  spots.forEach((s, i) => {
-    const b = document.createElement('button'); b.type = 'button'; b.className = 'x-pl-pin';
-    b.innerHTML = '<i>' + String(i + 1).padStart(2, '0') + '</i><span><b>' + s.title + '</b><em>' + s.type + '</em></span>';
-    b.addEventListener('click', (e) => { e.stopPropagation(); show(i); });
-    pinBox.appendChild(b); s.pin = b; s.lab = false;
-  });
   // the turn that brings direction d (on the planet) in front of the camera, with north (towards -z on the map) kept at the top of the screen
   const faceCamera = (d, tilt) => {
     const [px, pz] = planeOf(d), north = dirFrom(px, pz - .05, new THREE.Vector3()).sub(d);
@@ -694,23 +746,8 @@ export function open(opts) {
     const src = new THREE.Matrix4().makeBasis(right, north, d), dst = new THREE.Matrix4().makeBasis(rt, up, t);
     return new THREE.Quaternion().setFromRotationMatrix(dst.multiply(src.transpose()));
   };
-  const card = root.querySelector('.x-pl-card');
   let cur = -1, focus = null;
-  const spotDir = (s) => { s.obj.updateWorldMatrix(true, false); const v = new THREE.Vector3(); s.obj.getWorldPosition(v); return v.applyQuaternion(world.quaternion.clone().invert()).normalize(); };
-  function show(i) {
-    cur = (i + spots.length) % spots.length;
-    const s = spots[cur];
-    card.hidden = false;
-    card.querySelector('.x-pl-n').textContent = String(cur + 1).padStart(2, '0') + ' / ' + String(spots.length).padStart(2, '0') + ' · ' + s.type;
-    card.querySelector('h2').textContent = s.title; card.querySelector('p').textContent = s.text;
-    spots.forEach((o, k) => o.pin.classList.toggle('x-on', k === cur));
-    focus = { q: faceCamera(spotDir(s), .16), dist: Math.min(dist, baseDist * Math.min(.95, (s.zoom || .6) * 1.5)) };
-    vel.set(0, 0);
-  }
-  function hideCard() { cur = -1; card.hidden = true; spots.forEach(o => o.pin.classList.remove('x-on')); focus = null; }
-  card.querySelector('.x-pl-prev').addEventListener('click', () => show(cur - 1));
-  card.querySelector('.x-pl-next').addEventListener('click', () => show(cur + 1));
-  card.querySelector('.x-pl-cx').addEventListener('click', hideCard);
+  const show = () => {}, hideCard = () => {};
 
   // ---- camera, dragging, zoom
   let baseDist = 40, dist = 110, distT = 40;
@@ -722,7 +759,7 @@ export function open(opts) {
   };
   size();
   distT = baseDist; dist = baseDist * 2.6;
-  world.quaternion.copy(faceCamera(dirFrom(-1.5, 3.5, new THREE.Vector3()), .42));
+  world.quaternion.copy(faceCamera(dirFrom(-6, 3.0, new THREE.Vector3()), .4));
   const vel = new THREE.Vector2(), ptrs = new Map();
   let pinch = 0, lastInput = performance.now(), moved = 0;
   const rot = (dx, dy) => {
@@ -747,7 +784,6 @@ export function open(opts) {
   const onKey = (e) => {
     if (e.key === 'Escape') { if (cur >= 0) hideCard(); else close(); }
     else if (e.key === 'n' || e.key === 'N') night = night ? 0 : 1;
-    else if (e.key === 'ArrowRight') show(cur + 1); else if (e.key === 'ArrowLeft') show(cur - 1);
     else if (/^[wasd]$/i.test(e.key)) { const k = e.key.toLowerCase(); rot(k === 'a' ? 28 : k === 'd' ? -28 : 0, k === 'w' ? 28 : k === 's' ? -28 : 0); focus = null; }
     else return;
     e.preventDefault(); e.stopPropagation();
@@ -781,6 +817,7 @@ export function open(opts) {
       b.b.position.y = b.base + Math.sin(t * 1.4 + b.ph) * .018 * k;
       b.b.rotation.z = Math.sin(t * 1.1 + b.ph) * .045 * k; b.b.rotation.x = Math.sin(t * .9 + b.ph * 2) * .03 * k;
     }
+    foamMat.opacity = .42 + Math.sin(t * 1.4) * .16;
     for (const c of clouds) c.rotation.y += c.userData.sp * dt;
     for (const g of gulls) { g.rotateY(g.userData.sp * dt * .35); const f = Math.sin(t * 7 + g.userData.ph) * .5; g.userData.b.w1.rotation.z = f; g.userData.b.w2.rotation.z = -f; }
     for (const f of flyers) {
@@ -789,9 +826,13 @@ export function open(opts) {
       const fl = Math.sin(t * 8 + f.ph) * .55; f.b.w1.rotation.z = fl; f.b.w2.rotation.z = -fl;
     }
     for (const c of cars) {
-      c.u += c.v / c.r.total * dt; if (c.u > 1) c.u -= 1; else if (c.u < 0) c.u += 1;
+      c.u += c.v / c.r.total * dt;
+      if (c.ping) { if (c.u > 1) { c.u = 1; c.v = -c.v; c.off = -c.off; } else if (c.u < 0) { c.u = 0; c.v = -c.v; c.off = -c.off; } }
+      else if (c.u > 1) c.u -= 1; else if (c.u < 0) c.u += 1;
       const [x, z, yaw] = routeAt(c.r, c.u), sy = Math.sin(yaw), cy = Math.cos(yaw), px = x + sy * c.off, pz = z + cy * c.off, onW = 1 - sstep(.28, .55, inletD(px, pz));
-      put(c.w, px, pz, yaw + (c.v < 0 ? PI : 0), .035 + (onW > 0 ? onW * Math.max(0, (Math.abs(px - INLET[0][0]) < 1.5 ? .2 : .28) - groundH(px, pz)) : 0));
+      const hd = yaw + (c.v < 0 ? PI : 0), hx = Math.cos(hd), hz = -Math.sin(hd);
+      put(c.w, px, pz, hd, .035 + (onW > 0 ? onW * Math.max(0, (Math.abs(px - INLET[0][0]) < 1.5 ? .2 : .28) - groundH(px, pz)) : 0));
+      if (onW <= 0) c.w.quaternion.multiply(_q.setFromAxisAngle(Zax, Math.atan2(groundH(px + hx * .12, pz + hz * .12) - groundH(px - hx * .12, pz - hz * .12), .24)));
       c.w.scale.setScalar(Math.max(.001, Math.min(1, Math.min(c.u, 1 - c.u) * 14)));
     }
     for (const s of sailers) {
@@ -806,16 +847,6 @@ export function open(opts) {
     for (const w of walkers) {
       const a = t * w.sp + w.ph, x = w.cx + Math.sin(a) * w.half;
       put(w.p, x, w.fn(x) + w.sg * w.off, PI / 2 * Math.sign(Math.cos(a)), Math.abs(Math.sin(t * 7 + w.ph)) * .008);
-    }
-    // pins follow their spots, hide on the far side and show their name when they are near the middle of the screen
-    for (let i = 0; i < spots.length; i++) {
-      const s = spots[i]; s.obj.getWorldPosition(tv);
-      const facing = prj.copy(tv).normalize().dot(camDir);
-      const pr = prj.copy(tv).project(camera), vis = facing > .22;
-      s.pin.style.transform = 'translate(' + ((pr.x * .5 + .5) * root.clientWidth).toFixed(1) + 'px,' + ((-pr.y * .5 + .5) * root.clientHeight).toFixed(1) + 'px)';
-      s.pin.style.opacity = vis ? '1' : '0'; s.pin.style.pointerEvents = vis ? 'auto' : 'none';
-      const lab = vis && dist < baseDist * .95 && Math.abs(pr.x) < .6 && Math.abs(pr.y) < .6;
-      if (lab !== s.lab) { s.lab = lab; s.pin.classList.toggle('x-lab', lab); }
     }
     renderer.render(scene, camera);
   };
@@ -834,7 +865,8 @@ export function open(opts) {
     opts.onClose && opts.onClose();
   }
   root.querySelector('.x-pl-x').addEventListener('click', close);
-  return { close, root, spots, show, scene, camera, world };
+  const look = (x, z, zoom) => { focus = { q: faceCamera(dirFrom(x, z, new THREE.Vector3()), .45), dist: baseDist * (zoom || .5) }; };
+  return { close, root, spots, show, look, scene, camera, world };
 }
 
 let cssDone = false;
