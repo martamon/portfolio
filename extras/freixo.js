@@ -284,24 +284,19 @@ function stoneBridge(span, nA, bw, mat, deckMat) {
   return br;
 }
 // a ribbon laid on the ground along a list of map points (road, path); it breaks over water and dashes if asked
-function ribbon(pts, width, mat, lift, dash) {
-  const pos = [], idx = [], nrm = new THREE.Vector3(), tan = new THREE.Vector3(), side = new THREE.Vector3(), pa = new THREE.Vector3(), pb = new THREE.Vector3();
-  const at = (p, out) => { dirFrom(p[0], p[1], out); return out.multiplyScalar(R + groundH(p[0], p[1]) + lift); };
-  for (let i = 0; i < pts.length - 1; i++) {
+function ribbon(pts, width, mat, lift, dash, flo) {
+  flo = flo === undefined ? .07 : flo;
+  const P = pts.map((q) => dirFrom(q[0], q[1], new THREE.Vector3()).multiplyScalar(R + Math.max(groundH(q[0], q[1]), flo) + lift));
+  const pos = [], idx = [], tan = new THREE.Vector3(), side = new THREE.Vector3(), nrm = new THREE.Vector3();
+  for (let i = 0; i < P.length; i++) {
+    tan.copy(P[Math.min(P.length - 1, i + 1)]).sub(P[Math.max(0, i - 1)]).normalize(); nrm.copy(P[i]).normalize();
+    side.crossVectors(tan, nrm).normalize().multiplyScalar(width / 2);
+    pos.push(P[i].x + side.x, P[i].y + side.y, P[i].z + side.z, P[i].x - side.x, P[i].y - side.y, P[i].z - side.z);
+  }
+  for (let i = 0; i < P.length - 1; i++) {
     if (dash && i % 4 > 1) continue;
-    const mx = (pts[i][0] + pts[i + 1][0]) / 2, mz = (pts[i][1] + pts[i + 1][1]) / 2;
-    if (inletD(mx, mz) < .46) continue;
-    const p0 = pts[Math.max(0, i - 1)], p3 = pts[Math.min(pts.length - 1, i + 2)];
-    const corners = [];
-    for (const [k, pp] of [[i, pts[i]], [i + 1, pts[i + 1]]]) {
-      at(pp, pa); nrm.copy(pa).normalize();
-      at(k === i ? p0 : p3, pb); tan.copy(k === i ? pa : pb).sub(k === i ? pb : pa).normalize();
-      side.crossVectors(tan, nrm).normalize().multiplyScalar(width / 2);
-      corners.push(pa.clone().add(side), pa.clone().sub(side));
-    }
-    const o = pos.length / 3;
-    for (const c of corners) pos.push(c.x, c.y, c.z);
-    idx.push(o, o + 1, o + 2, o + 1, o + 3, o + 2);
+    if (inletD((pts[i][0] + pts[i + 1][0]) / 2, (pts[i][1] + pts[i + 1][1]) / 2) < .46) continue;
+    const o = i * 2; idx.push(o, o + 1, o + 2, o + 1, o + 3, o + 2);
   }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
   const m = new THREE.Mesh(g, mat); m.userData.ribbon = true; return m;
@@ -457,13 +452,12 @@ export function open(opts) {
 
   // ---- roads (joined to every village), promenades and street lamps
   const smooth = (fn, a, b, off) => { const out = []; for (let x = a; x <= b; x += .22) { let zz = 0; for (let k = -3; k <= 3; k++) zz += fn(x + k * .22); out.push([x, zz / 7 + off]); } return out; };
-  const roadN = smooth(shore, -22, 15, -1.2), roadS = smooth(shoreS, -11.5, 7, 1.25);
+  const roadN = smooth(shore, -22, 15, -1.4), roadS = smooth(shoreS, -11.5, 7, 1.45);
   const walkMat = std(0xe6dcc4, { roughness: 1, side: THREE.DoubleSide }), asphalt = std(0x565b62, { roughness: 1, side: THREE.DoubleSide }), lineMat = std(0xf4f0e4, { roughness: 1, side: THREE.DoubleSide }), pathMat = std(0xeee5d0, { roughness: 1, side: THREE.DoubleSide });
   const sideOf = (pts, d) => pts.map((q, i) => { const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)], tx = b[0] - a[0], tz = b[1] - a[1], l = Math.hypot(tx, tz) || 1; return [q[0] - tz / l * d, q[1] + tx / l * d]; });
   const buildRoad = (pts, up) => {
     up = up || 0;
-    W(ribbon(pts, .56, walkMat, .012 + up)); W(ribbon(pts, .38, asphalt, .022 + up));
-    W(ribbon(sideOf(pts, .165), .012, lineMat, .03 + up)); W(ribbon(sideOf(pts, -.165), .012, lineMat, .03 + up)); W(ribbon(pts, .014, lineMat, .03 + up, true));
+    W(ribbon(pts, .56, walkMat, .012 + up)); W(ribbon(pts, .4, asphalt, .022 + up));
   };
   buildRoad(roadN); buildRoad(roadS);
   for (const [a, b] of [[-17.2, -9.6], [-9.2, -2.8], [-.9, 3.6], [7.4, 13.2]]) W(ribbon(smooth(shore, a, b, -.3), .14, pathMat, .012));
@@ -487,7 +481,7 @@ export function open(opts) {
   }
   const routes = [route(roadN), route(roadS), mtRoads[0], mtRoads[1]];
   const foamMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .5, depthWrite: false, side: THREE.DoubleSide });
-  W(ribbon(smooth(shore, -22, 21, .07), .13, foamMat, .085)); W(ribbon(smooth(shoreS, -23, 15, -.07), .13, foamMat, .085));
+  W(ribbon(smooth(shore, -22, 21, .07), .13, foamMat, .085, false, -1)); W(ribbon(smooth(shoreS, -23, 15, -.07), .13, foamMat, .085, false, -1));
   function car(color, bus) {
     const g = new THREE.Group(), L = bus ? .5 : .3;
     const bd = box(L, bus ? .12 : .07, bus ? .17 : .15, std(color)); bd.position.y = bus ? .09 : .07; g.add(bd);
@@ -589,6 +583,42 @@ export function open(opts) {
     boats.push({ w, b: g, ph: rnd() * 6.28, base: 0, calm: true }); bateas.push(w);
   }
 
+  // ---- sea life: dolphins that leap, shoals of fish just under the surface, turtles and a whale
+  const seaLife = [];
+  const skin = std(0x7f93a6), belly = std(0xe5ecf2), whaleM = std(0x35506b);
+  function dolphin(sc) {
+    const g = new THREE.Group(), body = new THREE.Mesh(new THREE.SphereGeometry(.1, 12, 8), skin); body.scale.set(2.6, .8, .75); g.add(body);
+    const bl = new THREE.Mesh(new THREE.SphereGeometry(.1, 10, 6), belly); bl.scale.set(2.3, .45, .6); bl.position.y = -.025; g.add(bl);
+    const beak = new THREE.Mesh(new THREE.ConeGeometry(.032, .14, 8), skin); beak.rotation.z = -PI / 2; beak.position.x = .31; g.add(beak);
+    const fin = new THREE.Mesh(new THREE.ConeGeometry(.04, .1, 4), skin); fin.position.set(-.02, .1, 0); fin.rotation.z = .5; g.add(fin);
+    const tail = new THREE.Group(); tail.position.x = -.27; g.add(tail);
+    const tb = new THREE.Mesh(new THREE.ConeGeometry(.04, .2, 6), skin); tb.rotation.z = PI / 2; tb.position.x = -.08; tail.add(tb);
+    const fl = new THREE.Mesh(new THREE.BoxGeometry(.05, .012, .22), skin); fl.position.x = -.19; tail.add(fl);
+    g.scale.setScalar(sc || 1); return { g, tail };
+  }
+  for (const [cx, cz, rx, rz, sp, ph, n] of [[-4, 4.6, 6.5, .9, .16, 0, 2], [3, 6.4, 5, 1.1, -.14, 2, 2], [-9, 5.8, 3.4, 1.8, .18, 4, 1], [7.5, 4.2, 2.6, 1.2, -.17, 1, 1]]) {
+    for (let k = 0; k < n; k++) { const d = dolphin(1.25), w = new THREE.Group(); w.add(d.g); W(w); seaLife.push({ kind: 'dol', w, d, cx, cz, rx, rz, sp, a: ph + k * .55, ph: rnd() * 6, off: k * .22 }); }
+  }
+  const fishG = new THREE.ConeGeometry(.03, .11, 5);
+  for (const [cx, cz, rad, sp, col] of [[-6, 3.2, .7, .5, 0xf4b942], [1, 7.2, .8, -.45, 0xcfd8e2], [-11, 7.4, .6, .55, 0xe9774a], [5.5, 5.2, .75, -.5, 0x8fc4e8], [-1, 2.6, .6, .6, 0xf4b942], [10.5, 3.2, .6, -.5, 0xcfd8e2]]) {
+    const sh = new THREE.Group(), fs = [];
+    for (let k = 0; k < 9; k++) { const f = new THREE.Mesh(fishG, std(col)); f.rotation.z = -PI / 2; const h = new THREE.Group(); h.add(f); sh.add(h); fs.push({ h, a: rnd() * 6.28, r: .15 + rnd() * rad, y: rnd() * .05, sp: .8 + rnd() * .5 }); }
+    W(sh); seaLife.push({ kind: 'fish', w: sh, fs, cx, cz, drift: sp, ph: rnd() * 6 });
+  }
+  for (const [cx, cz, ph] of [[-7.5, 3.8, 0], [8.5, 6.3, 2]]) {
+    const g = new THREE.Group(), sh = new THREE.Mesh(new THREE.SphereGeometry(.1, 10, 6, 0, PI * 2, 0, PI / 2), std(0x5f8a4a)); sh.scale.set(1.2, .7, 1); g.add(sh);
+    const hd = new THREE.Mesh(new THREE.SphereGeometry(.04, 8, 6), std(0x9bb86b)); hd.position.set(.14, .02, 0); g.add(hd);
+    for (const [fx, fz] of [[.07, .1], [.07, -.1], [-.07, .1], [-.07, -.1]]) { const fl = box(.07, .012, .035, std(0x9bb86b)); fl.position.set(fx, 0, fz); g.add(fl); }
+    const w = new THREE.Group(); w.add(g); W(w); seaLife.push({ kind: 'turtle', w, g, cx, cz, rx: .8, rz: .5, sp: .1, a: ph, ph });
+  }
+  { const g = new THREE.Group(), body = new THREE.Mesh(new THREE.SphereGeometry(.3, 14, 8), whaleM); body.scale.set(3.2, .85, .85); g.add(body);
+    const bl = new THREE.Mesh(new THREE.SphereGeometry(.3, 10, 6), belly); bl.scale.set(2.9, .5, .75); bl.position.y = -.07; g.add(bl);
+    const tail = new THREE.Group(); tail.position.x = -.85; g.add(tail);
+    const tb = new THREE.Mesh(new THREE.ConeGeometry(.12, .5, 8), whaleM); tb.rotation.z = PI / 2; tb.position.x = -.22; tail.add(tb);
+    const fl = new THREE.Mesh(new THREE.BoxGeometry(.12, .02, .7), whaleM); fl.position.x = -.5; tail.add(fl);
+    const sp = new THREE.Mesh(new THREE.ConeGeometry(.05, .3, 8), std(0xffffff, { transparent: true, opacity: .75 })); sp.position.set(.5, .38, 0); g.add(sp);
+    const w = new THREE.Group(); w.add(g); W(w); seaLife.push({ kind: 'whale', w, g, tail, spout: sp, cx: -3, cz: 8.4, rx: 7.5, rz: .5, sp: .05, a: 1, ph: 0 }); }
+
   // ---- people on the beaches: sunbathers, parasols, swimmers and walkers along the water
   const swimmers = [], walkers = [];
   function parasol(col) {
@@ -618,7 +648,6 @@ export function open(opts) {
       walkers.push({ p, cx, fn, sg, half: 1.0 + rnd() * .5, ph: rnd() * 6.28, sp: .13 + rnd() * .08, off: .1 + rnd() * .12 });
     }
     // boardwalk along the back of the sand, tufts of dune grass, a lifeguard tower, a kiosk with an awning and a volleyball net
-    W(ribbon(smooth(wl, cx - 1.9, cx + 1.9, sg * 1.35), .1, std(0xb58c5c, { roughness: 1, side: THREE.DoubleSide }), .02));
     for (let k = 0; k < 16; k++) { const x = cx + (rnd() - .5) * 3.6, z = wl(x) + sg * (1.45 + rnd() * .3); if (groundH(x, z) < .05) continue; const tu = new THREE.Group(); for (let b = 0; b < 3; b++) { const bl = new THREE.Mesh(new THREE.ConeGeometry(.018, .14, 4), std(0x8fb35a)); bl.position.set((b - 1) * .025, .07, (b % 2) * .02); bl.rotation.z = (b - 1) * .25; tu.add(bl); } W(put(tu, x, z, rnd() * 6, 0)); }
     { const lx = cx - 1.0, lz = wl(lx) + sg * 1.05, g = new THREE.Group();
       for (const [px, pz] of [[-.05, -.05], [.05, -.05], [-.05, .05], [.05, .05]]) { const lg = box(.016, .2, .016, std(0xf2efe6)); lg.position.set(px, .1, pz); g.add(lg); }
@@ -831,6 +860,27 @@ export function open(opts) {
       b.b.rotation.z = Math.sin(t * 1.1 + b.ph) * .045 * k; b.b.rotation.x = Math.sin(t * .9 + b.ph * 2) * .03 * k;
     }
     foamMat.opacity = .42 + Math.sin(t * 1.4) * .16;
+    for (const o of seaLife) {
+      if (o.kind === 'fish') {
+        const dx = Math.sin(t * .2 + o.ph) * .9 * o.drift, dz = Math.cos(t * .17 + o.ph) * .5;
+        put(o.w, o.cx + dx, o.cz + dz, 0, -.07, true);
+        for (const f of o.fs) { f.a += f.sp * dt * 2.2; f.h.position.set(Math.cos(f.a) * f.r, f.y + Math.sin(t * 3 + f.a) * .008, Math.sin(f.a) * f.r); f.h.rotation.y = -f.a - PI / 2 * Math.sign(f.sp); }
+        continue;
+      }
+      o.a += o.sp * dt; const sg = Math.sign(o.sp), tx = -o.rx * Math.sin(o.a) * sg, tz = o.rz * Math.cos(o.a) * sg;
+      const yaw = Math.atan2(-tz, tx);
+      if (o.kind === 'dol') {                          // swims under the surface, then leaps in an arc and dives back in
+        const c = (t * .42 + o.ph) % 3.2, leap = c < 1 ? Math.sin(c * PI) : 0, vy = c < 1 ? Math.cos(c * PI) : 0;
+        put(o.w, o.cx + o.rx * Math.cos(o.a) + Math.sin(o.a) * 0, o.cz + o.rz * Math.sin(o.a) + o.off, yaw, -.09 + leap * .42, true);
+        o.d.g.rotation.z = c < 1 ? vy * -.7 : Math.sin(t * 2 + o.ph) * .04; o.d.tail.rotation.z = Math.sin(t * 7 + o.ph) * .35;
+      } else if (o.kind === 'turtle') {
+        put(o.w, o.cx + o.rx * Math.cos(o.a), o.cz + o.rz * Math.sin(o.a), yaw, -.02 + Math.sin(t * .8 + o.ph) * .008, true);
+        o.g.rotation.z = Math.sin(t * 1.2) * .04;
+      } else {                                         // the whale glides far out, raises its tail now and then and blows
+        put(o.w, o.cx + o.rx * Math.cos(o.a), o.cz + o.rz * Math.sin(o.a), yaw, -.1, true);
+        const c = (t * .13) % 1; o.tail.rotation.z = Math.sin(t * .9) * .14 + (c > .8 ? Math.sin((c - .8) / .2 * PI) * .5 : 0); o.spout.visible = c > .45 && c < .6; o.g.rotation.z = Math.sin(t * .5) * .03;
+      }
+    }
     for (const c of clouds) c.rotation.y += c.userData.sp * dt;
     for (const g of gulls) { g.rotateY(g.userData.sp * dt * .35); const f = Math.sin(t * 7 + g.userData.ph) * .5; g.userData.b.w1.rotation.z = f; g.userData.b.w2.rotation.z = -f; }
     for (const f of flyers) {
@@ -844,7 +894,7 @@ export function open(opts) {
       else if (c.u > 1) c.u -= 1; else if (c.u < 0) c.u += 1;
       const [x, z, yaw] = routeAt(c.r, c.u), sy = Math.sin(yaw), cy = Math.cos(yaw), px = x + sy * c.off, pz = z + cy * c.off, onW = 1 - sstep(.28, .55, inletD(px, pz));
       const hd = yaw + (c.v < 0 ? PI : 0), hx = Math.cos(hd), hz = -Math.sin(hd);
-      put(c.w, px, pz, hd, .028 + (onW > 0 ? onW * Math.max(0, (Math.abs(px - INLET[0][0]) < 1.5 ? .2 : .28) - groundH(px, pz)) : 0));
+      put(c.w, px, pz, hd, .028 + Math.max(0, .07 - groundH(px, pz)) + (onW > 0 ? onW * Math.max(0, (Math.abs(px - INLET[0][0]) < 1.5 ? .2 : .28) - groundH(px, pz)) : 0));
       if (onW <= 0) c.w.quaternion.multiply(_q.setFromAxisAngle(Zax, Math.atan2(groundH(px + hx * .12, pz + hz * .12) - groundH(px - hx * .12, pz - hz * .12), .24)));
       c.w.scale.setScalar(Math.max(.001, Math.min(1, Math.min(c.u, 1 - c.u) * 14)));
     }
@@ -878,8 +928,8 @@ export function open(opts) {
     opts.onClose && opts.onClose();
   }
   root.querySelector('.x-pl-x').addEventListener('click', close);
-  const look = (x, z, zoom) => { focus = { q: faceCamera(dirFrom(x, z, new THREE.Vector3()), .45), dist: baseDist * (zoom || .5) }; };
-  return { close, root, spots, show, look, scene, camera, world };
+  const look = (x, z, zoom, snap) => { focus = { q: faceCamera(dirFrom(x, z, new THREE.Vector3()), .45), dist: baseDist * (zoom || .5) }; if (snap) { world.quaternion.copy(focus.q); dist = distT = focus.dist; focus = null; } };
+  return { close, root, spots, show, look, scene, camera, world, dbg: { shore, shoreS, LOURO, HILL2, INLET, INLET2 } };
 }
 
 let cssDone = false;
