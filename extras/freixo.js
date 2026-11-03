@@ -767,6 +767,24 @@ export function open(opts) {
     for (const x of [-3.7, -2.9, -2.2, -.2, .5, 1.2]) hhS(x, .9 + rnd() * .3, 1 + (hc % 2), { stone: true });
     const [cx, cz] = onShoreS(-1.0, 2.5); W(put(church(.9), cx, cz, seaYawS(cx), -.03)); }
 
+  // ---- the small island: a tiny harbour with a boat, one little house in the middle and two horses grazing
+  const horses = [];
+  function horse(col, mane) {
+    const g = new THREE.Group(), m = std(col), dk = std(mane);
+    const body = box(.3, .15, .12, m); body.position.y = .24; g.add(body);
+    const neck = box(.07, .16, .08, m); neck.position.set(.17, .33, 0); neck.rotation.z = -.5; g.add(neck);
+    const head = new THREE.Group(); head.position.set(.24, .39, 0); const hd = box(.14, .07, .07, m); hd.position.x = .05; head.add(hd);
+    const mn = box(.02, .1, .02, dk); mn.position.set(-.02, .04, 0); head.add(mn); g.add(head);
+    for (const [lx, lz] of [[-.11, -.04], [-.11, .04], [.11, -.04], [.11, .04]]) { const lg = box(.03, .17, .03, m); lg.position.set(lx, .085, lz); g.add(lg); }
+    const tail = box(.03, .14, .03, dk); tail.position.set(-.17, .22, 0); tail.rotation.z = .4; g.add(tail);
+    return { g, head };
+  }
+  { const I = ISL[2], ix = I.cx, iz = I.cz, sz = edge(2, ix, 1);
+    const hs = house({ w: .42, d: .36, floors: 1, wall: 0xf7f1e4, roof: ROOF[0], gal: false, shut: 0x2f6fa8, fr: 2, door: 0x2f6fa8 }); W(put(hs, ix, iz - .1, .5, -.02));
+    for (let k = 0; k < 3; k++) { const q = new THREE.Group(); q.add(box(.3, .4, .3, std(0xb2ac9c))); const c = box(.34, .05, .34, std(0xd0cabb)); c.position.y = .22; q.add(c); W(put(q, ix, sz - .05 + k * .3, 0, .02, true)); }
+    const bt = boat(0xc9473a, 0xf2efe6, 'fisher'); bt.scale.setScalar(.7); const bw = new THREE.Group(); bw.add(bt); put(bw, ix + .45, sz + .55, PI / 2, 0, true); W(bw); boats.push({ w: bw, b: bt, ph: 1.3, base: 0 });
+    for (const [hx, hz, c, mn, ry] of [[-.9, .35, 0x7a4a2e, 0x2a1a10, .6], [.95, -.2, 0xf1ece0, 0x8a7a66, 3.4]]) { const h = horse(c, mn), w = new THREE.Group(); w.add(h.g); const x = ix + hx, z = iz + hz; put(w, x, z, ry, -.02); W(w); horses.push({ h, ph: rnd() * 6 }); } }
+
   // rocks on the tips of the capes (puntas)
   for (const cx of [-2.3, 14.1, 17.1, 20.3, -21.4]) for (let k = 0; k < 3; k++) {
     const x = cx + (rnd() - .5) * 1.4, z = shore(x) + (rnd() - .35) * .5, g = new THREE.Mesh(new THREE.IcosahedronGeometry(.07 + rnd() * .1, 2), std(0x9a968a, { flatShading: false }));
@@ -774,6 +792,7 @@ export function open(opts) {
   }
   // ---- trees: round oaks, pines and eucalyptus, only where nobody lives or drives
   const forbid = (x, z) => {
+    if (Math.hypot(x - ISL[2].cx, z - ISL[2].cz) < 2.2) return true;      // the little island keeps its clearing for the house and the horses
     const s = shore(x);
     for (const rt of mtRoads) for (let q = 0; q < rt.pts.length; q += 2) if (Math.abs(rt.pts[q][0] - x) < .6 && Math.abs(rt.pts[q][1] - z) < .6) return true;
     if (x > -23 && x < 17 && z > s - 6.6 && z < s + .1) { for (const [a, b] of [[-17.4, -9.5], [-9.4, -2.8], [-1.2, 4.6], [7.4, 13.3]]) if (x > a && x < b && z > s - 5.8) return true; if (Math.abs(z - (s - 1.2)) < .45) return true; }
@@ -973,6 +992,7 @@ export function open(opts) {
       b.b.rotation.z = Math.sin(t * 1.1 + b.ph) * .045 * k; b.b.rotation.x = Math.sin(t * .9 + b.ph * 2) * .03 * k;
     }
     foamMat.opacity = .42 + Math.sin(t * 1.4) * .16;
+    for (const o of horses) { const g = Math.max(0, Math.sin(t * .5 + o.ph)); o.h.head.rotation.z = -g * .9 + Math.sin(t * 2 + o.ph) * .03; }
     for (const f of falls) { if (f.mist) { f.mist.scale.setScalar(1 + Math.sin(t * 2) * .08); f.mist.material.opacity = .4 + Math.sin(t * 1.6) * .08; } else { const u = ((t * .9 + f.k / 6) % 1); f.m.position.y = 1.0 - u * .92; f.m.material.opacity = .95 - u * .4; } }
     for (const o of seaLife) {
       if (o.kind === 'fish') {                         // a shoal swims along the ría all together, its fish keeping their places with a little wobble
