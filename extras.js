@@ -18,12 +18,36 @@
       log('view ' + innerWidth + 'x' + innerHeight + ' dpr ' + devicePixelRatio + ' sw ' + ('serviceWorker' in navigator) + ' ref ' + (document.referrer || '-'));
       addEventListener('error', function (e) { log('ERR ' + (e.message || (e.target && (e.target.src || e.target.href)) || '?') + (e.filename ? ' @' + e.filename.split('/').pop() + ':' + e.lineno : '')); }, true);
       addEventListener('unhandledrejection', function (e) { log('REJ ' + (e.reason && (e.reason.message || e.reason))); });
-      var rep = function (tag) { try { var m = document.querySelector('main'); log(tag + ' text ' + document.body.innerText.length + ' main ' + (m ? m.getBoundingClientRect().height | 0 : '-') + ' body ' + document.body.scrollHeight + ' imgs ' + document.images.length + ' bg ' + getComputedStyle(document.body).backgroundColor); } catch (err) { log('rep ' + err.message); } };
+      var rep = function (tag) { try { var m = document.querySelector('main'); log(tag + ' inapp ' + INAPP + ' text ' + document.body.innerText.length + ' main ' + (m ? m.getBoundingClientRect().height | 0 : '-') + ' body ' + document.body.scrollHeight + ' imgs ' + document.images.length + ' bg ' + getComputedStyle(document.body).backgroundColor); } catch (err) { log('rep ' + err.message); } };
       setTimeout(function () { rep('1s'); }, 1000); setTimeout(function () { rep('4s'); }, 4000); setTimeout(function () { rep('9s'); }, 9000);
       show();
     })();
   }
 
+
+  // In-app browsers (LinkedIn, Instagram, ...) end up on a blank page as soon as the YouTube player of the home page is created, so
+  // there every YouTube iframe shows its still picture with a link to YouTube instead (?xinapp forces this in any browser).
+  var INAPP = /LinkedInApp|FBAN|FBAV|Instagram|MicroMessenger|Twitter/i.test(navigator.userAgent) || (/iP(hone|ad|od)/.test(navigator.userAgent) && !/Safari\//.test(navigator.userAgent)) || /[?&]xinapp\b/.test(location.search);
+  if (INAPP) {
+    document.documentElement.setAttribute('data-xinapp', '');
+    (function () {
+      var YT = /^(https?:)?\/\/([a-z0-9-]+\.)?(youtube|youtube-nocookie)\.com\//i;
+      var card = function (src) {
+        var m = /\/embed\/([\w-]{6,})/.exec(src), id = m && m[1];
+        if (!id) return '<!doctype html><body style="margin:0;background:#000">';
+        return '<!doctype html><meta name="viewport" content="width=device-width"><style>html,body{margin:0;height:100%;background:#000}a{display:block;position:relative;height:100%;background:#000 url(https://i.ytimg.com/vi/' + id + '/hqdefault.jpg) center/cover no-repeat}a:after{content:"";position:absolute;left:50%;top:50%;width:68px;height:68px;margin:-34px;border-radius:50%;background:rgba(0,0,0,.55) url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\'%3E%3Cpath fill=\'%23fff\' d=\'M9 7l8 5-8 5z\'/%3E%3C/svg%3E") center/60% no-repeat}</style><a href="https://www.youtube.com/watch?v=' + id + '" target="_blank" rel="noopener" aria-label="Play on YouTube"></a>';
+      };
+      var d = Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype, 'src');
+      if (d && d.set) {
+        Object.defineProperty(HTMLIFrameElement.prototype, 'src', { configurable: true, enumerable: d.enumerable, get: d.get, set: function (v) { if (YT.test(String(v))) { this.srcdoc = card(String(v)); } else d.set.call(this, v); } });
+      }
+      var sa = Element.prototype.setAttribute;
+      Element.prototype.setAttribute = function (n, v) {
+        if (this.tagName === 'IFRAME' && String(n).toLowerCase() === 'src' && YT.test(String(v))) return sa.call(this, 'srcdoc', card(String(v)));
+        return sa.call(this, n, v);
+      };
+    })();
+  }
 
   // every route that is not one of these is a project page (the project list lives in Framer's CMS and grows)
   var NOT_PROJECTS = ['home', 'about', 'contact'];
@@ -189,6 +213,7 @@
     '[data-xmr] [data-xmh]{display:none!important}',
     '[data-xmr] iframe.x-mreel{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}',
     // home reel: our own sound button
+    'html[data-xinapp] .x-reel-ctl{display:none!important}',
     '.x-reel-ctl{position:absolute;right:16px;bottom:16px;z-index:5;width:44px;height:44px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.45);color:#fff;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);pointer-events:auto;transition:background .5s ease}',
     '.x-reel-ctl:hover{background:rgba(0,0,0,.65)}',
     '.x-reel-ctl svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}',
