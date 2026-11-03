@@ -7,6 +7,24 @@
 (function () {
   'use strict';
 
+  // ?xdebug on any page prints what the browser reports (errors, sizes) on the page itself, for in-app browsers that can't be inspected
+  if (/[?&]xdebug\b/.test(location.search)) {
+    (function () {
+      var box = document.createElement('pre'), lines = [];
+      box.style.cssText = 'position:fixed;left:0;right:0;top:0;max-height:60vh;overflow:auto;margin:0;padding:8px;background:#000;color:#0f0;font:11px/1.35 monospace;white-space:pre-wrap;word-break:break-all;z-index:2147483647';
+      var show = function () { box.textContent = lines.join('\n'); if (!box.parentNode && document.documentElement) document.documentElement.appendChild(box); };
+      var log = function (t) { lines.push(t); if (lines.length > 40) lines.shift(); show(); };
+      log('xdebug ' + new Date().toISOString().slice(11, 19) + ' ' + navigator.userAgent);
+      log('view ' + innerWidth + 'x' + innerHeight + ' dpr ' + devicePixelRatio + ' sw ' + ('serviceWorker' in navigator) + ' ref ' + (document.referrer || '-'));
+      addEventListener('error', function (e) { log('ERR ' + (e.message || (e.target && (e.target.src || e.target.href)) || '?') + (e.filename ? ' @' + e.filename.split('/').pop() + ':' + e.lineno : '')); }, true);
+      addEventListener('unhandledrejection', function (e) { log('REJ ' + (e.reason && (e.reason.message || e.reason))); });
+      var rep = function (tag) { try { var m = document.querySelector('main'); log(tag + ' text ' + document.body.innerText.length + ' main ' + (m ? m.getBoundingClientRect().height | 0 : '-') + ' body ' + document.body.scrollHeight + ' imgs ' + document.images.length + ' bg ' + getComputedStyle(document.body).backgroundColor); } catch (err) { log('rep ' + err.message); } };
+      setTimeout(function () { rep('1s'); }, 1000); setTimeout(function () { rep('4s'); }, 4000); setTimeout(function () { rep('9s'); }, 9000);
+      show();
+    })();
+  }
+
+
   // every route that is not one of these is a project page (the project list lives in Framer's CMS and grows)
   var NOT_PROJECTS = ['home', 'about', 'contact'];
   var TITLES = { 'soapglory': 'Soap&Glory', 'lexus-singapore': 'Lexus', 'china': 'China', 'schweppes': 'Schweppes', 'soidades-de-onte': 'Soidades de onte', 'djone': 'Djone', 'ayeaye': 'AYE AYE', 'pedrapas': 'Pedra Pas', 'greece': 'Greece', 'portugal': 'Portugal', 'nothing-to-see-here': 'Nothing to see here', 'studio-girls': 'Studio' };
