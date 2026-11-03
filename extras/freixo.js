@@ -53,7 +53,8 @@ const shoreS = (x) => edge(1, x, -1);        // the north shore of the south coa
 const COVES = [[-4.2, shore(-4.2) - .15], [3.9, shore(3.9) - .15], [-19.0, shore(-19.0) - .15], [-8.8, shoreS(-8.8) + .2], [15.6, shore(15.6) - .15], [18.7, shore(18.7) - .15]];
 const INLET = [[-6.4, shore(-6.4) + .5], [-6.4, shore(-6.4) - .9], [-6.25, shore(-6.4) - 2.2], [-6.4, shore(-6.4) - 3.4]];     // Esteiro's inlet
 const INLET2 = [[5.8, shore(5.8) + .5], [5.8, shore(5.8) - 1.0], [5.65, shore(5.8) - 2.6], [5.8, shore(5.8) - 4.2]];            // the river of Outes
-const INLETS = [INLET, INLET2];
+const INLET3 = [[-1.2, shoreS(-1.2) - .6], [-1.2, shoreS(-1.2) + 1.0], [-1.1, shoreS(-1.2) + 2.4], [-1.2, shoreS(-1.2) + 3.7]];      // Ézaro: the sea runs in as a short river up to the waterfall
+const INLETS = [INLET, INLET2, INLET3];
 const LOURO = [-19.8, shore(-19.8) - 3.0], LAG = [-19.0, shore(-19.0) - 1.9], HILL2 = [12.6, shore(12.6) - 8.5];
 function inletD(x, z) {
   let m = 9;
@@ -73,7 +74,7 @@ function groundH(x, z) {
   if (i === 0) h += 4.2 * Math.exp(-((x - LOURO[0]) ** 2 + (z - LOURO[1]) ** 2) / (2 * 2.6 * 2.6)) + 2.8 * Math.exp(-((x - HILL2[0]) ** 2 + (z - HILL2[1]) ** 2) / (2 * 2.4 * 2.4));
   const g = cove(x, z);
   if (g > 0) h = -.02 + (h + .02) * (1 - .8 * g);
-  if (i === 0) { const c = 1 - sstep(.26, .5, inletD(x, z)); if (c > 0) h = h * (1 - c) - .16 * c; }
+  { const c = 1 - sstep(.26, .5, inletD(x, z)); if (c > 0) h = h * (1 - c) - .16 * c; }
   const lg = 1 - sstep(.45, .8, Math.hypot(x - LAG[0], z - LAG[1])); if (lg > 0) h = h * (1 - lg) - .14 * lg;
   return h;
 }
@@ -458,7 +459,7 @@ export function open(opts) {
   // ---- the old stone bridge of Outes (Ponte Nafonso) and the river
   // ---- roads (joined to every village), promenades and street lamps
   const smooth = (fn, a, b, off) => { const out = []; for (let x = a; x <= b; x += .22) { let zz = 0; for (let k = -3; k <= 3; k++) zz += fn(x + k * .22); out.push([x, zz / 7 + off]); } return out; };
-  const roadN = smooth(shore, -22.5, 21, -1.4), roadS = smooth(shoreS, -13.5, 9, 1.45);
+  const roadN = smooth(shore, -19.2, 21, -1.4), roadS = smooth(shoreS, -13.5, 9, 1.45);
   const walkMat = std(0xe6dcc4, { roughness: 1, side: THREE.DoubleSide }), asphalt = std(0x565b62, { roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }), lineMat = std(0xf4f0e4, { roughness: 1, side: THREE.DoubleSide }), pathMat = std(0xeee5d0, { roughness: 1, side: THREE.DoubleSide });
   const sideOf = (pts, d) => pts.map((q, i) => { const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)], tx = b[0] - a[0], tz = b[1] - a[1], l = Math.hypot(tx, tz) || 1; return [q[0] - tz / l * d, q[1] + tx / l * d]; });
   const relax = (pts, passes) => { let q = pts; for (let k = 0; k < passes; k++) q = q.map((p, i) => (i === 0 || i === q.length - 1) ? p : [(q[i - 1][0] + 2 * p[0] + q[i + 1][0]) / 4, (q[i - 1][1] + 2 * p[1] + q[i + 1][1]) / 4]); return q; };
@@ -500,12 +501,6 @@ export function open(opts) {
   };
   const nearOn = (road, x) => road.reduce((m, p) => Math.abs(p[0] - x) < Math.abs(m[0] - x) ? p : m);
   const mtRoads = [];
-  { const rb0 = roadN.rb[0], a = [rb0[0], rb0[1] - RB], top = HILL2, pts = winding(a, top, .55, 1.5); mtRoads.push(route(pts));
-    buildRoad(pts);
-    const ch = house({ w: .3, d: .28, floors: 1, wall: 0xf7f1e4, roof: ROOF[0], gal: false, chim: false, fr: 2, door: 0x2f6fa8 });
-    const cr1 = box(.016, .12, .016, std(0xdddddd)); cr1.position.set(0, .3, 0); ch.add(cr1); const cr2 = box(.07, .016, .016, std(0xdddddd)); cr2.position.set(0, .33, 0); ch.add(cr2);
-    W(put(ch, top[0], top[1], .8, -.02));
-    const ch2 = house({ w: .3, d: .28, floors: 1, wall: 0xf7f1e4, roof: ROOF[0], gal: false, chim: false, fr: 2, door: 0x2f6fa8 }); W(put(ch2, LOURO[0], LOURO[1], .8, -.02)); }
   flushRoads();
   // the bridges carry the road itself: same line, same width, arches under it
   const roadBridge = (x, nA, span) => {
@@ -515,7 +510,10 @@ export function open(opts) {
     const g = new THREE.Group(); g.add(br); W(put(g, roadN[k][0], roadN[k][1], yaw, 0, true));
   };
   roadBridge(INLET[0][0], 3, .42); roadBridge(INLET2[0][0], 4, .46);
-  const routes = [route(roadN), route(roadS), mtRoads[0]];
+  { let k = 1; for (let q = 1; q < roadS.length - 1; q++) if (Math.abs(roadS[q][0] - INLET3[0][0]) < Math.abs(roadS[k][0] - INLET3[0][0])) k = q;
+    const a = roadS[k - 1], b = roadS[k + 1], yaw = Math.atan2(-(b[1] - a[1]), b[0] - a[0]), br = stoneBridge(.4, 3, .7, std(0xa9a28f), std(0x9d978a), 0); br.scale.y = .5;
+    const g = new THREE.Group(); g.add(br); W(put(g, roadS[k][0], roadS[k][1], yaw, 0, true)); }
+  const routes = [route(roadN), route(roadS)];
   const foamMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .5, depthWrite: false, side: THREE.DoubleSide });
   W(ribbon(smooth(shore, -22, 21, .07), .13, foamMat, .085, false, -1)); W(ribbon(smooth(shoreS, -23, 15, -.07), .13, foamMat, .085, false, -1));
   function car(color, bus) {
@@ -538,7 +536,7 @@ export function open(opts) {
   addCars(0, -1, 4, .5, [0xd0744a, 0xf2efe6, 0x3a3f47, 0xc23b2e], true);
   addCars(1, 1, 2, .45, [0x2f6fa8, 0xe9b94a]);
   addCars(1, -1, 2, .45, [0xc23b2e, 0xf2efe6]);
-  addCars(2, 1, 1, .3, [0xc23b2e], false, true); addCars(2, -1, 1, .3, [0x2f6fa8], false, true);
+  
 
   // ---- the south coast across the ría: Louro, its dune beach and lagoon, the mountain, a second village and farms
   for (let x = -10.2; x < -6.2; x += .72) hhS(x, .62, 1 + (hc % 2)); for (let x = -9.8; x < -6.4; x += .78) hhS(x, 2.15, 2); hhS(-8.6, 3.2, 1);
@@ -754,7 +752,7 @@ export function open(opts) {
 
   // ---- Ézaro, on the south shore: a granite village under the mountain and the waterfall of the river Xallas, falling straight into the sea
   const falls = [];
-  { const ex = -1.2, [fx, fz] = onShoreS(ex, .62), yaw = seaYawS(fx), g = new THREE.Group(), gr = [0xaaa391, 0xb8b19f, 0x9b968a];
+  { const ex = -1.2, [fx, fz] = onShoreS(ex, 3.95), yaw = seaYawS(fx), g = new THREE.Group(), gr = [0xaaa391, 0xb8b19f, 0x9b968a];
     for (const [bx, by, bz, sc, k] of [[0, .35, -.25, .62, 0], [-.35, .28, -.05, .45, 1], [.38, .3, -.05, .48, 2], [-.1, .8, -.3, .5, 1], [.15, 1.05, -.35, .38, 0], [0, .15, .15, .4, 2], [-.55, .12, .1, .3, 1], [.58, .12, .12, .3, 0]]) {
       const m = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 2), std(gr[k], { flatShading: false })); m.scale.set(sc * 1.05, sc * 1.1, sc); m.position.set(bx, by, bz); m.castShadow = true; g.add(m);
     }
@@ -763,9 +761,9 @@ export function open(opts) {
     for (let k = 0; k < 6; k++) { const st = box(.17, .1, .06, std(0xffffff, { transparent: true, opacity: .9 })); st.position.set(0, .9, .34); g.add(st); falls.push({ m: st, k }); }
     const pool = box(.44, .03, .22, std(0x69b9d0, { transparent: true, opacity: .85 })); pool.position.set(0, 1.04, .02); g.add(pool);
     const mist = new THREE.Mesh(new THREE.SphereGeometry(.28, 12, 8), std(0xffffff, { transparent: true, opacity: .45, roughness: 1 })); mist.position.set(0, .1, .42); mist.scale.y = .55; g.add(mist); falls.push({ mist });
-    W(put(g, fx, fz, yaw, -.02));
-    for (const x of [-3.7, -2.9, -2.2, -.2, .5, 1.2]) hhS(x, .9 + rnd() * .3, 1 + (hc % 2), { stone: true });
-    const [cx, cz] = onShoreS(-1.0, 2.5); W(put(church(.9), cx, cz, seaYawS(cx), -.03)); }
+    W(put(g, fx, fz, yaw, -.08));
+    for (const x of [-3.7, -2.9, -2.2, .4, 1.1, 1.8]) hhS(x, .9 + rnd() * .3, 1 + (hc % 2), { stone: true });
+    const [cx, cz] = onShoreS(-3.4, 3.1); W(put(church(.9), cx, cz, seaYawS(cx), -.03)); }
 
   // ---- the small island: a tiny harbour with a boat, one little house in the middle and two horses grazing
   const horses = [];
