@@ -21,10 +21,12 @@ Static mirror of https://martamonteagudo.com (Framer site), served via GitHub Pa
 ## The planet of the ría de Muros e Noia (Contact page)
 
 Three clicks (or taps) on the blue creature of the Contact page open `extras/freixo.js`, a small 3D planet built with three.js (`extras/three.module.min.js`,
-loaded only then): the coast of the ría with Muros (granite arcades, old town, church and hórreo, quay), Esteiro (inlet, mole, bridge, sand spit), O Freixo (pier,
-light), Outes (church, the old bridge, Ponte Nafonso) and, across the water, Monte Louro with its beach and lagoon, all spread over the globe and joined by roads.
-People sunbathe, swim and walk on the beaches, fishermen sit in anchored boats, cars drive on the roads, boats sail, birds fly and the clouds turn.
-The map is drawn on a plane wrapped on the sphere from the north pole (`dirFrom` / `planeOf`); villages are placed along `shore(x)`.
-It opens on top of the page (no new tab); the cross at the top right or Esc close it. Drag to turn, wheel / pinch to zoom, N (or the button) for day / night,
-arrows for the next / previous place. `?xplanet` on any URL opens it at once. The text that turns round the creature on hover ("click 3 times") is `jfHint` in
-`extras.js`. When `extras/freixo.js` changes, bump the `?v=` on its import in `extras.js`.
+loaded only then). It is only for looking at: there are no points or names to click. The coast of the ría runs along the north of the globe with Monte Louro
+at its western end (a mountain of the mainland, with a mountain road and its beach and lagoon), then Muros (granite arcades, old town, church and hórreo,
+quay), Esteiro (inlet, mole, bridge, the Area Maior sand spit), Punta Uhía (a cape), O Freixo (pier, light), the old bridge (Ponte Nafonso), Outes and the beaches
+of Paramean and Ancoradoiro, with capes and inlets all along; the other shore of the ría lies to the south. Roads join the villages (and climb two hills);
+people sunbathe, swim and walk on the beaches, fishermen sit in anchored boats, cars drive, boats sail each on its own lane, birds fly and the clouds turn.
+The map is drawn on a plane wrapped on the sphere from the north pole (`dirFrom` / `planeOf`); villages are placed along `shore(x)`; `coastW` shapes the capes.
+The cross at the top right or Esc close it. Drag to turn, wheel / pinch to zoom, N (or the button) for day / night. `?xplanet` on any URL opens it at once.
+The text that turns round the creature on hover ("click 3 times") is `jfHint` in `extras.js`. When `extras/freixo.js` changes, bump the `?v=` on its import
+in `extras.js`.
