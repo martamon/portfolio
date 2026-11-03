@@ -26,10 +26,12 @@ function shore(x) {                       // z of the south shore of the main is
 }
 const COVES = [[-2.6, shore(-2.6) - .2], [3.7, shore(3.7) - .2], [-5.9, 9.4]];   // wide sandy beaches: Esteiro's spit, O Freixo, Louro
 const INLET = [[-3.95, shore(-3.95) + .5], [-3.95, shore(-3.95) - .9], [-3.8, shore(-3.95) - 2.0], [-3.95, shore(-3.95) - 3.0]];   // Esteiro's little inlet
+const INLET2 = [[4.5, shore(4.5) + .5], [4.5, shore(4.5) - 1.0], [4.35, shore(4.5) - 2.4], [4.5, shore(4.5) - 3.8]];   // the river of Outes, under the old bridge
+const INLETS = [INLET, INLET2];
 function inletD(x, z) {
   let m = 9;
-  for (let i = 0; i < INLET.length - 1; i++) {
-    const ax = INLET[i][0], az = INLET[i][1], dx = INLET[i + 1][0] - ax, dz = INLET[i + 1][1] - az;
+  for (const P of INLETS) for (let i = 0; i < P.length - 1; i++) {
+    const ax = P[i][0], az = P[i][1], dx = P[i + 1][0] - ax, dz = P[i + 1][1] - az;
     const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz)));
     m = Math.min(m, Math.hypot(x - ax - dx * t, z - az - dz * t));
   }
@@ -149,10 +151,13 @@ export function open(opts) {
   const slopeAt = (x) => (shore(x + .3) - shore(x - .3)) / .6;
   const seaYaw = (x) => Math.atan2(-slopeAt(x), 1);           // yaw that turns a front towards the sea
   const onShore = (x, inland) => [x, shore(x) - inland];
-  const WALLS = [0xf6f1e7, 0xf2dcae, 0xeab9a0, 0xa9cbdc, 0xd3e3bd, 0xe9a85a, 0xf0c9c0, 0xb9d3c8, 0xf6f1e7, 0xf2dcae];
-  const ROOFS = [0x5d636b, 0x4a4f57, 0x9a5140, 0x5d636b, 0x6a3f35];
+  const GRANITE = 0xa8a396;
+  const WALLS = [0xf7f3ea, GRANITE, 0xe8c46a, 0xe7a58b, 0xf7f3ea, 0x8fb5cf, GRANITE, 0xb7d0a0, 0xf7f3ea, 0xb4503f, 0xe8c46a, GRANITE];
+  const ARC = [0xf7f3ea, 0xe8c46a, 0x8fb5cf, 0xe7a58b, 0xb7d0a0, 0xf7f3ea];
+  const ROOFS = [0x5d636b, 0x4a4f57, 0x5d636b, 0x9a5140, 0x4a4f57];
   const white = std(0xffffff), stoneM = std(0x9a9488), woodM = std(0x7a4a2e);
-  const SHUT = [std(0x2f6fa8), std(0x3b8f6a), std(0xb2473a), std(0x3a5d7a)];
+  const SHUT = [std(0x2f6fa8), std(0x3b8f6a), std(0xa23a30), std(0x3a5d7a)];
+  const FRAMES = [white, white, std(0x2f6fa8), std(0x3b8f6a), white, std(0xa23a30)], granF = std(0xc9c4b8);
   const FLOW = [std(0xd9507a), std(0xe9b94a), std(0xc23b2e)];
   const gable = (len, span, rh, mat) => {            // a gabled roof, ridge along x
     const sh = new THREE.Shape(); sh.moveTo(-span / 2, 0); sh.lineTo(span / 2, 0); sh.lineTo(0, rh); sh.closePath();
@@ -160,8 +165,8 @@ export function open(opts) {
     g.rotateY(Math.PI / 2); g.translate(-len / 2, 0, 0);
     return new THREE.Mesh(g, mat);
   };
-  const windowAt = (g, x, y, z, shut, flow) => {
-    const fr = box(.085, .1, .02, white); fr.position.set(x, y, z + .006); g.add(fr);
+  const windowAt = (g, x, y, z, shut, flow, fm) => {
+    const fr = box(.085, .1, .02, fm || white); fr.position.set(x, y, z + .006); g.add(fr);
     const gl = box(.056, .075, .024, winMat); gl.position.set(x, y, z + .01); g.add(gl);
     if (shut) for (const sx of [-1, 1]) { const sw = box(.026, .1, .018, shut); sw.position.set(x + sx * .06, y, z + .006); g.add(sw); }
     if (flow) { const fb = box(.085, .03, .04, flow); fb.position.set(x, y - .065, z + .025); g.add(fb); }
@@ -172,23 +177,25 @@ export function open(opts) {
     const body = box(w, bodyH, d, std(o.wall)); body.position.y = .06 + bodyH / 2; g.add(body);
     const rh = Math.min(.34, d * .42), roof = gable(w * 1.08, d * 1.14, rh, std(o.roof)); roof.position.y = .06 + bodyH; g.add(roof);
     if (o.chim !== false) { const ch = box(.06, .16, .06, stoneM); ch.position.set(w * (.22 + rnd() * .1), .06 + bodyH + rh * .62, -d * .1); g.add(ch); const cp = box(.075, .02, .075, std(0x4a4f57)); cp.position.set(ch.position.x, ch.position.y + .09, ch.position.z); g.add(cp); }
+    const fm = o.stone ? granF : FRAMES[(o.fr || 0) % FRAMES.length];
+    if (!o.stone) for (const sx of [-1, 1]) { const q = box(.035, bodyH, .035, stoneM); q.position.set(sx * (w / 2 + .004), .06 + bodyH / 2, d / 2 + .004); g.add(q); }   // granite corner stones
     const z = d / 2, n = Math.max(2, Math.round(w / .19)), shut = o.shut ? SHUT[o.shut % SHUT.length] : null, flow = o.flow ? FLOW[o.flow % FLOW.length] : null;
     for (let f = 0; f < o.floors; f++) {
       const y = .06 + fh * f + fh * .55;
       if (f === 1 && o.gal) {                          // a glazed gallery across the first floor
         const gl = box(w * .88, fh * .62, .03, winMat); gl.position.set(0, y, z + .012); g.add(gl);
-        for (let i = 0; i <= 6; i++) { const bar = box(.016, fh * .66, .036, white); bar.position.set(-w * .44 + i * w * .88 / 6, y, z + .016); g.add(bar); }
-        const top = box(w * .92, .018, .04, white); top.position.set(0, y + fh * .33, z + .016); g.add(top);
-        const bot = box(w * .92, .018, .04, white); bot.position.set(0, y - fh * .33, z + .016); g.add(bot);
+        for (let i = 0; i <= 6; i++) { const bar = box(.016, fh * .66, .036, fm); bar.position.set(-w * .44 + i * w * .88 / 6, y, z + .016); g.add(bar); }
+        const top = box(w * .92, .018, .04, fm); top.position.set(0, y + fh * .33, z + .016); g.add(top);
+        const bot = box(w * .92, .018, .04, fm); bot.position.set(0, y - fh * .33, z + .016); g.add(bot);
         continue;
       }
       for (let i = 0; i < n; i++) {
         const x = (i - (n - 1) / 2) * (w / n);
         if (f === 0 && Math.abs(x) < w / n * .55 && n % 2 === 1) continue;     // the door's place
-        windowAt(g, x, y, z, shut, f > 0 ? flow : null);
+        windowAt(g, x, y, z, shut, f > 0 ? flow : null, fm);
       }
     }
-    const dr = box(.075, .125, .03, woodM), df = box(.1, .14, .024, white); dr.position.set(0, .06 + .0625, z + .014); df.position.set(0, .06 + .07, z + .006); g.add(df, dr);
+    const dr = box(.075, .125, .03, o.stone || (o.fr || 0) % 3 === 0 ? woodM : SHUT[(o.fr || 0) % SHUT.length]), df = box(.1, .14, .024, fm); dr.position.set(0, .06 + .0625, z + .014); df.position.set(0, .06 + .07, z + .006); g.add(df, dr);
     const st = box(.14, .025, .06, stoneM); st.position.set(0, .0125, z + .04); g.add(st);
     return g;
   }
@@ -203,7 +210,7 @@ export function open(opts) {
       if (k < n * 2) { const ar = new THREE.Mesh(new THREE.TorusGeometry(r * .92, .02, 5, 8, Math.PI), stoneM); ar.position.set(x + wu / 4, gh - r, d / 2 - .04); g.add(ar); }
     }
     for (let i = 0; i < n; i++) {
-      const cx = -W / 2 + wu * (i + .5), wall = std(WALLS[(i * 3 + 1) % WALLS.length]);
+      const cx = -W / 2 + wu * (i + .5), wall = std(ARC[(i * 2 + n) % ARC.length]);
       const up = box(wu - .008, fh * 2, d, wall); up.position.set(cx, gh + .02 + fh, 0); g.add(up);
       const dr = box(.07, .12, .02, std([0x2f6fa8, 0x7a4a2e, 0x3b8f6a][i % 3])); dr.position.set(cx, .06, d / 2 - .12); g.add(dr);
       const gl = box(wu * .78, fh * .62, .03, winMat); gl.position.set(cx, gh + .02 + fh * .55, d / 2 + .012); g.add(gl);
@@ -216,14 +223,27 @@ export function open(opts) {
   }
   const hut = (x, inland, o) => { const [px, pz] = onShore(x, inland); const hs = house(o); world.add(put(hs, px, pz, seaYaw(px) + (o.turn || 0), -.02)); return hs; };
   let hc = 0;
-  const hh = (x, inland, floors, extra) => { const r = hut(x, inland, Object.assign({ w: .42 + rnd() * .18, d: .38 + rnd() * .06, floors, wall: WALLS[hc % WALLS.length], roof: ROOFS[(hc * 2 + 1) % ROOFS.length], gal: floors > 1 && hc % 2 === 0, shut: hc % 3 === 0 ? hc + 1 : 0, flow: hc % 4 === 1 ? hc : 0, turn: (rnd() - .5) * .16 }, extra || {})); hc++; return r; };
+  const hh = (x, inland, floors, extra) => { const r = hut(x, inland, Object.assign({ w: .42 + rnd() * .18, d: .38 + rnd() * .06, floors, wall: WALLS[hc % WALLS.length], stone: WALLS[hc % WALLS.length] === GRANITE, fr: hc, roof: ROOFS[(hc * 2 + 1) % ROOFS.length], gal: floors > 1 && hc % 2 === 0 && WALLS[hc % WALLS.length] !== GRANITE, shut: hc % 3 === 0 ? hc + 1 : 0, flow: hc % 4 === 1 ? hc : 0, turn: (rnd() - .5) * .16 }, extra || {})); hc++; return r; };
   const hub = (x, inland, lift) => { const o = new THREE.Object3D(); const [px, pz] = onShore(x, inland); world.add(put(o, px, pz, 0, lift)); return o; };
 
   // Muros: two arcaded blocks on the front (a little square between them), houses behind and the church above
   { const [ax, az] = onShore(-8.0, .7); world.add(put(arcade(4, .44, .42), ax, az, seaYaw(ax), -.02));
     const [bx, bz] = onShore(-6.15, .62); world.add(put(arcade(3, .44, .42), bx, bz, seaYaw(bx), -.02));
-    for (const x of [-8.7, -7.9, -7.1, -6.4]) hh(x, 1.9, 2, {});
-    for (const x of [-8.3, -7.4, -6.6]) hh(x, 2.8, 1 + (hc % 2), {}); }
+    for (const x of [-8.7, -7.9, -7.1, -6.4]) hh(x, 1.9, 2, { wall: GRANITE, stone: true, gal: false });
+    for (const x of [-8.5, -7.7, -6.9, -6.2]) hh(x, 2.7, 2 + (hc % 2), { wall: GRANITE, stone: true, gal: false, roof: 0x4a4f57 });
+    for (const x of [-8.3, -7.4, -6.6]) hh(x, 3.5, 2, { wall: [GRANITE, 0xf7f3ea, GRANITE][hc % 3], stone: true, gal: false });
+    // narrow lanes of cobbles between the old houses, and a stone cruceiro in the little square between the arcades
+    const lane = std(0xb5afa3);
+    for (const lx of [-8.3, -7.5, -6.55]) for (let k = 0; k < 6; k++) { const [px, pz] = onShore(lx, 1.15 + k * .42); const lq = box(.2, .02, .46, lane); world.add(put(lq, px, pz, seaYaw(px), .0)); }
+    { const [cx2, cz2] = onShore(-7.05, .5); const cr = new THREE.Group();
+      for (let k = 0; k < 3; k++) { const st = box(.34 - k * .08, .05, .34 - k * .08, stoneM); st.position.y = .025 + k * .05; cr.add(st); }
+      const sh = box(.045, .5, .045, std(0xb9b4a6)); sh.position.y = .42; cr.add(sh);
+      const cb = box(.2, .045, .045, std(0xb9b4a6)); cb.position.y = .56; cr.add(cb);
+      world.add(put(cr, cx2, cz2, 0, -.01)); } }
+  // Muros' seafarers' quarter: sheds, stacked creels and nets by the quay
+  for (const [x, inl] of [[-7.55, .35], [-6.55, .35], [-8.75, .45]]) { const [px, pz] = onShore(x, inl); const shed = house({ w: .34, d: .26, floors: 1, wall: 0xf7f3ea, roof: 0x5d636b, gal: false, shut: 1, fr: 2, chim: false }); world.add(put(shed, px, pz, seaYaw(px), -.02)); }
+  for (const [x, inl] of [[-7.15, .25], [-6.1, .3], [-8.4, .3]]) { const [px, pz] = onShore(x, inl); const cs = new THREE.Group(); for (let k = 0; k < 6; k++) { const cr2 = box(.1, .07, .08, std(0x7a5a3a)); cr2.position.set((k % 3 - 1) * .11, .035 + Math.floor(k / 3) * .075, 0); cs.add(cr2); } world.add(put(cs, px, pz, seaYaw(px) + .3, -.01)); }
+  for (const x of [-7.9, -5.3]) { const [px, pz] = onShore(x, .35); const nt = new THREE.Group(); for (const dx of [-.3, .3]) { const pole = new THREE.Mesh(new THREE.CylinderGeometry(.014, .014, .34, 4), std(0x6b5a46)); pole.position.set(dx, .17, 0); nt.add(pole); } const net = box(.6, .2, .01, std(0x5f8f8a, { transparent: true, opacity: .6 })); net.position.y = .22; nt.add(net); world.add(put(nt, px, pz, seaYaw(px), -.01)); }
   // Esteiro: houses on both banks of its little inlet, the harbour building at the mole, the footbridge, the boats in the inlet
   hh(-5.4, 1.7, 2, {}); hh(-4.8, 1.7, 1, {}); hh(-5.2, 2.6, 2, {}); hh(-4.6, 2.6, 2, {}); hh(-4.2, 2.5, 1, {});
   for (const x of [-3.3, -2.7, -2.1, -1.5]) hh(x, 2.3 + rnd() * .15, 2, {});
@@ -239,10 +259,12 @@ export function open(opts) {
   for (const x of [-.55, 0, .45, 1.75, 2.3, 2.85]) hh(x, .6, 1 + (hc % 2), {});
   for (const x of [-.4, .3, 1.0, 1.7, 2.4, 3.0]) hh(x, 1.9, 2, {});
   // Outes: a bigger place further up the slope
-  for (const x of [5.2, 5.85, 6.5, 7.15, 7.8]) hh(x, .75 + rnd() * .2, 2, {});
-  for (const x of [5.5, 6.2, 6.9, 7.6, 8.2]) hh(x, 1.9 + rnd() * .2, 2 + (hc % 2), {});
-  for (const x of [5.6, 6.5, 7.4]) hh(x, 3.0, 2, {});
-  spot('Muros', 'Muros, with its arcades (soportales) along the front, its narrow streets and its seafarers’ houses with glazed galleries, all looking at the water.', hub(-7.0, 1.4, .5), true);
+  for (const x of [5.2, 5.8, 6.4, 7.0]) hh(x, .75 + rnd() * .2, 2, {});
+  for (const x of [5.5, 6.2, 6.85]) hh(x, 1.9 + rnd() * .2, 2 + (hc % 2), {});
+  for (const x of [5.6, 6.5]) hh(x, 3.0, 2, {});
+  spot('Muros', 'Muros: the arcades (soportales) along the waterfront, the seafarers’ houses with glazed galleries in white, blue and green, and the old town climbing behind.', hub(-7.0, 1.4, .5), true);
+  spot('Muros old town', 'The old town of Muros is made of granite: stone houses with small windows, narrow cobbled lanes between them, a stone cruceiro in the square, and the church above the roofs.', hub(-7.5, 2.6, .35));
+  spot('Seafarers’ quarter', 'By the quay of Muros: the fishermen’s sheds, stacked creels and nets put out to dry, and the small boats that go out every morning.', hub(-7.0, .35, .35));
   spot('Esteiro', 'Esteiro opens onto its own little inlet: houses on both banks, a footbridge across the water, the big harbour building at the end of the mole, and a long white sand spit with pines on the other side.', hub(-4.0, 1.0, .5), true);
   spot('O Freixo', 'O Freixo, a harbour village of low houses round its pier, with the sea at the end of every street.', hub(1.2, 1.2, .45), true);
   spot('Outes', 'Outes, the municipality, spreads over the slope above the ría, between the hills and the water.', hub(6.6, 1.8, .5), true);
@@ -263,7 +285,7 @@ export function open(opts) {
   { const [x, z] = onShore(-7.1, 3.3); world.add(put(church(false), x, z, seaYaw(x), -.03));
     const [x2, z2] = onShore(6.0, 3.9); world.add(put(church(true), x2, z2, seaYaw(x2), -.03)); }
   const horreos = [];
-  for (const [x, inland, yaw] of [[-1.0, 3.3, .3], [4.4, 2.6, -.4], [8.2, 3.6, .1], [-5.6, 3.4, .2]]) {
+  for (const [x, inland, yaw] of [[-1.0, 3.3, .3], [3.0, 3.4, -.4], [7.1, 3.6, .1], [-5.6, 3.4, .2]]) {
     const hg = new THREE.Group();
     const body2 = box(.3, .26, .9, std(0xb9a98d)); body2.position.y = .52; hg.add(body2);
     const hr = gable(1.0, .42, .17, std(0x7a6f60)); hr.rotation.y = Math.PI / 2; hr.position.y = .65; hg.add(hr);
@@ -280,6 +302,7 @@ export function open(opts) {
   const roadG = new THREE.Group(); world.add(roadG);
   for (let i = 0; i < road.length - 1; i++) {
     const [x, z] = road[i], [x2, z2] = road[i + 1], len = Math.hypot(x2 - x, z2 - z) + .03, yaw = Math.atan2(-(z2 - z), x2 - x);
+    if (inletD((x + x2) / 2, (z + z2) / 2) < .46) continue;
     const seg = box(len + .06, .035, .24, roadMat); roadG.add(put(seg, (x + x2) / 2, (z + z2) / 2, yaw, .0));
     if (i % 3 === 0) { const dsh = box(len * .55, .038, .02, dashMat); roadG.add(put(dsh, (x + x2) / 2, (z + z2) / 2, yaw, .0)); }
     if (i % 6 === 2) { const lp = new THREE.Group(); const pole = new THREE.Mesh(new THREE.CylinderGeometry(.012, .015, .34, 5), lampPost); pole.position.y = .17; lp.add(pole); const lb = new THREE.Mesh(new THREE.SphereGeometry(.035, 6, 5), lampMat); lb.position.y = .36; lp.add(lb); roadG.add(put(lp, x, z - .17, 0, 0)); }
@@ -335,10 +358,28 @@ export function open(opts) {
   for (let s = 0; s < 7; s++) { const x = -5.5 + s * .38, z = shore(x) + .12; const p = box(.46, .5, .5, stone); const g = new THREE.Group(); g.add(p); world.add(put(g, x, z, 0, .02, true)); }
   for (let s = 1; s < 4; s++) { const x = -4.35, z = shore(-4.35) + .12 + s * .4; const p = box(.5, .5, .46, stone); const g = new THREE.Group(); g.add(p); world.add(put(g, x, z, 0, .02, true)); }
   { const bx = INLET[0][0], bz = shore(bx) - 1.25;
-    const br = new THREE.Group(); const dk = box(1.15, .04, .12, std(0xc9c4b8)); dk.position.y = .1; br.add(dk);
-    for (const sx of [-.55, .55]) { const pp = box(.08, .12, .12, stone); pp.position.set(sx, .06, 0); br.add(pp); }
-    for (const sx of [-.5, -.25, 0, .25, .5]) { const rl = box(.015, .06, .015, std(0x5d636b)); rl.position.set(sx, .15, .05); br.add(rl); }
+    const br = new THREE.Group(); const dk = box(1.15, .04, .26, std(0xc9c4b8)); dk.position.y = .1; br.add(dk);
+    for (const sx of [-.55, .55]) { const pp = box(.08, .12, .26, stone); pp.position.set(sx, .06, 0); br.add(pp); }
+    for (const sx of [-.5, -.25, 0, .25, .5]) for (const sz of [-1, 1]) { const rl = box(.015, .06, .015, std(0x5d636b)); rl.position.set(sx, .15, sz * .12); br.add(rl); }
     world.add(put(br, bx, bz, 0, .02, true)); }
+  // the old stone bridge over the river of Outes (Ponte Nafonso): arches, a humped deck and parapets
+  const bridgeObj = new THREE.Group();
+  { const bx = INLET2[0][0], bz = (road.find(function (q) { return q[0] >= bx; }) || road[0])[1], span = .46, nA = 4, bw = .3;
+    const br = new THREE.Group(), gran = std(0x9b968a), L = span * nA;
+    for (let k = 0; k < nA; k++) {
+      const sh = new THREE.Shape(); sh.moveTo(-span / 2, 0); sh.lineTo(span / 2, 0); sh.lineTo(span / 2, .24); sh.lineTo(-span / 2, .24); sh.closePath();
+      const ra = span * .38, hole = new THREE.Path(); hole.moveTo(-ra, .012); hole.absarc(0, .012, ra, Math.PI, 0, true); hole.closePath(); sh.holes.push(hole);
+      const g2 = new THREE.ExtrudeGeometry(sh, { depth: bw, bevelEnabled: false }); g2.translate(0, 0, -bw / 2);
+      const m = new THREE.Mesh(g2, gran); m.position.x = (k - (nA - 1) / 2) * span; br.add(m);
+    }
+    for (let k = 0; k < 11; k++) {
+      const u = k / 10 * 2 - 1, y = .24 + (1 - u * u) * .07, seg = L / 11 + .02;
+      const dk = box(seg, .05, bw + .02, gran); dk.position.set(u * L / 2, y + .02, 0); br.add(dk);
+      for (const sz of [-1, 1]) { const pr = box(seg, .07, .035, std(0xaba69a)); pr.position.set(u * L / 2, y + .075, sz * (bw / 2 - .005)); br.add(pr); }
+    }
+    bridgeObj.position.set(0, 0, 0); br.position.y = -.03; bridgeObj.add(br);
+    world.add(put(bridgeObj, bx, bz, -Math.atan(slopeAt(bx)), .0, true));
+    spot('Old bridge', 'The old stone bridge of Outes (Ponte Nafonso), with its arches over the river, where the road crosses on the way to Noia.', bridgeObj); }
   // Muros' quay
   for (let s = 0; s < 5; s++) { const x = -6.9 + s * .01, z = shore(-6.9) + .0 + s * .5; const p = box(.46, .5, .56, stone); const g = new THREE.Group(); g.add(p); world.add(put(g, x, z, 0, .02, true)); }
   spot('The pier', 'The mole of O Freixo reaches out into the ría. The boats tie up along it, and a small light at its end shows the way in at night.', lh);
@@ -497,7 +538,7 @@ export function open(opts) {
   starGeo.setAttribute('position', new THREE.BufferAttribute(sp, 3));
   const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 1.1, sizeAttenuation: true, transparent: true, opacity: 0, depthWrite: false });
   scene.add(new THREE.Points(starGeo, starMat));
-  const ORDER = ['Muros', 'Esteiro', 'Esteiro beach', 'O Freixo', 'The pier', 'Fishing boats', 'Bateas', 'O Freixo beach', 'Outes', 'Hórreos', 'Monte Louro'];
+  const ORDER = ['Muros', 'Muros old town', 'Seafarers’ quarter', 'Esteiro', 'Esteiro beach', 'O Freixo', 'The pier', 'Fishing boats', 'Bateas', 'O Freixo beach', 'Outes', 'Old bridge', 'Hórreos', 'Monte Louro'];
   spots.sort((a, b) => ORDER.indexOf(a.title) - ORDER.indexOf(b.title));
 
   // ---- day / night
@@ -546,7 +587,8 @@ export function open(opts) {
     card.querySelector('h2').textContent = s.title; card.querySelector('p').textContent = s.text;
     spots.forEach((o, k) => o.pin.classList.toggle('x-on', k === cur));
     const d = spotDir(s);
-    focus = { q: faceCamera(d, .06), dist: Math.min(dist, baseDist * .74) };
+    const ZOOM = { 'Old bridge': .56, 'Seafarers’ quarter': .46, 'Muros old town': .48, 'Esteiro': .5, 'Esteiro beach': .52, 'Hórreos': .5, 'The pier': .55, 'Bateas': .55 };
+    focus = { q: faceCamera(d, .06), dist: Math.min(dist, baseDist * (ZOOM[s.title] || .74)) };
     vel.set(0, 0);
   }
   function hideCard() { cur = -1; card.hidden = true; spots.forEach(o => o.pin.classList.remove('x-on')); focus = null; }
@@ -634,7 +676,8 @@ export function open(opts) {
     for (const c of cars) {
       c.u += c.sp * dt; if (c.u > 1) c.u -= 1; else if (c.u < 0) c.u += 1;
       const [x, z, yaw] = roadAt(c.u), dir = c.sp < 0 ? Math.PI : 0, cy = Math.cos(yaw), sy = Math.sin(yaw);
-      put(c.w, x - sy * c.off * (c.sp < 0 ? -1 : 1) * -1, z - cy * c.off * (c.sp < 0 ? -1 : 1) * -1, yaw + dir, .035);
+      const px = x + sy * c.off * (c.sp < 0 ? -1 : 1), pz = z + cy * c.off * (c.sp < 0 ? -1 : 1), onW = 1 - sstep(.28, .55, inletD(px, pz));
+      put(c.w, px, pz, yaw + dir, .035 + (onW > 0 ? onW * Math.max(0, (px < 0 ? .14 : .3) - groundH(px, pz)) : 0));
       const e = Math.min(1, Math.min(c.u, 1 - c.u) * 14); c.w.scale.setScalar(Math.max(.001, e));
     }
     for (const s of sailers) {
