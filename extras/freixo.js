@@ -767,6 +767,21 @@ export function open(opts) {
     const sqF = square(1.8, 2.75, 1.4, 1.0, { trees: 2, terraces: 2, people: 5 });
     const sqO = square(9.65, 2.75, 1.5, 1.1, { trees: 2, terraces: 2, people: 6 }); }
 
+  // ---- Ézaro, on the south shore: a granite village under the mountain and the waterfall of the river Xallas, falling straight into the sea
+  const falls = [];
+  { const ex = -1.2, [fx, fz] = onShoreS(ex, .62), yaw = seaYawS(fx), g = new THREE.Group(), gr = [0xaaa391, 0xb8b19f, 0x9b968a];
+    for (const [bx, by, bz, sc, k] of [[0, .35, -.25, .62, 0], [-.35, .28, -.05, .45, 1], [.38, .3, -.05, .48, 2], [-.1, .8, -.3, .5, 1], [.15, 1.05, -.35, .38, 0], [0, .15, .15, .4, 2], [-.55, .12, .1, .3, 1], [.58, .12, .12, .3, 0]]) {
+      const m = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 2), std(gr[k], { flatShading: false })); m.scale.set(sc * 1.05, sc * 1.1, sc); m.position.set(bx, by, bz); m.castShadow = true; g.add(m);
+    }
+    const wm = std(0xeaf7ff, { transparent: true, opacity: .7, roughness: .3 });
+    const wf = box(.2, 1.0, .05, wm); wf.position.set(0, .56, .33); g.add(wf);
+    for (let k = 0; k < 6; k++) { const st = box(.17, .1, .06, std(0xffffff, { transparent: true, opacity: .9 })); st.position.set(0, .9, .34); g.add(st); falls.push({ m: st, k }); }
+    const pool = box(.44, .03, .22, std(0x69b9d0, { transparent: true, opacity: .85 })); pool.position.set(0, 1.04, .02); g.add(pool);
+    const mist = new THREE.Mesh(new THREE.SphereGeometry(.28, 12, 8), std(0xffffff, { transparent: true, opacity: .45, roughness: 1 })); mist.position.set(0, .1, .42); mist.scale.y = .55; g.add(mist); falls.push({ mist });
+    W(put(g, fx, fz, yaw, -.02));
+    for (const x of [-3.7, -2.9, -2.2, -.2, .5, 1.2]) hhS(x, .9 + rnd() * .3, 1 + (hc % 2), { stone: true });
+    const [cx, cz] = onShoreS(-1.0, 2.5); W(put(church(.9), cx, cz, seaYawS(cx), -.03)); }
+
   // rocks on the tips of the capes (puntas)
   for (const cx of [-2.3, 14.1, 17.1, 20.3, -21.4]) for (let k = 0; k < 3; k++) {
     const x = cx + (rnd() - .5) * 1.4, z = shore(x) + (rnd() - .35) * .5, g = new THREE.Mesh(new THREE.IcosahedronGeometry(.07 + rnd() * .1, 2), std(0x9a968a, { flatShading: false }));
@@ -973,6 +988,7 @@ export function open(opts) {
       b.b.rotation.z = Math.sin(t * 1.1 + b.ph) * .045 * k; b.b.rotation.x = Math.sin(t * .9 + b.ph * 2) * .03 * k;
     }
     foamMat.opacity = .42 + Math.sin(t * 1.4) * .16;
+    for (const f of falls) { if (f.mist) { f.mist.scale.setScalar(1 + Math.sin(t * 2) * .08); f.mist.material.opacity = .4 + Math.sin(t * 1.6) * .08; } else { const u = ((t * .9 + f.k / 6) % 1); f.m.position.y = 1.0 - u * .92; f.m.material.opacity = .95 - u * .4; } }
     for (const o of seaLife) {
       if (o.kind === 'fish') {                         // a shoal swims along the ría all together, its fish keeping their places with a little wobble
         o.a += o.sp * dt; const sg = Math.sign(o.sp), tx = -o.rx * Math.sin(o.a) * sg, tz = o.rz * Math.cos(o.a) * sg;
@@ -1047,7 +1063,7 @@ export function open(opts) {
     opts.onClose && opts.onClose();
   }
   root.querySelector('.x-pl-x').addEventListener('click', close);
-  const look = (x, z, zoom, snap) => { focus = { q: faceCamera(dirFrom(x, z, new THREE.Vector3()), .45), dist: baseDist * (zoom || .5) }; if (snap) { world.quaternion.copy(focus.q); dist = distT = focus.dist; focus = null; } };
+  const look = (x, z, zoom, snap, tilt) => { focus = { q: faceCamera(dirFrom(x, z, new THREE.Vector3()), tilt === undefined ? .45 : tilt), dist: baseDist * (zoom || .5) }; if (snap) { world.quaternion.copy(focus.q); dist = distT = focus.dist; focus = null; } };
   return { close, root, spots, show, look, scene, camera, world, dbg: { shore, shoreS, LOURO, HILL2, INLET, INLET2 } };
 }
 
