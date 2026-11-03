@@ -378,12 +378,19 @@ function makeAudio(night0) {
     setNight(n) { night = n; bp.frequency.setTargetAtTime(n ? 340 : 520, ctx.currentTime, 2); sg.gain.setTargetAtTime(n ? .07 : .05, ctx.currentTime, 2); },
     sfx(name) {
       if (muted || !alive) return;
-      const now = performance.now(); if (last[name] && now - last[name] < (name === 'splash' ? 1500 : 150)) return; last[name] = now;
+      const now = performance.now(); if (last[name] && now - last[name] < (name === 'splash' ? 1500 : name === 'hover' ? 70 : 150)) return; last[name] = now;
       if (name === 'open') { note(72, .07, 2.4); setTimeout(() => note(76, .06, 2.4), 140); setTimeout(() => note(79, .06, 2.8), 290); }
       else if (name === 'close') { note(79, .05, 1.6); setTimeout(() => note(72, .05, 2.2), 150); }
       else if (name === 'day') { note(79, .06, 2.2); setTimeout(() => note(84, .05, 2.6), 130); }
       else if (name === 'night') { note(69, .07, 2.6); setTimeout(() => note(64, .06, 3), 160); }
       else if (name === 'tick') note(88, .03, .9);
+      else if (name === 'hover' || name === 'press') {                       // a soft bubbly "pop": a quick upward glide with a little shimmer on top
+        const t = ctx.currentTime, base = [523, 587, 659, 784, 880][Math.floor(Math.random() * 5)] * (name === 'press' ? .75 : 1), o = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain();
+        o.type = 'sine'; o.frequency.setValueAtTime(base * .78, t); o.frequency.exponentialRampToValueAtTime(base * 1.12, t + .09);
+        o2.type = 'triangle'; o2.frequency.setValueAtTime(base * 1.5, t); o2.frequency.exponentialRampToValueAtTime(base * 2.1, t + .09);
+        const g2 = ctx.createGain(); g2.gain.value = .18; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(name === 'press' ? .07 : .05, t + .012); g.gain.exponentialRampToValueAtTime(.0006, t + (name === 'press' ? .5 : .32));
+        o.connect(g); o2.connect(g2); g2.connect(g); g.connect(tone); o.start(t); o2.start(t); o.stop(t + .6); o2.stop(t + .6);
+      }
       else if (name === 'splash') {
         const t = ctx.currentTime, b = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = ctx.createGain(); b.buffer = nb; fl.type = 'bandpass'; fl.frequency.setValueAtTime(2200, t); fl.frequency.exponentialRampToValueAtTime(700, t + .5); fl.Q.value = .8;
         g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.045, t + .03); g.gain.exponentialRampToValueAtTime(.0005, t + .6); b.connect(fl); fl.connect(g); g.connect(tone); b.start(t, Math.random() * 2); b.stop(t + .7);
@@ -978,6 +985,10 @@ export function open(opts) {
   if (!audio) muBtn.style.display = 'none'; else { if (muteSaved) audio.mute(true); audio.start(); audio.sfx('open'); paintMu(); }
   muBtn.addEventListener('click', () => { if (!audio) return; audio.mute(!audio.muted); try { localStorage.setItem('xpl-mute', audio.muted ? '1' : '0'); } catch (e) {} paintMu(); if (!audio.muted) audio.sfx('tick'); });
   let lastNight = night0;
+  if (audio) for (const bt of root.querySelectorAll('button')) {                 // every button answers with a little pop when the pointer touches it and a deeper one when pressed
+    bt.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') audio.sfx('hover'); });
+    bt.addEventListener('pointerdown', () => audio.sfx('press'));
+  }
   const paintBtn = () => { dnBtn.innerHTML = nightT > .5 ? '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/></svg>' : '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>'; root.classList.toggle('x-night', nightT > .5); };
   const bgc = new THREE.Color();
   const light = (k) => {
