@@ -366,8 +366,11 @@ export function open(opts) {
   let hc = 0;
   const SHUTC = [0x2f6fa8, 0x3b8f6a, 0xa23a30];
   const mk = (floors, extra) => { const k = hc++; return Object.assign({ w: .44 + rnd() * .2, d: .4 + rnd() * .07, floors, wall: WALLS[k % WALLS.length], roof: ROOF[(k * 3 + 1) % ROOF.length], gal: floors > 1 && k % 2 === 0, shut: k % 4 === 0 ? SHUTC[(k >> 2) % 3] : 0, fr: k, turn: (rnd() - .5) * .14 }, extra || {}); };
+  // village squares (x range, inland range): houses keep out of them
+  const SQ = [[-13.95, -11.65, 1.8, 3.55], [-8.9, -7.4, 2.1, 3.4], [1.1, 2.5, 2.1, 3.4], [8.9, 10.4, 2.1, 3.4]];
+  const inSq = (x, inl) => SQ.some((q) => x > q[0] && x < q[1] && inl > q[2] && inl < q[3]);
   let hk = 0; const thin = () => (hk++ % 5) > 1;
-  const hh = (x, inl, floors, extra) => { if (thin()) return null; const o = mk(floors, extra); if (o.stone) { o.wall = GRANITE[hc % 3]; o.gal = false; o.roof = ROOF[hc % 3]; } const [px, pz] = onShore(x, inl); const hs = house(o); W(put(hs, px, pz, seaYaw(px) + o.turn, -.02)); return hs; };
+  const hh = (x, inl, floors, extra) => { if (thin() || inSq(x, inl)) return null; const o = mk(floors, extra); if (o.stone) { o.wall = GRANITE[hc % 3]; o.gal = false; o.roof = ROOF[hc % 3]; } const [px, pz] = onShore(x, inl); const hs = house(o); W(put(hs, px, pz, seaYaw(px) + o.turn, -.02)); return hs; };
   const hhS = (x, inl, floors, extra) => { if (thin()) return null; const o = mk(floors, extra); if (o.stone) { o.wall = GRANITE[hc % 3]; o.gal = false; } const [px, pz] = onShoreS(x, inl); const hs = house(o); W(put(hs, px, pz, seaYawS(px) + o.turn, -.02)); return hs; };
   const shoreEdge = (fn, sg) => (x, off) => fn(x) - sg * off;       // sg -1: land lies to the north of the water line (north coast), +1: to the south
   const lane = std(0xe5dccb), cobble = std(0xcfc6b4);
@@ -376,8 +379,7 @@ export function open(opts) {
   { const [ax, az] = onShore(-14.6, .62); W(put(arcade(5, .46, .42, true), ax, az, seaYaw(ax), -.02));
     const [bx, bz] = onShore(-11.8, .62); W(put(arcade(4, .46, .42, true), bx, bz, seaYaw(bx), -.02));
     for (const [inl, f] of [[2.15, 2], [3.0, 3], [3.85, 2]]) for (let x = -17.2 + (inl > 2 ? .35 : 0); x < -9.8; x += .74) { if ([-15.6, -13.1, -10.9].some(l => Math.abs(x - l) < .42)) continue; hh(x, inl + rnd() * .12, f, { stone: hc % 5 !== 3 }); }
-    for (const lx of [-13.1]) for (let k = 0; k < 5; k++) { const [px, pz] = onShore(lx, 1.7 + k * .36); W(put(box(.2, .02, .4, cobble), px, pz, seaYaw(px), .0)); }
-    const [cx2, cz2] = onShore(-13.1, .55); const cr = new THREE.Group();
+    const [cx2, cz2] = onShore(-12.8, 2.6); const cr = new THREE.Group();
     for (let k = 0; k < 3; k++) { const st = box(.34 - k * .08, .05, .34 - k * .08, std(0xbdb6a3)); st.position.y = .025 + k * .05; cr.add(st); }
     const sh = box(.045, .5, .045, std(0xc9c3b2)); sh.position.y = .42; cr.add(sh);
     const cb = box(.2, .045, .045, std(0xc9c3b2)); cb.position.y = .56; cr.add(cb);
@@ -499,10 +501,10 @@ export function open(opts) {
       cars.push({ w, r: routes[ri], u: (k + (dir > 0 ? .1 : .6)) / n, v: speed * dir, off: dir > 0 ? .095 : -.095, ping: !!ping });
     }
   };
-  addCars(0, 1, 3, .5, [0xc23b2e, 0xf2efe6, 0x2f6fa8]);
-  addCars(0, -1, 2, .5, [0xd0744a, 0xe9b94a], true);
-  addCars(1, 1, 1, .45, [0x2f6fa8]);
-  addCars(1, -1, 1, .45, [0xc23b2e]);
+  addCars(0, 1, 5, .5, [0xc23b2e, 0xf2efe6, 0x2f6fa8, 0xe9b94a, 0x3b8f6a]);
+  addCars(0, -1, 4, .5, [0xd0744a, 0xf2efe6, 0x3a3f47, 0xc23b2e], true);
+  addCars(1, 1, 2, .45, [0x2f6fa8, 0xe9b94a]);
+  addCars(1, -1, 2, .45, [0xc23b2e, 0xf2efe6]);
   addCars(2, 1, 1, .3, [0xc23b2e], false, true);
   addCars(3, 1, 1, .3, [0x2f6fa8], false, true);
 
@@ -615,10 +617,10 @@ export function open(opts) {
     const e = new THREE.Mesh(fishEye, eyeM); e.position.set(.06, .018, .02); g.add(e); const e2 = e.clone(); e2.position.z = -.02; g.add(e2);
     return g;
   }
-  for (const [cx, cz, rad, sp, col] of [[-6, 3.2, .7, .5, 0xf08a3c], [1, 7.2, .8, -.45, 0xb9c8d6], [8, 4.8, .6, .5, 0xf2c14a]]) {
+  for (const [cx, cz, rx, rz, sp, ph, col] of [[-3, 3.4, 9.5, .6, .05, 0, 0xf08a3c], [-1, 7.3, 8.5, .6, -.045, 2, 0xb9c8d6], [3, 5.3, 7, .5, .04, 4, 0xf2c14a]]) {
     const sh = new THREE.Group(), fs = [];
-    for (let k = 0; k < 5; k++) { const h = fish(col); sh.add(h); fs.push({ h, a: rnd() * 6.28, r: .2 + rnd() * rad, y: rnd() * .03, sp: .6 + rnd() * .4 }); }
-    W(sh); seaLife.push({ kind: 'fish', w: sh, fs, cx, cz, drift: sp, ph: rnd() * 6 });
+    for (let k = 0; k < 6; k++) { const h = fish(col); sh.add(h); fs.push({ h, lx: -(k % 3) * .18 + rnd() * .1, lz: (k - 2.5) * .09 + (rnd() - .5) * .05, ph: rnd() * 6 }); }
+    W(sh); seaLife.push({ kind: 'fish', w: sh, fs, cx, cz, rx, rz, sp, a: ph, ph: rnd() * 6 });
   }
   const whale = (cx, cz, rx, rz, sp, a, sc) => {
     const g = new THREE.Group(), body = new THREE.Mesh(new THREE.SphereGeometry(.3, 14, 8), whaleM); body.scale.set(3.2, .85, .85); g.add(body);
@@ -674,6 +676,42 @@ export function open(opts) {
   beach(18.7, shore, -1, 6, 2, 1, 'Ancoradoiro beach', 'Playa', '');
   beach(-19.0, shore, -1, 7, 2, 1, 'Louro beach', 'Playa y laguna', 'The long dune beach of Louro, with a lagoon behind the sand, at the foot of the mountain.');
   beach(-8.8, shoreS, 1, 4, 1, 0, 'Cove across the ría', 'Playa', 'A small beach on the other shore of the ría, in front of the fishermen’s houses.');
+
+  // ---- village squares: a paved plaza with a tree or two, benches, café terraces and people; Muros has the main square (with the cruceiro)
+  const strollers = [];
+  function chair(g, x, z, ry) { const c = box(.045, .045, .045, std(0x6b4a2a)); c.position.set(x, .05, z); g.add(c); const bk = box(.045, .05, .01, std(0x6b4a2a)); bk.position.set(x + Math.sin(ry) * .026, .09, z + Math.cos(ry) * .026); g.add(bk); }
+  function terrace(x, inl, col) {
+    const [px, pz] = onShore(x, inl), g = new THREE.Group();
+    const tb = new THREE.Mesh(new THREE.CylinderGeometry(.06, .06, .012, 10), std(0xf4efe4)); tb.position.y = .1; g.add(tb);
+    const ps = new THREE.Mesh(new THREE.CylinderGeometry(.012, .012, .1, 5), std(0xeeeeee)); ps.position.y = .05; g.add(ps);
+    chair(g, -.1, 0, PI / 2); chair(g, .1, 0, -PI / 2); chair(g, 0, .1, PI);
+    const pa = parasol(col); pa.scale.setScalar(.72); pa.position.set(0, 0, 0); g.add(pa);
+    W(put(g, px, pz, seaYaw(px), 0));
+  }
+  function square(x, inl, w, d, o) {
+    o = o || {};
+    const [px, pz] = onShore(x, inl), yaw = seaYaw(px), slab = new THREE.Group();
+    const sl = box(w, .16, d, std(0xe3d9c2)); sl.position.y = -.01; slab.add(sl);
+    const bd = box(w + .06, .15, d + .06, std(0xc9bfa8)); bd.position.y = -.015; slab.add(bd);
+    W(put(slab, px, pz, yaw, -.04));
+    for (const [qx, qz] of [[-.5, -.4], [.5, -.4], [-.5, .4], [.5, .4]].slice(0, o.trees === undefined ? 2 : o.trees)) {
+      const tr = new THREE.Group(), tk = new THREE.Mesh(new THREE.CylinderGeometry(.02, .028, .24, 6), std(0x7a5a3c)); tk.position.y = .12; tr.add(tk);
+      const cr = new THREE.Mesh(new THREE.IcosahedronGeometry(.17, 1), std(0x62ae4a)); cr.position.y = .36; tr.add(cr);
+      const a = yaw, tx = px + (qx * w * .8) * Math.cos(a) - (qz * d * .8) * Math.sin(a), tz = pz - (qx * w * .8) * Math.sin(a) + (qz * d * .8) * Math.cos(a);
+      W(put(tr, tx, tz, 0, .03));
+    }
+    for (const sx of [-1, 1]) { const bn = new THREE.Group(); bn.add(box(.2, .035, .06, std(0x8a6a44))); const bk = box(.2, .06, .012, std(0x8a6a44)); bk.position.set(0, .05, -.03); bn.add(bk); const a = yaw, tx = px + sx * w * .3 * Math.cos(a) - d * .38 * Math.sin(a), tz = pz - sx * w * .3 * Math.sin(a) + d * .38 * Math.cos(a); W(put(bn, tx, tz, yaw, .045)); }
+    for (let k = 0; k < (o.terraces || 2); k++) { const tx = x + (k - ((o.terraces || 2) - 1) / 2) * w * .42; terrace(tx, inl - d * .33, [0xc9473a, 0x2f6fa8, 0xe9b94a][k % 3]); }
+    for (let k = 0; k < (o.people || 6); k++) {
+      const p = person(SHIRTS[(k * 3 + 2) % SHIRTS.length], { skin: SKINS[k % 4], hat: k % 4 === 0 ? 0xe9e2d2 : undefined }); W(p);
+      strollers.push({ p, x: px, z: pz, yaw, rx: w * (.2 + rnd() * .22), rz: d * (.18 + rnd() * .2), a: rnd() * 6.28, sp: (.18 + rnd() * .16) * (k % 2 ? 1 : -1), still: k % 3 === 0 });
+    }
+    return slab;
+  }
+  { const sqM = square(-12.8, 2.65, 2.0, 1.5, { trees: 4, terraces: 3, people: 12 });
+    const sqE = square(-8.15, 2.75, 1.2, 1.0, { trees: 1, terraces: 1, people: 4 });
+    const sqF = square(1.8, 2.75, 1.4, 1.0, { trees: 2, terraces: 2, people: 5 });
+    const sqO = square(9.65, 2.75, 1.5, 1.1, { trees: 2, terraces: 2, people: 6 }); }
 
   // rocks on the tips of the capes (puntas)
   for (const cx of [-2.3, 14.1, 17.1, 20.3, -21.4]) for (let k = 0; k < 3; k++) {
@@ -866,10 +904,10 @@ export function open(opts) {
     }
     foamMat.opacity = .42 + Math.sin(t * 1.4) * .16;
     for (const o of seaLife) {
-      if (o.kind === 'fish') {
-        const dx = Math.sin(t * .2 + o.ph) * .9 * o.drift, dz = Math.cos(t * .17 + o.ph) * .5;
-        put(o.w, o.cx + dx, o.cz + dz, 0, -.025, true);
-        for (const f of o.fs) { f.a += f.sp * dt * 2.2; f.h.position.set(Math.cos(f.a) * f.r, f.y + Math.sin(t * 3 + f.a) * .008, Math.sin(f.a) * f.r); f.h.rotation.y = -f.a - PI / 2; }
+      if (o.kind === 'fish') {                         // a shoal swims along the ría all together, its fish keeping their places with a little wobble
+        o.a += o.sp * dt; const sg = Math.sign(o.sp), tx = -o.rx * Math.sin(o.a) * sg, tz = o.rz * Math.cos(o.a) * sg;
+        put(o.w, o.cx + o.rx * Math.cos(o.a), o.cz + o.rz * Math.sin(o.a), Math.atan2(-tz, tx), -.025, true);
+        for (const f of o.fs) { f.h.position.set(f.lx + Math.sin(t * 2.2 + f.ph) * .03, Math.sin(t * 2 + f.ph) * .01, f.lz + Math.sin(t * 1.6 + f.ph * 2) * .02); f.h.rotation.y = Math.sin(t * 3.2 + f.ph) * .22; }
         continue;
       }
       o.a += o.sp * dt; const sg = Math.sign(o.sp), tx = -o.rx * Math.sin(o.a) * sg, tz = o.rz * Math.cos(o.a) * sg;
@@ -907,6 +945,11 @@ export function open(opts) {
       s.a += s.sp * dt; const sg = Math.sign(s.sp), tx = -s.rx * Math.sin(s.a) * sg, tz = s.rz * Math.cos(s.a) * sg;
       put(s.w, s.cx + s.rx * Math.cos(s.a), s.cz + s.rz * Math.sin(s.a), Math.atan2(-tz, tx), 0, true);
       s.b.position.y = Math.sin(t * 1.5 + s.ph) * .02; s.b.rotation.z = Math.sin(t * 1.1 + s.ph) * .05 - .04; s.b.rotation.x = Math.sin(t * .9 + s.ph * 2) * .035;
+    }
+    for (const q of strollers) {
+      if (q.still) { put(q.p, q.x + Math.cos(q.a) * q.rx * Math.cos(q.yaw), q.z - Math.cos(q.a) * q.rx * Math.sin(q.yaw), q.yaw + q.a, 0); continue; }
+      q.a += q.sp * dt; const sg = Math.sign(q.sp), lx = Math.cos(q.a) * q.rx, lz = Math.sin(q.a) * q.rz, c = Math.cos(q.yaw), sn = Math.sin(q.yaw);
+      put(q.p, q.x + lx * c - lz * sn, q.z - lx * sn + lz * c, q.yaw + Math.atan2(-Math.cos(q.a) * q.rz * sg, -Math.sin(q.a) * q.rx * sg), Math.abs(Math.sin(t * 6 + q.a * 3)) * .006);
     }
     for (const s of swimmers) {
       const a = t * s.sp + s.ph, x = s.x + Math.sin(a) * s.rx;
