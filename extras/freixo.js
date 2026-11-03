@@ -577,8 +577,8 @@ export function open(opts) {
   loopLane(-3.5, 4.4, 11, .4, .04, 1, ['trawler'], .75);
   loopLane(-3, 6.2, 10, .5, -.034, 1, ['sail'], 1.0);
   // open sea (beyond the ría, round the far side of the planet): bigger fishing boats on two wide rings
-  loopLane(0, 0, 31, 31, .03, 4, ['trawler'], 1.5);
-  loopLane(0, 0, 35, 35, -.025, 3, ['trawler'], 1.7);
+  loopLane(0, 0, 31, 31, .03, 4, ['trawler'], .95);
+  loopLane(0, 0, 35, 35, -.025, 3, ['trawler'], 1.05);
   spot('Fishing boats', 'Pesca', '', m1, .5);
 
   // ---- bateas: the floating wooden rafts of the Galician rías, with their buoys
@@ -630,7 +630,7 @@ export function open(opts) {
     g.scale.setScalar(sc);
     const w = new THREE.Group(); w.add(g); W(w); seaLife.push({ kind: 'whale', w, g, tail, spout: sp2, cx, cz, rx, rz, sp, a, ph: rnd() * 6 });
   };
-  whale(0, 0, 31, 31, .018, 1.2, 1.4); whale(0, 0, 33.5, 33.5, -.015, 3.9, 1.6); whale(0, 0, 36, 36, .012, 5.6, 1.3);
+  whale(0, 0, 31, 31, .018, 1.2, .8); whale(0, 0, 33.5, 33.5, -.015, 3.9, .9); whale(0, 0, 36, 36, .012, 5.6, .75);
 
   // ---- people on the beaches: sunbathers, parasols, swimmers and walkers along the water
   const swimmers = [], walkers = [];
