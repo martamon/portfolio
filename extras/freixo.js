@@ -521,6 +521,16 @@ export function open(opts) {
     const hg = new THREE.ExtrudeGeometry(sh, { depth: .27, bevelEnabled: true, bevelSize: .012, bevelThickness: .012, bevelSegments: 2 }); hg.translate(0, 0, -.135);
     g.add(new THREE.Mesh(hg, std(color)));
     const deck = box(.85, .02, .22, std(0xe9e2d2)); deck.position.set(.02, .125, 0); g.add(deck);
+    if (kind === 'trawler') {
+      const h2 = new THREE.Mesh(hg, std(color)); h2.scale.set(1.5, 1.15, 1.35); g.add(h2);
+      const dk = box(1.15, .02, .3, std(0xdad4c4)); dk.position.set(.02, .2, 0); g.add(dk);
+      const wh = box(.3, .2, .24, std(0xf2efe6)); wh.position.set(.32, .31, 0); g.add(wh); const wr = box(.32, .03, .26, std(trim)); wr.position.set(.32, .42, 0); g.add(wr);
+      const ww = box(.02, .07, .22, winMat); ww.position.set(.475, .33, 0); g.add(ww);
+      const mast = new THREE.Mesh(new THREE.CylinderGeometry(.014, .02, .7, 6), std(0x59514a)); mast.position.set(-.1, .55, 0); g.add(mast);
+      const boom = new THREE.Mesh(new THREE.CylinderGeometry(.01, .01, .55, 4), std(0x59514a)); boom.rotation.z = PI / 2 - .5; boom.position.set(-.3, .6, 0); g.add(boom);
+      const dr = new THREE.Mesh(new THREE.CylinderGeometry(.07, .07, .24, 10), std(0xd26a3a)); dr.rotation.x = PI / 2; dr.position.set(-.38, .3, 0); g.add(dr);
+      return g;
+    }
     if (kind === 'sail') {
       const mast = new THREE.Mesh(new THREE.CylinderGeometry(.012, .016, .85, 6), std(0x59514a)); mast.position.set(.08, .55, 0); g.add(mast);
       const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(new Float32Array([.07, .16, 0, .07, .92, .0, -.36, .18, .0, .09, .22, 0, .09, .8, .02, .44, .2, .03]), 3)); sg.computeVertexNormals();
@@ -553,19 +563,22 @@ export function open(opts) {
     return w;
   };
   // fishermen at anchor in the calm water, well apart from each other
-  [[-3.4, .9, 1.3], [4.8, .8, 1.9], [-12.2, .3, .5], [10.8, 1.0, 2.8], [-5.5, 9.4, 1.1], [3.5, 9.3, 2.0]].forEach((b) => moor(b[0], b[1], b[2], 1, 'fisher', 1.5));
+  [[-3.4, .9, 1.3], [4.8, .8, 1.9], [-12.2, .3, .5], [10.8, 1.0, 2.8], [-5.5, 9.4, 1.1], [3.5, 9.3, 2.0]].forEach((b) => moor(b[0], b[1], b[2], .8, 'fisher', 1.5));
   const m1 = moor(pierX - .55, shoreZ + 1.2, PI / 2 + .06, 1, undefined, .62); moor(pierX + .55, shoreZ + 1.6, PI / 2 - .08, 1, undefined, .62);
   for (const x of [-15.4, -12.6]) moor(x, shore(x) + .75, 1.6 + (rnd() - .5) * .3, .9, undefined, .7);
   for (let k = 0; k < 2; k++) moor(INLET[0][0] + (k % 2 ? .12 : -.12), shore(INLET[0][0]) - .3 - k * .4, PI / 2 + (rnd() - .5) * .2, .7, undefined, .3);
   // boats on the move, each kind on its own lane (a loop along the ría), equally spaced so that they never catch up with one another
   const sail = (kind, cx, cz, rx, rz, sp, ph, ci, sc) => {
-    const bc = BOATS[ci % BOATS.length], b = kind === 'sail' ? boat(0xf2efe6, 0, 'sail') : boat(bc[0], bc[1]); b.scale.setScalar(sc);
+    const bc = BOATS[ci % BOATS.length], b = kind === 'sail' ? boat(0xf2efe6, 0, 'sail') : kind === 'trawler' ? boat(bc[0], bc[1], 'trawler') : boat(bc[0], bc[1]); b.scale.setScalar(sc);
     const w = new THREE.Group(); w.add(b); W(w);
     sailers.push({ w, b, cx, cz, rx, rz, sp, a: ph, ph: rnd() * 6.28 });
   };
   const loopLane = (cx, cz, rx, rz, sp, n, kinds, sc) => { for (let k = 0; k < n; k++) sail(kinds[k % kinds.length], cx, cz, rx, rz, sp, k * 2 * PI / n, k + 2, sc); };
-  loopLane(-3.5, 4.4, 11, .4, .04, 2, ['fish'], .95);
-  loopLane(-3, 6.2, 10, .5, -.034, 2, ['sail'], 1.0);
+  loopLane(-3.5, 4.4, 11, .4, .04, 1, ['trawler'], .75);
+  loopLane(-3, 6.2, 10, .5, -.034, 1, ['sail'], 1.0);
+  // open sea (beyond the ría, round the far side of the planet): bigger fishing boats on two wide rings
+  loopLane(0, 0, 31, 31, .03, 4, ['trawler'], 1.5);
+  loopLane(0, 0, 35, 35, -.025, 3, ['trawler'], 1.7);
   spot('Fishing boats', 'Pesca', '', m1, .5);
 
   // ---- bateas: the floating wooden rafts of the Galician rías, with their buoys
@@ -592,28 +605,32 @@ export function open(opts) {
     const fl = new THREE.Mesh(new THREE.BoxGeometry(.05, .012, .22), skin); fl.position.x = -.19; tail.add(fl);
     g.scale.setScalar(sc || 1); return { g, tail };
   }
-  for (const [cx, cz, rx, rz, sp, ph, n] of [[-4, 4.6, 6.5, .9, .16, 0, 2], [5, 6.2, 4, 1.1, -.14, 2, 1]]) {
-    for (let k = 0; k < n; k++) { const d = dolphin(1.25), w = new THREE.Group(); w.add(d.g); W(w); seaLife.push({ kind: 'dol', w, d, cx, cz, rx, rz, sp, a: ph + k * .55, ph: rnd() * 6, off: k * .22 }); }
+  for (const [cx, cz, rx, rz, sp, ph, n, gap] of [[0, 0, 32.5, 32.5, .042, 0, 3, .035], [0, 0, 29.5, 29.5, -.04, 2, 2, .04]]) {
+    for (let k = 0; k < n; k++) { const d = dolphin(1.25), w = new THREE.Group(); w.add(d.g); W(w); seaLife.push({ kind: 'dol', w, d, cx, cz, rx, rz, sp, a: ph + k * (gap || .55), ph: rnd() * 6, off: k * .22 }); }
   }
-  const fishG = new THREE.ConeGeometry(.03, .11, 5);
-  for (const [cx, cz, rad, sp, col] of [[-6, 3.2, .7, .5, 0xf4b942], [1, 7.2, .8, -.45, 0xcfd8e2], [8, 4.8, .6, .5, 0x8fc4e8]]) {
+  const fishBody = new THREE.SphereGeometry(.05, 8, 6), fishTail = new THREE.ConeGeometry(.04, .07, 4), fishEye = new THREE.SphereGeometry(.009, 5, 4), eyeM = std(0x1b1b1b);
+  function fish(col) {
+    const g = new THREE.Group(), m = std(col), b = new THREE.Mesh(fishBody, m); b.scale.set(1.7, .75, .45); g.add(b);
+    const t = new THREE.Mesh(fishTail, m); t.rotation.z = PI / 2; t.position.x = -.1; t.scale.z = .5; g.add(t);
+    const e = new THREE.Mesh(fishEye, eyeM); e.position.set(.06, .018, .02); g.add(e); const e2 = e.clone(); e2.position.z = -.02; g.add(e2);
+    return g;
+  }
+  for (const [cx, cz, rad, sp, col] of [[-6, 3.2, .7, .5, 0xf08a3c], [1, 7.2, .8, -.45, 0xb9c8d6], [8, 4.8, .6, .5, 0xf2c14a]]) {
     const sh = new THREE.Group(), fs = [];
-    for (let k = 0; k < 6; k++) { const f = new THREE.Mesh(fishG, std(col)); f.rotation.z = -PI / 2; const h = new THREE.Group(); h.add(f); sh.add(h); fs.push({ h, a: rnd() * 6.28, r: .15 + rnd() * rad, y: rnd() * .05, sp: .8 + rnd() * .5 }); }
+    for (let k = 0; k < 5; k++) { const h = fish(col); sh.add(h); fs.push({ h, a: rnd() * 6.28, r: .2 + rnd() * rad, y: rnd() * .03, sp: .6 + rnd() * .4 }); }
     W(sh); seaLife.push({ kind: 'fish', w: sh, fs, cx, cz, drift: sp, ph: rnd() * 6 });
   }
-  for (const [cx, cz, ph] of [[-7.5, 3.8, 0]]) {
-    const g = new THREE.Group(), sh = new THREE.Mesh(new THREE.SphereGeometry(.1, 10, 6, 0, PI * 2, 0, PI / 2), std(0x5f8a4a)); sh.scale.set(1.2, .7, 1); g.add(sh);
-    const hd = new THREE.Mesh(new THREE.SphereGeometry(.04, 8, 6), std(0x9bb86b)); hd.position.set(.14, .02, 0); g.add(hd);
-    for (const [fx, fz] of [[.07, .1], [.07, -.1], [-.07, .1], [-.07, -.1]]) { const fl = box(.07, .012, .035, std(0x9bb86b)); fl.position.set(fx, 0, fz); g.add(fl); }
-    const w = new THREE.Group(); w.add(g); W(w); seaLife.push({ kind: 'turtle', w, g, cx, cz, rx: .8, rz: .5, sp: .1, a: ph, ph });
-  }
-  { const g = new THREE.Group(), body = new THREE.Mesh(new THREE.SphereGeometry(.3, 14, 8), whaleM); body.scale.set(3.2, .85, .85); g.add(body);
+  const whale = (cx, cz, rx, rz, sp, a, sc) => {
+    const g = new THREE.Group(), body = new THREE.Mesh(new THREE.SphereGeometry(.3, 14, 8), whaleM); body.scale.set(3.2, .85, .85); g.add(body);
     const bl = new THREE.Mesh(new THREE.SphereGeometry(.3, 10, 6), belly); bl.scale.set(2.9, .5, .75); bl.position.y = -.07; g.add(bl);
     const tail = new THREE.Group(); tail.position.x = -.85; g.add(tail);
     const tb = new THREE.Mesh(new THREE.ConeGeometry(.12, .5, 8), whaleM); tb.rotation.z = PI / 2; tb.position.x = -.22; tail.add(tb);
     const fl = new THREE.Mesh(new THREE.BoxGeometry(.12, .02, .7), whaleM); fl.position.x = -.5; tail.add(fl);
-    const sp = new THREE.Mesh(new THREE.ConeGeometry(.05, .3, 8), std(0xffffff, { transparent: true, opacity: .75 })); sp.position.set(.5, .38, 0); g.add(sp);
-    const w = new THREE.Group(); w.add(g); W(w); seaLife.push({ kind: 'whale', w, g, tail, spout: sp, cx: -3, cz: 8.4, rx: 7.5, rz: .5, sp: .05, a: 1, ph: 0 }); }
+    const sp2 = new THREE.Mesh(new THREE.ConeGeometry(.05, .3, 8), std(0xffffff, { transparent: true, opacity: .75 })); sp2.position.set(.5, .38, 0); g.add(sp2);
+    g.scale.setScalar(sc);
+    const w = new THREE.Group(); w.add(g); W(w); seaLife.push({ kind: 'whale', w, g, tail, spout: sp2, cx, cz, rx, rz, sp, a, ph: rnd() * 6 });
+  };
+  whale(0, 0, 31, 31, .018, 1.2, 1.4); whale(0, 0, 33.5, 33.5, -.015, 3.9, 1.6); whale(0, 0, 36, 36, .012, 5.6, 1.3);
 
   // ---- people on the beaches: sunbathers, parasols, swimmers and walkers along the water
   const swimmers = [], walkers = [];
@@ -851,8 +868,8 @@ export function open(opts) {
     for (const o of seaLife) {
       if (o.kind === 'fish') {
         const dx = Math.sin(t * .2 + o.ph) * .9 * o.drift, dz = Math.cos(t * .17 + o.ph) * .5;
-        put(o.w, o.cx + dx, o.cz + dz, 0, -.07, true);
-        for (const f of o.fs) { f.a += f.sp * dt * 2.2; f.h.position.set(Math.cos(f.a) * f.r, f.y + Math.sin(t * 3 + f.a) * .008, Math.sin(f.a) * f.r); f.h.rotation.y = -f.a - PI / 2 * Math.sign(f.sp); }
+        put(o.w, o.cx + dx, o.cz + dz, 0, -.025, true);
+        for (const f of o.fs) { f.a += f.sp * dt * 2.2; f.h.position.set(Math.cos(f.a) * f.r, f.y + Math.sin(t * 3 + f.a) * .008, Math.sin(f.a) * f.r); f.h.rotation.y = -f.a - PI / 2; }
         continue;
       }
       o.a += o.sp * dt; const sg = Math.sign(o.sp), tx = -o.rx * Math.sin(o.a) * sg, tz = o.rz * Math.cos(o.a) * sg;
