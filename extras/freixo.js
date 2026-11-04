@@ -66,7 +66,7 @@ function inletD(x, z) {
   return m;
 }
 function cove(x, z) { let g = 0; for (const c of COVES) g = Math.max(g, Math.exp(-((x - c[0]) ** 2 + (z - c[1]) ** 2) / (2 * 2.5 * 2.5))); return g; }
-function groundH(x, z) {
+function groundRaw(x, z) {
   const i = whichIsl(x, z), r = isl(i, x, z);
   if (r >= 1) return -.02 - .75 * sstep(1, 1.1, r);
   const k = 1 - r;
@@ -76,6 +76,14 @@ function groundH(x, z) {
   if (g > 0) h = -.02 + (h + .02) * (1 - .8 * g);
   { const c = 1 - sstep(.26, .5, inletD(x, z)); if (c > 0) h = h * (1 - c) - .16 * c; }
   const lg = 1 - sstep(.45, .8, Math.hypot(x - LAG[0], z - LAG[1])); if (lg > 0) h = h * (1 - lg) - .14 * lg;
+  return h;
+}
+// the school yards and the little pitch sit on flat ground: the hill is levelled round them
+let FLAT = null;
+function groundH(x, z) {
+  if (!FLAT) { FLAT = []; for (const [fx, inl, r] of [[-.5, 5.05, 2.1], [13.0, 4.55, 2.1], [-7.6, 4.85, 1.3], [8.3, 1.4, 1.0]]) { const cz = shore(fx) - inl; FLAT.push([fx, cz, r * 1.25, groundRaw(fx, cz) - .14]); } }
+  let h = groundRaw(x, z);
+  for (const f of FLAT) { const d = Math.hypot(x - f[0], z - f[1]); if (d < f[2] * 1.9) h += (f[3] - h) * (1 - sstep(f[2] * .8, f[2] * 1.9, d)); }
   return h;
 }
 const Y = new THREE.Vector3(0, 1, 0), Zax = new THREE.Vector3(0, 0, 1);
@@ -216,6 +224,7 @@ function house(o) {
     const dw = box(.05, .06, .012, winMat); dw.position.set(0, bodyH + .1, d / 2 - .1 + .008); g.add(dw);
   }
   if (!o.stone) for (const sx of [-1, 1]) { const q = box(.03, bodyH, .03, std(0xc9c2b0)); q.position.set(sx * (w / 2 - .004), bodyH / 2, z - .004); g.add(q); }
+  g.userData.fp = Math.max(w, d) / 2 * 1.12 + .06; g.userData.pri = 1;
   return g;
 }
 // stone arcades (soportales): shops under round granite arches, two storeys above, one long roof
@@ -238,6 +247,7 @@ function arcade(n, wu, d, stone) {
   }
   const roof = gable(W * 1.02, d + .1, .28, std(ROOF[1])); roof.position.y = gh + .02 + fh * 2; g.add(roof);
   for (let i = 0; i < n; i += 2) { const ch = box(.055, .15, .055, std(0xaaa391)); ch.position.set(-W / 2 + wu * (i + .5), gh + .02 + fh * 2 + .18, -d * .12); g.add(ch); }
+  g.userData.fps = []; for (let k = 0; k < n * 1.6; k++) g.userData.fps.push([-W / 2 + .25 + k * (W - .5) / Math.max(1, n * 1.6 - 1), .3]); g.userData.pri = 2;
   return g;
 }
 // a granite church with a porch under a tiled roof and a tall bell tower with a lantern (after the church of the photo)
@@ -261,6 +271,7 @@ function church(scale) {
   const cr1 = box(.016, .12, .016, std(0xdddddd)); cr1.position.set(-.38, 1.56, .22); g.add(cr1);
   const cr2 = box(.07, .016, .016, std(0xdddddd)); cr2.position.set(-.38, 1.58, .22); g.add(cr2);
   g.scale.setScalar(scale || 1);
+  g.userData.fp = .8 * (scale || 1); g.userData.pri = 3;
   return g;
 }
 // a granite hórreo on stone legs with ventilation slits and a tiled roof (after the one of the photo)
@@ -276,6 +287,7 @@ function horreo() {
   }
   const cr = box(.014, .09, .014, std(0xcccccc)); cr.position.set(0, .87, .46); g.add(cr);
   const cr2 = box(.06, .014, .014, std(0xcccccc)); cr2.position.set(0, .89, .46); g.add(cr2);
+  g.userData.fp = .5; g.userData.pri = 1;
   return g;
 }
 function person(shirt, o) {
@@ -499,10 +511,10 @@ export function open(opts) {
   const SHUTC = [0x2f6fa8, 0x3b8f6a, 0xa23a30];
   const mk = (floors, extra) => { const k = hc++; return Object.assign({ w: .44 + rnd() * .2, d: .4 + rnd() * .07, floors, wall: WALLS[k % WALLS.length], roof: ROOF[(k * 3 + 1) % ROOF.length], gal: floors > 1 && k % 2 === 0, shut: k % 4 === 0 ? SHUTC[(k >> 2) % 3] : 0, fr: k, turn: (rnd() - .5) * .14 }, extra || {}); };
   // village squares (x range, inland range): houses keep out of them
-  let riverPts = [];
-  const SQ = [[-13.95, -11.65, 1.8, 3.55], [-8.9, -7.4, 2.1, 3.4], [1.1, 2.5, 2.1, 3.4], [8.9, 10.4, 2.1, 3.4]];
+  let riverPts = []; const keptC = [];
+  const SQ = [[-1.9, .9, 3.4, 6.7], [11.7, 14.3, 3.0, 6.1], [-8.7, -6.6, 4.0, 5.7], [-13.95, -11.65, 1.8, 3.55], [-8.9, -7.4, 2.1, 3.4], [1.1, 2.5, 2.1, 3.4], [8.9, 10.4, 2.1, 3.4]];
   const inSq = (x, inl) => SQ.some((q) => x > q[0] && x < q[1] && inl > q[2] && inl < q[3]);
-  const JX = [7.0], LINKX = [7.0];
+  const JX = [8.3], LINKX = [8.3];
   const roadClear = (x, inl) => LINKX.some((lx) => Math.abs(x - lx) < .65 && inl > .9 && inl < 7.9)  || JX.some((jx) => Math.abs(x - jx) < 1.05 && inl < 2.6 && inl > .5);
   let hk = 0; const thin = () => (hk++ % 5) > 1;
   const hh = (x, inl, floors, extra) => { if (thin() || inSq(x, inl) || roadClear(x, inl) || (cove(x, shore(x) - inl) > .04 && inl < 3.7)) return null; const o = mk(floors, extra); if (o.stone) { o.wall = GRANITE[hc % 3]; o.gal = false; o.roof = ROOF[hc % 3]; } const [px, pz] = onShore(x, inl); const hs = house(o); W(put(hs, px, pz, seaYaw(px) + o.turn, -.02)); return hs; };
@@ -596,23 +608,26 @@ export function open(opts) {
     for (const [pts] of roadList) { const m = ribbon(pts, .56, walkMat, .012, false, undefined, true); m.renderOrder = 1; W(m); }
     for (const [pts] of roadList) { const m = ribbon(pts, .4, asphalt, .03, false, undefined, true); m.renderOrder = 2; W(m); }
   };
-  // two roundabouts on the coast road: the road goes round the inland half of each ring, a link road leaves from its top
-  const RB = 0.52;
+  // the roundabout: a flat ring (pavement + asphalt + grass island) where the coast road is cut; the cars follow the inland half of the ring
+  const RB = 0.62, roadRaw = relax(roadN, 4);
   for (const jx of JX) {
     let c = 0; for (let q = 0; q < roadN.length; q++) if (Math.abs(roadN[q][0] - jx) < Math.abs(roadN[c][0] - jx)) c = q;
-    const z0 = roadN[c][1];
-    for (let q = 0; q < roadN.length; q++) { const dx = roadN[q][0] - jx; if (Math.abs(dx) <= RB) roadN[q] = [roadN[q][0], z0 - Math.sqrt(Math.max(0, RB * RB - dx * dx))]; }
+    const z0 = roadRaw[c][1];
+    for (let q = 0; q < roadN.length; q++) { const dx = roadN[q][0] - jx; if (Math.abs(dx) <= RB) roadN[q] = [roadN[q][0], z0 - Math.sqrt(Math.max(0, RB * RB - dx * dx)) * .9]; }
     roadN.rb = roadN.rb || []; roadN.rb.push([jx, z0]);
   }
-  let roadN2 = relax(roadN, 3); roadN2.rb = roadN.rb; roadN.length = 0; roadN2.forEach((q) => roadN.push(q));
+  { const rn = relax(roadN, 3); rn.rb = roadN.rb; roadN.length = 0; rn.forEach((q) => roadN.push(q)); }
+  { const cut = [[]]; for (const q of roadRaw) { if (roadN.rb.some(([jx, z0]) => Math.hypot(q[0] - jx, q[1] - z0) < RB - .08)) { if (cut[cut.length - 1].length) cut.push([]); } else cut[cut.length - 1].push(q); } for (const part of cut) if (part.length > 2) buildRoad(part); }
   for (const [jx, z0] of roadN.rb) {
-    const ring = []; for (let k = 0; k <= 24; k++) { const a = k / 24 * PI * 2; ring.push([jx + Math.cos(a) * RB, z0 + Math.sin(a) * RB]); }
-    buildRoad(ring);
-    const isl2 = new THREE.Mesh(new THREE.CylinderGeometry(.2, .22, .05, 16), std(0x7fb35a)); const ig = new THREE.Group(); ig.add(isl2);
-    const tr = new THREE.Mesh(new THREE.CylinderGeometry(.015, .02, .16, 5), std(0x7a5a3c)); tr.position.y = .1; ig.add(tr); const cr = new THREE.Mesh(new THREE.IcosahedronGeometry(.1, 1), std(0x62ae4a)); cr.position.y = .22; ig.add(cr);
-    W(put(ig, jx, z0, 0, .035));
+    const hb = Math.max(groundH(jx, z0), .07), mk = (r0, r1, mat, lift) => { const m = new THREE.Mesh(new THREE.RingGeometry(r0, r1, 48, 1), mat); m.rotation.x = -PI / 2; m.userData.ribbon = true; const g = new THREE.Group(); g.add(m); W(put(g, jx, z0, 0, hb + lift, true)); return m; };
+    const lift0 = -SEA;
+    mk(RB - .27, RB + .34, new THREE.MeshStandardMaterial({ color: 0xe6dcc4, roughness: 1, side: THREE.DoubleSide }), lift0 + .012);
+    mk(RB - .2, RB + .2, new THREE.MeshStandardMaterial({ color: 0x565b62, roughness: 1, side: THREE.DoubleSide }), lift0 + .03);
+    const isl2 = new THREE.Mesh(new THREE.CylinderGeometry(RB - .3, RB - .27, .05, 28), std(0x7fb35a)); const ig = new THREE.Group(); ig.add(isl2);
+    const tr = new THREE.Mesh(new THREE.CylinderGeometry(.015, .02, .16, 6), std(0x7a5a3c)); tr.position.y = .1; ig.add(tr); const cr = new THREE.Mesh(new THREE.IcosahedronGeometry(.11, 2), std(0x62ae4a)); cr.position.y = .24; ig.add(cr);
+    W(put(ig, jx, z0, 0, hb + .04, true));
   }
-  buildRoad(roadN); buildRoad(roadS);
+  buildRoad(roadS);
   const linkRoads = [];
   const inlRoute = null;
   for (const [a, b] of [[-17.2, -9.6], [-9.2, -2.8], [-.9, 3.6], [7.4, 13.2]]) W(ribbon(smooth(shore, a, b, -.3), .14, pathMat, .012));
@@ -629,16 +644,16 @@ export function open(opts) {
   const mtRoads = [];
   flushRoads();
   // the bridges carry the road itself: same line, same width, arches under it
-  const roadBridge = (x, nA, span) => {
-    let k = 1; for (let q = 1; q < roadN.length - 1; q++) if (Math.abs(roadN[q][0] - x) < Math.abs(roadN[k][0] - x)) k = q;
-    const a = roadN[k - 1], b = roadN[k + 1], yaw = Math.atan2(-(b[1] - a[1]), b[0] - a[0]);
-    const br = stoneBridge(span, nA, .7, std(0xa9a28f), std(0x9d978a), 0); br.scale.y = .5; br.position.y = 0;
-    const g = new THREE.Group(); g.add(br); W(put(g, roadN[k][0], roadN[k][1], yaw, 0, true));
+  const roadBridge = (road, x, len) => {
+    let k = 1; for (let q = 1; q < road.length - 1; q++) if (Math.abs(road[q][0] - x) < Math.abs(road[k][0] - x)) k = q;
+    const a = road[k - 1], b = road[k + 1], yaw = Math.atan2(-(b[1] - a[1]), b[0] - a[0]), st = std(0xb4ad9a), g = new THREE.Group();
+    const slab = box(len, .09, .64, st); slab.position.y = .03 - SEA - .045 + .045 - .045 + .045 - .0 ; slab.position.y = 0; g.add(slab);
+    for (const sz of [-1, 1]) { const pr = box(len, .07, .045, std(0xc9c2ae)); pr.position.set(0, .06, sz * .335); g.add(pr); }
+    for (let q = -1; q <= 1; q += 2) { const pier = box(.1, .26, .5, st); pier.position.set(q * len * .3, -.17, 0); g.add(pier); }
+    W(put(g, road[k][0], road[k][1], yaw, .07 - SEA - .045 - .005 + .03 - .03, true));
   };
-  roadBridge(INLET[0][0], 3, .42); roadBridge(INLET2[0][0], 4, .46);
-  { let k = 1; for (let q = 1; q < roadS.length - 1; q++) if (Math.abs(roadS[q][0] - INLET3[0][0]) < Math.abs(roadS[k][0] - INLET3[0][0])) k = q;
-    const a = roadS[k - 1], b = roadS[k + 1], yaw = Math.atan2(-(b[1] - a[1]), b[0] - a[0]), br = stoneBridge(.4, 3, .7, std(0xa9a28f), std(0x9d978a), 0); br.scale.y = .5;
-    const g = new THREE.Group(); g.add(br); W(put(g, roadS[k][0], roadS[k][1], yaw, 0, true)); }
+  roadBridge(roadRaw, INLET[0][0], 1.3); roadBridge(roadRaw, INLET2[0][0], 1.5);
+  { const rs = relax(roadS, 3); roadBridge(rs, INLET3[0][0], 1.3); }
   const routes = [route(roadN), route(roadS)];
   // the river of Outes keeps going up the hillside, getting narrower and narrower until it is a thread
   const RIVER2 = relax([[INLET2[3][0], INLET2[3][1] + .9], [INLET2[3][0], INLET2[3][1] + .1], [6.4, -7.0], [6.9, -8.6], [7.9, -9.9], [8.8, -10.9], [9.9, -11.7], [10.9, -12.2]], 0);
@@ -847,7 +862,7 @@ export function open(opts) {
   beach(-8.8, shoreS, 1, 4, 1, 0, 'Cove across the ría', 'Playa', 'A small beach on the other shore of the ría, in front of the fishermen’s houses.');
 
   // ---- village squares: a paved plaza with a tree or two, benches, café terraces and people; Muros has the main square (with the cruceiro)
-  const strollers = [], pathers = [];
+  const strollers = [], pathers = [], kickers = [];
   function chair(g, x, z, ry) { const c = box(.045, .045, .045, std(0x6b4a2a)); c.position.set(x, .05, z); g.add(c); const bk = box(.045, .05, .01, std(0x6b4a2a)); bk.position.set(x + Math.sin(ry) * .026, .09, z + Math.cos(ry) * .026); g.add(bk); }
   function terrace(x, inl, col) {
     const [px, pz] = onShore(x, inl), g = new THREE.Group();
@@ -862,7 +877,7 @@ export function open(opts) {
     const [px, pz] = onShore(x, inl), yaw = seaYaw(px), slab = new THREE.Group();
     const sl = box(w, .16, d, std(0xe3d9c2)); sl.position.y = -.01; slab.add(sl);
     const bd = box(w + .06, .15, d + .06, std(0xc9bfa8)); bd.position.y = -.015; slab.add(bd);
-    W(put(slab, px, pz, yaw, -.04));
+    slab.userData.fp = Math.max(w, d) * .62; slab.userData.pri = 3; W(put(slab, px, pz, yaw, -.04));
     for (const [qx, qz] of [[-.5, -.4], [.5, -.4], [-.5, .4], [.5, .4]].slice(0, o.trees === undefined ? 2 : o.trees)) {
       const tr = new THREE.Group(), tk = new THREE.Mesh(new THREE.CylinderGeometry(.02, .028, .24, 6), std(0x7a5a3c)); tk.position.y = .12; tr.add(tk);
       const cr = new THREE.Mesh(new THREE.IcosahedronGeometry(.17, 1), std(0x62ae4a)); cr.position.y = .36; tr.add(cr);
@@ -919,15 +934,15 @@ export function open(opts) {
     for (const [hx, hz, c, mn, ry] of [[-.9, .35, 0x7a4a2e, 0x2a1a10, .6], [.95, -.2, 0xf1ece0, 0x8a7a66, 3.4]]) { const h = horse(c, mn), w = new THREE.Group(); h.g.scale.setScalar(.5); w.add(h.g); const x = ix + hx, z = iz + hz; put(w, x, z, ry, -.02); W(w); horses.push({ h, ph: rnd() * 6 }); } }
 
   // ---- a pretty street of little houses with tulip borders, leading inland from the south road (after the reference miniatures)
-  const stX = 4.6, stZ0 = shoreS(stX) + 1.45;
+  const stX = 4.6, stZ0 = shoreS(stX) + 1.8;
   const stPts = []; for (let k = 0; k <= 22; k++) stPts.push([stX + .28 * Math.sin(k * .38), stZ0 + k * .2]);
-  W(ribbon(relax(stPts, 3), .34, std(0xcfc6b4, { roughness: 1, side: THREE.DoubleSide }), .03, false, undefined, true));
-  W(ribbon(relax(stPts, 3), .5, std(0xe3dac4, { roughness: 1, side: THREE.DoubleSide }), .02, false, undefined, true));
+  W(ribbon(relax(stPts, 3), .34, std(0xcfc6b4, { roughness: 1, side: THREE.DoubleSide }), .02, false, undefined, true));
+  W(ribbon(relax(stPts, 3), .5, std(0xe3dac4, { roughness: 1, side: THREE.DoubleSide }), .008, false, undefined, true));
   { const PAST = [0xf6e6b4, 0xaed0dc, 0xb9d9c3, 0xf2c6a8, 0xf3d9a0, 0xa9c6d8], RF = [0xc9462e, 0xd0693a, 0x5f7f96, 0xc45a30, 0xdc7a48, 0xb04a36];
     for (let k = 0; k < 5; k++) for (const sd of [-1, 1]) {
       const z = stZ0 + .55 + k * .78 + (sd > 0 ? .3 : 0), px = stX + .28 * Math.sin((z - stZ0) / .2 * .38), x = px + sd * .62;
       const hs = house({ w: .42, d: .36, floors: k % 2 ? 2 : 1, wall: PAST[(k + (sd > 0 ? 2 : 0)) % PAST.length], roof: RF[(k * 2 + (sd > 0 ? 1 : 0)) % RF.length], gal: false, shut: [0x3d78a8, 0x4a9a74, 0xb4483a][(k + sd + 3) % 3], fr: k * 3 + (sd > 0 ? 1 : 0) });
-      W(put(hs, x, z, -sd * PI / 2, -.01));
+      hs.userData.pri = 2; W(put(hs, x, z, -sd * PI / 2, -.01));
       for (let q = 0; q < 6; q++) {                                                     // a border of tulips between the house and the street
         const fx = px + sd * (.34 + (q % 2) * .045), fz = z - .26 + q * .1, fl = new THREE.Group(), cl = [0xf0793a, 0xf2a43a, 0xe9577a, 0xf5e04a][(q + k) % 4];
         const sm = new THREE.Mesh(new THREE.CylinderGeometry(.004, .004, .07, 4), std(0x4a8a3a)); sm.position.y = .035; fl.add(sm); const bl = new THREE.Mesh(new THREE.SphereGeometry(.024, 8, 6), std(cl)); bl.position.y = .08; bl.scale.y = 1.25; fl.add(bl);
@@ -960,7 +975,7 @@ export function open(opts) {
       const pl = new THREE.Group(); const sl = box(.85, .5, .7, stoneT); sl.position.y = .02; pl.add(sl); const mt = box(.88, .04, .74, moss); mt.position.y = .27; pl.add(mt);
       const ya = -PI / 2 * 0 + .15 * (k - 1); W(put(pl, x, z, ya, -.02));
       const hs = house({ w: .46, d: .38, floors: 1 + (hi2 % 2), wall: wallsM[hi2 % wallsM.length], roof: ROOF[hi2 % ROOF.length], gal: false, shut: [0x3d78a8, 0x4a9a74, 0xb4483a][hi2 % 3], fr: hi2, stone: false });
-      const hp = new THREE.Group(); hp.add(hs); hs.position.y = .3; W(put(hp, x, z, ya, -.02));
+      const hp = new THREE.Group(); hp.add(hs); hs.position.y = .3; hs.userData.fp = 0; hp.userData.fp = .55; hp.userData.pri = 2; W(put(hp, x, z, ya, -.02));
       // steps climbing from this terrace to the next one
       for (let q = 0; q < 6; q++) { const stp = box(.22, .045, .09, std(0xcfc6b4)); const sg = new THREE.Group(); sg.add(stp); W(put(sg, x + .42 + (q * .02), z + .46 + q * .1, 0, .0)); }
       hi2++;
@@ -972,6 +987,54 @@ export function open(opts) {
       const arch = new THREE.Group(); const ab = box(.5, .36, .24, stoneT); ab.position.y = .1; arch.add(ab); const ah = new THREE.Mesh(new THREE.CylinderGeometry(.11, .11, .26, 12), std(0x1b1a18)); ah.rotation.x = PI / 2; ah.position.set(0, .06, .02); arch.add(ah); W(put(arch, px + .35, pz - .4, -.3, -.04)); }
   }
   // the village keeps its clearing
+  // ---- two schools with a football pitch where children play, and one tiny pitch
+  function pitch(w, d, goals) {
+    const g = new THREE.Group(), grass = box(w, .05, d, std(0x7bbf55)); grass.position.y = .005; g.add(grass);
+    for (let k = 0; k < 5; k++) { const st = box(w / 5 - .004, .052, d - .02, std(k % 2 ? 0x73b84e : 0x84c75d)); st.position.set(-w / 2 + w / 10 + k * w / 5, .006, 0); g.add(st); }
+    const ln = std(0xf8f6ec);
+    for (const [lw, ld, lx, lz] of [[w - .06, .014, 0, d / 2 - .035], [w - .06, .014, 0, -d / 2 + .035], [.014, d - .06, w / 2 - .035, 0], [.014, d - .06, -w / 2 + .035, 0], [.014, d - .06, 0, 0]]) { const l = box(lw, .054, ld, ln); l.position.set(lx, .008, lz); g.add(l); }
+    const cc = new THREE.Mesh(new THREE.TorusGeometry(Math.min(w, d) * .13, .007, 5, 24), ln); cc.rotation.x = PI / 2; cc.position.y = .03; g.add(cc);
+    if (goals) for (const sx of [-1, 1]) { const gl = new THREE.Group(), pm = std(0xffffff); for (const gz of [-.09, .09]) { const po = box(.012, .09, .012, pm); po.position.set(0, .075, gz); gl.add(po); } const cb = box(.012, .012, .2, pm); cb.position.set(0, .12, 0); gl.add(cb); const nt = box(.05, .09, .19, std(0xffffff, { transparent: true, opacity: .25 })); nt.position.set(sx * .03, .075, 0); gl.add(nt); gl.position.x = sx * (w / 2 - .02); g.add(gl); }
+    return g;
+  }
+  function school(roofCol, wallCol) {
+    const g = new THREE.Group(), wl = std(wallCol), rf = std(roofCol), wd = std(0xfff8ea);
+    const wing = (x, w2) => { const b = box(w2, .3, .46, wl); b.position.set(x, .15, 0); g.add(b); const r = gable(w2 + .06, .5, .16, rf); r.position.set(x, .29, 0); g.add(r);
+      for (let k = 0; k < Math.floor(w2 / .22); k++) { const wx = x - w2 / 2 + .13 + k * .22; for (const wy of [.1, .22]) { const fr = box(.09, .09, .014, wd); fr.position.set(wx, wy, .235); g.add(fr); const gl = box(.06, .065, .018, winMat); gl.position.set(wx, wy, .24); g.add(gl); } } };
+    wing(-.62, .8); wing(.62, .8);
+    const mid = box(.5, .42, .5, wl); mid.position.set(0, .21, .02); g.add(mid);
+    const rm = gable(.56, .56, .2, rf); rm.position.set(0, .4, .02); g.add(rm);
+    const tw = box(.26, .3, .26, wl); tw.position.set(0, .56, 0); g.add(tw); const tr = new THREE.Mesh(new THREE.ConeGeometry(.2, .2, 12), rf); tr.position.set(0, .81, 0); g.add(tr);
+    const clk = new THREE.Mesh(new THREE.CylinderGeometry(.075, .075, .02, 16), std(0xfffdf2)); clk.rotation.x = PI / 2; clk.position.set(0, .56, .14); g.add(clk);
+    const h1 = box(.008, .05, .008, std(0x2b3036)); h1.position.set(0, .58, .152); g.add(h1); const h2 = box(.04, .008, .008, std(0x2b3036)); h2.position.set(.015, .56, .152); g.add(h2);
+    const dr = box(.12, .17, .02, std(0xb4483a)); dr.position.set(0, .085, .275); g.add(dr); const da = new THREE.Mesh(new THREE.CylinderGeometry(.07, .07, .02, 12), wd); da.rotation.x = PI / 2; da.position.set(0, .17, .27); g.add(da);
+    const fp = new THREE.Mesh(new THREE.CylinderGeometry(.007, .007, .5, 5), std(0xeeeeee)); fp.position.set(.42, .25, .45); g.add(fp); const fl = box(.12, .07, .005, std(0xc9473a)); fl.position.set(.48, .46, .45); g.add(fl); g.userData.flag = fl;
+    return g;
+  }
+  const flags = [];
+  function schoolYard(x, inl, roofCol, wallCol, nKids) {
+    const [px, pz] = onShore(x, inl), yaw = seaYaw(px), slab = new THREE.Group();
+    const sl = box(2.5, .16, 2.7, std(0xe6dcc0)); sl.position.y = -.01; slab.add(sl); const bd = box(2.56, .15, 2.76, std(0xc9bfa8)); bd.position.y = -.015; slab.add(bd);
+    slab.userData.fp = 1.9; slab.userData.pri = 3; W(put(slab, px, pz, yaw, -.04));
+    const loc = (lx, lz) => [px + lx * Math.cos(yaw) - lz * Math.sin(yaw), pz - lx * Math.sin(yaw) + lz * Math.cos(yaw)];
+    const sc = school(roofCol, wallCol); const [sx, sz] = loc(0, -.95); W(put(sc, sx, sz, yaw, .03)); flags.push(sc.userData.flag);
+    const pt = pitch(1.7, 1.0, true); const [qx, qz] = loc(0, .5); W(put(pt, qx, qz, yaw, .1));
+    for (const lx of [-1.05, 1.05]) for (const lz of [.4, 1.15]) { const tr = new THREE.Group(), tk = new THREE.Mesh(new THREE.CylinderGeometry(.02, .028, .24, 6), std(0x7a5a3c)); tk.position.y = .12; tr.add(tk); const cr = new THREE.Mesh(new THREE.IcosahedronGeometry(.16, 2), std(0x62ae4a)); cr.position.y = .34; tr.add(cr); const [tx, tz] = loc(lx, lz); W(put(tr, tx, tz, 0, .03)); }
+    const ball = new THREE.Mesh(new THREE.SphereGeometry(.026, 10, 8), std(0xf6f1e4)); W(ball);
+    const kids = []; for (let k = 0; k < nKids; k++) { const kd = person(SHIRTS[(k * 3 + (k % 2 ? 1 : 0)) % SHIRTS.length], { skin: SKINS[k % 4], pants: k % 2 ? 0x2f3f66 : 0x8a2f2f }); kd.scale.setScalar(.7); W(kd); kids.push({ kd, x: (rnd() - .5) * 1.4, z: (rnd() - .5) * .7, team: k % 2, ph: rnd() * 6 }); }
+    kickers.push({ loc, qx: 0, qz: .5, ball, kids, bx: 0, bz: 0, vx: .3, vz: .2, ph: rnd() * 6 });
+    // two kids chatting by the school door and a teacher
+    for (const [lx, c] of [[-.2, 1], [.15, 4]]) { const pp = person(SHIRTS[c], { skin: SKINS[c % 4] }); pp.scale.setScalar(.85); const [ax, az] = loc(lx, -.52); W(put(pp, ax, az, yaw + PI, .03)); }
+  }
+  schoolYard(-.5, 5.05, 0xc9462e, 0xf6e6b4, 8);
+  schoolYard(13.0, 4.55, 0x5f7f96, 0xf2c6a8, 8);
+  { const [px, pz] = onShore(-7.6, 4.85), yaw = seaYaw(px), slab = new THREE.Group(); slab.add(box(1.5, .16, 1.1, std(0xe6dcc0))); slab.userData.fp = 1.0; slab.userData.pri = 3; W(put(slab, px, pz, yaw, -.05));
+    const pt = pitch(1.2, .7, true); W(put(pt, px, pz, yaw, .1));
+    const loc = (lx, lz) => [px + lx * Math.cos(yaw) - lz * Math.sin(yaw), pz - lx * Math.sin(yaw) + lz * Math.cos(yaw)];
+    const ball = new THREE.Mesh(new THREE.SphereGeometry(.026, 10, 8), std(0xf6f1e4)); W(ball);
+    const kids = []; for (let k = 0; k < 4; k++) { const kd = person(SHIRTS[(k * 2 + 1) % SHIRTS.length], { skin: SKINS[k % 4], pants: 0x2f3f66 }); kd.scale.setScalar(.7); W(kd); kids.push({ kd, x: (rnd() - .5) * 1, z: (rnd() - .5) * .5, team: k % 2, ph: rnd() * 6 }); }
+    kickers.push({ loc, qx: 0, qz: 0, ball, kids, bx: 0, bz: 0, vx: .3, vz: .2, ph: rnd() * 6, small: true }); }
+
   // rocks on the tips of the capes (puntas)
   for (const cx of [-2.3, 14.1, 17.1, 20.3, -21.4]) for (let k = 0; k < 3; k++) {
     const x = cx + (rnd() - .5) * 1.4, z = shore(x) + (rnd() - .35) * .5, g = new THREE.Mesh(new THREE.IcosahedronGeometry(.07 + rnd() * .1, 2), std(0x9a968a, { flatShading: false }));
@@ -980,9 +1043,11 @@ export function open(opts) {
   // ---- trees: round oaks, pines and eucalyptus, only where nobody lives or drives
   const forbid = (x, z) => {
     if (Math.hypot(x - ISL[2].cx, z - ISL[2].cz) < 2.2) return true;
+    for (const q of SQ) { const sh = shore(x); if (x > q[0] - .2 && x < q[1] + .2 && z < sh - q[2] + .2 && z > sh - q[3] - .2) return true; }
     if (x > 8.2 && x < 13.2 && z > shore(10.6) - 9.6 && z < shore(10.6) - 5.2) return true;
     if (Math.abs(x - 4.6) < 1.3 && z > shoreS(4.6) + .9 && z < shoreS(4.6) + 6.4) return true;
-    for (const q of riverPts) if (Math.abs(q[0] - x) < .45 && Math.abs(q[1] - z) < .45) return true;      // the little island keeps its clearing for the house and the horses
+    for (const q of riverPts) if (Math.abs(q[0] - x) < .45 && Math.abs(q[1] - z) < .45) return true;
+    for (const c of keptC) if (Math.hypot(x - c[0], z - c[1]) < c[2] + .22) return true;      // the little island keeps its clearing for the house and the horses
     const s = shore(x);
     for (const rt of mtRoads) for (let q = 0; q < rt.pts.length; q += 2) if (Math.abs(rt.pts[q][0] - x) < .6 && Math.abs(rt.pts[q][1] - z) < .6) return true;
     if (x > -23 && x < 17 && z > s - 6.6 && z < s + .1) { for (const [a, b] of [[-17.4, -9.5], [-9.4, -2.8], [-1.2, 4.6], [7.4, 13.3]]) if (x > a && x < b && z > s - 5.8) return true; if (Math.abs(z - (s - 1.2)) < .45) return true; }
@@ -1005,6 +1070,16 @@ export function open(opts) {
       else { const hr = horreo(); W(put(hr, cx0 - .3, cz0 + .35, rnd() * 6, -.02)); }
     } }
 
+  // ---- tidy up: no building may overlap another one or stand on a road; the most important ones (churches, schools, squares, arcades) stay
+  { const items = [], dd2 = new THREE.Vector3();
+    for (const o of world.children) { const u = o.userData; if (!u || !(u.fp || u.fps)) continue; if (u.fp === 0) continue; dd2.copy(o.position).normalize(); const [x, z] = planeOf(dd2); items.push({ o, x, z, pri: u.pri || 1, circles: u.fps ? u.fps.map(([dx, r]) => [x + dx, z, r]) : [[x, z, u.fp]] }); }
+    items.sort((a, b) => b.pri - a.pri || b.circles[0][2] - a.circles[0][2]);
+    const roads = [roadRaw, roadS, relax(stPts, 3)]; const nearRoad = (c, withStreet) => roads.some((pts, ri) => (ri < 2 || withStreet) && pts.some((q) => Math.hypot(q[0] - c[0], q[1] - c[1]) < c[2] + .3));
+    const kept = [];
+    for (const it of items) {
+      const bad = it.circles.some((c) => kept.some((k) => k.circles.some((kc) => Math.hypot(c[0] - kc[0], c[1] - kc[1]) < c[2] + kc[2] - .02)) || (it.pri < 3 && nearRoad(c, it.pri < 2)));
+      if (bad) world.remove(it.o); else { kept.push(it); for (const c of it.circles) keptC.push(c); }
+    } }
   const oaks = [], pines = [], euc = [];
   const dd = new THREE.Vector3();
   for (let i = 0; i < 14000 && oaks.length + pines.length + euc.length < 330; i++) {
@@ -1255,6 +1330,18 @@ export function open(opts) {
       const [x, z, yaw] = routeAt(q.r, q.u), sy = Math.sin(yaw), cy = Math.cos(yaw);
       put(q.p, x + sy * q.off, z + cy * q.off, yaw + (q.v < 0 ? PI : 0), (q.still ? 0 : Math.abs(Math.sin(t * 7 + q.u * 30)) * .008) + (q.lift || 0));
     }
+    for (const k of kickers) {                                              // the ball drifts across the pitch, every child runs after it, and now and then it is kicked towards a goal
+      const hw = k.small ? .5 : .75, hd = k.small ? .27 : .4;
+      k.bx = Math.sin(t * .6 + k.ph) * hw + Math.sin(t * 1.7 + k.ph) * .06; k.bz = Math.sin(t * .83 + k.ph * 2) * hd;
+      const [bx, bz] = k.loc(k.qx + k.bx, k.qz + k.bz); put(k.ball, bx, bz, 0, .125 + Math.abs(Math.sin(t * 5 + k.ph)) * .04);
+      for (const c of k.kids) {
+        const tx = k.bx + (c.team ? .22 : -.22) + Math.sin(t * .9 + c.ph) * .16, tz = k.bz + Math.cos(t * 1.1 + c.ph) * .15, dx = tx - c.x, dz = tz - c.z, d = Math.hypot(dx, dz);
+        const sp = Math.min(d, .55) * 1.8 * dt; if (d > .001) { c.x += dx / d * sp; c.z += dz / d * sp; c.x = Math.max(-hw, Math.min(hw, c.x)); c.z = Math.max(-hd, Math.min(hd, c.z)); }
+        const [wx, wz] = k.loc(k.qx + c.x, k.qz + c.z);
+        put(c.kd, wx, wz, Math.atan2(-dz, dx) , .1 + Math.abs(Math.sin(t * 9 + c.ph)) * .012);
+      }
+    }
+    for (const fl of flags) fl.rotation.y = Math.sin(t * 3 + fl.position.x * 5) * .35;
     for (const bl of balls) { const c = Math.cos(t * 2.6 + bl.ph), h = .07 + .24 * Math.abs(Math.sin(t * 2.6 + bl.ph)); put(bl.m, bl.x, bl.z + c * .3 * bl.sg, 0, h); }
     for (const s of swimmers) {
       const a = t * s.sp + s.ph, x = s.x + Math.sin(a) * s.rx;
