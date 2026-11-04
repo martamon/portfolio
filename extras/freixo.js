@@ -814,13 +814,14 @@ export function open(opts) {
   // every lane carries its cars at one speed and evenly spaced, so a car never catches up with the one in front
   const addCars = (ri, dir, n, speed, colors, bus, ping) => {
     for (let k = 0; k < n; k++) {
-      const m = car(colors[k % colors.length], bus && k === 0), w = new THREE.Group(); m.scale.setScalar(.66); w.add(m); W(w);
+      const m = car(colors[k % colors.length], bus && k === 0), w = new THREE.Group(); m.scale.setScalar(.5); w.add(m); W(w);
       cars.push({ w, r: routes[ri], u: (k + (dir > 0 ? .1 : .6)) / n, v: speed * dir, off: dir > 0 ? .095 : -.095, ping: !!ping });
     }
   };
   function bike(shirt, col) {
     const g = new THREE.Group(), tire = std(0x2b3036), fr = std(col);
-    for (const x of [-.09, .09]) { const w = new THREE.Mesh(new THREE.TorusGeometry(.045, .006, 6, 16), tire); w.rotation.y = PI / 2; w.position.set(x, .05, 0); g.add(w); }
+    for (const x of [-.09, .09]) { const w = new THREE.Mesh(new THREE.TorusGeometry(.045, .008, 8, 20), tire); w.position.set(x, .05, 0); g.add(w);   /* wheels stand along the road: round seen from the side */
+      const hub = new THREE.Mesh(new THREE.CylinderGeometry(.008, .008, .02, 6), fr); hub.rotation.x = PI / 2; hub.position.set(x, .05, 0); g.add(hub); }
     const bar = box(.2, .008, .008, fr); bar.position.set(0, .085, 0); bar.rotation.z = -.2; g.add(bar); const bar2 = box(.11, .008, .008, fr); bar2.position.set(-.03, .06, 0); bar2.rotation.z = .9; g.add(bar2);
     const hb = box(.008, .008, .06, tire); hb.position.set(.095, .12, 0); g.add(hb);
     const rd = person(shirt, { skin: SKINS[0], role: 'bike', hat: 0xe9e2d2 }); rd.scale.setScalar(.62); rd.position.set(-.02, .06, 0); g.add(rd);
@@ -1123,7 +1124,7 @@ export function open(opts) {
       }
     }
     for (const z of [stZ0 + 1.0, stZ0 + 2.6]) { const px = stX + .28 * Math.sin((z - stZ0) / .2 * .38), lp = new THREE.Group(); const pole = new THREE.Mesh(new THREE.CylinderGeometry(.01, .013, .3, 5), std(0x2b3036)); pole.position.y = .15; lp.add(pole); const lb = new THREE.Mesh(new THREE.SphereGeometry(.03, 8, 6), lampMat); lb.position.y = .32; lp.add(lb); W(put(lp, px + .24, z, 0, 0)); }
-    const pc = car(0x9fd0d6, false); pc.scale.setScalar(.66); const pw = new THREE.Group(); pw.add(pc); W(put(pw, stX + .1, stZ0 + 1.9, -PI / 2, .03));
+    const pc = car(0x9fd0d6, false); pc.scale.setScalar(.5); const pw = new THREE.Group(); pw.add(pc); W(put(pw, stX + .1, stZ0 + 1.9, -PI / 2, .03));
     const [wx, wz] = [stX + .28 * Math.sin(2.7 / .2 * .38), stZ0 + 2.9]; const wb = new THREE.Group(); wb.add(box(.5, .02, .2, std(0x8a6a44))); W(put(wb, wx - .0, wz, 0, .01)); }
 
   // life in the street: cars that come and go, neighbours walking, a child running, two friends chatting
