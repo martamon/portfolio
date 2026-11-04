@@ -457,6 +457,8 @@ function makeAudio(night0) {
       else if (name === 'night') { note(69, .07, 2.6); setTimeout(() => note(64, .06, 3), 160); }
       else if (name === 'tick') note(88, .03, .9);
       else if (name === 'boom') { const t = ctx.currentTime, b2 = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = ctx.createGain(); b2.buffer = nb; fl.type = 'lowpass'; fl.frequency.setValueAtTime(420, t + .5); fl.frequency.exponentialRampToValueAtTime(90, t + 1.6); g.gain.setValueAtTime(0, t); g.gain.setValueAtTime(0, t + .5); g.gain.linearRampToValueAtTime(.09, t + .53); g.gain.exponentialRampToValueAtTime(.0005, t + 1.8); b2.connect(fl); fl.connect(g); g.connect(tone); g.connect(rev); b2.start(t + .5, Math.random() * 2); b2.stop(t + 1.9); const w = ctx.createOscillator(), wg = ctx.createGain(); w.type = 'sine'; w.frequency.setValueAtTime(500, t); w.frequency.exponentialRampToValueAtTime(1400, t + .5); wg.gain.setValueAtTime(.012, t); wg.gain.linearRampToValueAtTime(0, t + .5); w.connect(wg); wg.connect(tone); w.start(t); w.stop(t + .55); for (let k = 0; k < 6; k++) setTimeout(() => alive && !muted && note(84 + Math.floor(Math.random() * 12), .012, .35), 650 + k * 90 + Math.random() * 120); }
+      else if (name === 'learn') { [72, 76, 79, 83].forEach((m, k) => setTimeout(() => note(m, .04 - k * .004, 2.8), k * 105)); }
+      else if (name === 'learnoff') { [83, 79, 74].forEach((m, k) => setTimeout(() => note(m, .03, 1.8), k * 95)); }
       else if (name === 'rain') { note(76, .05, 2.6); setTimeout(() => note(71, .045, 2.8), 160); setTimeout(() => note(67, .04, 3), 330); }
       else if (name === 'sun') { note(79, .05, 2.2); setTimeout(() => note(84, .05, 2.6), 140); setTimeout(() => note(88, .04, 2.8), 280); }
       else if (name === 'hover' || name === 'press') {                       // a soft bubbly "pop": a quick upward glide with a little shimmer on top
@@ -487,7 +489,12 @@ export function open(opts) {
     '<div class="x-pl-top"><div class="x-pl-t"><b>Ría de Muros e Noia</b><span>A Coruña</span></div><div class="x-pl-btns">' +
     '<button type="button" class="x-pl-mu" aria-label="Sound"></button><button type="button" class="x-pl-rn" aria-label="Rain"></button><button type="button" class="x-pl-dn" aria-label="Day / night"></button>' +
     '<button type="button" class="x-pl-x" aria-label="Close"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button></div></div>' +
-    '<div class="x-pl-hint">Drag to turn · scroll to zoom · N for day / night</div>';
+    '<button type="button" class="x-pl-more">Aprende más</button>' +
+    '<div class="x-pl-info" hidden><button type="button" class="x-pl-ix" aria-label="Cerrar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button>' +
+    '<h2>Ría de Muros e Noia</h2><p class="x-pl-sub">A Coruña · Galicia</p>' +
+    '<p>Una de las Rías Baixas, entre el monte Louro y la desembocadura del Tambre. Esta maqueta es una versión simplificada y soñada de su costa.</p>' +
+    '<ul><li><b>Muros</b>: villa marinera con soportales de granito, casco antiguo, puerto y pescadores.</li><li><b>Esteiro</b>: aldea de mariscadores con su ensenada y el arenal de Area Maior.</li><li><b>O Freixo y Outes</b>: casas de piedra, el puente medieval de Nafonso sobre el Tambre y las playas de Ancoradoiro y Paramán.</li><li><b>Monte Louro</b>: la montaña sobre la laguna y la playa de dunas de Louro.</li><li><b>Ézaro</b>: el río Xallas se despeña en cascada hasta casi tocar el mar.</li><li><b>Bateas</b> y barquitos: de la ría salen mejillón y pescado todo el año.</li></ul>' +
+    '<p class="x-pl-tip">Arrastra para girar · rueda o pellizco para acercarte · N para cambiar de día a noche</p></div>';
   document.body.appendChild(root);
   const prevOverflow = document.documentElement.style.overflow;
   document.documentElement.style.overflow = 'hidden';
@@ -497,7 +504,7 @@ export function open(opts) {
   let renderer;
   try { renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, powerPreference: 'high-performance' }); }
   catch (e) {
-    root.querySelector('.x-pl-hint').textContent = 'Your browser cannot show the 3D map.';
+    root.querySelector('.x-pl-more').textContent = 'Tu navegador no puede mostrar el mapa 3D.';
     root.querySelector('.x-pl-x').addEventListener('click', () => { root.remove(); document.documentElement.style.overflow = prevOverflow; opts.onClose && opts.onClose(); });
     return { close() { root.remove(); document.documentElement.style.overflow = prevOverflow; } };
   }
@@ -1396,6 +1403,10 @@ export function open(opts) {
   if (!audio) muBtn.style.display = 'none'; else { if (muteSaved) audio.mute(true); audio.start(); audio.sfx('open'); paintMu(); }
   muBtn.addEventListener('click', () => { if (!audio) return; audio.mute(!audio.muted); try { localStorage.setItem('xpl-mute', audio.muted ? '1' : '0'); } catch (e) {} paintMu(); if (!audio.muted) audio.sfx('tick'); });
   let lastNight = night0;
+  const info = root.querySelector('.x-pl-info'), moreBtn = root.querySelector('.x-pl-more');
+  const toggleInfo = (on) => { if (on === !info.hidden) return; if (on) { info.hidden = false; requestAnimationFrame(() => info.classList.add('x-on')); } else { info.classList.remove('x-on'); setTimeout(() => { if (!info.classList.contains('x-on')) info.hidden = true; }, 420); } moreBtn.classList.toggle('x-open', on); if (audio) audio.sfx(on ? 'learn' : 'learnoff'); };
+  moreBtn.addEventListener('click', () => toggleInfo(info.hidden));
+  info.querySelector('.x-pl-ix').addEventListener('click', () => toggleInfo(false));
   if (audio) for (const bt of root.querySelectorAll('button')) {                 // every button answers with a little pop when the pointer touches it and a deeper one when pressed
     bt.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') audio.sfx('hover'); });
     bt.addEventListener('pointerdown', () => audio.sfx('press'));
@@ -1468,7 +1479,7 @@ export function open(opts) {
   cv.addEventListener('wheel', (e) => { e.preventDefault(); distT = Math.min(baseDist * 1.7, Math.max(14.3, distT * Math.exp(e.deltaY * .0016))); lastInput = performance.now(); focus = null; }, { passive: false });
   cv.addEventListener('click', () => { if (moved < 6 && cur >= 0) hideCard(); });
   const onKey = (e) => {
-    if (e.key === 'Escape') { if (cur >= 0) hideCard(); else close(); }
+    if (e.key === 'Escape') { if (!info.hidden) toggleInfo(false); else if (cur >= 0) hideCard(); else close(); }
     else if (e.key === 'n' || e.key === 'N') { manual = true; night = night > .5 ? 0 : 1; }
     else if (/^[wasd]$/i.test(e.key)) { const k = e.key.toLowerCase(); rot(k === 'a' ? 28 : k === 'd' ? -28 : 0, k === 'w' ? 28 : k === 's' ? -28 : 0); focus = null; }
     else return;
@@ -1711,8 +1722,21 @@ function injectCss() {
     '.x-pl.x-night .x-pl-nav button{background:rgba(203,227,255,.14)}',
     '.x-pl-nav button:hover{background:rgba(18,48,74,.2)}',
     '.x-pl-nav .x-pl-cx{margin-left:auto;width:34px;height:34px;padding:0;display:grid;place-items:center;font-size:13px}',
-    '.x-pl-hint{position:absolute;left:0;right:0;bottom:max(14px,env(safe-area-inset-bottom));text-align:center;font:500 11px "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.12em;text-transform:uppercase;opacity:.6;pointer-events:none}',
-    '.x-pl-card:not([hidden])~.x-pl-hint{display:none}',
+    '.x-pl-more{position:absolute;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);border:0;border-radius:999px;padding:9px 20px 10px;background:rgba(255,253,248,.72);color:#2c4a5a;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 2px 14px rgba(20,50,80,.12);font:500 13px/1 "Switzer","Switzer Placeholder",system-ui,sans-serif;letter-spacing:.02em;transition:background .5s ease,transform .6s cubic-bezier(.22,.8,.24,1),box-shadow .6s ease}',
+    '.x-pl-more:hover{transform:translateX(-50%) translateY(-2px);box-shadow:0 6px 20px rgba(20,50,80,.18);background:rgba(255,253,248,.92)}',
+    '.x-pl-more.x-open{opacity:0;pointer-events:none}',
+    '.x-pl.x-night .x-pl-more{background:rgba(20,34,66,.7);color:#cbe3ff}',
+    '.x-pl-info{position:absolute;left:50%;bottom:max(16px,env(safe-area-inset-bottom));width:min(430px,calc(100% - 28px));max-height:min(62vh,520px);overflow:auto;padding:20px 22px 16px;border-radius:22px;background:rgba(255,253,248,.88);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:0 10px 36px rgba(20,50,80,.2);color:#12304a;opacity:0;transform:translate(-50%,16px);transition:opacity .45s ease,transform .6s cubic-bezier(.22,.8,.24,1);-webkit-user-select:text;user-select:text}',
+    '.x-pl-info.x-on{opacity:1;transform:translate(-50%,0)}.x-pl-info[hidden]{display:none}',
+    '.x-pl.x-night .x-pl-info{background:rgba(16,28,56,.88);color:#cbe3ff}',
+    '.x-pl-info h2{margin:0 28px 2px 0;font:600 21px/1.2 "Switzer","Switzer Placeholder",system-ui,sans-serif;letter-spacing:-.01em}',
+    '.x-pl-info p{margin:8px 0;font:400 14px/1.5 "Switzer","Switzer Placeholder",system-ui,sans-serif}',
+    '.x-pl-info .x-pl-sub{margin:0 0 8px;opacity:.65;font-size:12.5px}',
+    '.x-pl-info ul{margin:8px 0;padding:0;list-style:none}.x-pl-info li{margin:7px 0;padding-left:16px;position:relative;font:400 13.5px/1.45 "Switzer","Switzer Placeholder",system-ui,sans-serif}',
+    '.x-pl-info li:before{content:"";position:absolute;left:2px;top:.55em;width:6px;height:6px;border-radius:50%;background:#b9623f}',
+    '.x-pl-info .x-pl-tip{margin:12px 0 0;opacity:.6;font:500 10.5px/1.5 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.06em;text-transform:uppercase}',
+    '.x-pl-ix{position:absolute;right:12px;top:12px;width:32px;height:32px;border:0;border-radius:50%;display:grid;place-items:center;padding:0;background:rgba(18,48,74,.1)}',
+    '.x-pl.x-night .x-pl-ix{background:rgba(203,227,255,.14)}',
     '@media(max-width:600px){.x-pl-card{left:12px;right:12px;width:auto}.x-pl-t b{font-size:16px}.x-pl-t span{font-size:11px}.x-pl-pin b,.x-pl-pin em{font-size:12.5px}}'
   ].join('\n');
   document.head.appendChild(s);
