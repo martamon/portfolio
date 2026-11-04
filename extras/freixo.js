@@ -1580,7 +1580,7 @@ export function open(opts) {
   const mochiTick = (now) => { if (mStep < 0 && mochi.hidden) return; requestAnimationFrame(mochiTick); mochiSwim(now); const r = mSp.getBoundingClientRect(), ccx = r.left + r.width / 2, ccy = r.top + r.height / 2; mex += (mpx - mex) * .035; mey += (mpy - mey) * .035; const dx = mex - ccx, dy = mey - ccy, d = Math.hypot(dx, dy); const lean = 0; mBlink -= .016; if (mBlink < -3.6) mBlink = .22;
     if (M3) {                                          // the live 3D Mochi: pupils glide to where the mouse is, the head and body turn softly after them
       const gx = Math.max(-1, Math.min(1, dx / 420)), gy = Math.max(-1, Math.min(1, dy / 320));
-      M3.px += (gx - M3.px) * .045; M3.py += (gy - M3.py) * .045; M3.ry += (gx * .5 - M3.ry) * .028; M3.rx += (gy * .32 - M3.rx) * .028;
+      M3.px += (gx - M3.px) * .075; M3.py += (gy - M3.py) * .075; M3.ry += (gx * .5 - M3.ry) * .05; M3.rx += (gy * .32 - M3.rx) * .05;
       for (const e of M3.m.eyes) { e.pupil.position.x = M3.px * .15; e.pupil.position.y = -M3.py * .13; e.pupil.rotation.y = M3.px * .3; }
       const bk = mBlink > 0 ? Math.max(.08, 1 - Math.sin(Math.min(1, (.22 - mBlink) / .22) * PI)) : 1; for (const e of M3.m.eyes) e.eye.scale.y = bk;
       M3.m.inner.rotation.y = M3.ry; M3.m.inner.rotation.x = M3.rx * .6; M3.m.inner.rotation.z = -M3.ry * .1; M3.m.root.position.x = M3.ry * .12;
