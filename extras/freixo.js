@@ -3,7 +3,7 @@
 // fishermen on anchored boats, cars, boats under sail, birds and clouds that keep moving. Opened from the Contact page (three clicks on the creature).
 // open({ night, onClose }) shows it on top of the page and returns { close }.
 import * as THREE from './three.module.min.js';
-import { mochiText, MOCHI, tr } from './i18n.js?v=12';
+import { mochiText, MOCHI, tr } from './i18n.js?v=13';
 const mochiLen = MOCHI.length;
 
 // phones and weak devices get a lighter version: fewer pixels, no velvet sheen and cheaper shadows
@@ -1216,9 +1216,7 @@ export function open(opts) {
     return slab;
   }
   { const sqM = square(-12.8, 2.65, 2.0, 1.5, { trees: 4, terraces: 3, people: 12 });
-    const sqE = square(-8.15, 2.75, 1.2, 1.0, { trees: 1, terraces: 1, people: 4 });
-    const sqF = square(1.8, 2.75, 1.4, 1.0, { trees: 2, terraces: 2, people: 5 });
-    const sqO = square(9.65, 2.75, 1.5, 1.1, { trees: 2, terraces: 2, people: 6 }); }
+  }
 
   // ---- Ézaro, on the south shore: a granite village under the mountain and the waterfall of the river Xallas, falling straight into the sea
   const falls = [];
@@ -1742,7 +1740,7 @@ export function open(opts) {
     if (tourOn) return; tourOn = true; tourMuted = !!(audio && audio.muted);
     mochi.classList.remove('x-ctaon'); mochi.classList.add('x-load'); root.classList.add('x-tour'); if (audio) { audio.sfx('mochinext'); setTimeout(() => audio && audio.mute(true), 500); }
     const t0 = performance.now();
-    import('./conducir.js?v=21').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
+    import('./conducir.js?v=22').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
       .then((m) => { const ab = m.open({ onClose: endTour, getDark: () => nightT }); if (!ab) throw new Error('no webgl'); setTimeout(mochiClose, 700); })
       .catch(() => { endTour(); mochiClose(); });
   };
