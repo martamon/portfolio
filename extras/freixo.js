@@ -582,7 +582,7 @@ export function open(opts) {
     '<button type="button" class="x-pl-mu" aria-label="Sound"></button><button type="button" class="x-pl-rn" aria-label="Rain"></button><button type="button" class="x-pl-dn" aria-label="Day / night"></button>' +
     '<button type="button" class="x-pl-x" aria-label="Close"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button></div></div>' +
     '<button type="button" class="x-pl-more"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l1.7 5 5 1.7-5 1.7L12 17l-1.7-5.1-5-1.7 5-1.7z"/><path d="M18.5 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/></svg><span>Learn more</span></button>' +
-    '<div class="x-pl-mochi" hidden><div class="x-pl-mq"><div class="x-pl-mo"><div class="x-pl-ms"><canvas class="x-pl-mc" width="320" height="262"></canvas></div></div><div class="x-pl-sh"></div></div><div class="x-pl-bub"><p></p><span class="x-pl-go">▾</span></div></div>' +
+    '<div class="x-pl-mochi" hidden><div class="x-pl-mq"><div class="x-pl-mo"><div class="x-pl-ms"><canvas class="x-pl-mc" width="320" height="262"></canvas></div></div><div class="x-pl-sh"></div></div><div class="x-pl-bub"><p></p><span class="x-pl-go">▾</span></div><button type="button" class="x-pl-cta">Start the tour</button></div>' +
     '<div class="x-pl-info" hidden><button type="button" class="x-pl-ix" aria-label="Cerrar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button>' +
     '<h2>Ría de Muros e Noia</h2><p class="x-pl-sub">A Coruña · Galicia</p>' +
     '<p>Una de las Rías Baixas, entre el monte Louro y la desembocadura del Tambre. Esta maqueta es una versión simplificada y soñada de su costa.</p>' +
@@ -1548,13 +1548,17 @@ export function open(opts) {
   const toggleInfo = (on) => { if (on === !info.hidden) return; if (on) { info.hidden = false; requestAnimationFrame(() => info.classList.add('x-on')); } else { info.classList.remove('x-on'); setTimeout(() => { if (!info.classList.contains('x-on')) info.hidden = true; }, 420); } moreBtn.classList.toggle('x-open', on); if (audio) audio.sfx(on ? 'learn' : 'learnoff'); };
   // for now the "Aprende más" button is only a placeholder: it does nothing (to switch it on again: moreBtn.addEventListener('click', () => toggleInfo(info.hidden)))
   // "Aprende más": Mochi, the little assistant, appears in front of a blurred map and tells two short messages (a click anywhere moves on / closes it)
-  const mochi = root.querySelector('.x-pl-mochi'), mSp = mochi.querySelector('.x-pl-ms'), mCv = mSp.querySelector('canvas'), mBub = mochi.querySelector('.x-pl-bub p'), MSG = ['Thank you so much for staying until here! My name is Mochi and I am Martamon’s assistant (actually, I am her digitalised kitten).', 'Martamon comes from a tiny village in the north of Spain, in Galicia. It is a VERY, VERY pretty and quiet fishing village. This map is a recreation of that very special place.'];
+  const mochi = root.querySelector('.x-pl-mochi'), mSp = mochi.querySelector('.x-pl-ms'), mCv = mSp.querySelector('canvas'), mBub = mochi.querySelector('.x-pl-bub p'), MSG = ['Thank you so much for staying until here! My name is Mochi and I am Martamon’s assistant (actually, I am her digitalised kitten).', 'Martamon comes from a tiny village in the north of Spain, in Galicia. It is a VERY, VERY pretty and quiet fishing village. This map is a recreation of that very special place.', 'This map does not follow the original layout of the village exactly, but it is made to sum up a little of Martamon’s place of origin and its culture.', 'These villages are in the Ría de Muros e Noia, and they are O Freixo, Esteiro, Outes, Muros and Louro.', 'I want to take you on a tour of all these villages and tell you a bit about their culture and some curious facts about them.', 'If you feel like trying it, click the start button that will appear next.'];
   const mRect = { x: 0, y: 0, n: 0 }; let M3 = null, mex = innerWidth / 2, mey = innerHeight / 2, mStep = -1, mType = 0, mEye = 4, mBlink = 0, mt2 = 0, mpx = innerWidth / 2, mpy = innerHeight / 2;
   const mTxt = (txt, i) => { if (!mBub.children.length) mBub.innerHTML = '<span></span><span style="opacity:0"></span>'; mBub.children[0].textContent = txt.slice(0, i); mBub.children[1].textContent = txt.slice(i); };   // the whole text is laid out from the start (the unwritten part is invisible), so typing never reflows the bubble
   const typeMsg = (txt) => { clearInterval(mType); mochi.classList.remove('x-done'); mTxt(txt, 0); let i = 0; mType = setInterval(() => { if (i >= txt.length) { clearInterval(mType); mochi.classList.add('x-done'); return; } mTxt(txt, ++i); if (i % 3 === 1 && audio) audio.sfx('mochitalk'); }, 34); };
-  const mochiClose = () => { if (M3) { try { M3.r.dispose(); M3.r.forceContextLoss(); } catch (e) {} M3 = null; } clearInterval(mType); mochi.classList.remove('x-on'); root.classList.remove('x-mochi'); mStep = -1; setTimeout(() => { if (mStep < 0) mochi.hidden = true; }, 700); if (audio) audio.sfx('mochiend'); };
+  const mochiClose = () => { if (M3) { try { M3.r.dispose(); M3.r.forceContextLoss(); } catch (e) {} M3 = null; } clearInterval(mType); mochi.classList.remove('x-on', 'x-ctaw', 'x-cta', 'x-ctaon'); root.classList.remove('x-mochi'); mStep = -1; setTimeout(() => { if (mStep < 0) mochi.hidden = true; }, 700); if (audio) audio.sfx('mochiend'); };
   const mochiPop = () => { mSp.classList.remove('x-hop'); mochi.classList.remove('x-pop'); void mSp.offsetWidth; mSp.classList.add('x-hop'); mochi.classList.add('x-pop'); };
-  const mochiNext = () => { if (mStep < 0) return; if (!mochi.classList.contains('x-done')) { clearInterval(mType); mTxt(MSG[mStep], 1e4); mochi.classList.add('x-done'); return; } mStep++; if (mStep >= MSG.length) { mochiClose(); return; } if (audio) audio.sfx('mochinext'); mochiPop(); if (mStep === 1) look(-9, 1.5, .68); typeMsg(MSG[mStep]); };
+  const mochiCta = () => {                                 // after the last text: Mochi hides behind a box and peeks out over its top edge
+    mochi.classList.add('x-ctaw'); if (audio) audio.sfx('mochinext');
+    setTimeout(() => { if (mStep < MSG.length) return; mochi.classList.add('x-cta'); mochiPop(); setTimeout(() => mochi.classList.add('x-ctaon'), 80); }, 450);
+  };
+  const mochiNext = () => { if (mStep < 0 || mStep >= MSG.length) return; if (!mochi.classList.contains('x-done')) { clearInterval(mType); mTxt(MSG[mStep], 1e4); mochi.classList.add('x-done'); return; } mStep++; if (mStep >= MSG.length) { mochiCta(); return; } if (audio) audio.sfx('mochinext'); mochiPop(); if (mStep === 1) look(-9, 1.5, .68); typeMsg(MSG[mStep]); };
   const buildMochi = async () => {
     if (M3) return; const bm = await import('/extras/blob-model.js?v=1'), m = bm.buildBlob(THREE), sc = new THREE.Scene(), cam = new THREE.PerspectiveCamera(30, 320 / 262, .1, 20);
     m.body.geometry.attributes.color.array.forEach((v, i, a) => { a[i] = v + (1 - v) * .18; });                    // pastel: lighter and softer
@@ -1567,11 +1571,12 @@ export function open(opts) {
   };
   moreBtn.addEventListener('click', () => { if (mStep >= 0) return; buildMochi().catch(() => {}); mStep = 0; look(3, 3, .62); mochi.hidden = false; root.classList.add('x-mochi'); requestAnimationFrame(() => requestAnimationFrame(() => mochi.classList.add('x-on'))); if (audio) audio.sfx('mochi'); setTimeout(() => mStep === 0 && typeMsg(MSG[0]), 1100); });
   mochi.addEventListener('click', () => mochiNext());
+  mochi.querySelector('.x-pl-cta').addEventListener('click', (e) => { e.stopPropagation(); if (audio) audio.sfx('mochiend'); mochiClose(); });   // the tour itself comes next
   addEventListener('pointermove', (e) => { mpx = e.clientX; mpy = e.clientY; });
   const mo = mochi.querySelector('.x-pl-mo'), mshadow = mochi.querySelector('.x-pl-sh'), J = { x: 0, y: 0, vx: 0, vy: 0, p: 1, since: 9, sq: 0, last: 0, dir: 1, rot: 0 };
   const mochiSwim = (now) => {                       // swims like a jellyfish: a soft pulse every ~2 s squeezes it, shoots it up and sideways, then it glides and sinks slowly
     const dt = Math.min(.05, (now - (J.last || now)) / 1000); J.last = now; J.p -= dt;
-    if (J.p <= 0) { J.p = 2.6 + Math.random() * 1.0; J.since = 0; J.dir = Math.random() < .5 ? -1 : 1; if (Math.abs(J.x) > 30) J.dir = J.x > 0 ? -1 : 1; J.vy -= 46; J.vx += J.dir * 18; }
+    if (J.p <= 0) { J.p = 2.6 + Math.random() * 1.0; J.since = 0; J.dir = Math.random() < .5 ? -1 : 1; if (Math.abs(J.x) > 30) J.dir = J.x > 0 ? -1 : 1; J.vy -= mStep >= MSG.length ? 10 : 46; J.vx += mStep >= MSG.length ? 0 : J.dir * 18; }
     J.since += dt; const sq = J.since < .8 ? Math.sin(J.since / .8 * PI) : 0; J.sq += (sq * .075 - J.sq) * Math.min(1, dt * 5);
     J.vy += 12 * dt; J.vy += -J.y * 1.1 * dt; J.vx += -J.x * .9 * dt; const dr = Math.exp(-1.5 * dt); J.vx *= dr; J.vy *= dr; J.x += J.vx * dt; J.y += J.vy * dt;
     J.rot += (J.vx * .07 - J.rot) * Math.min(1, dt * 2.5);
@@ -1979,6 +1984,13 @@ function injectCss() {
     '@keyframes x-mo-float{50%{transform:translateY(-14px) rotate(1.6deg)}}@keyframes x-mo-sh{50%{transform:scale(.86);opacity:.7}}',
     '.x-pl-bub{position:relative;max-width:min(430px,86vw);padding:16px 22px 18px;border-radius:24px;background:rgba(255,253,248,.92);color:#4a3340;box-shadow:0 10px 36px rgba(80,40,40,.18);opacity:0;transform:translateY(14px);transition:opacity .6s ease .5s,transform .8s cubic-bezier(.22,.8,.24,1) .5s}',
     '.x-pl-mochi.x-on .x-pl-bub{opacity:1;transform:none}',
+    '.x-pl-mochi.x-ctaw .x-pl-bub{opacity:0!important;transform:translateY(10px)!important;transition:opacity .4s ease,transform .4s ease;pointer-events:none}',
+    '.x-pl-mochi.x-cta .x-pl-bub{display:none}',
+    '.x-pl-cta{display:none;position:relative;z-index:3;font:500 15px/1 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.08em;text-transform:uppercase;padding:20px 40px;border-radius:20px;border:0;background:rgba(255,253,248,.96);color:#4a3340;box-shadow:0 12px 34px rgba(80,40,40,.2);cursor:pointer;opacity:0;transform:translateY(12px);transition:opacity .6s ease,transform .8s cubic-bezier(.22,.8,.24,1),box-shadow .3s ease}',
+    '.x-pl-cta:hover{box-shadow:0 14px 40px rgba(80,40,40,.3)}',
+    '.x-pl-mochi.x-cta .x-pl-cta{display:block}.x-pl-mochi.x-ctaon .x-pl-cta{opacity:1;transform:none}',
+    '.x-pl-mochi.x-cta .x-pl-mq{z-index:1;margin-bottom:-62px}.x-pl-mochi.x-cta .x-pl-sh{display:none}',
+    '.x-pl.x-night .x-pl-cta{background:rgba(24,34,64,.95);color:#e4eeff}',
     '.x-pl.x-night .x-pl-bub{background:rgba(24,34,64,.92);color:#e4eeff}',
     '.x-pl-bub p{margin:0;min-height:3em;font:500 17px/1.5 "Switzer","Switzer Placeholder",system-ui,sans-serif}',
     '.x-pl-go{position:absolute;right:16px;bottom:6px;opacity:0;font-size:14px;animation:x-mo-nudge 1.3s ease-in-out infinite}.x-pl-mochi.x-done .x-pl-go{opacity:.5}',
