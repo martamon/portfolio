@@ -332,7 +332,7 @@ function mercado() {
     for (let q = 0; q < 6; q++) { const ba = new THREE.Mesh(new THREE.CylinderGeometry(.012, .016, .1, 6), std(0xf2ecdc)); ba.position.set(sx * (.34 + q * .08), .43, .86); g.add(ba); }
     const ball = new THREE.Mesh(new THREE.SphereGeometry(.03, 8, 6), std(0xf2ecdc)); ball.position.set(sx * .84, .5, .86); g.add(ball);
   }
-  g.scale.setScalar(.9); g.userData.fp = 1.25; g.userData.pri = 5; return g;
+  g.scale.setScalar(.9); g.userData.fp = .95; g.userData.pri = 5; return g;
 }
 // the fish market (lonja): a long, low hall with big blue doors, a pale roof, a sign, and boxes of fish waiting outside
 function lonja() {
@@ -743,14 +743,15 @@ export function open(opts) {
     const cb = box(.2, .045, .045, std(0xc9c3b2)); cb.position.y = .56; cr.add(cb);
     W(put(cr, cx2, cz2, 0, -.01));
     const [chx, chz] = onShore(-13.0, 5.2); const ch = church(1.25); W(put(ch, chx, chz, seaYaw(chx), -.03));
-    { const [mx, mz] = onShore(-9.6, 5.9); W(put(mercado(), mx, mz, seaYaw(mx), -.02));
+    { const [mx, mz] = onShore(-9.6, 6.4); W(put(mercado(), mx, mz, seaYaw(mx), -.02));
       // a round stone square in front of the market, with a fountain and stone houses round it
-      { const [qx, qz] = onShore(-9.6, 3.85), sq = new THREE.Group(), pav = new THREE.Mesh(new THREE.CylinderGeometry(.78, .78, .04, 32), std(0xd3cbb8)); sq.add(pav);
+      { const [qx, qz] = onShore(-9.6, 4.05), sq = new THREE.Group(), pav = new THREE.Mesh(new THREE.CylinderGeometry(.78, .78, .04, 32), std(0xd3cbb8)); sq.add(pav);
         const kerb = new THREE.Mesh(new THREE.TorusGeometry(.78, .03, 6, 36), std(0xb7b09e)); kerb.rotation.x = PI / 2; kerb.position.y = .03; sq.add(kerb);
         for (let k = 0; k < 8; k++) { const sp = box(.015, .005, .56, std(0xb7b09e)); sp.rotation.y = k * PI / 8; sp.position.y = .025; sq.add(sp); }
         const fb = new THREE.Mesh(new THREE.CylinderGeometry(.2, .22, .08, 14), std(0xcfc7b4)); fb.position.y = .06; sq.add(fb); const fw = new THREE.Mesh(new THREE.CylinderGeometry(.17, .17, .02, 14), std(0x74cfdb, { transparent: true, opacity: .85 })); fw.position.y = .1; sq.add(fw); const fc = new THREE.Mesh(new THREE.CylinderGeometry(.025, .035, .22, 6), std(0xcfc7b4)); fc.position.y = .17; sq.add(fc);
-        sq.userData.fp = .95; sq.userData.pri = 5; W(put(sq, qx, qz, 0, -.03));
-        [[-1.35, 3.75, .3, 2], [1.35, 3.75, -.3, 1], [-.95, 2.7, .6, 1], [.95, 2.7, -.6, 2]].forEach(([dx, inl, yw, fl], k) => { const [hx, hz] = onShore(-9.6 + dx, inl); const hs = house({ w: .42, d: .36, floors: fl, wall: 0xd6d0c0, roof: ROOF[(k + 2) % ROOF.length], gal: false, shut: [0x3d78a8, 0x4a9a74, 0xb4483a][(k + 1) % 3], fr: k + 6, stone: true }); hs.userData.pri = 4; W(put(hs, hx, hz, seaYaw(hx) + yw, -.02)); }); } const [lx, lz] = onShore(-17.2, 2.5); W(put(lonja(), lx, lz, seaYaw(lx), -.02));
+        sq.userData.fp = .8; sq.userData.pri = 5; W(put(sq, qx, qz, 0, -.03));
+        // little fishermen's cottages round the square, each turned to face it
+        [[-1.3, 4.05], [1.3, 4.05], [-.95, 2.95], [.95, 2.95], [0, 2.6]].forEach(([dx, inl], k) => { const [hx, hz] = onShore(-9.6 + dx, inl), hs = house({ w: .3, d: .26, floors: 1, wall: [0xf7f1e4, 0xd8e8f0, 0xf6e2b8, 0xf2d4c4, 0xe3efe6][k % 5], roof: [0xc9473a, 0x2f6fa8, 0xe9b94a, 0xc9473a, 0x5fae8a][k % 5], gal: false, shut: [0x2f6fa8, 0xb4483a, 0x4a9a74][k % 3], fr: k + 8, door: 0x2f6fa8 }); hs.userData.pri = 4; hs.userData.fp = .32; W(put(hs, hx, hz, Math.atan2(qx - hx, qz - hz), -.02)); const bar = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, .05, 8), std(0x4f8fc0)); const bg = new THREE.Group(); bg.add(bar); bar.position.y = .025; bg.userData.fp = .05; bg.userData.pri = 4; W(put(bg, hx + (qx - hx) * .22, hz + (qz - hz) * .22, 0, -.02)); }); } const [lx, lz] = onShore(-17.2, 2.5); W(put(lonja(), lx, lz, seaYaw(lx), -.02));
       // in front of the lonja, set back from the road: a round stone square with a little fountain and a few stone houses round it
       const [qx, qz] = onShore(-17.2, 4.75), sq = new THREE.Group(), pav = new THREE.Mesh(new THREE.CylinderGeometry(.78, .78, .04, 32), std(0xd3cbb8)); pav.position.y = .0; sq.add(pav);
       const kerb = new THREE.Mesh(new THREE.TorusGeometry(.78, .03, 6, 36), std(0xb7b09e)); kerb.rotation.x = PI / 2; kerb.position.y = .03; sq.add(kerb);
