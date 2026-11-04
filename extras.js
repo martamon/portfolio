@@ -990,7 +990,7 @@
     if (planet) return;
     planet = { loading: true };
     jfHint(0);
-    import('/extras/freixo.js?v=62').then(function (m) {
+    import('/extras/freixo.js?v=64').then(function (m) {
       planet = m.open({ getDark: function () { return darkness(theme.hour); }, onClose: function () { planet = null; } });
     }).catch(function () { planet = null; });
   }
