@@ -343,7 +343,18 @@ function lonja() {
   { const cv = document.createElement('canvas'); cv.width = 256; cv.height = 64; const c = cv.getContext('2d'); c.fillStyle = '#2f6fa8'; c.fillRect(0, 0, 256, 64); c.fillStyle = '#fff6e4'; c.font = '700 40px "Switzer","Inter",sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('LONJA', 128, 34); const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; const sg = new THREE.Mesh(new THREE.PlaneGeometry(.5, .12), new THREE.MeshStandardMaterial({ map: t, roughness: 1 })); sg.position.set(0, .54, .402); g.add(sg); }
   const cols = [0xe9577a, 0xf2c14a, 0x5fae8a, 0x4f8fc0];
   for (let i = 0; i < 7; i++) { const cr = box(.17, .1, .12, std(cols[i % 4])); cr.position.set(-.78 + (i % 4) * .2 + (i > 3 ? .1 : 0), .05 + (i > 3 ? .1 : 0), .62 + (i > 3 ? .02 : .0)); g.add(cr); }
-  g.userData.fp = 1.2; g.userData.pri = 5; return g;
+  // fishing nets in front of it: drying racks with sagging nets, a heap of net with floats, and a pile of crates
+  { const cv = document.createElement('canvas'); cv.width = cv.height = 64; const c = cv.getContext('2d'); c.strokeStyle = 'rgba(255,255,255,.9)'; c.lineWidth = 3; for (let i = -64; i < 128; i += 14) { c.beginPath(); c.moveTo(i, 0); c.lineTo(i + 64, 64); c.stroke(); c.beginPath(); c.moveTo(i + 64, 0); c.lineTo(i, 64); c.stroke(); }
+    const nt = new THREE.CanvasTexture(cv); nt.wrapS = nt.wrapT = THREE.RepeatWrapping; nt.repeat.set(3, 2); nt.colorSpace = THREE.SRGBColorSpace;
+    [[-.62, 0x4f8fc0], [0, 0xe9a24a], [.62, 0x5fae8a]].forEach(([sx, col], k) => {
+      const post = (x) => { const p2 = new THREE.Mesh(new THREE.CylinderGeometry(.014, .018, .46, 6), std(0x7a5a3c)); p2.position.set(x, .23, .8); g.add(p2); }; post(sx - .26); post(sx + .26);
+      const bar = box(.54, .014, .014, std(0x7a5a3c)); bar.position.set(sx, .45, .8); g.add(bar);
+      const ng = new THREE.PlaneGeometry(.5, .32, 8, 4); for (let i = 0; i < ng.attributes.position.count; i++) { const x = ng.attributes.position.getX(i); ng.attributes.position.setZ(i, Math.sin((x + .25) * 6.3) * .02 + .02); } ng.computeVertexNormals();
+      const net = new THREE.Mesh(ng, new THREE.MeshStandardMaterial({ color: PASTEL(col), map: nt, transparent: true, alphaTest: .25, side: THREE.DoubleSide, roughness: 1 })); net.position.set(sx, .29, .8); g.add(net);
+      for (let f = 0; f < 4; f++) { const fl = new THREE.Mesh(new THREE.SphereGeometry(.016, 6, 5), std([0xe36d57, 0xf2c14a][f % 2])); fl.position.set(sx - .2 + f * .13, .12, .805); g.add(fl); } });
+    const heap = new THREE.Mesh(new THREE.IcosahedronGeometry(.16, 1), new THREE.MeshStandardMaterial({ color: PASTEL(0x4f8fc0), map: nt, roughness: 1 })); heap.scale.set(1.5, .5, 1); heap.position.set(.78, .06, .66); g.add(heap);
+    for (let f = 0; f < 5; f++) { const fl = new THREE.Mesh(new THREE.SphereGeometry(.018, 6, 5), std(0xe36d57)); fl.position.set(.7 + f * .04, .1 + (f % 2) * .02, .6 + (f % 3) * .05); g.add(fl); } }
+  g.userData.fp = 1.3; g.userData.pri = 5; return g;
 }
 
 function church(scale) {
@@ -732,14 +743,14 @@ export function open(opts) {
     const cb = box(.2, .045, .045, std(0xc9c3b2)); cb.position.y = .56; cr.add(cb);
     W(put(cr, cx2, cz2, 0, -.01));
     const [chx, chz] = onShore(-13.0, 5.2); const ch = church(1.25); W(put(ch, chx, chz, seaYaw(chx), -.03));
-    { const [mx, mz] = onShore(-9.6, 2.5); W(put(mercado(), mx, mz, seaYaw(mx), -.02)); const [lx, lz] = onShore(-17.2, 5.6); W(put(lonja(), lx, lz, seaYaw(lx), -.02));
+    { const [mx, mz] = onShore(-9.6, 2.5); W(put(mercado(), mx, mz, seaYaw(mx), -.02)); const [lx, lz] = onShore(-17.2, 2.5); W(put(lonja(), lx, lz, seaYaw(lx), -.02));
       // in front of the lonja, set back from the road: a round stone square with a little fountain and a few stone houses round it
-      const [qx, qz] = onShore(-17.2, 3.75), sq = new THREE.Group(), pav = new THREE.Mesh(new THREE.CylinderGeometry(.78, .78, .04, 32), std(0xd3cbb8)); pav.position.y = .0; sq.add(pav);
+      const [qx, qz] = onShore(-17.2, 4.75), sq = new THREE.Group(), pav = new THREE.Mesh(new THREE.CylinderGeometry(.78, .78, .04, 32), std(0xd3cbb8)); pav.position.y = .0; sq.add(pav);
       const kerb = new THREE.Mesh(new THREE.TorusGeometry(.78, .03, 6, 36), std(0xb7b09e)); kerb.rotation.x = PI / 2; kerb.position.y = .03; sq.add(kerb);
       for (let k = 0; k < 8; k++) { const sp = box(.015, .005, .56, std(0xb7b09e)); sp.rotation.y = k * PI / 8; sp.position.y = .025; sq.add(sp); }
       const fb = new THREE.Mesh(new THREE.CylinderGeometry(.2, .22, .08, 14), std(0xcfc7b4)); fb.position.y = .06; sq.add(fb); const fw = new THREE.Mesh(new THREE.CylinderGeometry(.17, .17, .02, 14), std(0x74cfdb, { transparent: true, opacity: .85 })); fw.position.y = .1; sq.add(fw); const fc = new THREE.Mesh(new THREE.CylinderGeometry(.025, .035, .22, 6), std(0xcfc7b4)); fc.position.y = .17; sq.add(fc);
       sq.userData.fp = .95; sq.userData.pri = 5; W(put(sq, qx, qz, 0, -.03));
-      [[-1.25, 3.3, .3, 2], [1.25, 3.3, -.3, 1], [-.9, 2.3, .7, 1], [.9, 2.3, -.7, 2]].forEach(([dx, inl, yw, fl], k) => { const [hx, hz] = onShore(-17.2 + dx, inl); const hs = house({ w: .42, d: .36, floors: fl, wall: 0xd6d0c0, roof: ROOF[(k + 1) % ROOF.length], gal: false, shut: [0x3d78a8, 0x4a9a74, 0xb4483a][k % 3], fr: k + 3, stone: true }); hs.userData.pri = 4; W(put(hs, hx, hz, seaYaw(hx) + yw, -.02)); });
+      [[-1.25, 4.35, .3, 2], [1.25, 4.35, -.3, 1], [-1.65, 3.3, .7, 1], [1.65, 3.3, -.7, 2]].forEach(([dx, inl, yw, fl], k) => { const [hx, hz] = onShore(-17.2 + dx, inl); const hs = house({ w: .42, d: .36, floors: fl, wall: 0xd6d0c0, roof: ROOF[(k + 1) % ROOF.length], gal: false, shut: [0x3d78a8, 0x4a9a74, 0xb4483a][k % 3], fr: k + 3, stone: true }); hs.userData.pri = 4; W(put(hs, hx, hz, seaYaw(hx) + yw, -.02)); });
     }
     const [hx, hz] = onShore(-11.4, 4.5); const hr = horreo(); hr.scale.setScalar(1.15); W(put(hr, hx, hz, seaYaw(hx) + .35, -.02));
     spot('Church and hórreo', 'Old town', 'A granite church with its tall bell tower, and in front of it a hórreo on stone legs: the two pieces that make up the heart of a Galician old town.', ch, .55);
