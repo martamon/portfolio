@@ -990,7 +990,7 @@
     if (planet) return;
     planet = { loading: true };
     jfHint(0);
-    import('/extras/freixo.js?v=71').then(function (m) {
+    import('/extras/freixo.js?v=74').then(function (m) {
       planet = m.open({ getDark: function () { return darkness(theme.hour); }, getHour: function () { return theme.hour; }, onClose: function () { planet = null; } });
     }).catch(function () { planet = null; });
   }
@@ -1347,7 +1347,7 @@
     cancelAnimationFrame(theme.raf);
     var from = theme.hour, delta = ((to - from + 36) % 24) - 12, t0 = performance.now();
     var step = function (now) {
-      var p = Math.min(1, (now - t0) / 1500), e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+      var p = Math.min(1, (now - t0) / 3000), e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
       setHour(from + delta * e, true);
       theme.raf = p < 1 ? requestAnimationFrame(step) : 0;
     };

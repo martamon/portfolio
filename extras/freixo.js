@@ -474,11 +474,48 @@ function makeAudio(night0) {
   const rg = ctx.createGain(); rg.gain.value = 0; rb.connect(rh); rh.connect(rl); rl.connect(rg); rg.connect(out); rg.connect(rev); rb.start();
   let rainOn = false, dropT = 0;
   function drops() { if (!alive) return; if (rainOn && !muted) { const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(1400 + Math.random() * 1300, t); o.frequency.exponentialRampToValueAtTime(700 + Math.random() * 500, t + .06); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.012 + Math.random() * .01, t + .004); g.gain.exponentialRampToValueAtTime(.0004, t + .22); o.connect(g); g.connect(tone); o.start(t); o.stop(t + .25); } dropT = setTimeout(drops, 120 + Math.random() * 380); }
+  // ---- ambience of the place you are looking at: tiny cartoon voices of children, fiesta murmur and a music box, gulls and swash on the beach, engines and bells in the harbour, sheep and birds on the hills, whales in the open sea
+  const zOut = ctx.createGain(); zOut.gain.value = 0; zOut.connect(tone); zOut.connect(rev);
+  const Z = { kind: '', lvl: 0 }, R_ = Math.random, PENTZ = [72, 74, 76, 79, 81, 84];
+  function voice(f, d, v, fc) {
+    const t = ctx.currentTime, o = ctx.createOscillator(), bp = ctx.createBiquadFilter(), g = ctx.createGain();
+    o.type = 'sawtooth'; o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * (1.12 + R_() * .35), t + d);
+    bp.type = 'bandpass'; bp.frequency.value = fc || 800 + R_() * 700; bp.Q.value = 5;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + .015); g.gain.exponentialRampToValueAtTime(.0005, t + d + .05);
+    o.connect(bp); bp.connect(g); g.connect(zOut); o.start(t); o.stop(t + d + .08);
+  }
+  const babble = (n, base, v) => { for (let i = 0; i < n; i++) setTimeout(() => alive && Z.lvl > .03 && voice(base * (.85 + R_() * .5), .07 + R_() * .08, v || .03), i * (100 + R_() * 90)); };
+  const laugh = (base) => { for (let i = 0; i < 4; i++) setTimeout(() => alive && Z.lvl > .03 && voice(base * (1.25 - i * .09), .08, .028, 1100), i * 115); };
+  function tone2(f0, f1, d, v, type, hold) {
+    const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain(); o.type = type || 'sine'; o.frequency.setValueAtTime(f0, t); o.frequency.linearRampToValueAtTime(f1, t + d * .5); o.frequency.linearRampToValueAtTime(f0 * 1.05, t + d);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + d * .35); g.gain.linearRampToValueAtTime(0, t + d); o.connect(g); g.connect(zOut); o.start(t); o.stop(t + d + .1); return o;
+  }
+  function whale() { const o = tone2(150 + R_() * 40, 270 + R_() * 60, 5.5, .05, 'sine'); const l = ctx.createOscillator(), lg = ctx.createGain(); l.frequency.value = 4.5; lg.gain.value = 5; l.connect(lg); lg.connect(o.frequency); l.start(); l.stop(ctx.currentTime + 6); const h = tone2(300, 520, 5.5, .012, 'sine'); }
+  function gull() { const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(1500, t); o.frequency.linearRampToValueAtTime(950, t + .16); o.frequency.linearRampToValueAtTime(1350, t + .34); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.018, t + .03); g.gain.linearRampToValueAtTime(0, t + .4); o.connect(g); g.connect(zOut); o.start(t); o.stop(t + .45); }
+  function swash(v) { const t = ctx.currentTime, b = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = ctx.createGain(); b.buffer = nb; fl.type = 'bandpass'; fl.frequency.value = 500 + R_() * 300; fl.Q.value = .5; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v || .035, t + 1.3); g.gain.linearRampToValueAtTime(0, t + 3); b.connect(fl); fl.connect(g); g.connect(zOut); b.start(t, R_() * 2); b.stop(t + 3.1); }
+  function engine() { const t = ctx.currentTime, o = ctx.createOscillator(), fl = ctx.createBiquadFilter(), g = ctx.createGain(), l = ctx.createOscillator(), lg = ctx.createGain(); o.type = 'square'; o.frequency.value = 70 + R_() * 20; fl.type = 'lowpass'; fl.frequency.value = 220; l.frequency.value = 5.5; lg.gain.value = .008; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.014, t + .8); g.gain.linearRampToValueAtTime(0, t + 3.4); l.connect(lg); lg.connect(g.gain); o.connect(fl); fl.connect(g); g.connect(zOut); o.start(t); l.start(t); o.stop(t + 3.5); l.stop(t + 3.5); }
+  function bellZ() { const t = ctx.currentTime; for (const [m, d] of [[69, 0], [76, .02]]) { const o = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain(); o.frequency.value = NOTE(m); o2.frequency.value = NOTE(m) * 2.76; g.gain.setValueAtTime(0, t + d); g.gain.linearRampToValueAtTime(.022, t + d + .01); g.gain.exponentialRampToValueAtTime(.0004, t + d + 3.2); const g2 = ctx.createGain(); g2.gain.value = .25; o.connect(g); o2.connect(g2); g2.connect(g); g.connect(zOut); o.start(t + d); o2.start(t + d); o.stop(t + d + 3.3); o2.stop(t + d + 3.3); } }
+  function bleat() { const t = ctx.currentTime, o = ctx.createOscillator(), bp = ctx.createBiquadFilter(), g = ctx.createGain(), l = ctx.createOscillator(), lg = ctx.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(300, t); o.frequency.linearRampToValueAtTime(240, t + .5); bp.type = 'bandpass'; bp.frequency.value = 650; bp.Q.value = 4; l.frequency.value = 26; lg.gain.value = .006; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.014, t + .06); g.gain.linearRampToValueAtTime(0, t + .55); l.connect(lg); lg.connect(g.gain); o.connect(bp); bp.connect(g); g.connect(zOut); o.start(t); l.start(t); o.stop(t + .6); l.stop(t + .6); }
+  function chirp() { const n = 2 + Math.floor(R_() * 3), f = 2800 + R_() * 900; for (let i = 0; i < n; i++) setTimeout(() => { if (!alive || Z.lvl < .03) return; const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * 1.25, t + .06); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.012, t + .01); g.gain.linearRampToValueAtTime(0, t + .09); o.connect(g); g.connect(zOut); o.start(t); o.stop(t + .1); }, i * 120); }
+  let mbI = 0; const WALTZ = [72, 76, 79, 76, 84, 79, 76, 74]; function musicbox() { const m = WALTZ[mbI++ % WALTZ.length], t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.value = NOTE(m); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.02, t + .008); g.gain.exponentialRampToValueAtTime(.0004, t + 1.2); o.connect(g); g.connect(zOut); o.start(t); o.stop(t + 1.3); }
+  const lastZ = {}; const cool = (k, ms) => { const n = performance.now(); if (lastZ[k] && n - lastZ[k] < ms) return false; lastZ[k] = n; return true; };
+  const ZR = {
+    kids: [[.9, () => babble(2 + Math.floor(R_() * 3), 520, .03)], [.14, () => laugh(560)]],
+    fiesta: [[.55, () => babble(3, 230, .022)], [.8, musicbox], [.15, () => babble(2, 560, .02)]],
+    beach: [[.25, () => swash(.035)], [.12, () => cool('gull', 5000) && gull()], [.22, () => babble(2, 600, .02)]],
+    harbour: [[.07, () => cool('eng', 6000) && engine()], [.05, () => cool('bell', 9000) && bellZ()], [.2, () => swash(.03)], [.07, () => cool('gull', 6000) && gull()]],
+    village: [[.06, () => cool('bell', 12000) && bellZ()], [.3, () => babble(2, 240, .02)], [.15, chirp]],
+    mountain: [[.16, () => cool('bleat', 3500) && bleat()], [.4, chirp], [.1, () => swash(.02)]],
+    sea: [[.07, () => cool('whale', 9000) && whale()], [.3, () => swash(.04)], [.05, () => cool('gull', 7000) && gull()]],
+    ria: [[.25, () => swash(.03)], [.03, () => cool('eng', 9000) && engine()], [.06, () => cool('gull', 7000) && gull()]]
+  };
+  const zt = setInterval(() => { if (!alive || muted || Z.lvl < .05 || !Z.kind) return; for (const [rate, fn] of ZR[Z.kind] || []) if (R_() < rate * .13) fn(); }, 130);
   let mt = 0, pt = 0;
   const api = {
     start() { if (ctx.state === 'suspended') ctx.resume(); out.gain.cancelScheduledValues(ctx.currentTime); out.gain.setTargetAtTime(muted ? 0 : .9, ctx.currentTime, 1.6); pad(); pt = setInterval(pad, 8200); mt = setTimeout(melody, 1800); },
     mute(m) { muted = m; out.gain.setTargetAtTime(m ? 0 : .9, ctx.currentTime, .35); if (!m && ctx.state === 'suspended') ctx.resume(); },
     setRain(on) { rainOn = on; rg.gain.setTargetAtTime(on ? .075 : 0, ctx.currentTime, 1.4); rh.frequency.setTargetAtTime(on ? 1100 : 900, ctx.currentTime, 1); sg.gain.setTargetAtTime(on ? .028 : (night ? .07 : .05), ctx.currentTime, 2); if (on) drops(); else clearTimeout(dropT); },
+    zone(kind, lvl) { Z.kind = kind; Z.lvl = lvl; zOut.gain.setTargetAtTime(muted ? 0 : lvl * 1.0, ctx.currentTime, .6); },
     setNight(n) { night = n; bp.frequency.setTargetAtTime(n ? 340 : 520, ctx.currentTime, 2); sg.gain.setTargetAtTime(n ? .07 : .05, ctx.currentTime, 2); },
     sfx(name) {
       if (muted || !alive) return;
@@ -505,8 +542,9 @@ function makeAudio(night0) {
         g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.045, t + .03); g.gain.exponentialRampToValueAtTime(.0005, t + .6); b.connect(fl); fl.connect(g); g.connect(tone); b.start(t, Math.random() * 2); b.stop(t + .7);
       }
     },
-    stop() { alive = false; clearTimeout(dropT); clearTimeout(mt); clearInterval(pt); out.gain.setTargetAtTime(0, ctx.currentTime, .5); setTimeout(() => { try { ctx.close(); } catch (e) {} }, 2200); },
-    get muted() { return muted; }
+    stop() { alive = false; clearInterval(zt); clearTimeout(dropT); clearTimeout(mt); clearInterval(pt); out.gain.setTargetAtTime(0, ctx.currentTime, .5); setTimeout(() => { try { ctx.close(); } catch (e) {} }, 2200); },
+    get muted() { return muted; },
+    get zoneKind() { return Z.kind; }
   };
   return api;
 }
@@ -518,7 +556,7 @@ export function open(opts) {
   root.className = 'x-pl';
   root.setAttribute('role', 'dialog'); root.setAttribute('aria-label', 'Ría de Muros e Noia');
   root.innerHTML = '<canvas class="x-pl-cv"></canvas><div class="x-pl-ts x-pl-ts-t"></div><div class="x-pl-ts x-pl-ts-b"></div>' +
-    '<div class="x-pl-top"><div class="x-pl-t"><b>Ría de Muros e Noia</b><span>A Coruña</span><span class="x-pl-clock"><em>Hora local</em> <b class="x-pl-hh"></b><i>:</i><b class="x-pl-mm"></b></span></div><div class="x-pl-btns">' +
+    '<div class="x-pl-top"><div class="x-pl-t"><b>Ría de Muros e Noia</b><span>A Coruña</span><span class="x-pl-clock"><em>Hora local</em> <b class="x-pl-hh"></b><i>:</i><b class="x-pl-mm"></b><svg class="x-pl-an" viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.5"/><line class="x-pl-ah" x1="12" y1="12" x2="12" y2="7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line class="x-pl-am" x1="12" y1="12" x2="12" y2="4.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span></div><div class="x-pl-btns">' +
     '<button type="button" class="x-pl-mu" aria-label="Sound"></button><button type="button" class="x-pl-rn" aria-label="Rain"></button><button type="button" class="x-pl-dn" aria-label="Day / night"></button>' +
     '<button type="button" class="x-pl-x" aria-label="Close"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button></div></div>' +
     '<button type="button" class="x-pl-more">Aprende más</button>' +
@@ -549,7 +587,7 @@ export function open(opts) {
   const W = (o) => { world.add(o); return o; };
 
   // lights stay with the camera, so the sun does not move when the planet turns (the shadows do)
-  const hemi = new THREE.HemisphereLight(0xfff4e4, 0xd8bcd8, 1.75); scene.add(hemi);
+  const HEMI_GROUND = new THREE.Color(0xd8bcd8), hemi = new THREE.HemisphereLight(0xfff4e4, 0xd8bcd8, 1.75); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffeccf, 2.15); sun.position.set(16, 20, 24); scene.add(sun);
   sun.castShadow = true; sun.shadow.mapSize.set(innerWidth < 700 ? 1024 : 2048, innerWidth < 700 ? 1024 : 2048);
   Object.assign(sun.shadow.camera, { left: -16, right: 16, top: 16, bottom: -16, near: 1, far: 90 }); sun.shadow.bias = -.0005; sun.shadow.normalBias = .03;
@@ -1425,10 +1463,10 @@ export function open(opts) {
   const RAINBG = C(0x9fb1c0), RAINSKY = C(0xc6d3dc), CLD_DAY = C(0xffffff), CLD_RAIN = C(0x8d9aa8), SEA_RAIN = C(0x5d8fa0);
 
   // ---- day / night
-  const DUSK_BG = C(0xf6bfa6), DAY = { bg: C(0xbfe0f6), hemi: 1.15, sun: 2.1, sunC: C(0xffdfb4), sky: C(0xfff0dc), sea: C(0x62d0ee) };
+  const SUN_ORANGE = C(0xff8f3c), HEMI_DUSK = C(0xffc08c), GROUND_DUSK = C(0xe8a0b4), CLD_DUSK = C(0xffb48a), DUSK_BG = C(0xf9a672), DAY = { bg: C(0xbfe0f6), hemi: 1.15, sun: 2.1, sunC: C(0xffdfb4), sky: C(0xfff0dc), sea: C(0x62d0ee) };
   const NIGHT = { bg: C(0x0a1430), hemi: .5, sun: .6, sunC: C(0x8fb0ff), sky: C(0x6f8ad0), sea: C(0x1b3a63) };
   let manual = false, night = typeof opts.getDark === 'function' ? opts.getDark() : (opts.night ? 1 : 0), nightT = night; const night0 = night > .5 ? 1 : 0;
-  const dnBtn = root.querySelector('.x-pl-dn'), hhEl = root.querySelector('.x-pl-hh'), mmEl = root.querySelector('.x-pl-mm');
+  const dnBtn = root.querySelector('.x-pl-dn'), hhEl = root.querySelector('.x-pl-hh'), mmEl = root.querySelector('.x-pl-mm'), ahEl = root.querySelector('.x-pl-ah'), amEl = root.querySelector('.x-pl-am');
   let muteSaved = false; try { muteSaved = localStorage.getItem('xpl-mute') === '1'; } catch (e) {}
   const audio = makeAudio(!!opts.night), muBtn = root.querySelector('.x-pl-mu');
   const paintMu = () => { const m = audio ? audio.muted : true; muBtn.innerHTML = m ? '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l4 6M21 9l-4 6"/></svg>' : '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>'; muBtn.setAttribute('aria-pressed', m ? 'true' : 'false'); };
@@ -1452,11 +1490,12 @@ export function open(opts) {
   rnBtn.addEventListener('click', () => { rainTarget = rainTarget ? 0 : 1; if (audio) { audio.setRain(!!rainTarget); audio.sfx(rainTarget ? 'rain' : 'sun'); } paintRn(); });
   paintRn();
   const light = (k) => {
-    const r = rainT;
+    const r = rainT, dsk = Math.max(0, Math.min(1, 4 * k * (1 - k))) * (1 - r * .75);        // 0 by day and by night, 1 in the golden hour
     bgc.copy(DAY.bg).lerp(DUSK_BG, sstep(0, .5, k)).lerp(NIGHT.bg, sstep(.45, 1, k)).lerp(RAINBG, r * (1 - k * .75)); scene.background = bgc;
-    hemi.intensity = (DAY.hemi + (NIGHT.hemi - DAY.hemi) * k) * (1 - r * .12); hemi.color.copy(DAY.sky).lerp(NIGHT.sky, k).lerp(RAINSKY, r * (1 - k * .6));
-    sun.intensity = (DAY.sun + (NIGHT.sun - DAY.sun) * k) * (1 - r * .62); sun.color.copy(DAY.sunC).lerp(NIGHT.sunC, k).lerp(RAINSKY, r * .6);
-    sea.material.color.copy(DAY.sea).lerp(NIGHT.sea, k).lerp(SEA_RAIN, r * (1 - k)); for (const m of cloudMats) m.color.copy(CLD_DAY).lerp(CLD_RAIN, r * (1 - k * .5));
+    const kI = Math.pow(Math.max(0, (k - .45) / .55), 1.2);       // the light only really fades once the sun is down: the golden hour stays bright
+    hemi.intensity = (DAY.hemi + (NIGHT.hemi - DAY.hemi) * kI) * (1 - r * .12); hemi.color.copy(DAY.sky).lerp(NIGHT.sky, kI).lerp(RAINSKY, r * (1 - k * .6));
+    sun.intensity = (DAY.sun + (NIGHT.sun - DAY.sun) * kI) * (1 - r * .62); sun.color.copy(DAY.sunC).lerp(NIGHT.sunC, kI).lerp(SUN_ORANGE, dsk * .92).lerp(RAINSKY, r * .6); sun.intensity *= 1 + dsk * .55; sun.position.set(16 + 12 * dsk, 20 - 14 * dsk, 24 - 6 * dsk); hemi.color.lerp(HEMI_DUSK, dsk * .75); hemi.groundColor.copy(HEMI_GROUND).lerp(GROUND_DUSK, dsk); hemi.intensity *= 1 - dsk * .12;
+    sea.material.color.copy(DAY.sea).lerp(NIGHT.sea, kI).lerp(SEA_RAIN, r * (1 - k)); for (const m of cloudMats) m.color.copy(CLD_DAY).lerp(CLD_DUSK, dsk * .85).lerp(CLD_RAIN, r * (1 - k * .5));
     rainMat.uniforms.uA.value = r; rain.visible = r > .01;
     winMat.emissiveIntensity = Math.min(1.5, k * 1.5 + r * .9);
  lampMat.emissiveIntensity = .4 + k * 2.4; lamp.intensity = k * 2.2; starMat.opacity = k;
@@ -1530,10 +1569,27 @@ export function open(opts) {
     const dt = Math.min(.05, (now - last) / 1000); last = now; t += dt; frame++;
     if (!manual && opts.getDark) night = opts.getDark();       // the planet follows the real hour of the visitor (and the dial of the page)
     const nb2 = night > .5 ? 1 : 0; if (audio && nb2 !== lastNight) { lastNight = nb2; audio.setNight(!!nb2); audio.sfx(nb2 ? 'night' : 'day'); }
-    nightT += (night - nightT) * (1 - Math.exp(-dt * (manual ? 2.2 : 4))); if (Math.abs(night - nightT) < .002) nightT = night;
+    nightT += (night - nightT) * (1 - Math.exp(-dt * (manual ? 1.2 : 1.0))); if (Math.abs(night - nightT) < .002) nightT = night;
     light(nightT); if ((nightT > .5) !== root.classList.contains('x-night')) paintBtn();
     rainT += (rainTarget - rainT) * (1 - Math.exp(-dt * 1.1)); if (Math.abs(rainTarget - rainT) < .003) rainT = rainTarget; rainMat.uniforms.uT.value = t;
-    if (frame % 20 === 1) { const hr = opts.getHour ? opts.getHour() : new Date().getHours() + new Date().getMinutes() / 60; const hh = Math.floor(hr) % 24, mm = Math.floor((hr - Math.floor(hr)) * 60); hhEl.textContent = String(hh).padStart(2, '0'); mmEl.textContent = String(mm).padStart(2, '0'); }
+    if (frame % 20 === 1) { const hr = opts.getHour ? opts.getHour() : new Date().getHours() + new Date().getMinutes() / 60; const hh = Math.floor(hr) % 24, mm = Math.floor((hr - Math.floor(hr)) * 60); hhEl.textContent = String(hh).padStart(2, '0'); mmEl.textContent = String(mm).padStart(2, '0'); ahEl.style.transform = 'rotate(' + (((hr % 12) / 12) * 360).toFixed(1) + 'deg)'; amEl.style.transform = 'rotate(' + ((hr % 1) * 360).toFixed(1) + 'deg)'; }
+    if (audio && frame % 8 === 3) {
+      const zl = THREE.MathUtils.clamp((baseDist * .8 - dist) / (baseDist * .3), 0, 1);
+      if (zl <= 0) audio.zone('', 0); else {
+        camDir.set(0, 0, 1).applyQuaternion(_q.copy(world.quaternion).invert()).normalize(); const [cx, cz] = planeOf(camDir), at = (x, z, r) => Math.hypot(cx - x, cz - z) < r;
+        let kind = 'sea';
+        const far = Math.hypot(cx, cz) > 25 || cz < -22 || cz > 13;
+        if (kickers.some((k) => { const [kx, kz] = k.loc(k.qx, k.qz); return at(kx, kz, 1.7); })) kind = 'kids';
+        else if (at(fiestaFx.x, fiestaFx.z, 2.3)) kind = 'fiesta';
+        else if (COVES.some((c) => at(c[0], c[1], 2.2))) kind = 'beach';
+        else if (!far && groundH(cx, cz) < -.03 && (at(pierX, shoreZ + 1.5, 3) || at(INLET[0][0], INLET[0][1], 2.4) || at(-13, shore(-13) + 1.5, 5) || at(INLET2[0][0], INLET2[0][1], 2.4))) kind = 'harbour';
+        else if (HOMES.some((h) => at(h[0], h[1], 1.5))) kind = 'village';
+        else if (groundH(cx, cz) > 1.7) kind = 'mountain';
+        else if (far) kind = 'sea';
+        else kind = groundH(cx, cz) < -.03 ? 'ria' : 'village';
+        audio.zone(kind, zl);
+      }
+    }
     dist += (distT - dist) * (1 - Math.exp(-dt * 3.4));
     if (focus) { world.quaternion.slerp(focus.q, 1 - Math.exp(-dt * 3.2)); distT += (focus.dist - distT) * (1 - Math.exp(-dt * 3)); }
     else if (!ptrs.size) {
@@ -1703,7 +1759,7 @@ export function open(opts) {
   }
   root.querySelector('.x-pl-x').addEventListener('click', close);
   const look = (x, z, zoom, snap, tilt) => { focus = { q: faceCamera(dirFrom(x, z, new THREE.Vector3()), tilt === undefined ? .45 : tilt), dist: baseDist * (zoom || .5) }; if (snap) { world.quaternion.copy(focus.q); dist = distT = focus.dist; focus = null; } };
-  return { close, root, spots, show, look, scene, camera, world, dbg: { shore, shoreS, LOURO, HILL2, INLET, INLET2 } };
+  return { audio, close, root, spots, show, look, scene, camera, world, dbg: { shore, shoreS, LOURO, HILL2, INLET, INLET2 } };
 }
 
 let cssDone = false;
@@ -1726,6 +1782,7 @@ function injectCss() {
     '.x-pl-clock{display:flex;align-items:baseline;gap:6px;margin-top:6px;opacity:.85!important;font:500 12px/1.2 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace!important;letter-spacing:.06em;text-transform:uppercase}',
     '.x-pl-clock em{font-style:normal;opacity:.7}.x-pl-clock b{font:500 12px/1.2 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace!important;letter-spacing:.06em}.x-pl-clock i{font-style:normal;display:inline-block;width:.5em;text-align:center;animation:x-pl-blink 1s step-end infinite}',
     '@keyframes x-pl-blink{50%{opacity:0}}',
+    '.x-pl-an{align-self:center;margin-left:4px;opacity:.75;overflow:visible}.x-pl-ah,.x-pl-am{transform-origin:12px 12px}',
     '.x-pl-btns{display:flex;gap:10px;pointer-events:auto}',
     '.x-pl button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}',
     '.x-pl-dn,.x-pl-x,.x-pl-mu,.x-pl-rn{width:44px;height:44px;border-radius:50%;border:0;padding:0;display:grid;place-items:center;background:rgba(255,255,255,.7);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 2px 10px rgba(20,50,80,.12);transition:background .5s ease,transform .5s cubic-bezier(.22,.8,.24,1)}',
