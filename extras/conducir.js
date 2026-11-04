@@ -250,13 +250,14 @@ function fonte() {
   add(new THREE.CylinderGeometry(.34, .44, 2.3, 8), gran, 0, 1.6, 0); add(new THREE.CylinderGeometry(1.0, .5, .4, 12), gran, 0, 2.7, 0); add(new THREE.SphereGeometry(.32, 8, 6), gran, 0, 3.05, 0);
   g.userData.r = 3.2; return g;
 }
-function person(shirt, skin) {
+function person(shirt, skin, bagCol) {
   const g = new THREE.Group(), m = (geo, col, x, y, z) => { const o = new THREE.Mesh(geo, std(col)); o.position.set(x, y, z); o.castShadow = true; g.add(o); return o; };
   const body = m(new THREE.IcosahedronGeometry(.5, 2), shirt, 0, .95, 0); body.scale.set(1, 1.15, .9);
   for (const sz of [-1, 1]) { m(new THREE.IcosahedronGeometry(.2, 1), 0x3a4a63, .05, .22, sz * .22).scale.set(1.3, .8, 1); const arm = m(new THREE.IcosahedronGeometry(.17, 1), skin, 0, .95, sz * .5); arm.userData.arm = sz; }
   m(new THREE.IcosahedronGeometry(.4, 2), skin, 0, 1.85, 0);
   for (const sz of [-1, 1]) { m(new THREE.IcosahedronGeometry(.05, 1), 0x2b2530, .36, 1.9, sz * .14); m(new THREE.IcosahedronGeometry(.07, 1), 0xf08a8a, .33, 1.76, sz * .26).scale.set(.5, .8, 1); }
   const hair = new THREE.Mesh(new THREE.SphereGeometry(.42, 10, 6, 0, PI * 2, 0, PI * .55), std([0x4a3326, 0x2b2530, 0xb5651d, 0xe0b45a, 0x7a4a2a][Math.floor(rng() * 5)])); hair.position.set(-.03, 1.9, 0); hair.rotation.z = .1; g.add(hair);
+  if (bagCol) { const bag = new THREE.Mesh(rbox(.42, .5, .3, .08), std(bagCol)); bag.position.set(.1, .5, .72); bag.castShadow = true; g.add(bag); const hd = new THREE.Mesh(new THREE.TorusGeometry(.12, .02, 5, 10, PI), std(0x4a4038)); hd.position.set(.1, .8, .72); g.add(hd); }
   const um = new THREE.Group(); const dome = new THREE.Mesh(new THREE.SphereGeometry(1.0, 12, 6, 0, PI * 2, 0, PI / 2), std([0xe36d57, 0x4f8fc0, 0xf2c14a, 0x5fae8a, 0xe9a0c0][Math.floor(rng() * 5)])); dome.scale.y = .55; dome.position.y = 2.75; const hd = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, 1.2, 5), std(0x4a4038)); hd.position.y = 2.15; um.add(dome, hd); um.visible = false; g.add(um); g.userData.um = um;
   return g;
 }
@@ -271,6 +272,33 @@ function busStop() {
   { const cv = document.createElement('canvas'); cv.width = cv.height = 96; const c = cv.getContext('2d'); c.fillStyle = '#2f6fa8'; c.beginPath(); c.arc(48, 48, 44, 0, 6.3); c.fill(); c.fillStyle = '#fff6e4'; c.font = '700 38px "Switzer","Inter",sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('BUS', 48, 52); const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; const sg = new THREE.Mesh(new THREE.PlaneGeometry(.9, .9), new THREE.MeshStandardMaterial({ map: t, transparent: true, roughness: 1 })); sg.position.set(2.3, 2.6, 0); sg.rotation.y = PI / 2; g.add(sg); add(new THREE.CylinderGeometry(.05, .05, 2.6, 5), dk, 2.3, 1.3, 0); }
   add(new THREE.BoxGeometry(.9, 1.0, .05), 0xf6f0e2, 1.3, 1.9, -.86);
   g.userData.hx = 2.3; g.userData.hz = 1.25; g.userData.r = 2.6; return g;
+}
+// a supermarket: a wide pale building with a glass front, coral awning, a big sign, crates of fruit and a row of trolleys
+function supermercado(label) {
+  const g = new THREE.Group(), add = (geo, col, x, y, z, extra) => { const o = new THREE.Mesh(geo, std(col, extra)); o.position.set(x, y, z); o.castShadow = true; o.receiveShadow = true; g.add(o); return o; };
+  add(rbox(14, 4.4, 8, .3), 0xf3e8d2, 0, 2.2, 0); add(rbox(14.6, .5, 8.6, .15), 0xe36d57, 0, 4.6, 0);
+  add(new THREE.BoxGeometry(9.6, 2.2, .12), 0x7fb0c8, -1.2, 1.9, 4.04, { roughness: .2, transparent: true, opacity: .8 });
+  for (let i = 0; i <= 6; i++) add(new THREE.BoxGeometry(.1, 2.3, .16), 0xf6efe0, -6 + i * 1.6, 1.9, 4.06);
+  add(new THREE.BoxGeometry(2.4, 2.4, .14), 0x6f9db6, 5.2, 1.3, 4.05, { roughness: .2 }); add(new THREE.BoxGeometry(.1, 2.4, .18), 0xf6efe0, 5.2, 1.3, 4.07);
+  for (let i = 0; i < 9; i++) add(new THREE.BoxGeometry(1.6, .14, 1.9), i % 2 ? 0xfff6e8 : 0xe36d57, -6.4 + i * 1.6, 3.35, 4.9).rotation.x = .28;        // a striped awning over the whole front
+  { const cv = document.createElement('canvas'); cv.width = 768; cv.height = 192; const c = cv.getContext('2d'); c.fillStyle = '#2f6fa8'; c.beginPath(); c.roundRect ? c.roundRect(6, 6, 756, 180, 40) : c.rect(6, 6, 756, 180); c.fill(); c.fillStyle = '#fff6e4'; c.font = '700 84px "Switzer","Inter",sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(label, 400, 100); c.strokeStyle = '#fff6e4'; c.lineWidth = 9; c.lineCap = 'round'; c.beginPath(); c.moveTo(48, 62); c.lineTo(76, 62); c.lineTo(92, 124); c.lineTo(150, 124); c.stroke(); c.fillStyle = '#fff6e4'; c.beginPath(); c.arc(100, 146, 9, 0, 6.3); c.arc(142, 146, 9, 0, 6.3); c.fill();
+    const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; const sg = new THREE.Mesh(new THREE.PlaneGeometry(9, 2.25), new THREE.MeshStandardMaterial({ map: t, roughness: 1 })); sg.position.set(0, 5.3, 4.35); sg.castShadow = true; g.add(sg); add(new THREE.BoxGeometry(9.2, .12, .4), 0xf6efe0, 0, 4.1, 4.3); }
+  const fr = [0xe9577a, 0xf2a43a, 0x8fcf6a, 0xf5d66a]; for (let k = 0; k < 4; k++) { add(rbox(1.5, .6, 1.0, .08), 0xb98a5a, 6.8 + (k % 2) * 1.7, .3, 3.5 + Math.floor(k / 2) * 1.3); for (let q = 0; q < 6; q++) { const f = new THREE.Mesh(new THREE.IcosahedronGeometry(.24, 1), std(fr[k])); f.position.set(6.8 + (k % 2) * 1.7 - .45 + (q % 3) * .45, .72, 3.5 + Math.floor(k / 2) * 1.3 - .2 + Math.floor(q / 3) * .4); f.castShadow = true; g.add(f); } }
+  for (let k = 0; k < 4; k++) { const c = cart(); c.position.set(-5.6 + k * .9, 0, 5.4); c.rotation.y = PI / 2; g.add(c); }
+  g.userData.hx = 7.5; g.userData.hz = 4.5; g.userData.r = 8.4; return g;
+}
+function cart() {
+  const g = new THREE.Group(), m = (geo, col, x, y, z) => { const o = new THREE.Mesh(geo, std(col)); o.position.set(x, y, z); o.castShadow = true; g.add(o); return o; };
+  m(rbox(.8, .45, .55, .06), 0xd6dce2, 0, .75, 0); m(new THREE.BoxGeometry(.06, .6, .6), 0x3a4452, -.45, 1.0, 0); m(new THREE.BoxGeometry(.7, .05, .5), 0x3a4452, 0, .42, 0);
+  for (const sx of [-.3, .3]) for (const sz of [-.22, .22]) m(new THREE.CylinderGeometry(.07, .07, .05, 6), 0x3a4452, sx, .12, sz).rotation.x = PI / 2;
+  return g;
+}
+// a fisherman with a rod over the water
+function fisher(shirt, skin) {
+  const g = person(shirt, skin), rod = new THREE.Group(); rod.position.set(.4, 1.2, .55); g.add(rod);
+  const r = new THREE.Mesh(new THREE.CylinderGeometry(.02, .035, 3.4, 5), std(0x5a4a38)); r.position.y = 1.5; r.rotation.z = -1.0; r.position.x = .95; rod.add(r);
+  const line = new THREE.Mesh(new THREE.CylinderGeometry(.006, .006, 2.6, 3), std(0xf4eadb)); line.position.set(2.5, 1.65 - 1.25, 0); rod.add(line);
+  const bob = new THREE.Mesh(new THREE.SphereGeometry(.12, 8, 6), std(0xe36d57)); bob.position.set(2.5, 0, 0); rod.add(bob); g.userData.bob = bob; g.userData.rod = rod; return g;
 }
 // small pictures for the information cards (pastel drawings, labelled in the language of the visitor)
 function artFor(id, lang) {
@@ -445,6 +473,11 @@ export function open(opts) {
     for (let k = 0; k < 1; k++) { const hx = rx - 19 - rng() * 7, hzz = z0 - 12 + k * 12 + (rng() - .5) * 4; if (H(hx, hzz) < .4 || solid(hx, hzz, 7) || lanes.some((pts) => pts.some((q) => Math.hypot(q[0] - hx, q[1] - hzz) < 6.5))) continue; const hr = horreo(); const yaw = rng() * PI * 2; addTo(hr, hx, hzz, yaw, hr.userData.r); if (vi === 1 && !infoSpots.length) infoSpots.push(['horreo', hx + Math.cos(yaw) * 0 + 6.5, hzz]); }
     if (vi === 3 || vi === 2) { const ch = church(); const cx = rx - 13, cz = z0 + (vi === 3 ? -16 : 16); if (!solid(cx, cz, 9)) addTo(ch, cx, cz, PI / 2, 8); }
   });
+  { const lbl = lang === 0 ? 'SUPERMARKET' : 'SUPERMERCADO', sz0 = 50, sx0 = ROADX(sz0) - 16, sm = supermercado(lbl); addTo(sm, sx0, sz0, PI / 2, sm.userData.r);
+    const lot = new THREE.Mesh(new THREE.BoxGeometry(11, .1, 22), std(0x9aa3b0)); lot.position.set(sx0 + 9.4, H(ROADX(sz0) - 7, sz0) + .05, sz0); scene.add(lot); lot.receiveShadow = true;
+    shelters.push([sx0 + 5.6, sz0 - 3], [sx0 + 5.6, sz0 + 3]);
+    const mkShopper = (i, z1, z2, withCart) => { const w2 = person([0x7aa6d8, 0xf0907a, 0xf4e6d0, 0xc9a0e8][i % 4], [0xf0c9a0, 0xe3b185, 0xf5d6b5][i % 3], [0xe36d57, 0x5fae8a, 0xf2c14a][i % 3]); if (withCart) { const c = cart(); c.position.set(1.25, 0, 0); w2.add(c); } scene.add(w2); walkers.push({ p: w2, pts: [[sx0 + 5.6, z1], [sx0 + 9.5, (z1 + z2) / 2], [sx0 + 6.4, z2]], d: rng() * 6, sp: .45 + rng() * .25, dir: 1, lift: .08 }); };
+    mkShopper(0, sz0 - 6, sz0 + 6, true); mkShopper(1, sz0 + 4, sz0 - 7, false); mkShopper(2, sz0 - 2, sz0 + 8, true); }
   for (const [px, pz, pr] of plazas) {
     const g = new THREE.Group(), cvp = document.createElement('canvas'); cvp.width = cvp.height = 256; const c2 = cvp.getContext('2d'); c2.fillStyle = '#9d9585'; c2.fillRect(0, 0, 256, 256); let ry = 0; while (ry < 256) { const rh = 22 + rng() * 14; let rx2 = -rng() * 40; while (rx2 < 256) { const sw = 34 + rng() * 40, tone = 190 + rng() * 40; c2.fillStyle = `rgb(${tone},${tone - 6},${tone - 20})`; c2.beginPath(); c2.roundRect ? c2.roundRect(rx2 + 1.5, ry + 1.5, sw - 3, rh - 3, 6) : c2.rect(rx2 + 1.5, ry + 1.5, sw - 3, rh - 3); c2.fill(); rx2 += sw; } ry += rh; }
     const pt = new THREE.CanvasTexture(cvp); pt.wrapS = pt.wrapT = THREE.RepeatWrapping; pt.repeat.set(pr / 3, pr / 3); pt.colorSpace = THREE.SRGBColorSpace;
@@ -454,7 +487,7 @@ export function open(opts) {
     if (pr > 8) { const f = fonte(); addTo(f, px, pz, 0, 3.2); } else addTo(cruceiro(), px, pz, 0, 2.3);
     for (let k = 0; k < 6; k++) { const a = k * PI / 3 + .3, bx = px + Math.cos(a) * pr * .72, bz = pz + Math.sin(a) * pr * .72, bn = new THREE.Group(); const seat = new THREE.Mesh(rbox(2.4, .2, .8, .06), std(0xa5835c)); seat.position.y = .55; const back = new THREE.Mesh(rbox(2.4, .6, .14, .05), std(0xa5835c)); back.position.set(0, .95, -.34); bn.add(seat, back); for (const sx of [-1, 1]) { const lg = new THREE.Mesh(rbox(.18, .55, .6, .04), std(0xbab3a3)); lg.position.set(sx * 1.05, .27, 0); bn.add(lg); } bn.traverse((o) => { if (o.isMesh) o.castShadow = true; }); addTo(bn, bx, bz, -a - PI / 2, 0); colliders.push([bx, bz, 1.0]); }
     for (let k = 0; k < 5; k++) { const a = k * PI * 2 / 5 + .9, tx = px + Math.cos(a) * pr * .9, tz = pz + Math.sin(a) * pr * .9, tg = new THREE.Group(); const tk = new THREE.Mesh(new THREE.CylinderGeometry(.22, .3, 2.6, 6), std(0x8a6a4c)); tk.position.y = 1.3; const cw = new THREE.Mesh(rbox(3.2, 2.2, 3.2, .8), std(0x5aa88a, { flatShading: false })); cw.position.y = 3.6; tg.add(tk, cw); tg.traverse((o) => { if (o.isMesh) o.castShadow = true; }); addTo(tg, tx, tz, a, 0); colliders.push([tx, tz, .8]); }
-    const n = pr > 8 ? 3 : 1; for (let k = 0; k < n; k++) { const w2 = person([0xe36d57, 0x4f8fc0, 0xf2c14a, 0x5fae8a, 0xc9a0e8, 0xf0907a][k % 6], [0xf0c9a0, 0xe3b185, 0xf5d6b5][k % 3]); scene.add(w2); const pts = []; const a0 = rng() * 6, rr = pr * (.35 + rng() * .3); for (let q = 0; q <= 16; q++) pts.push([px + Math.cos(a0 + q * .4) * rr, pz + Math.sin(a0 + q * .4) * rr]); walkers.push({ p: w2, pts, d: rng() * 20, sp: .8 + rng() * .5, dir: 1, lift: .22 }); }
+    const n = pr > 8 ? 1 : 0; for (let k = 0; k < n; k++) { const w2 = person([0xe36d57, 0x4f8fc0, 0xf2c14a, 0x5fae8a, 0xc9a0e8, 0xf0907a][k % 6], [0xf0c9a0, 0xe3b185, 0xf5d6b5][k % 3]); scene.add(w2); const pts = []; const a0 = rng() * 6, rr = pr * (.35 + rng() * .3); for (let q = 0; q <= 16; q++) pts.push([px + Math.cos(a0 + q * .4) * rr, pz + Math.sin(a0 + q * .4) * rr]); walkers.push({ p: w2, pts, d: rng() * 20, sp: .8 + rng() * .5, dir: 1, lift: .22 }); }
   }
   // dry-stone walls along both sides of every lane
   { const wallG = rbox(1.7, .95, .6, .14), nW = lanes.reduce((a, p) => a + p.length * 2, 0), walls = new THREE.InstancedMesh(wallG, std(0xffffff, { flatShading: false }), nW), wo = new THREE.Object3D(), wc = new THREE.Color(); let wi = 0;
@@ -465,8 +498,8 @@ export function open(opts) {
   // the people of the villages: on the pavements, in the lanes and on the beach
   { const skins = [0xf0c9a0, 0xe3b185, 0xf5d6b5, 0xc58c5e], shirts = [0xe36d57, 0x4f8fc0, 0xf2c14a, 0x5fae8a, 0xc9a0e8, 0xf0907a, 0xf4e6d0, 0x7aa6d8];
     const mk = (pts, i) => { const w2 = person(shirts[i % shirts.length], skins[i % skins.length]); scene.add(w2); walkers.push({ p: w2, pts, d: rng() * 30, sp: .85 + rng() * .6, dir: rng() < .5 ? 1 : -1, lift: .08 }); };
-    let wk = 0; VILLAGES.forEach(([, z0]) => { for (const sd of [-1, 1]) for (let k = 0; k < 1; k++) { const pts = []; for (let z = z0 - 20 + k * 6; z <= z0 + 20; z += 2) pts.push([ROADX(z) + sd * (3.9 + k * .4), z]); mk(pts, wk++); } });
-    for (const pts of lanes.slice(0, 5)) { mk(pts.map((q) => [q[0] + .7, q[1]]), wk++); }
+    let wk = 0; VILLAGES.forEach(([, z0], vi) => { for (const sd of [-1, 1]) for (let k = 0; k < 1; k++) { if ((vi + (sd > 0 ? 1 : 0)) % 2) continue; const pts = []; for (let z = z0 - 20 + k * 6; z <= z0 + 20; z += 2) pts.push([ROADX(z) + sd * (3.9 + k * .4), z]); mk(pts, wk++); } });
+    for (const pts of lanes.filter((_, i) => i % 5 === 0)) { mk(pts.map((q) => [q[0] + .7, q[1]]), wk++); }
     { const bz = 66; const pts = []; for (let z = bz - 16; z <= bz + 16; z += 2) pts.push([COAST(z) - 4.2 + Math.sin(z * .3) * .8, z]); mk(pts, wk++); } }
   // the beach of Area Maior at Louro: parasols, towels and a sign
   { const bz = 66, parC = [0xe36d57, 0x4f8fc0, 0xf2c14a, 0x5fae8a, 0xe9a0c0, 0xf4e6d0];
@@ -516,6 +549,8 @@ export function open(opts) {
     for (const sz of [-1, 1]) { const rail = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0 - 1, .08, .08), postM); rail.position.set((x0 + x1) / 2 + .2, PIERY + 1.0, z0 + sz * (PIERW / 2 - .08)); g.add(rail); }
     scene.add(g); piers.push({ x0, x1, z: z0, y: PIERY + .08 }); return g; };
   mkPier(-62); mkPier(34);
+  const fishers = [];
+  [[-62, 1, 4], [34, 1, 6], [34, -1, 11], [34, 1, 16]].forEach(([z0, sd, dx], i) => { const pr = piers.find((q) => q.z === z0), f = fisher([0xe36d57, 0x4f8fc0, 0xf2c14a, 0x5fae8a][i], [0xf0c9a0, 0xe3b185][i % 2]); f.position.set(pr.x1 - dx, pr.y + .1, z0 + sd * (PIERW / 2 - .6)); f.rotation.y = 0; f.userData.ph = i * 1.9; scene.add(f); fishers.push(f); });
   const boats = []; [[-62, -1, 9], [-62, 1, 17], [34, -1, 8], [34, 1, 15], [34, -1, 19]].forEach(([z0, sd, dx], i) => { const b = new THREE.Group(), col = [0xe36d57, 0x4f8fc0, 0xf2c14a, 0x5fae8a, 0xe36d57][i]; const hull = new THREE.Mesh(rbox(5, 1.1, 2, .4), std(col)); hull.position.y = .3; b.add(hull); const cab = new THREE.Mesh(rbox(1.6, 1.3, 1.4, .25), std(0xf7f0e0)); cab.position.set(-.6, 1.2, 0); b.add(cab); const mast = new THREE.Mesh(new THREE.CylinderGeometry(.06, .06, 3, 5), std(0x8a6a4c)); mast.position.set(.8, 2, 0); b.add(mast); const fl = new THREE.Mesh(new THREE.SphereGeometry(.18, 6, 5), std(0xf08a76)); fl.position.set(2.6, .8, 0); b.add(fl); b.userData = { x: COAST(z0) + dx - 5, z: z0 + sd * (PIERW / 2 + 1.5), ph: i * 1.7 }; b.traverse((o) => { if (o.isMesh) o.castShadow = true; }); scene.add(b); boats.push(b); });
   // seagulls fly past from time to time: a little flock crosses the sky above the car, calling
   const gulls = []; for (let i = 0; i < 5; i++) { const g = new THREE.Group(), body = new THREE.Mesh(new THREE.SphereGeometry(.4, 8, 6), new THREE.MeshBasicMaterial({ color: 0xfffaf0 })); body.scale.set(1.9, .8, .8); g.add(body); const hd = new THREE.Mesh(new THREE.SphereGeometry(.2, 6, 5), new THREE.MeshBasicMaterial({ color: 0xfffaf0 })); hd.position.x = .72; g.add(hd); const bk = new THREE.Mesh(new THREE.ConeGeometry(.07, .26, 4), new THREE.MeshBasicMaterial({ color: 0xf2a94a })); bk.rotation.z = -PI / 2; bk.position.x = .94; g.add(bk); g.userData.w = []; for (const sd of [-1, 1]) { const w = new THREE.Mesh(new THREE.BoxGeometry(.8, .05, 1.7), new THREE.MeshBasicMaterial({ color: 0xffffff })); w.position.z = sd * .85; w.userData.s = sd; g.add(w); g.userData.w.push(w); } g.visible = false; scene.add(g); gulls.push(g); }
@@ -675,6 +710,7 @@ export function open(opts) {
       const um = w.p.userData.um; if (um) um.visible = raining && w.mode !== 'stay';
     }
     { rainL.material.opacity = rainT * .55 * (1 - uwMix); rainL.visible = rainT > .03 && uwMix < .6; if (rainL.visible) { rainL.position.set(camera.position.x, Math.max(camera.position.y - 5, H(camera.position.x, camera.position.z)), camera.position.z); const a = rainG.attributes.position; for (let i = 0; i < NR; i++) { let y = a.getY(i * 2) - dt * 20; if (y < -1) y += 23; a.setY(i * 2, y); a.setY(i * 2 + 1, y - 1.1); } a.needsUpdate = true; } for (const c of clouds) c.children.forEach((m2) => m2.material.color.lerp(rainT > .3 ? CLOUD_GREY : CLOUD_WARM, dt * .8)); }
+    for (const f of fishers) { const u = f.userData; u.rod.rotation.z = Math.sin(t * .6 + u.ph) * .03; u.bob.position.y = Math.sin(t * 1.6 + u.ph) * .06 - (Math.sin(t * .35 + u.ph) > .95 ? .25 : 0); if (u.um || f.userData.um) f.userData.um.visible = rainT > .45; }
     // the orbs
     let best = null, bd = 6.5, tgt = null, td = 1e9;
     for (const o of orbs) { const u = o.userData; o.position.y = u.base + Math.sin(t * 1.6 + u.id) * .3; u.ring.rotation.z = t * 1.2 + u.id; u.ring.rotation.x = PI / 2 + Math.sin(t + u.id) * .4; u.ball.material.emissiveIntensity = u.done ? .15 : .9 + Math.sin(t * 3 + u.id) * .3; u.ring.material.opacity = u.done ? .25 : .8; u.beam.visible = !u.done; const dx = o.position.x - S.x, dz = o.position.z - S.z, d = Math.hypot(dx, dz); if (d < bd && Math.abs(o.position.y - S.y) < 7) { bd = d; best = o; } if (!u.done && d < td) { td = d; tgt = o; } }
