@@ -546,7 +546,7 @@ function makeAudio(night0) {
       else if (name === 'boom') { const t = ctx.currentTime, b2 = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = ctx.createGain(); b2.buffer = nb; fl.type = 'lowpass'; fl.frequency.setValueAtTime(420, t + .5); fl.frequency.exponentialRampToValueAtTime(90, t + 1.6); g.gain.setValueAtTime(0, t); g.gain.setValueAtTime(0, t + .5); g.gain.linearRampToValueAtTime(.09, t + .53); g.gain.exponentialRampToValueAtTime(.0005, t + 1.8); b2.connect(fl); fl.connect(g); g.connect(tone); g.connect(rev); b2.start(t + .5, Math.random() * 2); b2.stop(t + 1.9); const w = ctx.createOscillator(), wg = ctx.createGain(); w.type = 'sine'; w.frequency.setValueAtTime(500, t); w.frequency.exponentialRampToValueAtTime(1400, t + .5); wg.gain.setValueAtTime(.012, t); wg.gain.linearRampToValueAtTime(0, t + .5); w.connect(wg); wg.connect(tone); w.start(t); w.stop(t + .55); for (let k = 0; k < 6; k++) setTimeout(() => alive && !muted && note(84 + Math.floor(Math.random() * 12), .012, .35), 650 + k * 90 + Math.random() * 120); }
       else if (name === 'mochi') { [64, 71, 76, 83, 88].forEach((m, k) => setTimeout(() => alive && note(m, .05, 3.4), k * 140)); setTimeout(() => { if (!alive || muted) return; for (let k = 0; k < 3; k++) { const t = ctx.currentTime + k * .13, o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(700 + k * 120, t); o.frequency.exponentialRampToValueAtTime(1500 + k * 160, t + .09); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.03, t + .01); g.gain.exponentialRampToValueAtTime(.0005, t + .2); o.connect(g); g.connect(tone); g.connect(rev); o.start(t); o.stop(t + .25); } }, 760); }
       else if (name === 'mochitalk') { const t = ctx.currentTime, f = 520 + Math.random() * 380, o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * (1.1 + Math.random() * .25), t + .06); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.022, t + .008); g.gain.exponentialRampToValueAtTime(.0005, t + .11); o.connect(g); g.connect(tone); o.start(t); o.stop(t + .13); }
-      else if (name === 'mochinext') { note(79, .045, 1.8); setTimeout(() => note(86, .04, 2.2), 110); }
+      else if (name === 'mochinext') { [74, 79, 83, 91].forEach((m, k) => setTimeout(() => alive && note(m, .042 - k * .004, 2.2), k * 95)); setTimeout(() => { if (!alive || muted) return; const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(600, t); o.frequency.exponentialRampToValueAtTime(1800, t + .22); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.026, t + .02); g.gain.exponentialRampToValueAtTime(.0005, t + .4); o.connect(g); g.connect(tone); g.connect(rev); o.start(t); o.stop(t + .45); }, 60); }
       else if (name === 'mochiend') { [86, 79, 74, 67].forEach((m, k) => setTimeout(() => alive && note(m, .04 - k * .004, 2.4), k * 120)); }
       else if (name === 'learn') { [72, 76, 79, 83].forEach((m, k) => setTimeout(() => note(m, .04 - k * .004, 2.8), k * 105)); }
       else if (name === 'learnoff') { [83, 79, 74].forEach((m, k) => setTimeout(() => note(m, .03, 1.8), k * 95)); }
@@ -581,8 +581,8 @@ export function open(opts) {
     '<div class="x-pl-top"><div class="x-pl-t"><b>Ría de Muros e Noia</b><span>A Coruña</span><span class="x-pl-clock"><em>Hora local</em> <b class="x-pl-hh"></b><i>:</i><b class="x-pl-mm"></b><svg class="x-pl-an" viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.5"/><line class="x-pl-ah" x1="12" y1="12" x2="12" y2="7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line class="x-pl-am" x1="12" y1="12" x2="12" y2="4.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span></div><div class="x-pl-btns">' +
     '<button type="button" class="x-pl-mu" aria-label="Sound"></button><button type="button" class="x-pl-rn" aria-label="Rain"></button><button type="button" class="x-pl-dn" aria-label="Day / night"></button>' +
     '<button type="button" class="x-pl-x" aria-label="Close"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button></div></div>' +
-    '<button type="button" class="x-pl-more">Aprende más</button>' +
-    '<div class="x-pl-mochi" hidden><div class="x-pl-mq"><div class="x-pl-mo"><div class="x-pl-ms"></div></div><div class="x-pl-sh"></div></div><div class="x-pl-bub"><p></p><span class="x-pl-go">▾</span></div></div>' +
+    '<button type="button" class="x-pl-more"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l1.7 5 5 1.7-5 1.7L12 17l-1.7-5.1-5-1.7 5-1.7z"/><path d="M18.5 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/></svg><span>Learn more</span></button>' +
+    '<div class="x-pl-mochi" hidden><div class="x-pl-mq"><div class="x-pl-mo"><div class="x-pl-ms"></div></div><div class="x-pl-sh"></div><i class="x-pl-st s1"></i><i class="x-pl-st s2"></i><i class="x-pl-st s3"></i><i class="x-pl-st s4"></i></div><div class="x-pl-bub"><p></p><span class="x-pl-go">▾</span></div></div>' +
     '<div class="x-pl-info" hidden><button type="button" class="x-pl-ix" aria-label="Cerrar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button>' +
     '<h2>Ría de Muros e Noia</h2><p class="x-pl-sub">A Coruña · Galicia</p>' +
     '<p>Una de las Rías Baixas, entre el monte Louro y la desembocadura del Tambre. Esta maqueta es una versión simplificada y soñada de su costa.</p>' +
@@ -597,7 +597,7 @@ export function open(opts) {
   let renderer;
   try { renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, powerPreference: 'high-performance' }); }
   catch (e) {
-    root.querySelector('.x-pl-more').textContent = 'Tu navegador no puede mostrar el mapa 3D.';
+    root.querySelector('.x-pl-more span').textContent = 'Your browser cannot show the 3D map.';
     root.querySelector('.x-pl-x').addEventListener('click', () => { root.remove(); document.documentElement.style.overflow = prevOverflow; opts.onClose && opts.onClose(); });
     return { close() { root.remove(); document.documentElement.style.overflow = prevOverflow; } };
   }
@@ -1552,11 +1552,22 @@ export function open(opts) {
   let mStep = -1, mType = 0, mEye = 4, mBlink = 0, mt2 = 0, mpx = innerWidth / 2, mpy = innerHeight / 2;
   const typeMsg = (txt) => { clearInterval(mType); mBub.textContent = ''; mochi.classList.remove('x-done'); let i = 0; mType = setInterval(() => { if (i >= txt.length) { clearInterval(mType); mochi.classList.add('x-done'); return; } mBub.textContent = txt.slice(0, ++i); if (i % 3 === 1 && audio) audio.sfx('mochitalk'); }, 34); };
   const mochiClose = () => { clearInterval(mType); mochi.classList.remove('x-on'); root.classList.remove('x-mochi'); mStep = -1; setTimeout(() => { if (mStep < 0) mochi.hidden = true; }, 700); if (audio) audio.sfx('mochiend'); };
-  const mochiNext = () => { if (mStep < 0) return; if (!mochi.classList.contains('x-done')) { clearInterval(mType); mBub.textContent = MSG[mStep]; mochi.classList.add('x-done'); return; } mStep++; if (mStep >= MSG.length) { mochiClose(); return; } if (audio) audio.sfx('mochinext'); typeMsg(MSG[mStep]); };
-  moreBtn.addEventListener('click', () => { if (mStep >= 0) return; mStep = 0; mochi.hidden = false; root.classList.add('x-mochi'); requestAnimationFrame(() => requestAnimationFrame(() => mochi.classList.add('x-on'))); if (audio) audio.sfx('mochi'); setTimeout(() => mStep === 0 && typeMsg(MSG[0]), 1100); });
+  const mochiPop = () => { mSp.classList.remove('x-hop'); mochi.classList.remove('x-pop'); void mSp.offsetWidth; mSp.classList.add('x-hop'); mochi.classList.add('x-pop'); };
+  const mochiNext = () => { if (mStep < 0) return; if (!mochi.classList.contains('x-done')) { clearInterval(mType); mBub.textContent = MSG[mStep]; mochi.classList.add('x-done'); return; } mStep++; if (mStep >= MSG.length) { mochiClose(); return; } if (audio) audio.sfx('mochinext'); mochiPop(); if (mStep === 1) look(-9, 1.5, .68); typeMsg(MSG[mStep]); };
+  moreBtn.addEventListener('click', () => { if (mStep >= 0) return; mStep = 0; look(3, 3, .62); mochi.hidden = false; root.classList.add('x-mochi'); requestAnimationFrame(() => requestAnimationFrame(() => mochi.classList.add('x-on'))); if (audio) audio.sfx('mochi'); setTimeout(() => mStep === 0 && typeMsg(MSG[0]), 1100); });
   mochi.addEventListener('click', () => mochiNext());
   addEventListener('pointermove', (e) => { mpx = e.clientX; mpy = e.clientY; });
-  const mochiTick = (now) => { if (mStep < 0 && mochi.hidden) return; requestAnimationFrame(mochiTick); const r = mSp.getBoundingClientRect(), dx = mpx - (r.left + r.width / 2), dy = mpy - (r.top + r.height / 2), d = Math.hypot(dx, dy); mBlink -= .016; let fr; if (mBlink < -3.2) mBlink = .14; if (mBlink > 0) fr = 9; else { const cx = d < 30 ? 1 : (dx < -d * .45 ? 0 : dx > d * .45 ? 2 : 1), cy = d < 30 ? 1 : (dy < -d * .45 ? 0 : dy > d * .45 ? 2 : 1); fr = cy * 3 + cx; } if (fr !== mEye) { mEye = fr; mSp.style.backgroundPosition = (fr / 9 * 100) + '% 0'; } };
+  const mo = mochi.querySelector('.x-pl-mo'), mshadow = mochi.querySelector('.x-pl-sh'), J = { x: 0, y: 0, vx: 0, vy: 0, p: 1, since: 9, sq: 0, last: 0, dir: 1, rot: 0 };
+  const mochiSwim = (now) => {                       // swims like a jellyfish: a soft pulse every ~2 s squeezes it, shoots it up and sideways, then it glides and sinks slowly
+    const dt = Math.min(.05, (now - (J.last || now)) / 1000); J.last = now; J.p -= dt;
+    if (J.p <= 0) { J.p = 1.7 + Math.random() * .7; J.since = 0; J.dir = Math.random() < .5 ? -1 : 1; if (Math.abs(J.x) > 30) J.dir = J.x > 0 ? -1 : 1; J.vy -= 78; J.vx += J.dir * 34; }
+    J.since += dt; const sq = J.since < .45 ? Math.sin(J.since / .45 * PI) : 0; J.sq += (sq * .13 - J.sq) * Math.min(1, dt * 12);
+    J.vy += 22 * dt; J.vy += -J.y * 1.5 * dt; J.vx += -J.x * 1.2 * dt; const dr = Math.exp(-1.15 * dt); J.vx *= dr; J.vy *= dr; J.x += J.vx * dt; J.y += J.vy * dt;
+    J.rot += (J.vx * .09 - J.rot) * Math.min(1, dt * 4);
+    mo.style.transform = 'translate3d(' + J.x.toFixed(1) + 'px,' + J.y.toFixed(1) + 'px,0) rotate(' + J.rot.toFixed(2) + 'deg) scale(' + (1 - J.sq * .9).toFixed(3) + ',' + (1 + J.sq).toFixed(3) + ')';
+    mshadow.style.transform = 'translateX(' + (J.x * .6).toFixed(1) + 'px) scale(' + (1 - Math.max(-.2, Math.min(.3, -J.y / 120))).toFixed(3) + ')'; mshadow.style.opacity = (.8 + Math.max(-.3, Math.min(.2, J.y / 200))).toFixed(2);
+  };
+  const mochiTick = (now) => { if (mStep < 0 && mochi.hidden) return; requestAnimationFrame(mochiTick); mochiSwim(now); const r = mSp.getBoundingClientRect(), dx = mpx - (r.left + r.width / 2), dy = mpy - (r.top + r.height / 2), d = Math.hypot(dx, dy); mBlink -= .016; let fr; if (mBlink < -3.2) mBlink = .14; if (mBlink > 0) fr = 9; else { const cx = d < 30 ? 1 : (dx < -d * .45 ? 0 : dx > d * .45 ? 2 : 1), cy = d < 30 ? 1 : (dy < -d * .45 ? 0 : dy > d * .45 ? 2 : 1); fr = cy * 3 + cx; } if (fr !== mEye) { mEye = fr; mSp.style.backgroundPosition = (fr / 9 * 100) + '% 0'; } };
   new MutationObserver(() => { if (!mochi.hidden) requestAnimationFrame(mochiTick); }).observe(mochi, { attributes: true, attributeFilter: ['hidden'] });
   // ESC closes it too; the planet keeps turning behind the blur
   info.querySelector('.x-pl-ix').addEventListener('click', () => toggleInfo(false));
@@ -1922,16 +1933,24 @@ function injectCss() {
     '.x-pl-nav button:hover{background:rgba(18,48,74,.2)}',
     '.x-pl-nav .x-pl-cx{margin-left:auto;width:34px;height:34px;padding:0;display:grid;place-items:center;font-size:13px}',
     '.x-pl-more{position:absolute;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);border:0;border-radius:999px;padding:9px 20px 10px;background:rgba(255,253,248,.72);color:#2c4a5a;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 2px 14px rgba(20,50,80,.12);font:500 13px/1 "Switzer","Switzer Placeholder",system-ui,sans-serif;letter-spacing:.02em;transition:background .5s ease,transform .6s cubic-bezier(.22,.8,.24,1),box-shadow .6s ease}',
-    '.x-pl-more{cursor:pointer}',
-    '.x-pl-more:hover{transform:translateX(-50%) translateY(-2px);box-shadow:0 6px 20px rgba(20,50,80,.18);background:rgba(255,253,248,.92)}',
+    '.x-pl-ms.x-hop{animation:x-ms-hop .9s cubic-bezier(.3,1.5,.5,1)}',
+    '@keyframes x-ms-hop{0%{transform:none}22%{transform:translateY(8px) scale(1.1,.86)}52%{transform:translateY(-26px) scale(.93,1.1) rotate(-3deg)}76%{transform:translateY(2px) scale(1.05,.95) rotate(1.5deg)}100%{transform:none}}',
+    '.x-pl-st{position:absolute;width:16px;height:16px;opacity:0;pointer-events:none;background:radial-gradient(closest-side,#fff,rgba(255,255,255,0));clip-path:polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%)}',
+    '.x-pl-st.s1{left:6%;top:14%}.x-pl-st.s2{right:4%;top:6%}.x-pl-st.s3{left:-2%;top:56%}.x-pl-st.s4{right:0;top:52%}',
+    '.x-pl-mochi.x-pop .x-pl-st{animation:x-st-pop 1.2s ease-out}.x-pl-mochi.x-pop .x-pl-st.s2{animation-delay:.12s}.x-pl-mochi.x-pop .x-pl-st.s3{animation-delay:.24s}.x-pl-mochi.x-pop .x-pl-st.s4{animation-delay:.34s}',
+    '@keyframes x-st-pop{0%{opacity:0;transform:scale(.2) rotate(0)}30%{opacity:1;transform:scale(1.5) rotate(40deg)}100%{opacity:0;transform:translateY(-22px) scale(.6) rotate(90deg)}}',
+    '.x-pl-bub.x-swap{animation:x-bub-swap .6s ease}@keyframes x-bub-swap{0%{transform:scale(.96)}50%{transform:scale(1.02)}100%{transform:none}}',
+    '.x-pl-more{cursor:pointer;display:flex;align-items:center;gap:8px;padding:10px 20px 10px 16px;background:rgba(255,255,255,.55);box-shadow:0 1px 0 rgba(255,255,255,.8) inset,0 2px 14px rgba(20,50,80,.1);font:500 12px/1 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace!important;letter-spacing:.14em;text-transform:uppercase}',
+    '.x-pl-more svg{opacity:.8}',
+    '.x-pl-more:hover{transform:translateX(-50%) translateY(-2px);box-shadow:0 6px 22px rgba(20,50,80,.18);background:rgba(255,255,255,.85)}',
     '.x-pl-mochi{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;padding:24px;cursor:pointer;background:rgba(251,222,196,0);-webkit-backdrop-filter:blur(0);backdrop-filter:blur(0);transition:background .9s ease,-webkit-backdrop-filter .9s ease,backdrop-filter .9s ease}',
-    '.x-pl-mochi[hidden]{display:none}.x-pl-mochi.x-on{background:rgba(251,222,196,.36);-webkit-backdrop-filter:blur(15px);backdrop-filter:blur(15px)}',
+    '.x-pl-mochi[hidden]{display:none}.x-pl-mochi.x-on{background:rgba(251,226,206,.1);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px)}',
     '.x-pl.x-night .x-pl-mochi.x-on{background:rgba(14,22,48,.5)}',
     '.x-pl-mq{position:relative;width:min(300px,60vw);aspect-ratio:224/183;opacity:0;transform:translateY(34px) scale(.6);transition:opacity .8s ease .15s,transform 1.1s cubic-bezier(.22,1.3,.3,1) .15s}',
     '.x-pl-mochi.x-on .x-pl-mq{opacity:1;transform:none}',
-    '.x-pl-mo{position:absolute;inset:0;animation:x-mo-float 4.2s ease-in-out infinite}',
-    '.x-pl-ms{position:absolute;inset:0;background:url(/extras/blob-sprite.webp) 44.4% 0/1000% 100% no-repeat;-webkit-filter:hue-rotate(14deg) saturate(.95) brightness(1.12);filter:hue-rotate(14deg) saturate(.95) brightness(1.12)}',
-    '.x-pl-sh{position:absolute;left:14%;right:2%;bottom:-12%;height:16%;border-radius:50%;background:radial-gradient(closest-side,rgba(120,72,64,.3),rgba(120,72,64,0));animation:x-mo-sh 4.2s ease-in-out infinite}',
+    '.x-pl-mo{position:absolute;inset:0;will-change:transform}',
+    '.x-pl-ms{position:absolute;inset:0;background:url(/extras/blob-sprite.webp) 44.4% 0/1000% 100% no-repeat;-webkit-filter:hue-rotate(22deg) saturate(.5) brightness(1.3) contrast(.86);filter:hue-rotate(22deg) saturate(.5) brightness(1.3) contrast(.86)}',
+    '.x-pl-sh{position:absolute;left:14%;right:2%;bottom:-12%;height:16%;border-radius:50%;background:radial-gradient(closest-side,rgba(120,72,64,.3),rgba(120,72,64,0));}',
     '@keyframes x-mo-float{50%{transform:translateY(-14px) rotate(1.6deg)}}@keyframes x-mo-sh{50%{transform:scale(.86);opacity:.7}}',
     '.x-pl-bub{position:relative;max-width:min(470px,86vw);padding:18px 24px 20px;border-radius:24px;background:rgba(255,253,248,.92);color:#4a3340;box-shadow:0 10px 36px rgba(80,40,40,.18);opacity:0;transform:translateY(14px);transition:opacity .6s ease .5s,transform .8s cubic-bezier(.22,.8,.24,1) .5s}',
     '.x-pl-mochi.x-on .x-pl-bub{opacity:1;transform:none}',
@@ -1941,7 +1960,7 @@ function injectCss() {
     '@keyframes x-mo-nudge{50%{transform:translateY(4px)}}',
     '.x-pl.x-mochi .x-pl-more{opacity:0;pointer-events:none}',
     '.x-pl-more.x-open{opacity:0;pointer-events:none}',
-    '.x-pl.x-night .x-pl-more{background:rgba(20,34,66,.7);color:#cbe3ff}',
+    '.x-pl.x-night .x-pl-more{background:rgba(20,34,66,.6);color:#cbe3ff}',
     '.x-pl-info{position:absolute;left:50%;bottom:max(16px,env(safe-area-inset-bottom));width:min(430px,calc(100% - 28px));max-height:min(62vh,520px);overflow:auto;padding:20px 22px 16px;border-radius:22px;background:rgba(255,253,248,.88);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:0 10px 36px rgba(20,50,80,.2);color:#12304a;opacity:0;transform:translate(-50%,16px);transition:opacity .45s ease,transform .6s cubic-bezier(.22,.8,.24,1);-webkit-user-select:text;user-select:text}',
     '.x-pl-info.x-on{opacity:1;transform:translate(-50%,0)}.x-pl-info[hidden]{display:none}',
     '.x-pl.x-night .x-pl-info{background:rgba(16,28,56,.88);color:#cbe3ff}',
