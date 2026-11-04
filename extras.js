@@ -1003,7 +1003,7 @@
     if (planet) return;
     planet = { loading: true };
     jfHint(0);
-    import('/extras/freixo.js?v=144').then(function (m) {
+    import('/extras/freixo.js?v=148').then(function (m) {
       planet = m.open({ getDark: function () { return darkness(theme.hour); }, getHour: function () { return theme.hour; }, onClose: function () { planet = null; } });
     }).catch(function () { planet = null; });
   }
@@ -1563,7 +1563,7 @@
       var ts = themeSeen && themeSeen.get(e), nowT = performance.now();
       if (ts && (ts.n >= 8 || nowT - ts.t < 1000)) continue;
       if (themeSeen) themeSeen.set(e, { n: ts ? ts.n + 1 : 1, t: nowT });
-      if (e.closest('.x-dial,button,[data-xn]')) continue;
+      if (e.closest('.x-dial,button,[data-xn],.x-pl,.x-dr')) continue;
       cs = getComputedStyle(e);
       var c = parseRgb(cs.color);
       // white type of the About page (the big "Martamon" and its text) goes soft too; white type elsewhere sits on pictures and stays

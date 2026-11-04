@@ -4,6 +4,7 @@
 // information about the ría; press E (or tap the button) next to one to read it.
 import * as THREE from './three.module.min.js';
 import { INFO, getLang, tr } from './i18n.js?v=13';
+import { stall, bunting, KINDS } from './mercadillo.js?v=1';
 
 const PI = Math.PI, LI = ['en', 'es', 'gl'];
 // phones and weak devices get a lighter version: fewer pixels, no velvet sheen, cheaper shadows and fewer objects
@@ -483,14 +484,30 @@ export function open(opts) {
     if (u0.hx && top - low > .05) { const sk = new THREE.Mesh(new THREE.BoxGeometry(u0.hx * 1.9, top - low + .5, u0.hz * 1.9), std(0xb9b2a2)); sk.position.y = -(top - low + .5) / 2 + .02; sk.castShadow = true; o.add(sk); }
     if (u0.hx && top - low < .5) { const cs = new THREE.Mesh(new THREE.PlaneGeometry(u0.hx * 3.1, u0.hz * 3.1), new THREE.MeshBasicMaterial({ map: contactTex(), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 })); cs.rotation.x = -PI / 2; cs.position.y = .07; o.add(cs); }
     o.position.set(x, top, z); o.rotation.y = yaw; scene.add(o); if (o.userData.porch) shelters.push([x + Math.sin(yaw) * o.userData.porch, z + Math.cos(yaw) * o.userData.porch]); if (r) { const u = o.userData; colliders.push(u.hx ? [x, z, r, u.hx, u.hz, yaw] : [x, z, r]); } return o; };
-  const infoSpots = [], solid = (x, z, rr) => colliders.some((c) => Math.hypot(c[0] - x, c[1] - z) < c[2] + rr), laneNear = (x, z, d) => lanes.some((pts) => pts.some((q) => Math.hypot(q[0] - x, q[1] - z) < d)) || Math.abs(x - ROADX(z)) < d + 2.6;
-  const plazas = [], walkers = [];
+  const infoSpots = [], reserved = [], solid = (x, z, rr) => colliders.some((c) => Math.hypot(c[0] - x, c[1] - z) < c[2] + rr) || reserved.some((r) => x > r[0] - rr && x < r[1] + rr && z > r[2] - rr && z < r[3] + rr), laneNear = (x, z, d) => lanes.some((pts) => pts.some((q) => Math.hypot(q[0] - x, q[1] - z) < d)) || Math.abs(x - ROADX(z)) < d + 2.6;
+  const plazas = [], walkers = []; let mkt = null;
   { const lbl = lang === 0 ? 'SUPERMARKET' : 'SUPERMERCADO', sz0 = 50, sx0 = ROADX(sz0) - 16, sm = supermercado(lbl); addTo(sm, sx0, sz0, PI / 2, sm.userData.r);
     const lot = new THREE.Mesh(new THREE.BoxGeometry(11, .1, 22), std(0x9aa3b0)); lot.position.set(sx0 + 9.4, H(ROADX(sz0) - 7, sz0) + .05, sz0); scene.add(lot); lot.receiveShadow = true;
     shelters.push([sx0 + 5.6, sz0 - 3], [sx0 + 5.6, sz0 + 3]);
     const mkShopper = (i, z1, z2, withCart) => { const w2 = person([0x7aa6d8, 0xf0907a, 0xf4e6d0, 0xc9a0e8][i % 4], [0xf0c9a0, 0xe3b185, 0xf5d6b5][i % 3], [0xe36d57, 0x5fae8a, 0xf2c14a][i % 3]); if (withCart) { const c = cart(); c.position.set(1.25, 0, 0); w2.add(c); } scene.add(w2); walkers.push({ p: w2, pts: [[sx0 + 5.6, z1], [sx0 + 9.5, (z1 + z2) / 2], [sx0 + 6.4, z2]], d: rng() * 6, sp: .45 + rng() * .25, dir: 1, lift: .08 }); };
     mkShopper(0, sz0 - 6, sz0 + 6, true); mkShopper(1, sz0 + 4, sz0 - 7, false); mkShopper(2, sz0 - 2, sz0 + 8, true); }
 
+  // ---- the Sunday market (mercadillo): a little street off the main road with stalls of vegetables, fruit, bread, cheese, octopus, empanadas, sausages and honey
+  { const STP = 5.6, N = 4, LEN = 10 + N * STP + 3; let site = null;
+    const cz = []; for (let z = -90; z <= 90; z += 2) cz.push(z); cz.sort((a, b) => Math.abs(a + 34) - Math.abs(b + 34));
+    for (const z of cz) { const x0 = ROADX(z) - 8; let ok = true;
+      for (let u = 0; u <= LEN && ok; u += 3) for (let v = -6; v <= 6 && ok; v += 3) { const x = x0 - u, zz = z + v; if (H(x, zz) < .55 || solid(x, zz, 2.2) || [2, 3].some((vi) => Math.hypot(ROADX(VILLAGES[vi][1]) - 21 - x, VILLAGES[vi][1] + 1 - zz) < (vi === 3 ? 16 : 13)) || VILLAGES.some(([, z0]) => Math.hypot(ROADX(z0 - 2) - 16 - x, z0 - 14 - zz) < 6) || lanes.some((l) => l.some((q) => Math.hypot(q[0] - x, q[1] - zz) < 6))) ok = false; }
+      if (ok) { site = [x0, z]; break; } }
+    if (site) { const [x0, z] = site, y0 = H(x0 - LEN / 2, z);
+      ribbon([[x0 + 4, z], [x0 - LEN, z]], 7.2, 0xd8cdb6, .06, 3, sandTex()); ribbon([[x0 + 4, z], [x0 - LEN, z]], 6.2, 0xcfc3aa, .08, 4, sandTex());
+      const awn = [0xe36d57, 0x4f8fc0, 0xf2c14a, 0x5fae8a, 0xe9a0c0, 0xa88bd8, 0xf09a3a, 0x6fc3b8];
+      for (let k = 0; k < N; k++) for (let sd = 0; sd < 2; sd++) { const kind = KINDS[(k * 2 + sd + (sd ? 3 : 0)) % 8], sx = x0 - 4.5 - k * STP, sz = z + (sd ? -3.7 : 3.7), st = stall(THREE, std, kind, awn[(k * 2 + sd) % 8], !LOW); st.scale.setScalar(.95);
+        st.userData.hx = 1.6; st.userData.hz = 1.0; st.userData.r = 2; addTo(st, sx, sz, sd ? 0 : PI, 2.1);
+        const vd = person([0xf4e6d0, 0xe9a0c0, 0x7aa6d8, 0xf2c14a][(k + sd) % 4], [0xf0c9a0, 0xe3b185, 0xf5d6b5, 0xc58c5e][(k + sd * 2) % 4]); vd.position.set(sx, H(sx, sz + (sd ? -2.1 : 2.1)) + .08, sz + (sd ? -2.1 : 2.1)); vd.rotation.y = (sd ? 0 : PI) - PI / 2 + (sd ? 0 : 0); scene.add(vd); }
+      for (let k = 0; k < N; k++) { const bn = bunting(THREE, std, 7.4, 9, awn); bn.rotation.y = PI / 2; const bx = x0 - 7.3 - k * STP; bn.position.set(bx, H(bx, z) + 5.1, z); scene.add(bn); }
+      const shirts = [0xe36d57, 0x4f8fc0, 0xc9a0e8, 0x5fae8a, 0xf0907a, 0x7aa6d8], skins = [0xf0c9a0, 0xe3b185, 0xf5d6b5, 0xc58c5e];
+      for (let i = 0; i < 6; i++) { const w2 = person(shirts[i], skins[i % 4], [0xe36d57, 0x5fae8a, 0xf2c14a][i % 3]); scene.add(w2); const a = x0 - 3 - (i % 3) * 4, b2 = x0 - LEN + 3 + (i % 3) * 2; walkers.push({ p: w2, pts: [[a, z + (i % 2 ? .9 : -.9)], [(a + b2) / 2, z + (i % 2 ? -.6 : .6)], [b2, z + (i % 2 ? .9 : -.9)]], d: i * 4.5, sp: .45 + (i % 3) * .12, dir: i % 2 ? 1 : -1, lift: .08 }); }
+      reserved.push([x0 - LEN - 2, x0 + 5, z - 6.5, z + 6.5]); mkt = { x: x0 - LEN / 2, z }; } }
   VILLAGES.forEach(([name, z0], vi) => {
     const rx = ROADX(z0), cnt = vi === 3 ? 8 : 5; let made = 0;
     // houses along the road and the lanes: set well back, spaced out, each turned to face its way
@@ -553,7 +570,7 @@ export function open(opts) {
   const casa = { x: 0, z: 0, ok: false, glow: null, mat: null };
   { const cands = []; for (let z = -90; z <= 92; z += 2) cands.push(z); cands.sort((a, b) => Math.abs(a + 2) - Math.abs(b + 2));
     const hs = houseMesh(8.4, 6.2, 2, 0xf3e4ca, 0xe36d57, false); casa.mat = WINM.clone(); casa.mat.emissiveIntensity = 1.3; hs.traverse((o) => { if (o.isMesh && o.material === WINM) o.material = casa.mat; });
-    for (const [z, off] of cands.flatMap((z) => [[z, 12], [z, 15], [z, 9.5]])) { const x = ROADX(z) - off; if (H(x, z) < .5 || solid(x, z, 6) || plazas.some((pl) => Math.hypot(pl[0] - x, pl[1] - z) < pl[2] + 6) || lanes.some((l) => l.some((q) => Math.hypot(q[0] - x, q[1] - z) < 6.5)) || viol(hs.userData, x, z, PI / 2)[0] > 0) continue;
+    for (const [z, off] of cands.flatMap((z) => [[z, 12], [z, 15], [z, 9.5], [z, 18], [z, 21]])) { const x = ROADX(z) - off; if (H(x, z) < .5 || solid(x, z, 4.8) || plazas.some((pl) => Math.hypot(pl[0] - x, pl[1] - z) < pl[2] + 6) || lanes.some((l) => l.some((q) => Math.hypot(q[0] - x, q[1] - z) < 6.5)) || viol(hs.userData, x, z, PI / 2)[0] > 0) continue;
       addTo(hs, x, z, PI / 2, hs.userData.r); casa.x = x + hs.userData.porch + 1.6; casa.z = z; casa.ok = true; casa.hx = x; casa.hy = H(x, z); break; }
     if (casa.ok) { const gl = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexL, color: 0xffc766, transparent: true, opacity: .5, depthWrite: false, blending: THREE.AdditiveBlending, fog: false })); gl.scale.set(15, 11, 1); gl.position.set(casa.hx + 3, casa.hy + 3.4, casa.z); scene.add(gl); casa.glow = gl;
       const lamp = new THREE.Mesh(new THREE.IcosahedronGeometry(.22, 1), new THREE.MeshStandardMaterial({ color: 0xfff3c4, emissive: 0xffd36b, emissiveIntensity: 1.6 })); lamp.position.set(casa.x - 1.6, casa.hy + 2.6, casa.z + 1.2); scene.add(lamp); } }
@@ -834,5 +851,5 @@ export function open(opts) {
     opts.onClose && opts.onClose();
   }
   root.querySelector('.x-dr-x').addEventListener('click', close);
-  return { close, state: S, dbg: { colliders, lanes } };
+  return { close, state: S, dbg: { colliders, lanes, mkt, casa } };
 }

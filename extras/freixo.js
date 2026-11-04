@@ -4,6 +4,7 @@
 // open({ night, onClose }) shows it on top of the page and returns { close }.
 import * as THREE from './three.module.min.js';
 import { mochiText, MOCHI, tr } from './i18n.js?v=13';
+import { stall, bunting, KINDS } from './mercadillo.js?v=1';
 const mochiLen = MOCHI.length;
 
 // phones and weak devices get a lighter version: fewer pixels, no velvet sheen and cheaper shadows
@@ -1217,6 +1218,17 @@ export function open(opts) {
   }
   { const sqM = square(-12.8, 2.65, 2.0, 1.5, { trees: 4, terraces: 3, people: 12 });
   }
+  // ---- the Sunday market: a little street with stalls of vegetables, fruit, bread, cheese, octopus, empanadas, sausages and honey
+  { let mx = 0, mz = 0, found = false;
+    for (const cx of [9.65, -8.15, 5.5, 13, -4, 1.8, -16]) { for (const inl of [4.1, 4.5, 3.7, 3.3]) { const [qx, qz] = onShore(cx, inl); let ok = true; for (let a = 0; a < 8 && ok; a++) for (const rr of [.6, 1.25]) if (groundH(qx + Math.cos(a * .785) * rr, qz + Math.sin(a * .785) * rr) < SEA + .05) ok = false; if (ok && groundH(qx, qz) > SEA + .05) { mx = qx; mz = qz; found = true; break; } } if (found) break; }
+    if (found) { const yaw = seaYaw(mx), g = new THREE.Group(), SC = .1;
+    const pave = box(.8, .02, 2.3, std(0xd8cdb6)); pave.position.y = -.005; g.add(pave); const edge = box(.7, .022, 2.2, std(0xcfc3aa)); edge.position.y = 0; g.add(edge);
+    const awn = [0xc9473a, 0x2f6fa8, 0xe9b94a, 0x3b9a6a, 0xe277a0, 0x7a58b5, 0xf08a3c, 0x4fb3a8];
+    for (let k = 0; k < 4; k++) for (const sd of [-1, 1]) { const st = stall(THREE, std, KINDS[(k * 2 + (sd > 0 ? 1 : 0) + (sd > 0 ? 3 : 0)) % 8], awn[(k * 2 + (sd > 0 ? 1 : 0)) % 8], false); st.scale.setScalar(SC); st.position.set(sd * .31, 0, -.78 + k * .52); st.rotation.y = sd < 0 ? PI / 2 : -PI / 2; g.add(st);
+      const vd = person(SHIRTS[(k + (sd > 0 ? 3 : 0)) % SHIRTS.length], { skin: SKINS[k % 4] }); vd.scale.setScalar(.8); vd.position.set(sd * .47, 0, -.78 + k * .52); vd.rotation.y = sd < 0 ? PI / 2 : -PI / 2; g.add(vd); }
+    for (let k = 0; k < 3; k++) { const bn = bunting(THREE, std, 6.4, 9, awn); bn.scale.setScalar(SC); bn.position.set(0, .3, -.52 + k * .52); g.add(bn); }
+    g.userData.fp = .9; g.userData.pri = 6; g.userData.market = 1; W(put(g, mx, mz, yaw, -.02));
+    for (let k = 0; k < 7; k++) { const p = person(SHIRTS[(k * 3 + 1) % SHIRTS.length], { skin: SKINS[k % 4] }); W(p); strollers.push({ p, x: mx, z: mz, yaw, rx: .1, rz: .72, a: rnd() * 6.28, sp: (.14 + rnd() * .12) * (k % 2 ? 1 : -1), still: k % 4 === 0 }); } } }
 
   // ---- Ézaro, on the south shore: a granite village under the mountain and the waterfall of the river Xallas, falling straight into the sea
   const falls = [];
@@ -1740,7 +1752,7 @@ export function open(opts) {
     if (tourOn) return; tourOn = true; tourMuted = !!(audio && audio.muted);
     mochi.classList.remove('x-ctaon'); mochi.classList.add('x-load'); root.classList.add('x-tour'); if (audio) { audio.sfx('mochinext'); setTimeout(() => audio && audio.mute(true), 500); }
     const t0 = performance.now();
-    import('./conducir.js?v=24').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
+    import('./conducir.js?v=25').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
       .then((m) => { const ab = m.open({ onClose: endTour, getDark: () => nightT }); if (!ab) throw new Error('no webgl'); setTimeout(mochiClose, 700); })
       .catch(() => { endTour(); mochiClose(); });
   };
