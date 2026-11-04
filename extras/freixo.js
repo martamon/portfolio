@@ -224,7 +224,7 @@ function house(o) {
     const dw = box(.05, .06, .012, winMat); dw.position.set(0, bodyH + .1, d / 2 - .1 + .008); g.add(dw);
   }
   if (!o.stone) for (const sx of [-1, 1]) { const q = box(.03, bodyH, .03, std(0xc9c2b0)); q.position.set(sx * (w / 2 - .004), bodyH / 2, z - .004); g.add(q); }
-  g.userData.fp = Math.max(w, d) / 2 * 1.12 + .06; g.userData.pri = 1;
+  g.userData.fp = Math.max(w, d) / 2 * 1.12 + .06; g.userData.pri = 1; g.userData.home = 1;
   return g;
 }
 // stone arcades (soportales): shops under round granite arches, two storeys above, one long roof
@@ -315,7 +315,7 @@ function lying(shirt, o) {
   const legs = box(.06, .022, .034, std(o.pants || 0x3a4a63)); legs.position.set(.05, .016, 0);
   const head = new THREE.Mesh(new THREE.SphereGeometry(.02, 8, 6), std(o.skin || 0xf0c9a0)); head.position.set(-.058, .024, 0);
   g.add(torso, legs, head);
-  g.userData.role = 'sun'; g.userData.idx = ALLP.length; ALLP.push(g);
+  g.userData.role = 'sunL'; g.userData.idx = ALLP.length; ALLP.push(g);
   return g;
 }
 const SHIRTS = [0xd9473a, 0x2f6fa8, 0xf2c14a, 0x3b9a6a, 0xf2efe6, 0xe277a0, 0x7a58b5, 0xf08a3c];
@@ -529,7 +529,7 @@ export function open(opts) {
   const SHUTC = [0x2f6fa8, 0x3b8f6a, 0xa23a30];
   const mk = (floors, extra) => { const k = hc++; return Object.assign({ w: .44 + rnd() * .2, d: .4 + rnd() * .07, floors, wall: WALLS[k % WALLS.length], roof: ROOF[(k * 3 + 1) % ROOF.length], gal: floors > 1 && k % 2 === 0, shut: k % 4 === 0 ? SHUTC[(k >> 2) % 3] : 0, fr: k, turn: (rnd() - .5) * .14 }, extra || {}); };
   // village squares (x range, inland range): houses keep out of them
-  let riverPts = []; const keptC = [];
+  let riverPts = []; const keptC = [], HOMES = [];
   const SQ = [[-1.9, .9, 3.4, 6.7], [14.3, 16.9, 3.0, 6.1], [-8.7, -6.6, 4.0, 5.7], [-13.95, -11.65, 1.8, 3.55], [-8.9, -7.4, 2.1, 3.4], [1.1, 2.5, 2.1, 3.4], [8.9, 10.4, 2.1, 3.4]];
   const inSq = (x, inl) => SQ.some((q) => x > q[0] && x < q[1] && inl > q[2] && inl < q[3]);
   const JX = [8.3], LINKX = [8.3];
@@ -1108,7 +1108,7 @@ export function open(opts) {
     for (let f = 0; f < fl; f++) for (let k = -1; k <= 1; k++) { const fr = box(.07, .09, .014, std(0xfff8ea)); fr.position.set(k * .15, f * fh + .1, d / 2 + .004); g.add(fr); const gl = box(.048, .068, .018, winMat); gl.position.set(k * .15, f * fh + .1, d / 2 + .008); g.add(gl); if (f > 0 && k !== 0) { const bc = box(.1, .016, .045, std(0xd9d0bc)); bc.position.set(k * .15, f * fh + .04, d / 2 + .03); g.add(bc); } }
     const rf = box(w + .04, .03, d + .04, std(0xb9b19d)); rf.position.y = fl * fh + .015; g.add(rf);
     const dr = box(.09, .12, .02, std(0x3d78a8)); dr.position.set(0, .06, d / 2 + .008); g.add(dr);
-    g.userData.fp = .5; g.userData.pri = 2; return g;
+    g.userData.fp = .5; g.userData.pri = 2; g.userData.home = 1; return g;
   }
   { const FLATC = [0xf2c6a8, 0xaed0dc, 0xf3d9a0, 0xb9d9c3];
     [[-3.0, 2.3, 0xc9462e], [10.6, 1.9, 0x2f6fa8]].forEach(([x, inl, c]) => { const [px, pz] = onShore(x, inl); W(put(supermarket(c), px, pz, seaYaw(px), -.02)); });
@@ -1138,13 +1138,13 @@ export function open(opts) {
 
   // ---- tidy up: no building may overlap another one or stand on a road; the most important ones (churches, schools, squares, arcades) stay
   { const items = [], dd2 = new THREE.Vector3();
-    for (const o of world.children) { const u = o.userData; if (!u || !(u.fp || u.fps)) continue; if (u.fp === 0) continue; dd2.copy(o.position).normalize(); const [x, z] = planeOf(dd2); items.push({ o, x, z, pri: u.pri || 1, circles: u.fps ? u.fps.map(([dx, r]) => [x + dx, z, r]) : [[x, z, u.fp]] }); }
+    for (const o of world.children) { const u = o.userData; if (!u || !(u.fp || u.fps)) continue; if (u.fp === 0) continue; dd2.copy(o.position).normalize(); const [x, z] = planeOf(dd2); items.push({ o, x, z, home: !!u.home, pri: u.pri || 1, circles: u.fps ? u.fps.map(([dx, r]) => [x + dx, z, r]) : [[x, z, u.fp]] }); }
     items.sort((a, b) => b.pri - a.pri || b.circles[0][2] - a.circles[0][2]);
     const roads = [roadRaw, roadS, relax(stPts, 3)]; const nearRoad = (c, withStreet) => roads.some((pts, ri) => (ri < 2 || withStreet) && pts.some((q) => Math.hypot(q[0] - c[0], q[1] - c[1]) < c[2] + .6));
     const kept = [];
     for (const it of items) {
       const bad = it.circles.some((c) => kept.some((k) => k.circles.some((kc) => Math.hypot(c[0] - kc[0], c[1] - kc[1]) < c[2] + kc[2] + .3)) || (it.pri < 3 && nearRoad(c, it.pri < 2)) || (it.pri < 3 && kept.some((k) => k.pri === 3 && k.circles.some((kc) => Math.hypot(c[0] - kc[0], c[1] - kc[1]) < c[2] + kc[2] + .7))));
-      if (bad) world.remove(it.o); else { kept.push(it); for (const c of it.circles) keptC.push(c); }
+      if (bad) world.remove(it.o); else { if (it.home) HOMES.push([it.x, it.z, it.circles[0][2]]); kept.push(it); for (const c of it.circles) keptC.push(c); }
     } }
   const oaks = [], pines = [], euc = [];
   const dd = new THREE.Vector3();
@@ -1203,13 +1203,14 @@ export function open(opts) {
   // they live up on the mountains only: high ground, well away from every building, field, road, river and beach
   { const KINDS = ['sheep', 'sheep', 'deer', 'goat', 'rabbit', 'rabbit', 'fox'];
     const okSpot = (x, z) => groundH(x, z) > 1.5 && !forbid(x, z) && inletD(x, z) > 1 && cove(x, z) < .05 && keptC.every((c) => Math.hypot(x - c[0], z - c[1]) > c[2] + 1.3);
-    let placed = 0;
-    for (let g = 0; g < 400 && placed < 15; g++) {
+    let placed = 0; const anchors = [];
+    for (let g = 0; g < 900 && placed < 9; g++) {
       const ax = -20 + rnd() * 38, az = shore(ax) - (6.5 + rnd() * 6.5);
-      if (!okSpot(ax, az)) continue;
-      const kind = KINDS[placed % KINDS.length], cnt = kind === 'sheep' ? 3 : kind === 'deer' || kind === 'goat' ? 2 : 1;
+      if (!okSpot(ax, az) || anchors.some((q) => Math.hypot(q[0] - ax, q[1] - az) < 4.2)) continue;
+      anchors.push([ax, az]);
+      const kind = KINDS[placed % KINDS.length], cnt = kind === 'sheep' ? 2 : 1;
       for (let k = 0; k < cnt; k++) {
-        const x = ax + (k - 1) * .3 + (rnd() - .5) * .2, z = az + (rnd() - .5) * .4;
+        const x = ax + k * .45 + (rnd() - .5) * .2, z = az + (rnd() - .5) * .4;
         if (!okSpot(x, z)) continue;
         const an = animal(kind); W(an.g); critters.push({ ...an, kind, hx: x, hz: z, ph: rnd() * 6, r: .3 + rnd() * .25, sp: .12 + rnd() * .1 });
       }
@@ -1471,18 +1472,6 @@ export function open(opts) {
       }
     }
     for (const fl of flags) fl.rotation.y = Math.sin(t * 3 + fl.position.x * 5) * .35;
-    // people react to the weather: umbrellas and shelter in the rain; at night most go home, and the children, bathers and sunbathers leave first
-    for (const g of ALLP) {
-      const u = g.userData; if (u.s0 === undefined) { u.s0 = g.scale.x; u.v = 1; }
-      const role = u.role, h = (u.idx * 37 % 100) / 100;
-      let want = 1;
-      if (role === 'sun' || role === 'swim') want = rainT > .35 || nightT > .35 ? 0 : 1;
-      else if (role === 'kid') want = nightT > .3 || rainT > .85 && h > .4 ? 0 : 1;
-      else if (role === 'walk') want = nightT > .4 || (rainT > .7 && h > .5) ? 0 : 1;
-      else if (role === 'town') want = nightT > .5 && h > .3 ? 0 : (rainT > .85 && h > .7 ? 0 : 1);
-      u.v += (want - u.v) * (1 - Math.exp(-dt * 2.6)); const sc = u.s0 * Math.max(.001, u.v); g.scale.setScalar(sc); g.visible = u.v > .03;
-      if (u.umb) u.umb.visible = rainT > .5;
-    }
     for (const bl of balls) { const c = Math.cos(t * 2.6 + bl.ph), h = .07 + .24 * Math.abs(Math.sin(t * 2.6 + bl.ph)); put(bl.m, bl.x, bl.z + c * .3 * bl.sg, 0, h); }
     for (const s of swimmers) {
       const a = t * s.sp + s.ph, x = s.x + Math.sin(a) * s.rx;
@@ -1491,6 +1480,35 @@ export function open(opts) {
     for (const w of walkers) {
       const a = t * w.sp + w.ph, x = w.cx + Math.sin(a) * w.half;
       put(w.p, x, w.fn(x) + w.sg * w.off, PI / 2 * Math.sign(Math.cos(a)), Math.abs(Math.sin(t * 7 + w.ph)) * .008);
+    }
+    // people react to the weather: when it rains or night falls they run to the nearest house, then wait at its door (some go in); when it clears they run back to what they were doing
+    for (const g of ALLP) {
+      const u = g.userData, role = u.role; if (role === 'fish') continue;
+      if (u.s0 === undefined) { u.s0 = g.scale.x; u.v = 1; u.mode = 0; u.lastX = null; const pp = planeOf(_d.copy(g.position).normalize()); u.p0 = pp; }
+      if (u.umb) u.umb.visible = rainT > .5 && u.mode !== 3;
+      const h = (u.idx * 37 % 100) / 100;
+      if (role === 'sunL') { const w = rainT > .35 || nightT > .35 ? 0 : 1; u.v += (w - u.v) * (1 - Math.exp(-dt * 2.6)); g.scale.setScalar(u.s0 * Math.max(.001, u.v)); g.visible = u.v > .03; continue; }
+      let shelter = false;
+      if (role === 'sun' || role === 'swim') shelter = rainT > .35 || nightT > .35;
+      else if (role === 'kid') shelter = nightT > .3 || (rainT > .85 && h > .4);
+      else if (role === 'walk') shelter = nightT > .4 || (rainT > .7 && h > .5);
+      else shelter = (nightT > .5 && h > .3) || (rainT > .85 && h > .7) || (rainT > .5 && role === 'town' && h > .85);
+      const cur = planeOf(_d.copy(g.position).normalize());
+      if (u.mode === 0) { u.p0 = cur; if (shelter && HOMES.length) {            // pick the nearest house and leave
+        let best = null, bd = 1e9; for (const hm of HOMES) { const d2 = Math.hypot(hm[0] - cur[0], hm[1] - cur[1]); if (d2 < bd) { bd = d2; best = hm; } }
+        const ang = Math.atan2(cur[1] - best[1], cur[0] - best[0]), r = best[2] * .8; u.door = [best[0] + Math.cos(ang) * r, best[1] + Math.sin(ang) * r, ang]; u.mode = 1; u.pos = cur; u.inside = (u.idx * 53 % 100) / 100 < .45; }
+        else continue; }
+      if (u.mode === 1 || u.mode === 2) {
+        if (!shelter) { u.mode = 4; }
+        else if (u.mode === 1) { const dx = u.door[0] - u.pos[0], dz = u.door[1] - u.pos[1], d = Math.hypot(dx, dz), st = Math.min(d, 1.05 * dt); if (d < .03) u.mode = 2; else { u.pos = [u.pos[0] + dx / d * st, u.pos[1] + dz / d * st]; put(g, u.pos[0], u.pos[1], Math.atan2(-dz, dx), Math.abs(Math.sin(t * 16 + u.idx)) * .014); } }
+        if (u.mode === 2) { put(g, u.door[0], u.door[1], Math.atan2(-Math.sin(u.door[2] + PI), Math.cos(u.door[2] + PI)), Math.abs(Math.sin(t * 1.5 + u.idx)) * .004); const want = u.inside ? 0 : 1; u.v += (want - u.v) * (1 - Math.exp(-dt * 3)); g.scale.setScalar(u.s0 * Math.max(.001, u.v)); g.visible = u.v > .03; }
+      }
+      if (u.mode === 4) {                                                       // out again: back to where the day left them
+        g.visible = true; u.v += (1 - u.v) * (1 - Math.exp(-dt * 4)); g.scale.setScalar(u.s0 * Math.max(.001, u.v));
+        const mv = u.lp && Math.hypot(cur[0] - u.lp[0], cur[1] - u.lp[1]) > .002, target = mv ? cur : u.p0, dx = target[0] - u.pos[0], dz = target[1] - u.pos[1], d = Math.hypot(dx, dz), st = Math.min(d, 1.05 * dt);
+        if (d < .04) { u.mode = 0; put(g, u.p0[0], u.p0[1], 0, 0); } else { u.pos = [u.pos[0] + dx / d * st, u.pos[1] + dz / d * st]; put(g, u.pos[0], u.pos[1], Math.atan2(-dz, dx), Math.abs(Math.sin(t * 16 + u.idx)) * .014); }
+      }
+      u.lp = planeOf(_d.copy(g.position).normalize());
     }
     renderer.render(scene, camera);
   };
