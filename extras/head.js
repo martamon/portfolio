@@ -4,12 +4,12 @@
 const N = 84, FW = 562, FH = 518, CW = 960, CH = 540, OX = 202, OY = 23, TURN = 14.04;   // seconds per turn, as in the footage
 let frames = null;
 const load = () => frames || (frames = Promise.all(Array.from({ length: N }, (_, i) => new Promise((ok) => {
-  const im = new Image(); im.decoding = 'async'; im.onload = () => ok(im); im.onerror = () => ok(null);
+  const im = new Image(); im.decoding = 'async'; im.onload = () => { if (self.createImageBitmap) createImageBitmap(im).then(ok, () => ok(im)); else ok(im); }; im.onerror = () => ok(null);   // kept as decoded bitmaps: the browser never has to decode a frame again while it turns
   im.src = '/extras/head/h' + String(i).padStart(2, '0') + '.webp?v=2';
 }))));
 
 export function mount(cv) {
-  const ctx = cv.getContext('2d'); let ang = 0, last = 0, vis = true, raf = 0, shown = '', imgs = null;
+  const ctx = cv.getContext('2d', { alpha: true }); let ang = 0, last = 0, vis = true, raf = 0, shown = '', imgs = null;
   const fade = ctx.createLinearGradient(0, 0, 0, CH); fade.addColorStop(0, 'rgba(0,0,0,0)'); fade.addColorStop(.09, '#000'); fade.addColorStop(.78, '#000'); fade.addColorStop(1, 'rgba(0,0,0,0)');   // the soft top and foot, drawn into the picture itself
   const draw = () => {
     const f = (((ang / 360) % 1) + 1) % 1 * N, i = Math.floor(f) % N, k = f - Math.floor(f), a = imgs[i], b = imgs[(i + 1) % N];

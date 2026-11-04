@@ -1570,7 +1570,7 @@
       }
       if (v.parentNode && !v.parentNode.querySelector('canvas.x-head')) {
         var cv = document.createElement('canvas'); cv.className = 'x-head'; cv.width = 960; cv.height = 540; cv.setAttribute('aria-label', 'Martamon'); cv.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;display:block;object-fit:cover;border-radius:0';
-        v.parentNode.appendChild(cv); import('/extras/head.js?v=3').then(function (m) { m.mount(cv); }).catch(function () {});
+        v.parentNode.appendChild(cv); import('/extras/head.js?v=4').then(function (m) { m.mount(cv); }).catch(function () {});
       }
     }
   }
