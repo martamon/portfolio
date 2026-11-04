@@ -104,6 +104,19 @@ const C = (h) => new THREE.Color(h);
 const PASTEL = (h, k) => { const c = new THREE.Color(h), hsl = {}; c.getHSL(hsl); k = k === undefined ? 1 : k; hsl.s = Math.min(1, hsl.s * (1 - .02 * k)); hsl.l = hsl.l + (1 - hsl.l) * (hsl.l < .3 ? .08 : .18) * k; c.setHSL(hsl.h, hsl.s, hsl.l); c.lerp(new THREE.Color(0xfff0dc), .04 * k); return c; };
 // a hand-painted paper texture: soft mottling, tiny brush dabs and a fine grain; it multiplies the colours, so it only adds texture
 let PAINT = null;
+let SEATEX = null;
+const seaTex = () => {
+  if (SEATEX) return SEATEX;
+  const N = 512, cv = document.createElement('canvas'); cv.width = cv.height = N; const g = cv.getContext('2d'); g.fillStyle = '#e9f4f8'; g.fillRect(0, 0, N, N);
+  let sd = 21; const r = () => { sd = (sd * 16807) % 2147483647; return (sd - 1) / 2147483646; };
+  const wrap = (fn) => { for (const oy of [-N, 0, N]) for (const ox of [-N, 0, N]) fn(ox, oy); };
+  for (let i = 0; i < 26; i++) { const x = r() * N, y = r() * N, rad = 50 + r() * 90, c = r() < .5 ? [255, 255, 255] : [196, 232, 244], a = .1 + r() * .14; wrap((ox, oy) => { const gr = g.createRadialGradient(x + ox, y + oy, 0, x + ox, y + oy, rad); gr.addColorStop(0, `rgba(${c[0]},${c[1]},${c[2]},${a})`); gr.addColorStop(1, `rgba(${c[0]},${c[1]},${c[2]},0)`); g.fillStyle = gr; g.fillRect(x + ox - rad, y + oy - rad, rad * 2, rad * 2); }); }
+  // long soft ripple lines: gentle S-curves, light on the crest and a faint shade beneath
+  for (let i = 0; i < 44; i++) { const x = r() * N, y = r() * N, w = 60 + r() * 120, amp = 3 + r() * 6, ph = r() * 6.28;
+    for (const [dy, col, al] of [[0, '255,255,255', .17 + r() * .1], [5, '120,176,206', .07]]) { g.strokeStyle = `rgba(${col},${al})`; g.lineWidth = dy ? 5 : 2.4; g.lineCap = 'round';
+      wrap((ox, oy) => { g.beginPath(); for (let k = 0; k <= 16; k++) { const u = k / 16, px = x + ox + (u - .5) * w, py = y + oy + dy + Math.sin(u * 5 + ph) * amp; k ? g.lineTo(px, py) : g.moveTo(px, py); } g.stroke(); }); } }
+  const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(16, 8); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; SEATEX = t; return t;
+};
 const paintRep = {};
 const paintTexR = (n) => { if (!paintRep[n]) { const t = paintTex().clone(); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(n, n); t.needsUpdate = true; paintRep[n] = t; } return paintRep[n]; };
 const paintTex = () => {
@@ -598,9 +611,14 @@ export function open(opts) {
   Object.assign(sun.shadow.camera, { left: -16, right: 16, top: 16, bottom: -16, near: 1, far: 90 }); sun.shadow.bias = -.0005; sun.shadow.normalBias = .03;
 
   const terrain = buildTerrain(); W(terrain);
-  const sea = new THREE.Mesh(new THREE.IcosahedronGeometry(R, 30), new THREE.MeshStandardMaterial({ color: 0x62d0ee, map: paintTexR(26), transparent: true, opacity: .9, flatShading: true, roughness: .9, metalness: 0 }));
+  const sea = new THREE.Mesh(new THREE.IcosahedronGeometry(R, 30), new THREE.MeshStandardMaterial({ color: 0x62d0ee, map: seaTex(), transparent: true, opacity: .9, flatShading: true, roughness: .9, metalness: 0 }));
   sea.scale.setScalar((R + SEA) / R); W(sea);
   const seaOrig = sea.geometry.attributes.position.array.slice();
+  // white wave crests, only on the open sea (the far side of the planet): little flat foam ribbons that drift, swell and fade
+  const crestN = 420, crestGeo = new THREE.IcosahedronGeometry(1, 1), crestMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .9, depthWrite: false }), crests = new THREE.InstancedMesh(crestGeo, crestMat, crestN), crestData = [];
+  { const dd0 = new THREE.Vector3(); let n = 0;
+    for (let i = 0; i < 9000 && n < crestN; i++) { dd0.set(Math.random() - .5, Math.random() - .5, Math.random() - .5).normalize(); const [x, z] = planeOf(dd0); const far = Math.hypot(x, z) > 24 || z > 14.5 || z < -23; if (!far || islandR(x, z) < 1.4) continue; crestData.push({ x, z, yaw: Math.random() * 6.28, sp: .05 + Math.random() * .09, ph: Math.random() * 6.28, w: .22 + Math.random() * .3, drift: (Math.random() - .5) * .05 }); n++; } }
+  crests.count = crestData.length; crests.frustumCulled = false; world.add(crests);
   const spots = [];
   const spot = () => 0;                      // (the planet is only for looking at: no points to click)
   const hubAt = (x, z, lift) => { const o = new THREE.Object3D(); W(put(o, x, z, 0, lift)); return o; };
@@ -926,6 +944,21 @@ export function open(opts) {
   };
   whale(0, 0, 31, 31, .018, 1.2, .8); whale(0, 0, 33.5, 33.5, -.015, 3.9, .9); whale(0, 0, 36, 36, .012, 5.6, .75);
 
+  // ---- canoes (piraguas) paddling slowly up and down the coast, close to the beaches
+  const canoes = [];
+  function canoe(col, pc) {
+    const g = new THREE.Group(), hull = new THREE.Mesh(new THREE.SphereGeometry(.1, 14, 8), std(col)); hull.scale.set(2.6, .34, .55); hull.position.y = .02; g.add(hull);
+    const stripe = new THREE.Mesh(new THREE.SphereGeometry(.1, 14, 8), std(0xfff8ea)); stripe.scale.set(2.2, .12, .24); stripe.position.y = .05; g.add(stripe);
+    const rd = person(pc, { skin: SKINS[(col >> 3) % 4], role: 'bike', hat: 0xf2efe6 }); rd.scale.setScalar(.58); rd.position.set(-.02, .04, 0); g.add(rd);
+    const pad = new THREE.Group(), sh = new THREE.Mesh(new THREE.CylinderGeometry(.005, .005, .36, 5), std(0x6b4a2a)); sh.rotation.x = PI / 2; pad.add(sh);
+    for (const sz of [-1, 1]) { const bl = box(.07, .012, .045, std(sz > 0 ? 0xd9473a : 0xf2efe6)); bl.position.set(0, 0, sz * .19); pad.add(bl); }
+    pad.position.set(-.02, .12, 0); g.add(pad);
+    return { g, pad };
+  }
+  [[-4.2, .85, .5, 0xe9774a, 0x2f6fa8, 1.6], [3.9, .9, .7, 0x4aa8d9, 0xd9473a, 1.4], [15.6, .85, .5, 0xf2c14a, 0x3b9a6a, 1.5], [18.7, .85, .45, 0xd9608a, 0x7a58b5, 1.6], [-19.0, .9, .4, 0x3bb89a, 0xf08a3c, 1.5], [-8.8, -.8, .5, 0xe9774a, 0xe277a0, 1.5]].forEach(([cx, off, sp, col, pc, half], i) => {
+    const c = canoe(col, pc); c.g.scale.setScalar(1.15); W(c.g); canoes.push({ ...c, cx, off, sp: sp * .5, half, ph: i * 1.7, south: i === 5 });
+  });
+
   // ---- people on the beaches: sunbathers, parasols, swimmers and walkers along the water
   const swimmers = [], walkers = [], balls = [], fireworks = []; let fwNext = 0;
   function parasol(col) {
@@ -1227,8 +1260,17 @@ export function open(opts) {
         if (ci % 6 === 3) for (let k = 0; k < 6; k++) { const bl = new THREE.Mesh(new THREE.SphereGeometry(.022, 6, 5), std([0xe9577a, 0xf5e04a, 0xfff8ea][(k + r) % 3])); bl.position.set(-w / 2 + .1 + k * (w - .2) / 5, .065, -d / 2 + .06 + r * .09); g.add(bl); }
       }
       const fn = box(w + .04, .05, .012, std(0x8a6a44)); fn.position.set(0, .03, d / 2 + .01); g.add(fn); const fn2 = fn.clone(); fn2.position.z = -d / 2 - .01; g.add(fn2);
-      g.userData.fp = Math.max(w, d) * .5 + .12; g.userData.pri = 0; g.userData.field = 1; W(put(g, x, z, ang, .03 + lift)); return g;
+      // the produce: nothing grows until it rains; then fruits come out, stay, and are picked by the farmer
+      const PRC = [0xe0523f, 0xf2a43a, 0x8fcf60, 0x9a6cc0, 0xf2d24e, 0xe9774a][ci % 6], prod = [], nr = Math.max(2, Math.floor(rows / 2)), nc = Math.max(3, Math.floor(w / .1));
+      for (let r2 = 0; r2 < nr; r2++) for (let k = 0; k < nc; k++) { const f = new THREE.Mesh(new THREE.SphereGeometry(.026, 8, 6), std(PRC)); f.position.set(-w / 2 + .09 + k * (w - .18) / Math.max(1, nc - 1), .075, -d / 2 + .1 + r2 * (d - .2) / Math.max(1, nr - 1)); f.scale.setScalar(.001); f.visible = false; g.add(f); prod.push(f); }
+      g.userData.prod = prod; g.userData.fw = w; g.userData.fd = d;
+      g.userData.fp = Math.max(w, d) * .5 + .12; g.userData.pri = 0; g.userData.field = 1; g.userData.fx = x; g.userData.fz = z; g.userData.fang = ang; W(put(g, x, z, ang, .03 + lift)); return g;
     };
+    // tiny fields on little stone terraces around the mountain village, and a few more houses there
+    { const vb = [10.6, shore(10.6) - 7.3], TF = [[-1.9, -1.4], [-2.6, -.2], [-1.6, 1.2], [1.6, 2.0], [2.8, .9], [3.0, -.6], [2.4, -2.0], [-.4, 2.3], [.6, -2.6], [-3.1, 1.5], [1.0, 3.1], [-2.2, 2.7]];
+      TF.forEach(([dx, dz], i) => { const x = vb[0] + dx, z = vb[1] + dz; if (groundH(x, z) < .3 || inletD(x, z) < 1 || riverPts.some((q) => Math.hypot(q[0] - x, q[1] - z) < .6)) return;
+        const gf = field(x, z, seaYaw(x) + (i % 2 ? .2 : -.15), .34 + (i % 3) * .04, .26 + (i % 2) * .03, 30 + i, 0), ter = box(.5, .14, .4, std(0xaaa08c)); ter.position.y = -.06; ter.scale.set(gf.userData.fw / .34 * .8, 1, gf.userData.fd / .26 * .9); gf.add(ter); });
+      for (let k = 0; k < 16; k++) { const a = k * 2.4, rr = 1.9 + (k % 4) * .6; hh(vb[0] + Math.cos(a) * rr * 1.1, 7.3 + Math.sin(a) * rr - 0, 1 + (hc % 2), { stone: k % 2 === 0 }); } }
     let fi = 0;
     for (const [fx, inl] of [[-16.2, 5.6], [-12.4, 6.6], [-7.2, 6.0], [-3.8, 6.5], [-.2, 5.9], [3.4, 6.3], [8.6, 6.4], [12.2, 6.2], [16.3, 6.0], [-10.6, 4.9], [5.4, 5.0], [-1.9, 7.4], [-14.2, 5.2], [-5.4, 7.2], [1.4, 7.0], [10.2, 7.0], [14.2, 5.6], [-18.4, 6.4], [18.0, 5.2]]) {
       const x = fx, z = shore(x) - inl, sl = Math.abs(groundH(x + .5, z) - groundH(x - .5, z)) + Math.abs(groundH(x, z + .5) - groundH(x, z - .5));
@@ -1565,6 +1607,7 @@ export function open(opts) {
   const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
 
   // ---- frame
+  let _crestO = null, fieldsList = null;
   let raf = 0, last = performance.now(), t = 0, frame = 0, closed = false;
   const tv = new THREE.Vector3(), camDir = new THREE.Vector3(0, 0, 1), prj = new THREE.Vector3();
   const loop = (now) => {
@@ -1611,6 +1654,7 @@ export function open(opts) {
       b.b.position.y = b.base + Math.sin(t * 1.4 + b.ph) * .018 * k;
       b.b.rotation.z = Math.sin(t * 1.1 + b.ph) * .045 * k; b.b.rotation.x = Math.sin(t * .9 + b.ph * 2) * .03 * k;
     }
+    if (frame % 2 === 0) { const o = _crestO || (_crestO = new THREE.Object3D()); for (let i = 0; i < crestData.length; i++) { const c = crestData[i], a = t * c.sp + c.ph, sw = Math.max(0, Math.sin(a)), x = c.x + Math.cos(c.yaw) * c.drift * t, z = c.z - Math.sin(c.yaw) * c.drift * t; put(o, x, z, c.yaw, .012 + sw * .012, true); o.scale.set(c.w * (.32 + sw * .55), .01 + sw * .008, .016 + sw * .016); o.updateMatrix(); crests.setMatrixAt(i, o.matrix); } crests.instanceMatrix.needsUpdate = true; crestMat.opacity = (.55 + .4 * (1 - nightT)) * (1 - rainT * .2); }
     foamMat.opacity = .42 + Math.sin(t * 1.4) * .16;
     for (const c of critters) {
       const w = Math.sin(t * c.sp + c.ph), w2 = Math.cos(t * c.sp * .8 + c.ph * 2), ax2 = c.hx + w * c.r, az2 = c.hz + w2 * c.r * .6;
@@ -1705,6 +1749,23 @@ export function open(opts) {
         const a = f.pts.geometry.attributes.position.array, rise = Math.min(1, u / .5), e = Math.max(0, u - .5), r = 1 - Math.exp(-e * 2.2);
         for (let k = 0; k < f.dirs.length; k++) { const d = f.dirs[k]; if (u < .5) { a[k * 3] = f.origin.x - f.up.x * (1 - rise) * .9; a[k * 3 + 1] = f.origin.y - f.up.y * (1 - rise) * .9; a[k * 3 + 2] = f.origin.z - f.up.z * (1 - rise) * .9; } else { a[k * 3] = f.origin.x + d.x * r * .9 - f.up.x * e * e * .09; a[k * 3 + 1] = f.origin.y + d.y * r * .9 - f.up.y * e * e * .09; a[k * 3 + 2] = f.origin.z + d.z * r * .9 - f.up.z * e * e * .09; } }
         f.pts.geometry.attributes.position.needsUpdate = true; f.pts.material.opacity = u < .5 ? .9 : Math.max(0, 1 - e / 2.6); } }
+    if (!fieldsList) { fieldsList = []; world.children.forEach((c) => { if (c.userData && c.userData.prod) { const farmer = person(SHIRTS[(fieldsList.length * 3 + 1) % SHIRTS.length], { skin: SKINS[fieldsList.length % 4], role: 'farm', hat: 0xe9d79a }); farmer.visible = false; farmer.scale.setScalar(.8); W(farmer); fieldsList.push({ g: c, farmer, state: 0, t0: 0, picked: 0, ph: Math.random() * 6 }); } }); }
+    for (const f of fieldsList) {
+      const u = f.g.userData, pr = u.prod, n = pr.length, wsx = Math.sin(u.fang), wsz = Math.cos(u.fang);
+      if (f.state === 0 && rainT > .55) { f.state = 1; f.t0 = t; for (const m of pr) m.visible = true; }
+      if (f.state === 1) { const k = Math.min(1, (t - f.t0) / 6); pr.forEach((m, i) => { const e = Math.max(0, Math.min(1, k * 1.6 - (i / n) * .6)); m.scale.setScalar(.001 + e * .999 + Math.sin(t * 2 + i) * .02 * e); }); if (k >= 1 && rainT < .3) { f.state = 2; f.t0 = t; f.farmerPos = 0; } }
+      else if (f.state === 2) {                                                 // the farmer walks in, picks the produce one by one and walks away
+        const arrive = Math.min(1, (t - f.t0) / 3.2), edge = (u.fd / 2 + .13), far = edge + .9 + (f.ph % 1) * .5;
+        const off = f.picked < n ? far - (far - edge) * arrive : edge + (t - f.t1) * .2;
+        f.farmer.visible = true; put(f.farmer, u.fx + wsx * off, u.fz + wsz * off, u.fang + PI + (arrive < 1 ? 0 : Math.sin(t * 1.3 + f.ph) * .3), .03 + (arrive < 1 ? Math.abs(Math.sin(t * 9)) * .01 : Math.abs(Math.sin(t * 5)) * .014));
+        if (arrive >= 1 && f.picked < n) { const nx = Math.floor((t - f.t0 - 3.2) / .55); while (f.picked < Math.min(n, Math.max(0, nx))) { pr[f.picked].scale.setScalar(.001); pr[f.picked].visible = false; f.picked++; } if (f.picked >= n) f.t1 = t; }
+        if (f.picked >= n && (t - f.t1) > 4) { f.state = 3; f.farmer.visible = false; }
+      } else if (f.state === 3) { f.state = 0; f.picked = 0; }
+    }
+    for (const c of canoes) {
+      const a = t * c.sp * .35 + c.ph, x = c.cx + Math.sin(a) * c.half, dx = Math.cos(a) * c.half * c.sp * .35, fn = c.south ? shoreS : shore, z = fn(x) + (c.south ? -1 : 1) * Math.abs(c.off), dz = (fn(x + .05) - fn(x - .05)) / .1 * dx, yaw = Math.atan2(-dz, dx);
+      put(c.g, x, z, yaw, Math.sin(t * 1.3 + c.ph) * .006, true); c.g.rotation.z = 0; c.pad.rotation.x = Math.sin(t * 2.4 + c.ph) * .5; c.pad.rotation.z = Math.sin(t * 2.4 + c.ph + 1.2) * .22;
+    }
     for (const bl of balls) { const c = Math.cos(t * 2.6 + bl.ph), h = .07 + .24 * Math.abs(Math.sin(t * 2.6 + bl.ph)); put(bl.m, bl.x, bl.z + c * .3 * bl.sg, 0, h); }
     for (const s of swimmers) {
       const a = t * s.sp + s.ph, x = s.x + Math.sin(a) * s.rx;
@@ -1716,7 +1777,7 @@ export function open(opts) {
     }
     // people react to the weather: when it rains or night falls they run to the nearest house, then wait at its door (some go in); when it clears they run back to what they were doing
     for (const g of ALLP) {
-      const u = g.userData, role = u.role; if (role === 'fish' || role === 'bike' || role === 'fest') continue;
+      const u = g.userData, role = u.role; if (role === 'fish' || role === 'bike' || role === 'fest' || role === 'farm') continue;
       if (u.s0 === undefined) { u.s0 = g.scale.x; u.v = 1; u.mode = 0; u.lastX = null; const pp = planeOf(_d.copy(g.position).normalize()); u.p0 = pp; }
       if (u.umb) u.umb.visible = rainT > .5 && u.mode !== 3;
       const h = (u.idx * 37 % 100) / 100;
