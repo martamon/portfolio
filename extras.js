@@ -1000,8 +1000,10 @@
     JF.dir = Math.random() < 0.5 ? 1 : -1;
     JF.x = JF.dir > 0 ? -w : innerWidth + w;
     JF.y = innerHeight * (0.25 + Math.random() * 0.5);
+    if (JF.walk) { JF.y = innerHeight - JF.h * 0.55; JF.wp = 0; JF.wT = 10; JF.ph = 0; }
     JF.vx = JF.dir * 60; JF.vy = 0; JF.t = 0; JF.pulse = 0.2; jfPick(); JF.since = 1; JF.sq = 0; JF.blink = 2 + Math.random() * 2; JF.blinkT = 0;
     JF.on = true;
+    if (JF.walk && innerWidth >= 600) setTimeout(function () { if (JF.on) jfHint(3600); }, 900);
     e.style.width = w + 'px'; e.style.height = JF.h + 'px';
     e.style.display = 'block';
   }
@@ -1035,6 +1037,7 @@
   function jfEnter() {
     JF.dir = Math.random() < 0.5 ? 1 : -1;
     JF.x = JF.dir > 0 ? -JF.w : innerWidth + JF.w; JF.y = innerHeight * (0.25 + Math.random() * 0.5);
+    if (JF.walk) JF.y = innerHeight - JF.h * 0.55;
     JF.vx = JF.dir * 80; JF.vy = 0; JF.sq = 0; JF.since = 1; JF.pulse = 0.2; JF.act = null; jfPick();
     JF.el.style.display = 'block';
   }
@@ -1112,6 +1115,22 @@
     } else if (JF.act && JF.act.n !== 'chase') {
       JF.rot = 0; JF.km = 1; JF.fo = -1;
       jfActStep(dt);
+    } else if (JF.walk) {
+      // Home and About: it walks to and fro along the bottom of the screen, stops now and then, and still answers taps, drags and 3 clicks
+      if (JF.act) jfActStep(dt);
+      JF.rot = 0; JF.km = 1; JF.fo = -1;
+      var chasing = !!JF.act, wdx = JF.tx - JF.x, want = 0, fl = innerHeight - JF.h * 0.55, spd = innerWidth < 600 ? 30 : 38;
+      if (JF.wp > 0 && !chasing) { JF.wp -= dt; if (JF.wp <= 0) { JF.tx = innerWidth * (0.06 + Math.random() * 0.88); JF.wT = 10; } }
+      else if (!chasing && (Math.abs(wdx) < 6 || (JF.wT -= dt) < 0)) JF.wp = 1.6 + Math.random() * 3.2;
+      else if (Math.abs(wdx) >= 6) want = (wdx > 0 ? 1 : -1) * (chasing ? 95 : spd);
+      JF.vx += (want - JF.vx) * Math.min(1, dt * 3.5);
+      if (Math.abs(JF.vx) > 8) JF.dir = JF.vx > 0 ? 1 : -1;
+      JF.x = Math.max(JF.w * 0.6, Math.min(innerWidth - JF.w * 0.6, JF.x + JF.vx * dt));
+      JF.vy += 1500 * dt; JF.y += JF.vy * dt;
+      var ground = false;
+      if (JF.y >= fl) { if (JF.vy > 240) { JF.vy = -JF.vy * 0.28; JF.sq = 0.25; } else { JF.vy = 0; ground = true; } JF.y = fl; }
+      JF.ph += Math.abs(JF.vx) * dt / (JF.w * 0.55) * Math.PI; JF.bob = ground ? Math.abs(Math.sin(JF.ph)) : 0;
+      if (ground) JF.sq += ((want ? 0.07 * (1 - JF.bob) - 0.01 : 0.02 + 0.02 * Math.sin(JF.t * 2.2)) - JF.sq) * Math.min(1, dt * 12);
     } else {
       if (JF.act) jfActStep(dt);
       JF.rot = 0; JF.km = 1; JF.fo = -1;
@@ -1151,10 +1170,15 @@
     if (JF.fr !== fr) { JF.fr = fr; JF.el.style.backgroundPosition = (fr / 9 * 100) + '% 0'; }
     var sway = Math.sin(JF.t * 1.3) * 5 + Math.max(-16, Math.min(16, JF.vx * 0.06));
     var near = Math.sin(JF.t * 0.45) * 0.7 + Math.sin(JF.t * 1.1 + 1) * 0.3;   // -1 far ... 1 near the viewer
-    var sx = (1 - JF.sq * 0.9) * (1 + 0.1 * near) * JF.km, sy = (1 + JF.sq) * (1 + 0.1 * near) * JF.km;
+    var lift = 0;
+    if (JF.walk) { near = 0; lift = (JF.bob || 0) * JF.h * 0.14; if (!JF.act && !JF.held) sway = Math.sin(JF.ph || 0) * 4 * Math.min(1, Math.abs(JF.vx) / 20); }
+    var mob = innerWidth < 600, bp = (JF.t % 1.15) / 1.15, beat = mob ? 1 + 0.07 * (Math.exp(-Math.pow((bp - 0.1) / 0.06, 2)) + 0.65 * Math.exp(-Math.pow((bp - 0.3) / 0.07, 2))) : 1;   // on phones it beats like a heart, a little bigger and smaller
+    var sx = (1 - JF.sq * 0.9) * (1 + 0.1 * near) * JF.km * beat, sy = (1 + JF.sq) * (1 + 0.1 * near) * JF.km * beat;
     JF.el.style.setProperty('--sd', (0.5 + 0.5 * near).toFixed(2));
-    JF.el.style.transform = 'translate3d(' + (JF.x - JF.w / 2).toFixed(1) + 'px,' + (JF.y - JF.h / 2).toFixed(1) + 'px,0) rotate(' + (sway + JF.rot).toFixed(1) + 'deg) scale(' + sx.toFixed(3) + ',' + sy.toFixed(3) + ')';
-    if (JF.hint && JF.hint.isConnected) { var hs = Math.max(176, Math.max(JF.w, JF.h) * 1.7); JF.hint.style.width = JF.hint.style.height = hs.toFixed(0) + 'px'; JF.hint.style.transform = 'translate3d(' + (JF.x - hs / 2).toFixed(1) + 'px,' + (JF.y - hs / 2).toFixed(1) + 'px,0)'; }
+    JF.el.style.transform = 'translate3d(' + (JF.x - JF.w / 2).toFixed(1) + 'px,' + (JF.y - JF.h / 2 - lift).toFixed(1) + 'px,0) rotate(' + (sway + JF.rot).toFixed(1) + 'deg) scale(' + sx.toFixed(3) + ',' + sy.toFixed(3) + ')';
+    if (mob && !planet && !(JF.hint && JF.hint.isConnected && JF.hint.classList.contains('x-on')) && !JF.held) jfHint(86400000);   // on phones the message around it is always there
+    if (JF.hint && JF.hint.isConnected) JF.hint.style.visibility = JF.el.style.display === 'none' ? 'hidden' : '';
+    if (JF.hint && JF.hint.isConnected) { var hs = JF.walk ? Math.max(150, JF.w * 2.3) : Math.max(176, Math.max(JF.w, JF.h) * 1.7); JF.hint.style.width = JF.hint.style.height = hs.toFixed(0) + 'px'; JF.hint.style.transform = 'translate3d(' + (JF.x - hs / 2).toFixed(1) + 'px,' + (JF.y - hs / 2 - (JF.walk ? hs * 0.22 : 0)).toFixed(1) + 'px,0)'; }
   }
   // a click or tap on the page sends it swimming over there
   addEventListener('pointerdown', function (ev) {
@@ -1162,6 +1186,8 @@
     JF.tx = ev.clientX; JF.ty = ev.clientY; JF.tT = 6; JF.pulse = Math.min(JF.pulse, 0.05);
   }, { passive: true });
   function setupDrifter(on) {
+    var wk = on === 'walk';
+    if (on && JF.walk !== wk) { JF.walk = wk; JF.on = false; JF.next = performance.now() + 600; if (JF.el) JF.el.style.display = 'none'; }
     if (!on) {
       // left the Contact page: remove it
       if (JF.raf) { cancelAnimationFrame(JF.raf); JF.raf = 0; }
@@ -1628,7 +1654,7 @@
       for (var tq = 0; tq < ti.length; tq++) if (ti[tq].textContent.trim() === 'Regular Studio') ti[tq].textContent = 'Martamon';
     }
     setupReel(p === 'home');
-    setupDrifter(p === 'contact');
+    setupDrifter(p === 'contact' ? 'swim' : (p === 'home' || p === 'about') ? 'walk' : false);
     setupContact(p === 'contact');
 
     var faces = document.querySelectorAll('a[href="./#hero"],a[href="/#hero"],a[href="./"]');
