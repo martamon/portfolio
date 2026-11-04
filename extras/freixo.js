@@ -615,10 +615,10 @@ export function open(opts) {
   sea.scale.setScalar((R + SEA) / R); W(sea);
   const seaOrig = sea.geometry.attributes.position.array.slice();
   // white wave crests, only on the open sea (the far side of the planet): little flat foam ribbons that drift, swell and fade
-  const crestN = 420, crestGeo = new THREE.IcosahedronGeometry(1, 1), crestMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .9, depthWrite: false }), crests = new THREE.InstancedMesh(crestGeo, crestMat, crestN), crestData = [];
+  const crestN = 0, crestGeo = new THREE.IcosahedronGeometry(1, 1), crestMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .9, depthWrite: false }), crests = new THREE.InstancedMesh(crestGeo, crestMat, crestN), crestData = [];
   { const dd0 = new THREE.Vector3(); let n = 0;
     for (let i = 0; i < 9000 && n < crestN; i++) { dd0.set(Math.random() - .5, Math.random() - .5, Math.random() - .5).normalize(); const [x, z] = planeOf(dd0); const far = Math.hypot(x, z) > 24 || z > 14.5 || z < -23; if (!far || islandR(x, z) < 1.4) continue; crestData.push({ x, z, yaw: Math.random() * 6.28, sp: .05 + Math.random() * .09, ph: Math.random() * 6.28, w: .22 + Math.random() * .3, drift: (Math.random() - .5) * .05 }); n++; } }
-  crests.count = crestData.length; crests.frustumCulled = false; world.add(crests);
+  crests.count = crestData.length; crests.frustumCulled = false; crests.visible = false;
   const spots = [];
   const spot = () => 0;                      // (the planet is only for looking at: no points to click)
   const hubAt = (x, z, lift) => { const o = new THREE.Object3D(); W(put(o, x, z, 0, lift)); return o; };
