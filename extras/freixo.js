@@ -697,6 +697,18 @@ export function open(opts) {
       cars.push({ w, r: routes[ri], u: (k + (dir > 0 ? .1 : .6)) / n, v: speed * dir, off: dir > 0 ? .095 : -.095, ping: !!ping });
     }
   };
+  function bike(shirt, col) {
+    const g = new THREE.Group(), tire = std(0x2b3036), fr = std(col);
+    for (const x of [-.09, .09]) { const w = new THREE.Mesh(new THREE.TorusGeometry(.045, .006, 6, 16), tire); w.rotation.y = PI / 2; w.position.set(x, .05, 0); g.add(w); }
+    const bar = box(.2, .008, .008, fr); bar.position.set(0, .085, 0); bar.rotation.z = -.2; g.add(bar); const bar2 = box(.11, .008, .008, fr); bar2.position.set(-.03, .06, 0); bar2.rotation.z = .9; g.add(bar2);
+    const hb = box(.008, .008, .06, tire); hb.position.set(.095, .12, 0); g.add(hb);
+    const rd = person(shirt, { skin: SKINS[0], role: 'bike', hat: 0xe9e2d2 }); rd.scale.setScalar(.62); rd.position.set(-.02, .06, 0); g.add(rd);
+    return g;
+  }
+  const addBikes = (ri, dir, n, speed, off) => {
+    for (let k = 0; k < n; k++) { const m = bike(SHIRTS[(k * 3 + ri + (dir > 0 ? 1 : 4)) % SHIRTS.length], [0xd9473a, 0x2f6fa8, 0x3b9a6a, 0xf2c14a][(k + ri) % 4]), w = new THREE.Group(); m.scale.setScalar(.9); w.add(m); W(w); cars.push({ w, r: routes[ri], u: (k + (dir > 0 ? .35 : .85)) / n, v: speed * dir, off: dir > 0 ? off : -off, ping: false, bike: true }); }
+  };
+  addBikes(0, 1, 3, .2, .165); addBikes(0, -1, 2, .19, .165); addBikes(1, 1, 1, .18, .165); addBikes(1, -1, 1, .17, .165);
   addCars(0, 1, 5, .5, [0xc23b2e, 0xf2efe6, 0x2f6fa8, 0xe9b94a, 0x3b8f6a]);
   addCars(0, -1, 4, .5, [0xd0744a, 0xf2efe6, 0x3a3f47, 0xc23b2e], true);
   addCars(1, 1, 2, .45, [0x2f6fa8, 0xe9b94a]);
@@ -1483,7 +1495,7 @@ export function open(opts) {
     }
     // people react to the weather: when it rains or night falls they run to the nearest house, then wait at its door (some go in); when it clears they run back to what they were doing
     for (const g of ALLP) {
-      const u = g.userData, role = u.role; if (role === 'fish') continue;
+      const u = g.userData, role = u.role; if (role === 'fish' || role === 'bike') continue;
       if (u.s0 === undefined) { u.s0 = g.scale.x; u.v = 1; u.mode = 0; u.lastX = null; const pp = planeOf(_d.copy(g.position).normalize()); u.p0 = pp; }
       if (u.umb) u.umb.visible = rainT > .5 && u.mode !== 3;
       const h = (u.idx * 37 % 100) / 100;
