@@ -3,7 +3,7 @@
 // into the sea, where the world turns turquoise and the car keeps rolling along the seabed, past fish and an old wreck. Glowing orbs hold
 // information about the ría; press E (or tap the button) next to one to read it.
 import * as THREE from './three.module.min.js';
-import { INFO, getLang, tr } from './i18n.js?v=11';
+import { INFO, getLang, tr } from './i18n.js?v=12';
 
 const PI = Math.PI, LI = ['en', 'es', 'gl'];
 // phones and weak devices get a lighter version: fewer pixels, no velvet sheen, cheaper shadows and fewer objects
@@ -396,9 +396,11 @@ export function open(opts) {
   const root = document.createElement('div'); root.className = 'x-dr';
   root.innerHTML = '<canvas class="x-dr-cv"></canvas><div class="x-dr-uw"></div>' +
     '<div class="x-dr-top"><div class="x-dr-t"><b>Ría de Muros e Noia</b><span class="x-dr-sub"></span></div><div class="x-dr-btns"><button type="button" class="x-dr-rn" aria-label="' + tr('Rain') + '"></button><button type="button" class="x-dr-dn" aria-label="' + tr('Day / night') + '"></button><button type="button" class="x-dr-mu" aria-label="' + tr('Sound') + '"></button><button type="button" class="x-dr-x" aria-label="' + tr('Back to the map') + '"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button></div></div>' +
+    '<button type="button" class="x-dr-tour"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.2"/></svg><span>' + tr('Take me on a guided tour') + '</span></button>' +
+    '<button type="button" class="x-dr-ta x-dr-tp" aria-label="' + tr('Previous stop') + '"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><button type="button" class="x-dr-ta x-dr-tn" aria-label="' + tr('Next stop') + '"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button><div class="x-dr-fade"></div>' +
     '<div class="x-dr-count"><i class="x-dr-arrow"></i><span></span></div><div class="x-dr-help">' + tr('Ride with the arrow keys') + '</div>' +
     '<button type="button" class="x-dr-prompt"></button><div class="x-dr-card"><div class="x-dr-art"></div><b></b><p></p><button type="button">' + tr('Close') + '</button></div>' +
-    (touch ? '<div class="x-dr-pad"><div><button data-k="left">◀</button><button data-k="right">▶</button></div><div><button data-k="up">▲</button><button data-k="down">▼</button></div></div>' : '');
+    (touch ? '<div class="x-dr-pad"><div><button data-k="left" aria-label="Left"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><button data-k="right" aria-label="Right"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button></div><div class="x-v"><button data-k="up" class="x-go" aria-label="Go"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 15l7-7 7 7"/></svg></button><button data-k="down" aria-label="Brake"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l7 7 7-7"/></svg></button></div></div>' : '');
   document.body.appendChild(root);
   const css = document.createElement('style'); css.textContent = [
     '.x-dr{position:fixed;inset:0;z-index:95;background:#cfe6f2;opacity:0;transition:opacity 1.1s ease;color:#4a3340;font:500 13px/1.45 "Switzer","Switzer Placeholder",system-ui,sans-serif;overscroll-behavior:contain;touch-action:none;user-select:none;-webkit-user-select:none}',
@@ -414,11 +416,14 @@ export function open(opts) {
     '.x-dr-prompt{position:absolute;left:50%;bottom:48px;transform:translate(-50%,14px);padding:16px 30px;border:0;border-radius:20px;background:rgba(255,253,248,.96);color:#4a3340;font:500 13px/1 "IBM Plex Mono",ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .4s,transform .5s cubic-bezier(.22,.8,.24,1);box-shadow:0 10px 30px rgba(60,70,80,.25)}.x-dr.x-near .x-dr-prompt{opacity:1;pointer-events:auto;transform:translate(-50%,0)}',
     '.x-dr-card{position:absolute;left:50%;bottom:36px;width:min(480px,calc(100% - 32px));padding:20px 24px 18px;border-radius:26px;background:rgba(255,253,248,.96);box-shadow:0 14px 44px rgba(60,70,80,.3);opacity:0;pointer-events:none;transform:translate(-50%,18px);transition:opacity .45s,transform .6s cubic-bezier(.22,.8,.24,1)}.x-dr.x-card .x-dr-card{opacity:1;pointer-events:auto;transform:translate(-50%,0)}',
     '.x-dr-art svg,.x-dr-art img{width:100%;height:auto;display:block;border-radius:16px;margin-bottom:12px}.x-dr-art img{max-height:34vh;object-fit:cover}.x-dr-art:empty{display:none}.x-dr-card b{display:block;font-size:20px;line-height:1.2;font-weight:700;margin-bottom:8px}.x-dr-card p{margin:0 0 14px;font-size:16px;line-height:1.5}.x-dr-card button{border:0;border-radius:14px;padding:11px 20px;background:#e36d57;color:#fff;font:500 12px/1 "IBM Plex Mono",ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}',
-    '.x-dr-pad{position:absolute;left:0;right:0;bottom:18px;display:flex;justify-content:space-between;padding:0 18px;pointer-events:none}.x-dr-pad>div{display:flex;gap:10px;pointer-events:auto}.x-dr-pad button{width:62px;height:62px;border:0;border-radius:50%;background:rgba(255,252,246,.7);color:#4a3340;font-size:20px;touch-action:none;-webkit-tap-highlight-color:transparent}.x-dr-pad button.x-on{background:#fff;transform:scale(.94)}',
+    '.x-dr-pad{position:absolute;left:0;right:0;bottom:22px;display:flex;justify-content:space-between;align-items:flex-end;padding:0 18px;pointer-events:none}.x-dr-pad>div{display:flex;gap:2px;padding:6px;border-radius:44px;background:linear-gradient(160deg,rgba(255,253,248,.78),rgba(255,236,224,.6));-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:0 10px 28px rgba(74,51,64,.2),inset 0 0 0 1px rgba(255,255,255,.75);pointer-events:auto}.x-dr-pad>div.x-v{flex-direction:column}.x-dr-pad button{width:62px;height:62px;border:0;border-radius:50%;background:transparent;color:#7a5a64;display:flex;align-items:center;justify-content:center;touch-action:none;-webkit-tap-highlight-color:transparent;transition:transform .18s cubic-bezier(.3,1.5,.5,1),background .2s,color .2s}.x-dr-pad button.x-go{color:#e36d57}.x-dr-pad button.x-on{background:linear-gradient(160deg,#ffb9a1,#e36d57);color:#fff;transform:scale(.92);box-shadow:0 4px 12px rgba(227,109,87,.45)}',
+    '.x-dr-tour{position:absolute;left:18px;top:68px;display:flex;align-items:center;gap:6px;padding:7px 12px 7px 9px;border:0;border-radius:16px;background:rgba(255,252,246,.85);color:#4a3340;font:500 10px/1 "IBM Plex Mono",ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);transition:background .25s,color .25s,transform .3s cubic-bezier(.3,1.5,.5,1)}.x-dr-tour:hover{transform:scale(1.05)}.x-dr.x-tour .x-dr-tour{background:#e36d57;color:#fff}',
+    '.x-dr-ta{position:absolute;top:50%;margin-top:-23px;width:46px;height:46px;border:0;border-radius:50%;background:rgba(255,252,246,.88);color:#4a3340;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 18px rgba(74,51,64,.2);opacity:0;pointer-events:none;transition:opacity .4s,transform .3s cubic-bezier(.3,1.5,.5,1)}.x-dr-tp{left:14px}.x-dr-tn{right:14px}.x-dr.x-tour .x-dr-ta{opacity:1;pointer-events:auto}.x-dr-ta:hover{transform:scale(1.1)}',
+    '.x-dr-fade{position:absolute;inset:0;background:#fff6ea;opacity:0;pointer-events:none;transition:opacity .45s ease}.x-dr.x-fade .x-dr-fade{opacity:1}.x-dr.x-tour .x-dr-pad,.x-dr.x-tour .x-dr-help{opacity:0;pointer-events:none}',
     '.x-dr.x-touch .x-dr-help{display:none}',
     '.x-dr.x-touch .x-dr-prompt{bottom:118px}.x-dr.x-touch .x-dr-card{bottom:auto;top:128px;max-height:calc(100% - 300px);overflow:auto}.x-dr.x-touch.x-card .x-dr-pad{opacity:0;pointer-events:none}.x-dr-pad{transition:opacity .3s}',
     '@media(max-width:700px){.x-dr-prompt{bottom:118px}.x-dr-card{bottom:auto;top:128px;max-height:calc(100% - 300px);overflow:auto}.x-dr.x-card .x-dr-pad{opacity:0;pointer-events:none}.x-dr-help{display:none}.x-dr-art img{max-height:22vh}}',
-    '@media(max-width:600px){.x-dr-t span{display:none}.x-dr-count{top:74px}}'
+    '@media(max-width:600px){.x-dr-t span{display:none}.x-dr-count{top:74px;left:auto;right:18px;transform:none;padding:7px 12px}.x-dr-tour{top:74px;padding:7px 10px 7px 8px;font-size:9.5px}}'
   ].join('\n'); root.appendChild(css);
   if (touch) root.classList.add('x-touch');
   requestAnimationFrame(() => requestAnimationFrame(() => root.classList.add('x-in')));
@@ -638,7 +643,24 @@ export function open(opts) {
   prompt.textContent = touch ? tr('Tap to read') : tr('Press E to read');
   const openCard = (o) => { if (!o) return; cardOn = true; card.querySelector('.x-dr-art').innerHTML = artFor(o.userData.id, lang); card.querySelector('b').textContent = INFO[o.userData.id].h[lang]; card.querySelector('p').textContent = INFO[o.userData.id].p[lang]; root.classList.add('x-card'); if (!o.userData.done) { o.userData.done = true; seen++; paintCount(); } if (snd) snd.chime(); };
   const closeCard = () => { cardOn = false; root.classList.remove('x-card'); };
-  card.querySelector('button').addEventListener('click', closeCard); prompt.addEventListener('click', () => openCard(nearOrb));
+  card.querySelector('button').addEventListener('click', () => { closeCard(); if (tour.on && tour.phase === 'read') tourGo(tour.i + 1, false); }); prompt.addEventListener('click', () => openCard(nearOrb));
+
+  // ---- guided tour: the bike pedals by itself along the road to each point of interest; the arrows jump between them
+  const tour = { on: false, i: 0, phase: 'wait', route: [], ghost: 0, stuck: 0, lx: 0, lz: 0 };
+  const tBtn = root.querySelector('.x-dr-tour'), tLab = tBtn.querySelector('span');
+  const tourStop = () => { tour.on = false; root.classList.remove('x-tour'); tLab.textContent = tr('Take me on a guided tour'); closeCard(); };
+  const tourGo = (i, jump) => {
+    if (i < 0) i = 0; if (i >= orbs.length) { tourStop(); return; }
+    tour.i = i; tour.phase = 'wait'; closeCard(); const o = orbs[i];
+    const go = () => { if (jump) { const zs = clamp(o.position.z - 14, -92, 92); S.x = ROADX(zs); S.z = zs; S.v = 0; S.steer = 0; S.yaw = 0; S.cyaw = 0; }
+      const pts = []; let z = S.z; const tx = o.position.x, tz = o.position.z; if (Math.abs(S.x - ROADX(z)) > 5) pts.push([ROADX(z), z]); const sg = Math.sign(tz - z) || 1; for (z += sg * 4; (tz - z) * sg > 10; z += sg * 4) pts.push([ROADX(z), z]); pts.push([tx, tz]);
+      tour.route = pts; tour.stuck = 0; tour.ghost = 0; tour.phase = 'ride'; };
+    if (jump) { root.classList.add('x-fade'); setTimeout(() => { if (!tour.on) { root.classList.remove('x-fade'); return; } go(); root.classList.remove('x-fade'); }, 480); } else go();
+  };
+  const tourStart = () => { tour.on = true; root.classList.add('x-tour', 'x-drove'); tLab.textContent = tr('Stop the tour'); tourGo(0, true); };
+  tBtn.addEventListener('click', () => { if (tour.on) tourStop(); else tourStart(); });
+  root.querySelector('.x-dr-tp').addEventListener('click', () => tourGo(Math.max(0, tour.i - 1), true));
+  root.querySelector('.x-dr-tn').addEventListener('click', () => tourGo(tour.i + 1, true));
 
   // ---- sound and controls
   const snd = makeSound(); const muBtn = root.querySelector('.x-dr-mu');
@@ -686,12 +708,24 @@ export function open(opts) {
     if (closed) return; raf = requestAnimationFrame(frame);
     const dt = Math.min(.05, (now - last) / 1000); last = now; t += dt;
     // driving: arcade physics
-    const throttle = (cardOn ? 0 : K.up - K.down), steerIn = cardOn ? 0 : (K.left - K.right);
+    let aT = 0, aS = 0;
+    if (tour.on) {
+      if (K.up || K.down || K.left || K.right) tourStop();
+      else if (tour.phase === 'ride') {
+        const o = orbs[tour.i], w = tour.route[0] || [o.position.x, o.position.z], dx = w[0] - S.x, dz = w[1] - S.z, d = Math.hypot(dx, dz), last = tour.route.length <= 1;
+        if (last && d < 5.2) tour.phase = 'arrive'; else if (!last && d < 3.4) tour.route.shift();
+        else { let er = Math.atan2(dx, dz) - S.yaw; er = Math.atan2(Math.sin(er), Math.cos(er)); aS = clamp(er * 2.2, -1, 1); aT = Math.abs(er) > 1.1 ? 0 : (S.v < (last ? clamp(d * .9, 2, 6.5) : 6.5) ? 1 : 0);
+          const mv = Math.hypot(S.x - tour.lx, S.z - tour.lz); if (aT > 0 && mv < dt * 1.1) tour.stuck += dt; else tour.stuck = 0; if (tour.stuck > 1.1) { tour.ghost = 2.5; tour.stuck = 0; } }
+      } else if (tour.phase === 'arrive') { aT = S.v > .5 ? -1 : 0; if (S.v < .6) { tour.phase = 'read'; S.v = 0; openCard(orbs[tour.i]); } }
+      tour.lx = S.x; tour.lz = S.z; if (tour.ghost > 0) tour.ghost -= dt;
+    }
+    const throttle = cardOn ? 0 : (tour.on ? aT : K.up - K.down), steerIn = cardOn ? 0 : (tour.on ? aS : K.left - K.right);
     if (throttle > 0) S.v += (S.v < 0 ? 14 : 5.5) * dt; else if (throttle < 0) S.v -= (S.v > 0 ? 14 : 6) * dt; else S.v -= Math.sign(S.v) * Math.min(Math.abs(S.v), 6 * dt);
     const vmax = S.uw ? 6.5 : 11; S.v = clamp(S.v, -3.5, vmax);
     S.steer += (steerIn - S.steer) * Math.min(1, dt * 5); S.yaw += S.steer * 1.55 * Math.min(1, Math.abs(S.v) / 2.8) / (1 + Math.abs(S.v) * .05) * Math.sign(S.v || 1) * dt;
     S.x += Math.sin(S.yaw) * S.v * dt; S.z += Math.cos(S.yaw) * S.v * dt;
     for (const c of colliders) {
+      if (tour.ghost > 0) break;
       const dx = S.x - c[0], dz = S.z - c[1], CR = .85;
       if (c.length >= 6) { if (c[6] !== undefined && S.y < c[6]) continue;                                                               // a building: an oriented box, the car is pushed out of it
         if (dx * dx + dz * dz > (c[2] + 3) * (c[2] + 3)) continue; const ca = Math.cos(c[5]), sa = Math.sin(c[5]), lx = dx * ca - dz * sa, lz = dx * sa + dz * ca, qx = clamp(lx, -c[3], c[3]), qz = clamp(lz, -c[4], c[4]), ex = lx - qx, ez = lz - qz, ed = Math.hypot(ex, ez);
@@ -763,7 +797,7 @@ export function open(opts) {
     // the orbs
     let best = null, bd = 6.5, tgt = null, td = 1e9;
     for (const o of orbs) { const u = o.userData; o.position.y = u.base + Math.sin(t * 1.6 + u.id) * .3; u.body.rotation.y = Math.sin(t * .5 + u.id) * .25; u.body.rotation.z = Math.sin(t * .8 + u.id) * .03; u.ring.scale.setScalar(1 + Math.sin(t * 2 + u.id) * .12); u.ball.material.emissiveIntensity = u.done ? .15 : .9 + Math.sin(t * 3 + u.id) * .3; u.ring.material.opacity = u.done ? .25 : .8; u.beam.visible = !u.done; const dx = o.position.x - S.x, dz = o.position.z - S.z, d = Math.hypot(dx, dz); if (d < bd && Math.abs(o.position.y - S.y) < 7) { bd = d; best = o; } if (!u.done && d < td) { td = d; tgt = o; } }
-    nearOrb = best; root.classList.toggle('x-near', !!best && !cardOn);
+    nearOrb = best; root.classList.toggle('x-near', !!best && !cardOn && !tour.on);
     if (tgt) { const b = Math.atan2(tgt.position.x - S.x, tgt.position.z - S.z); arrow.style.transform = 'rotate(' + ((S.cyaw - b) * 180 / PI).toFixed(1) + 'deg)'; arrow.style.opacity = 1; } else arrow.style.opacity = .2;
     let vn = '', vd = 40; VILLAGES.forEach(([n, z0]) => { const d = Math.hypot(S.x - (ROADX(z0) - 9), S.z - z0); if (d < vd) { vd = d; vn = n; } }); if (vn !== nearName) { nearName = vn; subEl.textContent = vn; }
     if (snd) { snd.atmos(nightT, rainT); }
