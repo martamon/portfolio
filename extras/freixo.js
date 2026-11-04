@@ -81,7 +81,7 @@ function groundRaw(x, z) {
 // the school yards and the little pitch sit on flat ground: the hill is levelled round them
 let FLAT = null; const flatList = () => FLAT;
 function groundH(x, z) {
-  if (!FLAT) { FLAT = []; for (const [fx, inl, r, so] of [[-.5, 5.05, 2.1], [15.6, 4.55, 2.1], [-7.6, 4.85, 1.3], [8.3, 1.4, 1.0], [2.2, 5.4, 1.9, 1]]) { const cz = so ? shoreS(fx) + inl : shore(fx) - inl; FLAT.push([fx, cz, r * 1.25, groundRaw(fx, cz) - .14]); } }
+  if (!FLAT) { FLAT = []; for (const [fx, inl, r, so] of [[-.5, 5.05, 2.1], [15.6, 4.55, 2.1], [-7.6, 4.85, 1.3], [8.3, 1.4, 1.0], [2.2, 5.4, 1.9, 1], [3.9, 7.0, .9], [14.2, 7.4, .9]]) { const cz = so ? shoreS(fx) + inl : shore(fx) - inl; FLAT.push([fx, cz, r * 1.25, groundRaw(fx, cz) - .14]); } }
   let h = groundRaw(x, z);
   for (const f of FLAT) { const d = Math.hypot(x - f[0], z - f[1]); if (d < f[2] * 1.9) h += (f[3] - h) * (1 - sstep(f[2] * .8, f[2] * 1.9, d)); }
   return h;
@@ -631,8 +631,8 @@ export function open(opts) {
   const SHUTC = [0x2f6fa8, 0x3b8f6a, 0xa23a30];
   const mk = (floors, extra) => { const k = hc++; return Object.assign({ w: .44 + rnd() * .2, d: .4 + rnd() * .07, floors, wall: WALLS[k % WALLS.length], roof: ROOF[(k * 3 + 1) % ROOF.length], gal: floors > 1 && k % 2 === 0, shut: k % 4 === 0 ? SHUTC[(k >> 2) % 3] : 0, fr: k, turn: (rnd() - .5) * .14 }, extra || {}); };
   // village squares (x range, inland range): houses keep out of them
-  let riverPts = []; const keptC = [], HOMES = [], STAIRS = [];
-  const SQ = [[-1.9, .9, 3.4, 6.7], [14.3, 16.9, 3.0, 6.1], [-8.7, -6.6, 4.0, 5.7], [-13.95, -11.65, 1.8, 3.55], [-8.9, -7.4, 2.1, 3.4], [1.1, 2.5, 2.1, 3.4], [8.9, 10.4, 2.1, 3.4]];
+  let riverPts = [], riverWidths = []; const keptC = [], HOMES = [], STAIRS = [];
+  const SQ = [[3.1, 4.7, 6.2, 7.8], [13.4, 15.0, 6.6, 8.2], [-1.9, .9, 3.4, 6.7], [14.3, 16.9, 3.0, 6.1], [-8.7, -6.6, 4.0, 5.7], [-13.95, -11.65, 1.8, 3.55], [-8.9, -7.4, 2.1, 3.4], [1.1, 2.5, 2.1, 3.4], [8.9, 10.4, 2.1, 3.4]];
   const inSq = (x, inl) => SQ.some((q) => x > q[0] && x < q[1] && inl > q[2] && inl < q[3]);
   const JX = [8.3], LINKX = [8.3];
   const roadClear = (x, inl) => LINKX.some((lx) => Math.abs(x - lx) < .65 && inl > .9 && inl < 7.9)  || JX.some((jx) => Math.abs(x - jx) < 1.05 && inl < 2.6 && inl > .5);
@@ -778,11 +778,11 @@ export function open(opts) {
   { const rs = relax(roadS, 3); roadBridge(rs, INLET3[0][0], 1.3); }
   const routes = [route(roadN), route(roadS)];
   // the river of Outes keeps going up the hillside, getting narrower and narrower until it is a thread
-  const RIVER2 = relax([[INLET2[2][0], INLET2[2][1] + .2], [INLET2[3][0], INLET2[3][1] + .1], [6.4, -7.0], [6.9, -8.6], [7.9, -9.9], [8.8, -10.9], [9.9, -11.7], [10.9, -12.2]], 0);
+  const RIVER2 = relax([[INLET2[2][0], INLET2[2][1] + .2], [INLET2[3][0], INLET2[3][1] + .1], [5.5, -7.2], [6.6, -8.5], [7.9, -9.0], [8.4, -10.3], [9.8, -10.7], [10.2, -12.0], [11.3, -12.4]], 0);
   { const dense = []; for (let i = 0; i < RIVER2.length - 1; i++) for (let k = 0; k < 6; k++) dense.push([RIVER2[i][0] + (RIVER2[i + 1][0] - RIVER2[i][0]) * k / 6, RIVER2[i][1] + (RIVER2[i + 1][1] - RIVER2[i][1]) * k / 6]); dense.push(RIVER2[RIVER2.length - 1]);
     const sm = relax(dense, 6), n = sm.length, widths = sm.map((_, i) => .78 * Math.pow(1 - i / (n - 1), 1.25) + .05);
     riverPts = sm; W(ribbonW(sm, widths, std(0x69b9d0, { transparent: true, opacity: .92, roughness: .2, side: THREE.DoubleSide, emissive: 0x2a6f86, emissiveIntensity: .15, polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 }), .03));
-    W(ribbonW(sm, widths.map((w) => w * 1.45), std(0xcdbf94, { roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }), .015)); }
+    riverWidths = widths; }
   const foamMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .5, depthWrite: false, side: THREE.DoubleSide });
   function car(color, bus) {
     const g = new THREE.Group(), L = bus ? .5 : .3;
@@ -947,12 +947,13 @@ export function open(opts) {
   // ---- canoes (piraguas) paddling slowly up and down the coast, close to the beaches
   const canoes = [];
   function canoe(col, pc) {
-    const g = new THREE.Group(), hull = new THREE.Mesh(new THREE.SphereGeometry(.1, 14, 8), std(col)); hull.scale.set(2.6, .34, .55); hull.position.y = .02; g.add(hull);
-    const stripe = new THREE.Mesh(new THREE.SphereGeometry(.1, 14, 8), std(0xfff8ea)); stripe.scale.set(2.2, .12, .24); stripe.position.y = .05; g.add(stripe);
-    const rd = person(pc, { skin: SKINS[(col >> 3) % 4], role: 'bike', hat: 0xf2efe6 }); rd.scale.setScalar(.58); rd.position.set(-.02, .04, 0); g.add(rd);
-    const pad = new THREE.Group(), sh = new THREE.Mesh(new THREE.CylinderGeometry(.005, .005, .36, 5), std(0x6b4a2a)); sh.rotation.x = PI / 2; pad.add(sh);
-    for (const sz of [-1, 1]) { const bl = box(.07, .012, .045, std(sz > 0 ? 0xd9473a : 0xf2efe6)); bl.position.set(0, 0, sz * .19); pad.add(bl); }
-    pad.position.set(-.02, .12, 0); g.add(pad);
+    const g = new THREE.Group(), hull = new THREE.Mesh(new THREE.SphereGeometry(.1, 16, 10, 0, PI * 2, 0, PI / 2), std(col)); hull.scale.set(2.7, .75, .62); hull.rotation.x = PI; hull.position.y = .09; g.add(hull);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(.1, .006, 6, 24), std(0xfff8ea)); rim.rotation.x = PI / 2; rim.scale.set(2.7, .62, 1); rim.position.y = .09; g.add(rim);
+    const inside = new THREE.Mesh(new THREE.CircleGeometry(.1, 20), std(0x5a4636)); inside.rotation.x = -PI / 2; inside.scale.set(2.65, .6, 1); inside.position.y = .088; g.add(inside);
+    const rd = person(pc, { skin: SKINS[(col >> 3) % 4], role: 'bike', hat: 0xf2efe6 }); rd.scale.setScalar(.58); rd.position.set(-.02, .1, 0); g.add(rd);
+    const pad = new THREE.Group(), sh = new THREE.Mesh(new THREE.CylinderGeometry(.005, .005, .4, 5), std(0x6b4a2a)); sh.rotation.x = PI / 2; pad.add(sh);
+    for (const sz of [-1, 1]) { const bl = box(.08, .012, .05, std(sz > 0 ? 0xd9473a : 0xf2efe6)); bl.position.set(0, 0, sz * .21); pad.add(bl); }
+    pad.position.set(-.02, .2, 0); g.add(pad);
     return { g, pad };
   }
   [[-4.2, .85, .5, 0xe9774a, 0x2f6fa8, 1.6], [3.9, .9, .7, 0x4aa8d9, 0xd9473a, 1.4], [15.6, .85, .5, 0xf2c14a, 0x3b9a6a, 1.5], [18.7, .85, .45, 0xd9608a, 0x7a58b5, 1.6], [-19.0, .9, .4, 0x3bb89a, 0xf08a3c, 1.5], [-8.8, -.8, .5, 0xe9774a, 0xe277a0, 1.5]].forEach(([cx, off, sp, col, pc, half], i) => {
@@ -1270,12 +1271,12 @@ export function open(opts) {
     };
     // tiny fields on little stone terraces around the mountain village, and a few more houses there
     { const vb = [10.6, shore(10.6) - 7.3], TF = [[-1.9, -1.4], [-2.6, -.2], [-1.6, 1.2], [1.6, 2.0], [2.8, .9], [3.0, -.6], [2.4, -2.0], [-.4, 2.3], [.6, -2.6], [-3.1, 1.5], [1.0, 3.1], [-2.2, 2.7], [-3.4, -1.6], [3.6, 2.2], [-1.0, -3.0], [3.8, -1.4], [2.0, 3.6], [-3.6, 3.0], [-.6, 3.8], [1.6, -3.4]];
-      TF.forEach(([dx, dz], i) => { const x = vb[0] + dx, z = vb[1] + dz; if (groundH(x, z) < .3 || inletD(x, z) < 1 || riverPts.some((q) => Math.hypot(q[0] - x, q[1] - z) < .6)) return;
-        const gf = field(x, z, seaYaw(x) + (i % 2 ? .2 : -.15), .34 + (i % 3) * .04, .26 + (i % 2) * .03, 30 + i, 0), ter = box(.5, .14, .4, std(0xaaa08c)); ter.position.y = -.06; ter.scale.set(gf.userData.fw / .34 * .8, 1, gf.userData.fd / .26 * .9); gf.add(ter); });
-      STAIRS.forEach(([sx, sz, sy], i) => { const x = sx - .35, z = sz + 1.0; if (groundH(x, z) < .3 || inletD(x, z) < 1) return; const gf = field(x, z, sy + .4, .3 + (i % 2) * .05, .24, 40 + i, 0), ter = box(.5, .14, .4, std(0xaaa08c)); ter.position.y = -.06; ter.scale.set(gf.userData.fw / .34 * .8, 1, gf.userData.fd / .26 * .9); gf.add(ter); });
-      for (let k = 0; k < 16; k++) { const a = k * 2.4, rr = 1.9 + (k % 4) * .6; hh(vb[0] + Math.cos(a) * rr * 1.1, 7.3 + Math.sin(a) * rr - 0, 1 + (hc % 2), { stone: k % 2 === 0 }); } }
+      // two groups of four small fields on a levelled stone platform, beside the houses (they do not touch the slope)
+      [[3.9, 7.0], [14.2, 7.4]].forEach(([cx, inl], ci2) => { const z0 = shore(cx) - inl, plat = new THREE.Group(), pb = box(1.25, .16, 1.05, std(0xaaa08c)); pb.position.y = -.02; plat.add(pb); const hh0 = groundH(cx, z0); W(put(plat, cx, z0, 0, -.06));
+        [[-.3, -.25], [.3, -.25], [-.3, .25], [.3, .25]].forEach(([ox, oz], q) => { const gf = field(cx + ox, z0 + oz, 0, .5, .4, 30 + ci2 * 4 + q, 0); gf.userData.fp = 0; gf.userData.pri = 0; gf.position.copy(dirFrom(cx + ox, z0 + oz, new THREE.Vector3()).multiplyScalar(R + hh0 + .08)); }); });
+      for (let k = 0; k < 44; k++) { const a = k * 2.4, rr = 1.6 + (k % 7) * .55; hh(vb[0] + Math.cos(a) * rr * 1.1, 7.3 + Math.sin(a) * rr - 0, 1 + (hc % 2), { stone: k % 2 === 0 }); } }
     let fi = 0;
-    for (const [fx, inl] of [[-16.2, 5.6], [-12.4, 6.6], [-7.2, 6.0], [-3.8, 6.5], [-.2, 5.9], [3.4, 6.3], [8.6, 6.4], [12.2, 6.2], [16.3, 6.0], [-10.6, 4.9], [5.4, 5.0], [-1.9, 7.4], [-14.2, 5.2], [-5.4, 7.2], [1.4, 7.0], [10.2, 7.0], [14.2, 5.6], [-18.4, 6.4], [18.0, 5.2]]) {
+    for (const [fx, inl] of []) {
       const x = fx, z = shore(x) - inl, sl = Math.abs(groundH(x + .5, z) - groundH(x - .5, z)) + Math.abs(groundH(x, z + .5) - groundH(x, z - .5));
       if (groundH(x, z) < .35 || sl > .16 || inletD(x, z) < 1.2) continue;
       field(x, z, seaYaw(x) + (fi % 2 ? .15 : -.12), .55 + (fi % 3) * .08, .45 + (fi % 2) * .06, fi, sl * .7); fi++;
@@ -1373,6 +1374,17 @@ export function open(opts) {
     g.remove(g.children[0]); g.remove(g.children.find((c) => c.scale && Math.abs(c.scale.x - .85) < .01));
     W(put(g, lx, zc, PI / 2, .13, true)); fiestaObj.push({ lh2: g });
   }
+
+  // ---- a little wooden bridge over the river, and neighbours who walk across it
+  { const n = riverPts.length, k = Math.floor(n * .66), a1 = riverPts[k - 1], b1 = riverPts[k + 1], c0 = riverPts[k], tx = b1[0] - a1[0], tz = b1[1] - a1[1], tl = Math.hypot(tx, tz) || 1, nx = -tz / tl, nz = tx / tl, wr = riverWidths[k] || .4, len = wr + 1.0;
+    const yaw = Math.atan2(-nz, nx), g = new THREE.Group(), wood = std(0xb98a5a), dark = std(0x8a6a44);
+    const deck = box(len, .035, .26, wood); deck.position.y = .06; g.add(deck);
+    for (let q = 0; q < Math.floor(len / .1); q++) { const pl = box(.012, .038, .27, dark); pl.position.set(-len / 2 + .06 + q * .1, .062, 0); g.add(pl); }
+    for (const sz of [-1, 1]) { const rl = box(len, .02, .02, dark); rl.position.set(0, .15, sz * .13); g.add(rl); for (let q = 0; q <= 5; q++) { const po = box(.02, .1, .02, dark); po.position.set(-len / 2 + .05 + q * (len - .1) / 5, .1, sz * .13); g.add(po); } }
+    const hm = Math.max(groundH(c0[0] + nx * len * .5, c0[1] + nz * len * .5), groundH(c0[0] - nx * len * .5, c0[1] - nz * len * .5), groundH(c0[0], c0[1]));
+    g.userData.fp = 0; put(g, c0[0], c0[1], yaw, hm + .02 - groundH(c0[0], c0[1])); W(g);
+    const pts = [[c0[0] + nx * (len / 2 + .5), c0[1] + nz * (len / 2 + .5)], [c0[0] - nx * (len / 2 + .5), c0[1] - nz * (len / 2 + .5)]], rt = route(pts);
+    [[0, 1, .05, 1], [4, 0, .04, -1], [2, 2, .06, 1]].forEach(([c, sk, v, d], i2) => { const pp = person(SHIRTS[c % SHIRTS.length], { skin: SKINS[sk], role: 'town' }); pp.scale.setScalar(.85); W(pp); pathers.push({ p: pp, r: rt, u: .15 + i2 * .3, v: v * d * .35, off: (i2 - 1) * .04, lift: hm + .08 - groundH(c0[0], c0[1]) }); }); }
 
   // ---- tidy up: no building may overlap another one or stand on a road; the most important ones (churches, schools, squares, arcades) stay
   { const items = [], dd2 = new THREE.Vector3();
@@ -1768,7 +1780,7 @@ export function open(opts) {
     }
     for (const c of canoes) {
       const a = t * c.sp * .35 + c.ph, x = c.cx + Math.sin(a) * c.half, dx = Math.cos(a) * c.half * c.sp * .35, fn = c.south ? shoreS : shore, z = fn(x) + (c.south ? -1 : 1) * Math.abs(c.off), dz = (fn(x + .05) - fn(x - .05)) / .1 * dx, yaw = Math.atan2(-dz, dx);
-      put(c.g, x, z, yaw, Math.sin(t * 1.3 + c.ph) * .006, true); c.g.rotation.z = 0; c.pad.rotation.x = Math.sin(t * 2.4 + c.ph) * .5; c.pad.rotation.z = Math.sin(t * 2.4 + c.ph + 1.2) * .22;
+      put(c.g, x, z, yaw, .03 + Math.sin(t * 1.3 + c.ph) * .006, true); c.g.rotation.z = 0; c.pad.rotation.x = Math.sin(t * 2.4 + c.ph) * .5; c.pad.rotation.z = Math.sin(t * 2.4 + c.ph + 1.2) * .22;
     }
     for (const bl of balls) { const c = Math.cos(t * 2.6 + bl.ph), h = .07 + .24 * Math.abs(Math.sin(t * 2.6 + bl.ph)); put(bl.m, bl.x, bl.z + c * .3 * bl.sg, 0, h); }
     for (const s of swimmers) {
