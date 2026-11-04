@@ -287,8 +287,11 @@ function supermercado(label) {
   for (let i = 0; i <= 6; i++) add(new THREE.BoxGeometry(.1, 2.3, .16), 0xf6efe0, -6 + i * 1.6, 1.9, 4.06);
   add(new THREE.BoxGeometry(2.4, 2.4, .14), 0x6f9db6, 5.2, 1.3, 4.05, { roughness: .2 }); add(new THREE.BoxGeometry(.1, 2.4, .18), 0xf6efe0, 5.2, 1.3, 4.07);
   for (let i = 0; i < 9; i++) add(new THREE.BoxGeometry(1.6, .14, 1.9), i % 2 ? 0xfff6e8 : 0xe36d57, -6.4 + i * 1.6, 3.35, 4.9).rotation.x = .28;        // a striped awning over the whole front
-  { const cv = document.createElement('canvas'); cv.width = 768; cv.height = 192; const c = cv.getContext('2d'); c.fillStyle = '#2f6fa8'; c.beginPath(); c.roundRect ? c.roundRect(6, 6, 756, 180, 40) : c.rect(6, 6, 756, 180); c.fill(); c.fillStyle = '#fff6e4'; c.font = '700 84px "Switzer","Inter",sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(label, 400, 100); c.strokeStyle = '#fff6e4'; c.lineWidth = 9; c.lineCap = 'round'; c.beginPath(); c.moveTo(48, 62); c.lineTo(76, 62); c.lineTo(92, 124); c.lineTo(150, 124); c.stroke(); c.fillStyle = '#fff6e4'; c.beginPath(); c.arc(100, 146, 9, 0, 6.3); c.arc(142, 146, 9, 0, 6.3); c.fill();
-    const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; const sg = new THREE.Mesh(new THREE.PlaneGeometry(9, 2.25), new THREE.MeshStandardMaterial({ map: t, roughness: 1 })); sg.position.set(0, 5.3, 4.35); sg.castShadow = true; g.add(sg); add(new THREE.BoxGeometry(9.2, .12, .4), 0xf6efe0, 0, 4.1, 4.3); }
+  { const cv = document.createElement('canvas'); cv.width = 1024; cv.height = 256; const c = cv.getContext('2d'); c.fillStyle = '#2f6fa8'; c.fillRect(0, 0, 1024, 256); c.strokeStyle = '#fff6e4'; c.lineWidth = 10; c.strokeRect(14, 14, 996, 228);
+    let fs = 130; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#fff6e4'; do { c.font = '700 ' + fs + 'px "Switzer","Inter",system-ui,sans-serif'; fs -= 4; } while (c.measureText(label).width > 900 && fs > 30); c.fillText(label, 512, 134);
+    const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; const side = new THREE.MeshStandardMaterial({ color: 0x2f6fa8, roughness: 1 });
+    const sg = new THREE.Mesh(new THREE.BoxGeometry(9, 2.25, .16), [side, side, side, side, new THREE.MeshStandardMaterial({ map: t, roughness: 1 }), side]); sg.position.set(0, 5.9, 3.6); sg.castShadow = true; g.add(sg);
+    for (const sx of [-3.6, 3.6]) add(new THREE.BoxGeometry(.18, 1.5, .18), 0xf6efe0, sx, 5.1, 3.6); }
   const fr = [0xe9577a, 0xf2a43a, 0x8fcf6a, 0xf5d66a]; for (let k = 0; k < 4; k++) { add(rbox(1.5, .6, 1.0, .08), 0xb98a5a, 6.8 + (k % 2) * 1.7, .3, 3.5 + Math.floor(k / 2) * 1.3); for (let q = 0; q < 6; q++) { const f = new THREE.Mesh(new THREE.IcosahedronGeometry(.24, 1), std(fr[k])); f.position.set(6.8 + (k % 2) * 1.7 - .45 + (q % 3) * .45, .72, 3.5 + Math.floor(k / 2) * 1.3 - .2 + Math.floor(q / 3) * .4); f.castShadow = true; g.add(f); } }
   for (let k = 0; k < 4; k++) { const c = cart(); c.position.set(-5.6 + k * .9, 0, 5.4); c.rotation.y = PI / 2; g.add(c); }
   g.userData.hx = 7.5; g.userData.hz = 4.5; g.userData.r = 8.4; return g;
@@ -482,6 +485,12 @@ export function open(opts) {
     o.position.set(x, top, z); o.rotation.y = yaw; scene.add(o); if (o.userData.porch) shelters.push([x + Math.sin(yaw) * o.userData.porch, z + Math.cos(yaw) * o.userData.porch]); if (r) { const u = o.userData; colliders.push(u.hx ? [x, z, r, u.hx, u.hz, yaw] : [x, z, r]); } return o; };
   const infoSpots = [], solid = (x, z, rr) => colliders.some((c) => Math.hypot(c[0] - x, c[1] - z) < c[2] + rr), laneNear = (x, z, d) => lanes.some((pts) => pts.some((q) => Math.hypot(q[0] - x, q[1] - z) < d)) || Math.abs(x - ROADX(z)) < d + 2.6;
   const plazas = [], walkers = [];
+  { const lbl = lang === 0 ? 'SUPERMARKET' : 'SUPERMERCADO', sz0 = 50, sx0 = ROADX(sz0) - 16, sm = supermercado(lbl); addTo(sm, sx0, sz0, PI / 2, sm.userData.r);
+    const lot = new THREE.Mesh(new THREE.BoxGeometry(11, .1, 22), std(0x9aa3b0)); lot.position.set(sx0 + 9.4, H(ROADX(sz0) - 7, sz0) + .05, sz0); scene.add(lot); lot.receiveShadow = true;
+    shelters.push([sx0 + 5.6, sz0 - 3], [sx0 + 5.6, sz0 + 3]);
+    const mkShopper = (i, z1, z2, withCart) => { const w2 = person([0x7aa6d8, 0xf0907a, 0xf4e6d0, 0xc9a0e8][i % 4], [0xf0c9a0, 0xe3b185, 0xf5d6b5][i % 3], [0xe36d57, 0x5fae8a, 0xf2c14a][i % 3]); if (withCart) { const c = cart(); c.position.set(1.25, 0, 0); w2.add(c); } scene.add(w2); walkers.push({ p: w2, pts: [[sx0 + 5.6, z1], [sx0 + 9.5, (z1 + z2) / 2], [sx0 + 6.4, z2]], d: rng() * 6, sp: .45 + rng() * .25, dir: 1, lift: .08 }); };
+    mkShopper(0, sz0 - 6, sz0 + 6, true); mkShopper(1, sz0 + 4, sz0 - 7, false); mkShopper(2, sz0 - 2, sz0 + 8, true); }
+
   VILLAGES.forEach(([name, z0], vi) => {
     const rx = ROADX(z0), cnt = vi === 3 ? 8 : 5; let made = 0;
     // houses along the road and the lanes: set well back, spaced out, each turned to face its way
@@ -501,12 +510,6 @@ export function open(opts) {
     for (let k = 0; k < 1; k++) { const hx = rx - 19 - rng() * 7, hzz = z0 - 12 + k * 12 + (rng() - .5) * 4; if (H(hx, hzz) < .4 || solid(hx, hzz, 7) || lanes.some((pts) => pts.some((q) => Math.hypot(q[0] - hx, q[1] - hzz) < 6.5))) continue; const hr = horreo(); const yaw = rng() * PI * 2; addTo(hr, hx, hzz, yaw, hr.userData.r); if (vi === 1 && !infoSpots.length) infoSpots.push(['horreo', hx + Math.cos(yaw) * 0 + 6.5, hzz]); }
     if (vi === 3 || vi === 2) { const ch = church(); const cx = rx - 21, cz = z0 + (vi === 3 ? -21 : 17); if (!solid(cx, cz, 9)) addTo(ch, cx, cz, PI / 2, 8); }
   });
-  { const lbl = lang === 0 ? 'SUPERMARKET' : 'SUPERMERCADO', sz0 = 50, sx0 = ROADX(sz0) - 16, sm = supermercado(lbl); addTo(sm, sx0, sz0, PI / 2, sm.userData.r);
-    const lot = new THREE.Mesh(new THREE.BoxGeometry(11, .1, 22), std(0x9aa3b0)); lot.position.set(sx0 + 9.4, H(ROADX(sz0) - 7, sz0) + .05, sz0); scene.add(lot); lot.receiveShadow = true;
-    shelters.push([sx0 + 5.6, sz0 - 3], [sx0 + 5.6, sz0 + 3]);
-    const mkShopper = (i, z1, z2, withCart) => { const w2 = person([0x7aa6d8, 0xf0907a, 0xf4e6d0, 0xc9a0e8][i % 4], [0xf0c9a0, 0xe3b185, 0xf5d6b5][i % 3], [0xe36d57, 0x5fae8a, 0xf2c14a][i % 3]); if (withCart) { const c = cart(); c.position.set(1.25, 0, 0); w2.add(c); } scene.add(w2); walkers.push({ p: w2, pts: [[sx0 + 5.6, z1], [sx0 + 9.5, (z1 + z2) / 2], [sx0 + 6.4, z2]], d: rng() * 6, sp: .45 + rng() * .25, dir: 1, lift: .08 }); };
-    mkShopper(0, sz0 - 6, sz0 + 6, true); mkShopper(1, sz0 + 4, sz0 - 7, false); mkShopper(2, sz0 - 2, sz0 + 8, true); }
-
   for (const [px, pz, pr] of plazas) {
     const g = new THREE.Group(), cvp = document.createElement('canvas'); cvp.width = cvp.height = 256; const c2 = cvp.getContext('2d'); c2.fillStyle = '#9d9585'; c2.fillRect(0, 0, 256, 256); let ry = 0; while (ry < 256) { const rh = 22 + rng() * 14; let rx2 = -rng() * 40; while (rx2 < 256) { const sw = 34 + rng() * 40, tone = 190 + rng() * 40; c2.fillStyle = `rgb(${tone},${tone - 6},${tone - 20})`; c2.beginPath(); c2.roundRect ? c2.roundRect(rx2 + 1.5, ry + 1.5, sw - 3, rh - 3, 6) : c2.rect(rx2 + 1.5, ry + 1.5, sw - 3, rh - 3); c2.fill(); rx2 += sw; } ry += rh; }
     const pt = new THREE.CanvasTexture(cvp); pt.wrapS = pt.wrapT = THREE.RepeatWrapping; pt.repeat.set(pr / 3, pr / 3); pt.colorSpace = THREE.SRGBColorSpace;
