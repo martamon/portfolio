@@ -582,7 +582,7 @@ export function open(opts) {
     '<button type="button" class="x-pl-mu" aria-label="Sound"></button><button type="button" class="x-pl-rn" aria-label="Rain"></button><button type="button" class="x-pl-dn" aria-label="Day / night"></button>' +
     '<button type="button" class="x-pl-x" aria-label="Close"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button></div></div>' +
     '<button type="button" class="x-pl-more"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l1.7 5 5 1.7-5 1.7L12 17l-1.7-5.1-5-1.7 5-1.7z"/><path d="M18.5 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/></svg><span>Learn more</span></button>' +
-    '<div class="x-pl-mochi" hidden><div class="x-pl-mq"><div class="x-pl-mo"><div class="x-pl-ms"><i></i><i></i><i></i><i></i><i class="bl"></i></div></div><div class="x-pl-sh"></div></div><div class="x-pl-bub"><p></p><span class="x-pl-go">▾</span></div></div>' +
+    '<div class="x-pl-mochi" hidden><div class="x-pl-mq"><div class="x-pl-mo"><div class="x-pl-ms"><canvas class="x-pl-mc" width="320" height="262"></canvas></div></div><div class="x-pl-sh"></div></div><div class="x-pl-bub"><p></p><span class="x-pl-go">▾</span></div></div>' +
     '<div class="x-pl-info" hidden><button type="button" class="x-pl-ix" aria-label="Cerrar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button>' +
     '<h2>Ría de Muros e Noia</h2><p class="x-pl-sub">A Coruña · Galicia</p>' +
     '<p>Una de las Rías Baixas, entre el monte Louro y la desembocadura del Tambre. Esta maqueta es una versión simplificada y soñada de su costa.</p>' +
@@ -1548,13 +1548,23 @@ export function open(opts) {
   const toggleInfo = (on) => { if (on === !info.hidden) return; if (on) { info.hidden = false; requestAnimationFrame(() => info.classList.add('x-on')); } else { info.classList.remove('x-on'); setTimeout(() => { if (!info.classList.contains('x-on')) info.hidden = true; }, 420); } moreBtn.classList.toggle('x-open', on); if (audio) audio.sfx(on ? 'learn' : 'learnoff'); };
   // for now the "Aprende más" button is only a placeholder: it does nothing (to switch it on again: moreBtn.addEventListener('click', () => toggleInfo(info.hidden)))
   // "Aprende más": Mochi, the little assistant, appears in front of a blurred map and tells two short messages (a click anywhere moves on / closes it)
-  const mochi = root.querySelector('.x-pl-mochi'), mSp = mochi.querySelector('.x-pl-ms'), mLay = [...mSp.querySelectorAll('i')], mBub = mochi.querySelector('.x-pl-bub p'), MSG = ['Thank you so much for staying until here! My name is Mochi and I am Martamon’s assistant (actually, I am her digitalised kitten).', 'Martamon comes from a tiny village in the north of Spain, in Galicia. It is a VERY, VERY pretty and quiet fishing village. This map is a recreation of that very special place.'];
-  let mex = innerWidth / 2, mey = innerHeight / 2, mStep = -1, mType = 0, mEye = 4, mBlink = 0, mt2 = 0, mpx = innerWidth / 2, mpy = innerHeight / 2;
+  const mochi = root.querySelector('.x-pl-mochi'), mSp = mochi.querySelector('.x-pl-ms'), mCv = mSp.querySelector('canvas'), mBub = mochi.querySelector('.x-pl-bub p'), MSG = ['Thank you so much for staying until here! My name is Mochi and I am Martamon’s assistant (actually, I am her digitalised kitten).', 'Martamon comes from a tiny village in the north of Spain, in Galicia. It is a VERY, VERY pretty and quiet fishing village. This map is a recreation of that very special place.'];
+  let M3 = null, mex = innerWidth / 2, mey = innerHeight / 2, mStep = -1, mType = 0, mEye = 4, mBlink = 0, mt2 = 0, mpx = innerWidth / 2, mpy = innerHeight / 2;
   const typeMsg = (txt) => { clearInterval(mType); mBub.textContent = ''; mochi.classList.remove('x-done'); let i = 0; mType = setInterval(() => { if (i >= txt.length) { clearInterval(mType); mochi.classList.add('x-done'); return; } mBub.textContent = txt.slice(0, ++i); if (i % 3 === 1 && audio) audio.sfx('mochitalk'); }, 34); };
-  const mochiClose = () => { clearInterval(mType); mochi.classList.remove('x-on'); root.classList.remove('x-mochi'); mStep = -1; setTimeout(() => { if (mStep < 0) mochi.hidden = true; }, 700); if (audio) audio.sfx('mochiend'); };
+  const mochiClose = () => { if (M3) { try { M3.r.dispose(); M3.r.forceContextLoss(); } catch (e) {} M3 = null; } clearInterval(mType); mochi.classList.remove('x-on'); root.classList.remove('x-mochi'); mStep = -1; setTimeout(() => { if (mStep < 0) mochi.hidden = true; }, 700); if (audio) audio.sfx('mochiend'); };
   const mochiPop = () => { mSp.classList.remove('x-hop'); mochi.classList.remove('x-pop'); void mSp.offsetWidth; mSp.classList.add('x-hop'); mochi.classList.add('x-pop'); };
   const mochiNext = () => { if (mStep < 0) return; if (!mochi.classList.contains('x-done')) { clearInterval(mType); mBub.textContent = MSG[mStep]; mochi.classList.add('x-done'); return; } mStep++; if (mStep >= MSG.length) { mochiClose(); return; } if (audio) audio.sfx('mochinext'); mochiPop(); if (mStep === 1) look(-9, 1.5, .68); typeMsg(MSG[mStep]); };
-  moreBtn.addEventListener('click', () => { if (mStep >= 0) return; mStep = 0; look(3, 3, .62); mochi.hidden = false; root.classList.add('x-mochi'); requestAnimationFrame(() => requestAnimationFrame(() => mochi.classList.add('x-on'))); if (audio) audio.sfx('mochi'); setTimeout(() => mStep === 0 && typeMsg(MSG[0]), 1100); });
+  const buildMochi = async () => {
+    if (M3) return; const bm = await import('/extras/blob-model.js?v=1'), m = bm.buildBlob(THREE), sc = new THREE.Scene(), cam = new THREE.PerspectiveCamera(30, 320 / 262, .1, 20);
+    m.body.geometry.attributes.color.array.forEach((v, i, a) => { a[i] = v + (1 - v) * .18; });                    // pastel: lighter and softer
+    m.body.material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .55, metalness: 0 });
+    for (const e of m.eyes) e.eye.children[0].material = new THREE.MeshStandardMaterial({ color: 0xb9b6f2, roughness: 1 });
+    m.inner.position.y = 0; sc.add(m.root); sc.add(new THREE.HemisphereLight(0xffffff, 0xcfc4f0, 1.5)); const dl = new THREE.DirectionalLight(0xfff3e0, 1.9); dl.position.set(2, 3, 4); sc.add(dl);
+    cam.position.set(0, .1, 5.4); cam.lookAt(0, .02, 0);
+    const r = new THREE.WebGLRenderer({ canvas: mCv, alpha: true, antialias: true }); r.setClearColor(0, 0); r.setPixelRatio(1); r.setSize(320, 262, false);
+    M3 = { m, sc, cam, r, px: 0, py: 0, rx: 0, ry: 0 };
+  };
+  moreBtn.addEventListener('click', () => { if (mStep >= 0) return; buildMochi().catch(() => {}); mStep = 0; look(3, 3, .62); mochi.hidden = false; root.classList.add('x-mochi'); requestAnimationFrame(() => requestAnimationFrame(() => mochi.classList.add('x-on'))); if (audio) audio.sfx('mochi'); setTimeout(() => mStep === 0 && typeMsg(MSG[0]), 1100); });
   mochi.addEventListener('click', () => mochiNext());
   addEventListener('pointermove', (e) => { mpx = e.clientX; mpy = e.clientY; });
   const mo = mochi.querySelector('.x-pl-mo'), mshadow = mochi.querySelector('.x-pl-sh'), J = { x: 0, y: 0, vx: 0, vy: 0, p: 1, since: 9, sq: 0, last: 0, dir: 1, rot: 0 };
@@ -1567,11 +1577,15 @@ export function open(opts) {
     mo.style.transform = 'translate3d(' + J.x.toFixed(1) + 'px,' + J.y.toFixed(1) + 'px,0) rotate(' + J.rot.toFixed(2) + 'deg) scale(' + (1 - J.sq * .9).toFixed(3) + ',' + (1 + J.sq).toFixed(3) + ')';
     mshadow.style.transform = 'translateX(' + (J.x * .6).toFixed(1) + 'px) scale(' + (1 - Math.max(-.2, Math.min(.3, -J.y / 120))).toFixed(3) + ')'; mshadow.style.opacity = (.8 + Math.max(-.3, Math.min(.2, J.y / 200))).toFixed(2);
   };
-  const mochiTick = (now) => { if (mStep < 0 && mochi.hidden) return; requestAnimationFrame(mochiTick); mochiSwim(now); const r = mSp.getBoundingClientRect(), ccx = r.left + r.width / 2, ccy = r.top + r.height / 2; mex += (mpx - mex) * .035; mey += (mpy - mey) * .035; const dx = mex - ccx, dy = mey - ccy, d = Math.hypot(dx, dy); const lean = Math.min(1, d / 320); mSp.style.transform = 'perspective(520px) translate(' + (dx / (d || 1) * lean * 3.5).toFixed(2) + 'px,' + (dy / (d || 1) * lean * 2.5).toFixed(2) + 'px) rotateY(' + (dx / (d || 1) * lean * 16).toFixed(2) + 'deg) rotateX(' + (-dy / (d || 1) * lean * 10).toFixed(2) + 'deg) rotateZ(' + (dx / (d || 1) * lean * 3).toFixed(2) + 'deg)'; mBlink -= .016; if (mBlink < -3.6) mBlink = .22;
-    const gx = 1 + Math.max(-1, Math.min(1, dx / (r.width * 1.3))), gy = 1 + Math.max(-1, Math.min(1, dy / (r.height * 1.3))), c0 = Math.min(1, Math.floor(gx)), r0 = Math.min(1, Math.floor(gy)), fx = sstep(.36, .64, gx - c0), fy = sstep(.36, .64, gy - r0);
-    const ws = [(1 - fx) * (1 - fy), fx * (1 - fy), (1 - fx) * fy, fx * fy], fr4 = [r0 * 3 + c0, r0 * 3 + c0 + 1, (r0 + 1) * 3 + c0, (r0 + 1) * 3 + c0 + 1];
-    let acc = 0; for (let q = 0; q < 4; q++) { acc += ws[q]; mLay[q].style.backgroundPosition = (fr4[q] / 9 * 100) + '% 0'; mLay[q].style.opacity = q === 0 ? 1 : (acc > 1e-4 ? (ws[q] / acc).toFixed(3) : 0); }
-    mLay[4].style.opacity = mBlink > 0 ? 1 : 0; };
+  const mochiTick = (now) => { if (mStep < 0 && mochi.hidden) return; requestAnimationFrame(mochiTick); mochiSwim(now); const r = mSp.getBoundingClientRect(), ccx = r.left + r.width / 2, ccy = r.top + r.height / 2; mex += (mpx - mex) * .035; mey += (mpy - mey) * .035; const dx = mex - ccx, dy = mey - ccy, d = Math.hypot(dx, dy); const lean = 0; mBlink -= .016; if (mBlink < -3.6) mBlink = .22;
+    if (M3) {                                          // the live 3D Mochi: pupils glide to where the mouse is, the head and body turn softly after them
+      const gx = Math.max(-1, Math.min(1, dx / 420)), gy = Math.max(-1, Math.min(1, dy / 320));
+      M3.px += (gx - M3.px) * .045; M3.py += (gy - M3.py) * .045; M3.ry += (gx * .5 - M3.ry) * .028; M3.rx += (gy * .32 - M3.rx) * .028;
+      for (const e of M3.m.eyes) { e.pupil.position.x = M3.px * .15; e.pupil.position.y = -M3.py * .13; e.pupil.rotation.y = M3.px * .3; }
+      const bk = mBlink > 0 ? Math.max(.08, 1 - Math.sin(Math.min(1, (.22 - mBlink) / .22) * PI)) : 1; for (const e of M3.m.eyes) e.eye.scale.y = bk;
+      M3.m.inner.rotation.y = M3.ry; M3.m.inner.rotation.x = M3.rx * .6; M3.m.inner.rotation.z = -M3.ry * .1; M3.m.root.position.x = M3.ry * .12;
+      M3.r.render(M3.sc, M3.cam);
+    } };
   new MutationObserver(() => { if (!mochi.hidden) requestAnimationFrame(mochiTick); }).observe(mochi, { attributes: true, attributeFilter: ['hidden'] });
   // ESC closes it too; the planet keeps turning behind the blur
   info.querySelector('.x-pl-ix').addEventListener('click', () => toggleInfo(false));
@@ -1958,8 +1972,8 @@ function injectCss() {
     '.x-pl-mq{position:relative;width:min(132px,32vw);aspect-ratio:224/183;opacity:0;transform:translateY(34px) scale(.6);transition:opacity .8s ease .15s,transform 1.1s cubic-bezier(.22,1.3,.3,1) .15s}',
     '.x-pl-mochi.x-on .x-pl-mq{opacity:1;transform:none}',
     '.x-pl-mo{position:absolute;inset:0;will-change:transform}',
-    '.x-pl-ms i{position:absolute;inset:0;background:url(/extras/blob-sprite.webp) 44.4% 0/1000% 100% no-repeat}.x-pl-ms i.bl{opacity:0;background-position:100% 0}',
-    '.x-pl-ms{position:absolute;inset:0;-webkit-filter:hue-rotate(22deg) saturate(.5) brightness(1.3) contrast(.86);filter:hue-rotate(22deg) saturate(.5) brightness(1.3) contrast(.86)}',
+    '.x-pl-mc{position:absolute;inset:0;width:100%;height:100%;display:block}',
+    '.x-pl-ms{position:absolute;inset:0;-webkit-filter:hue-rotate(22deg) saturate(.75) brightness(1.12) contrast(.9);filter:hue-rotate(22deg) saturate(.75) brightness(1.12) contrast(.86)}',
     '.x-pl-sh{position:absolute;left:14%;right:2%;bottom:-12%;height:16%;border-radius:50%;background:radial-gradient(closest-side,rgba(120,72,64,.3),rgba(120,72,64,0));}',
     '@keyframes x-mo-float{50%{transform:translateY(-14px) rotate(1.6deg)}}@keyframes x-mo-sh{50%{transform:scale(.86);opacity:.7}}',
     '.x-pl-bub{position:relative;max-width:min(430px,86vw);padding:16px 22px 18px;border-radius:24px;background:rgba(255,253,248,.92);color:#4a3340;box-shadow:0 10px 36px rgba(80,40,40,.18);opacity:0;transform:translateY(14px);transition:opacity .6s ease .5s,transform .8s cubic-bezier(.22,.8,.24,1) .5s}',
