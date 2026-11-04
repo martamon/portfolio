@@ -426,10 +426,17 @@ function makeAudio(night0) {
   const sg = ctx.createGain(); sg.gain.value = .05;
   const lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = .11; lg.gain.value = .035; lfo.connect(lg); lg.connect(sg.gain);
   ns.connect(bp); bp.connect(sg); sg.connect(out); ns.start(); lfo.start();
+  // rain: soft hiss (filtered noise) + a few tiny drops that plink in the reverb
+  const rb = ctx.createBufferSource(); rb.buffer = nb; rb.loop = true; rb.playbackRate.value = .8;
+  const rh = ctx.createBiquadFilter(); rh.type = 'highpass'; rh.frequency.value = 900; const rl = ctx.createBiquadFilter(); rl.type = 'lowpass'; rl.frequency.value = 5200;
+  const rg = ctx.createGain(); rg.gain.value = 0; rb.connect(rh); rh.connect(rl); rl.connect(rg); rg.connect(out); rg.connect(rev); rb.start();
+  let rainOn = false, dropT = 0;
+  function drops() { if (!alive) return; if (rainOn && !muted) { const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(1400 + Math.random() * 1300, t); o.frequency.exponentialRampToValueAtTime(700 + Math.random() * 500, t + .06); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.012 + Math.random() * .01, t + .004); g.gain.exponentialRampToValueAtTime(.0004, t + .22); o.connect(g); g.connect(tone); o.start(t); o.stop(t + .25); } dropT = setTimeout(drops, 120 + Math.random() * 380); }
   let mt = 0, pt = 0;
   const api = {
     start() { if (ctx.state === 'suspended') ctx.resume(); out.gain.cancelScheduledValues(ctx.currentTime); out.gain.setTargetAtTime(muted ? 0 : .9, ctx.currentTime, 1.6); pad(); pt = setInterval(pad, 8200); mt = setTimeout(melody, 1800); },
     mute(m) { muted = m; out.gain.setTargetAtTime(m ? 0 : .9, ctx.currentTime, .35); if (!m && ctx.state === 'suspended') ctx.resume(); },
+    setRain(on) { rainOn = on; rg.gain.setTargetAtTime(on ? .075 : 0, ctx.currentTime, 1.4); rh.frequency.setTargetAtTime(on ? 1100 : 900, ctx.currentTime, 1); sg.gain.setTargetAtTime(on ? .028 : (night ? .07 : .05), ctx.currentTime, 2); if (on) drops(); else clearTimeout(dropT); },
     setNight(n) { night = n; bp.frequency.setTargetAtTime(n ? 340 : 520, ctx.currentTime, 2); sg.gain.setTargetAtTime(n ? .07 : .05, ctx.currentTime, 2); },
     sfx(name) {
       if (muted || !alive) return;
@@ -439,6 +446,8 @@ function makeAudio(night0) {
       else if (name === 'day') { note(79, .06, 2.2); setTimeout(() => note(84, .05, 2.6), 130); }
       else if (name === 'night') { note(69, .07, 2.6); setTimeout(() => note(64, .06, 3), 160); }
       else if (name === 'tick') note(88, .03, .9);
+      else if (name === 'rain') { note(76, .05, 2.6); setTimeout(() => note(71, .045, 2.8), 160); setTimeout(() => note(67, .04, 3), 330); }
+      else if (name === 'sun') { note(79, .05, 2.2); setTimeout(() => note(84, .05, 2.6), 140); setTimeout(() => note(88, .04, 2.8), 280); }
       else if (name === 'hover' || name === 'press') {                       // a soft bubbly "pop": a quick upward glide with a little shimmer on top
         const t = ctx.currentTime, base = [523, 587, 659, 784, 880][Math.floor(Math.random() * 5)] * (name === 'press' ? .75 : 1), o = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain();
         o.type = 'sine'; o.frequency.setValueAtTime(base * .78, t); o.frequency.exponentialRampToValueAtTime(base * 1.12, t + .09);
@@ -451,7 +460,7 @@ function makeAudio(night0) {
         g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.045, t + .03); g.gain.exponentialRampToValueAtTime(.0005, t + .6); b.connect(fl); fl.connect(g); g.connect(tone); b.start(t, Math.random() * 2); b.stop(t + .7);
       }
     },
-    stop() { alive = false; clearTimeout(mt); clearInterval(pt); out.gain.setTargetAtTime(0, ctx.currentTime, .5); setTimeout(() => { try { ctx.close(); } catch (e) {} }, 2200); },
+    stop() { alive = false; clearTimeout(dropT); clearTimeout(mt); clearInterval(pt); out.gain.setTargetAtTime(0, ctx.currentTime, .5); setTimeout(() => { try { ctx.close(); } catch (e) {} }, 2200); },
     get muted() { return muted; }
   };
   return api;
@@ -465,7 +474,7 @@ export function open(opts) {
   root.setAttribute('role', 'dialog'); root.setAttribute('aria-label', 'Ría de Muros e Noia');
   root.innerHTML = '<canvas class="x-pl-cv"></canvas><div class="x-pl-ts x-pl-ts-t"></div><div class="x-pl-ts x-pl-ts-b"></div>' +
     '<div class="x-pl-top"><div class="x-pl-t"><b>Ría de Muros e Noia</b><span>A Coruña</span></div><div class="x-pl-btns">' +
-    '<button type="button" class="x-pl-mu" aria-label="Sound"></button><button type="button" class="x-pl-dn" aria-label="Day / night"></button>' +
+    '<button type="button" class="x-pl-mu" aria-label="Sound"></button><button type="button" class="x-pl-rn" aria-label="Rain"></button><button type="button" class="x-pl-dn" aria-label="Day / night"></button>' +
     '<button type="button" class="x-pl-x" aria-label="Close"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button></div></div>' +
     '<div class="x-pl-hint">Drag to turn · scroll to zoom · N for day / night</div>';
   document.body.appendChild(root);
@@ -1116,6 +1125,36 @@ export function open(opts) {
   // Monte Louro
   spot('Monte Louro', 'Monte', 'Across the water, Monte Louro rises over the mouth of the ría, with pines on its slopes and the sea on three sides.', hubAt(LOURO[0], LOURO[1], 1.9), .6);
 
+  // ---- gentle little animals on the hillsides: sheep, deer, goats, rabbits and a fox that wander and graze
+  const critters = [];
+  function animal(kind) {
+    const g = new THREE.Group(), head = new THREE.Group();
+    const col = { sheep: 0xf8f3e6, deer: 0xb98a5a, rabbit: 0xd8cdbc, fox: 0xd9733a, goat: 0xe8e0cf }[kind], dk = std({ sheep: 0x4a4038, deer: 0x6b4a2e, rabbit: 0xb7a994, fox: 0x2b2420, goat: 0x6b6358 }[kind]);
+    const s2 = kind === 'rabbit' ? .55 : kind === 'fox' ? .8 : 1;
+    const body = new THREE.Mesh(new THREE.SphereGeometry(.1, 12, 9), std(col)); body.scale.set(kind === 'sheep' ? 1.25 : 1.5, kind === 'sheep' ? 1.05 : .85, 1); body.position.y = kind === 'deer' ? .26 : .15; g.add(body);
+    const hd = new THREE.Mesh(new THREE.SphereGeometry(.052, 10, 8), kind === 'sheep' ? dk : std(col)); hd.scale.set(1.25, 1, .95); head.add(hd);
+    head.position.set(.15, kind === 'deer' ? .4 : .2, 0); g.add(head);
+    const ear = (sz) => { const e = new THREE.Mesh(new THREE.SphereGeometry(.02, 6, 5), kind === 'sheep' ? dk : std(col)); e.scale.set(.6, kind === 'rabbit' ? 2.8 : 1.6, .6); e.position.set(-.02, kind === 'rabbit' ? .07 : .045, sz * .035); head.add(e); }; ear(1); ear(-1);
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(.008, 5, 4), std(0x1b1b1b)); eye.position.set(.04, .015, .03); head.add(eye); const eye2 = eye.clone(); eye2.position.z = -.03; head.add(eye2);
+    if (kind === 'deer') { const nk = new THREE.Mesh(new THREE.CylinderGeometry(.03, .04, .16, 7), std(col)); nk.position.set(.11, .33, 0); nk.rotation.z = -.5; g.add(nk); for (const sz of [-1, 1]) for (let k = 0; k < 2; k++) { const an = new THREE.Mesh(new THREE.CylinderGeometry(.004, .006, .09, 4), std(0xcfc3a6)); an.position.set(-.01 + k * .02, .09, sz * .03); an.rotation.z = k ? -.5 : .2; head.add(an); } }
+    if (kind === 'goat') for (const sz of [-1, 1]) { const hn = new THREE.Mesh(new THREE.ConeGeometry(.009, .06, 5), std(0x8a7a60)); hn.position.set(0, .06, sz * .02); hn.rotation.x = sz * -.3; head.add(hn); }
+    const tail = new THREE.Mesh(new THREE.SphereGeometry(kind === 'fox' ? .05 : .026, 8, 6), std(kind === 'fox' ? 0xd9733a : 0xffffff)); if (kind === 'fox') tail.scale.set(2.6, .9, .9); tail.position.set(-.17 * (kind === 'fox' ? 1.35 : 1), kind === 'deer' ? .28 : .16, 0); g.add(tail);
+    const leg = (x, z) => { const l = new THREE.Mesh(new THREE.CylinderGeometry(.012, .01, kind === 'deer' ? .26 : kind === 'rabbit' ? .05 : .12, 5), dk); l.position.set(x, kind === 'deer' ? .13 : kind === 'rabbit' ? .03 : .06, z); g.add(l); return l; };
+    const legs = [leg(.09, .05), leg(.09, -.05), leg(-.09, .05), leg(-.09, -.05)];
+    g.scale.setScalar(s2 * 1.15);
+    return { g, head, legs };
+  }
+  { const SPOTS = [['sheep', -14.5, 6.6], ['sheep', -2.9, 7.2], ['sheep', 10.4, 6.9], ['deer', -17.6, 7.8], ['deer', -5.4, 8.1], ['deer', 6.3, 8.4], ['goat', -19.6, 8.6], ['goat', 12.9, 8.8], ['rabbit', -9.8, 6.4], ['rabbit', .3, 6.6], ['rabbit', 4.2, 6.8], ['rabbit', 14.8, 6.2], ['fox', -12.4, 9.0], ['fox', 2.0, 9.3]];
+    for (const [kind, ax, inl] of SPOTS) {
+      const cnt = kind === 'sheep' ? 3 : kind === 'deer' || kind === 'goat' ? 2 : 1;
+      for (let k = 0; k < cnt; k++) {
+        let x = ax + (rnd() - .5) * 1.1 + k * .22, z = shore(ax) - inl + (rnd() - .5) * .8;
+        for (let tries = 0; tries < 10 && (groundH(x, z) < .5 || forbid(x, z) || inletD(x, z) < .6); tries++) { x = ax + (rnd() - .5) * 2.4; z = shore(ax) - inl + (rnd() - .5) * 2.2; }
+        if (groundH(x, z) < .4 || inletD(x, z) < .5) continue;
+        const an = animal(kind); W(an.g); critters.push({ ...an, kind, hx: x, hz: z, ph: rnd() * 6, r: .35 + rnd() * .4, sp: .12 + rnd() * .1 });
+      }
+    } }
+
   // ---- sky: clouds, gulls and a few birds that keep going round the planet
   const clouds = [];
   for (let i = 0; i < 5; i++) {
@@ -1157,6 +1196,17 @@ export function open(opts) {
   const ORDER = ['Muros arcades', 'Muros old town', 'Church and hórreo', 'Seafarers’ quarter', 'Esteiro harbour', 'Esteiro beach', 'O Freixo pier', 'Fishing boats', 'O Freixo beach', 'Bateas', 'Ponte Nafonso', 'Outes church', 'Cove across the ría', 'Louro beach', 'Monte Louro'];
   spots.sort((a, b) => ORDER.indexOf(a.title) - ORDER.indexOf(b.title));
 
+  // ---- rain: thousands of thin drops falling straight down over the whole planet, a grey sky and darker, bigger clouds
+  const RAIN_N = 7000, rdir = new Float32Array(RAIN_N * 6), rph = new Float32Array(RAIN_N * 2), rtip = new Float32Array(RAIN_N * 2);
+  for (let i = 0; i < RAIN_N; i++) { const dr0 = new THREE.Vector3(rnd() - .5, rnd() - .5, rnd() - .5).normalize(), f = rnd() * 3.4; for (let k = 0; k < 2; k++) { rdir.set([dr0.x, dr0.y, dr0.z], (i * 2 + k) * 3); rph[i * 2 + k] = f; rtip[i * 2 + k] = k; } }
+  const rainGeo = new THREE.BufferGeometry(); rainGeo.setAttribute('position', new THREE.BufferAttribute(rdir, 3)); rainGeo.setAttribute('ph', new THREE.BufferAttribute(rph, 1)); rainGeo.setAttribute('tip', new THREE.BufferAttribute(rtip, 1));
+  const rainMat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, uniforms: { uT: { value: 0 }, uA: { value: 0 }, uR: { value: R }, uC: { value: new THREE.Color(0xdbeaf6) } },
+    vertexShader: 'attribute float ph; attribute float tip; uniform float uT; uniform float uR; varying float vA; void main(){ float h = mod(ph - uT * 2.2, 3.4); vA = smoothstep(0.0, .25, h) * (1.0 - smoothstep(2.9, 3.4, h)); vec3 p = normalize(position) * (uR + .12 + h + tip * .2); gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0); }',
+    fragmentShader: 'uniform float uA; uniform vec3 uC; varying float vA; void main(){ gl_FragColor = vec4(uC, uA * vA * .85); }' });
+  const rain = new THREE.LineSegments(rainGeo, rainMat); rain.frustumCulled = false; rain.visible = false; world.add(rain);
+  const cloudMats = []; for (const c of clouds) c.traverse((o) => { if (o.isMesh) cloudMats.push(o.material); });
+  const RAINBG = C(0x9fb1c0), RAINSKY = C(0xc6d3dc), CLD_DAY = C(0xffffff), CLD_RAIN = C(0x8d9aa8), SEA_RAIN = C(0x5d8fa0);
+
   // ---- day / night
   const DAY = { bg: C(0xd6ebf1), hemi: 1.05, sun: 2.55, sunC: C(0xffecc8), sky: C(0xf1f6ec), sea: C(0x4ab5c4) };
   const NIGHT = { bg: C(0x0a1430), hemi: .5, sun: .6, sunC: C(0x8fb0ff), sky: C(0x6f8ad0), sea: C(0x1b3a63) };
@@ -1174,12 +1224,20 @@ export function open(opts) {
   }
   const paintBtn = () => { dnBtn.innerHTML = nightT > .5 ? '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/></svg>' : '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>'; root.classList.toggle('x-night', nightT > .5); };
   const bgc = new THREE.Color();
+  const rnBtn = root.querySelector('.x-pl-rn');
+  let rainT = 0, rainTarget = 0;
+  const paintRn = () => { rnBtn.innerHTML = rainTarget ? '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/></svg>' : '<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 15a4 4 0 0 1-.4-7.98A5.5 5.5 0 0 1 17.2 7.6 3.7 3.7 0 0 1 17 15"/><path d="M8 18l-1 2.4M12 17l-1 2.4M16 18l-1 2.4"/></svg>'; rnBtn.setAttribute('aria-pressed', rainTarget ? 'true' : 'false'); root.classList.toggle('x-rain', !!rainTarget); };
+  rnBtn.addEventListener('click', () => { rainTarget = rainTarget ? 0 : 1; if (audio) { audio.setRain(!!rainTarget); audio.sfx(rainTarget ? 'rain' : 'sun'); } paintRn(); });
+  paintRn();
   const light = (k) => {
-    bgc.copy(DAY.bg).lerp(NIGHT.bg, k); scene.background = bgc;
-    hemi.intensity = DAY.hemi + (NIGHT.hemi - DAY.hemi) * k; hemi.color.copy(DAY.sky).lerp(NIGHT.sky, k);
-    sun.intensity = DAY.sun + (NIGHT.sun - DAY.sun) * k; sun.color.copy(DAY.sunC).lerp(NIGHT.sunC, k);
-    sea.material.color.copy(DAY.sea).lerp(NIGHT.sea, k);
-    winMat.emissiveIntensity = k * 1.5; lampMat.emissiveIntensity = .4 + k * 2.4; lamp.intensity = k * 2.2; starMat.opacity = k;
+    const r = rainT;
+    bgc.copy(DAY.bg).lerp(NIGHT.bg, k).lerp(RAINBG, r * (1 - k * .75)); scene.background = bgc;
+    hemi.intensity = (DAY.hemi + (NIGHT.hemi - DAY.hemi) * k) * (1 - r * .12); hemi.color.copy(DAY.sky).lerp(NIGHT.sky, k).lerp(RAINSKY, r * (1 - k * .6));
+    sun.intensity = (DAY.sun + (NIGHT.sun - DAY.sun) * k) * (1 - r * .62); sun.color.copy(DAY.sunC).lerp(NIGHT.sunC, k).lerp(RAINSKY, r * .6);
+    sea.material.color.copy(DAY.sea).lerp(NIGHT.sea, k).lerp(SEA_RAIN, r * (1 - k)); for (const m of cloudMats) m.color.copy(CLD_DAY).lerp(CLD_RAIN, r * (1 - k * .5));
+    rainMat.uniforms.uA.value = r; rain.visible = r > .01;
+    winMat.emissiveIntensity = Math.min(1.5, k * 1.5 + r * .9);
+ lampMat.emissiveIntensity = .4 + k * 2.4; lamp.intensity = k * 2.2; starMat.opacity = k;
   };
   dnBtn.addEventListener('click', () => { night = night ? 0 : 1; });
   light(nightT); paintBtn();
@@ -1251,6 +1309,7 @@ export function open(opts) {
     if (audio && night !== lastNight) { lastNight = night; audio.setNight(!!night); audio.sfx(night ? 'night' : 'day'); }
     nightT += (night - nightT) * (1 - Math.exp(-dt * 2.2)); if (Math.abs(night - nightT) < .002) nightT = night;
     light(nightT); if ((nightT > .5) !== root.classList.contains('x-night')) paintBtn();
+    rainT += (rainTarget - rainT) * (1 - Math.exp(-dt * 1.1)); if (Math.abs(rainTarget - rainT) < .003) rainT = rainTarget; rainMat.uniforms.uT.value = t;
     dist += (distT - dist) * (1 - Math.exp(-dt * 3.4));
     if (focus) { world.quaternion.slerp(focus.q, 1 - Math.exp(-dt * 3.2)); distT += (focus.dist - distT) * (1 - Math.exp(-dt * 3)); }
     else if (!ptrs.size) {
@@ -1270,6 +1329,14 @@ export function open(opts) {
       b.b.rotation.z = Math.sin(t * 1.1 + b.ph) * .045 * k; b.b.rotation.x = Math.sin(t * .9 + b.ph * 2) * .03 * k;
     }
     foamMat.opacity = .42 + Math.sin(t * 1.4) * .16;
+    for (const c of critters) {
+      const w = Math.sin(t * c.sp + c.ph), w2 = Math.cos(t * c.sp * .8 + c.ph * 2), ax2 = c.hx + w * c.r, az2 = c.hz + w2 * c.r * .6;
+      const dx = Math.cos(t * c.sp + c.ph) * c.r * c.sp, dz = -Math.sin(t * c.sp * .8 + c.ph * 2) * c.r * .6 * c.sp * .8;
+      put(c.g, ax2, az2, Math.atan2(-dz, dx), .0);
+      const graze = Math.max(0, Math.sin(t * .45 + c.ph * 3)) > .3 ? 1 : 0; c.head.rotation.z = c.kind === 'rabbit' ? -graze * .5 : -graze * .8 + Math.sin(t * 1.6 + c.ph) * .05;
+      c.legs.forEach((l, i) => { l.rotation.z = graze ? 0 : Math.sin(t * 4 + i * PI / 2 + c.ph) * .25; });
+      if (c.kind === 'rabbit' && !graze) c.g.position.addScaledVector(c.g.position.clone().normalize(), Math.max(0, Math.sin(t * 5 + c.ph)) * .03);
+    }
     for (const o of horses) { const g = Math.max(0, Math.sin(t * .5 + o.ph)); o.h.head.rotation.z = -g * .9 + Math.sin(t * 2 + o.ph) * .03; }
     for (const f of falls) {
       if (f.mist) { f.mist.scale.setScalar(1 + Math.sin(t * 2) * .08); f.mist.material.opacity = .36 + Math.sin(t * 1.6) * .07; }
@@ -1299,7 +1366,7 @@ export function open(opts) {
         const c = (t * .13) % 1; o.tail.rotation.z = Math.sin(t * .9) * .14 + (c > .8 ? Math.sin((c - .8) / .2 * PI) * .5 : 0); o.spout.visible = c > .45 && c < .6; o.g.rotation.z = Math.sin(t * .5) * .03;
       }
     }
-    for (const c of clouds) c.rotation.y += c.userData.sp * dt;
+    for (const c of clouds) { c.rotation.y += c.userData.sp * dt; c.scale.setScalar(1 + rainT * .55); }
     for (const g of gulls) { g.rotateY(g.userData.sp * dt * .35); const f = Math.sin(t * 7 + g.userData.ph) * .5; g.userData.b.w1.rotation.z = f; g.userData.b.w2.rotation.z = -f; }
     for (const f of flyers) {
       f.a += f.sp * dt; const sg = Math.sign(f.sp), tx = -f.rx * Math.sin(f.a) * sg, tz = f.rz * Math.cos(f.a) * sg;
@@ -1393,9 +1460,11 @@ function injectCss() {
     '.x-pl-t span{opacity:.7;font-size:12px}',
     '.x-pl-btns{display:flex;gap:10px;pointer-events:auto}',
     '.x-pl button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}',
-    '.x-pl-dn,.x-pl-x,.x-pl-mu{width:44px;height:44px;border-radius:50%;border:0;padding:0;display:grid;place-items:center;background:rgba(255,255,255,.7);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 2px 10px rgba(20,50,80,.12);transition:background .5s ease,transform .5s cubic-bezier(.22,.8,.24,1)}',
-    '.x-pl.x-night .x-pl-dn,.x-pl.x-night .x-pl-x,.x-pl.x-night .x-pl-mu{background:rgba(20,34,66,.65)}',
-    '.x-pl-dn:hover,.x-pl-x:hover,.x-pl-mu:hover{transform:scale(1.06)}',
+    '.x-pl-dn,.x-pl-x,.x-pl-mu,.x-pl-rn{width:44px;height:44px;border-radius:50%;border:0;padding:0;display:grid;place-items:center;background:rgba(255,255,255,.7);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 2px 10px rgba(20,50,80,.12);transition:background .5s ease,transform .5s cubic-bezier(.22,.8,.24,1)}',
+    '.x-pl.x-night .x-pl-dn,.x-pl.x-night .x-pl-x,.x-pl.x-night .x-pl-mu,.x-pl.x-night .x-pl-rn{background:rgba(20,34,66,.65)}',
+    '.x-pl-dn:hover,.x-pl-x:hover,.x-pl-mu:hover,.x-pl-rn:hover{transform:scale(1.06)}',
+    '.x-pl-rn[aria-pressed="true"]{background:rgba(120,170,215,.75)}',
+    '.x-pl.x-rain{background:#aebfcb}.x-pl.x-rain.x-night{background:#0b1426}',
     '.x-pl-pins{position:absolute;inset:0;pointer-events:none;overflow:hidden}',
     '.x-pl-pin{position:absolute;left:0;top:0;margin:0;padding:0;border:0;background:none;display:flex;align-items:center;transition:opacity .4s ease;will-change:transform;white-space:nowrap}',
     '.x-pl-pin i{flex:none;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;background:#b9623f;color:#fff;font:600 11px/26px "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;font-style:normal;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.25);transition:transform .4s cubic-bezier(.22,.8,.24,1)}',
