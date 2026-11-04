@@ -340,12 +340,24 @@ function horreo() {
 const ALLP = [];
 function person(shirt, o) {
   o = o || {};
-  const g = new THREE.Group(), skin = std(o.skin || 0xf0c9a0);
-  const legs = box(.034, .05, .026, std(o.pants || 0x3a4a63)); legs.position.y = .025;
-  const torso = box(.044, .06, .03, std(shirt)); torso.position.y = .08;
-  const head = new THREE.Mesh(new THREE.SphereGeometry(.021, 8, 6), skin); head.position.y = .124;
-  g.add(legs, torso, head);
-  if (o.hat) { const hat = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, .008, 8), std(o.hat)); hat.position.y = .142; g.add(hat); const hc = new THREE.Mesh(new THREE.CylinderGeometry(.016, .02, .02, 8), std(o.hat)); hc.position.y = .152; g.add(hc); }
+  // round and cute: an egg-shaped body, a big round head with two dot eyes and rosy cheeks, tiny round feet (about as tall as before)
+  const g = new THREE.Group(), skin = std(o.skin || 0xf0c9a0), eye = std(0x2b2530), sh = std(shirt);
+  const body = new THREE.Mesh(new THREE.IcosahedronGeometry(.036, 2), sh); body.scale.set(1, 1.12, .92); body.position.y = .05; g.add(body);
+  for (const sz of [-1, 1]) {
+    const ft = new THREE.Mesh(new THREE.IcosahedronGeometry(.013, 1), std(o.pants || 0x3a4a63)); ft.scale.set(1.25, .8, 1); ft.position.set(.006, .01, sz * .016); g.add(ft);
+    const hn = new THREE.Mesh(new THREE.IcosahedronGeometry(.011, 1), skin); hn.position.set(0, .05, sz * .037); g.add(hn);
+  }
+  const head = new THREE.Mesh(new THREE.IcosahedronGeometry(.032, 2), skin); head.position.y = .113; g.add(head);
+  for (const sz of [-1, 1]) {
+    const e = new THREE.Mesh(new THREE.IcosahedronGeometry(.0042, 1), eye); e.position.set(.028, .118, sz * .0115); g.add(e);
+    const ck = new THREE.Mesh(new THREE.IcosahedronGeometry(.0058, 1), std(0xf08a8a)); ck.scale.set(.5, .8, 1); ck.position.set(.027, .107, sz * .0195); g.add(ck);
+  }
+  if (o.hat) {
+    const brim = new THREE.Mesh(new THREE.CylinderGeometry(.043, .043, .006, 12), std(o.hat)); brim.position.y = .137; g.add(brim);
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(.03, 10, 6, 0, PI * 2, 0, PI / 2), std(o.hat)); dome.position.y = .137; dome.scale.y = .85; g.add(dome);
+  } else {
+    const hair = new THREE.Mesh(new THREE.SphereGeometry(.0345, 10, 6, 0, PI * 2, 0, PI * .55), std([0x4a3326, 0x2b2530, 0xb5651d, 0xe0b45a, 0x7a4a2a][(ALLP.length * 7 + (o.skin || 0)) % 5])); hair.position.set(-.004, .117, 0); hair.rotation.z = .12; g.add(hair);
+  }
   g.userData.role = o.role || 'town'; g.userData.idx = ALLP.length;
   if (g.userData.role === 'town' || g.userData.role === 'walk') {                           // a little umbrella, only shown while it rains
     const um = new THREE.Group(), pole = new THREE.Mesh(new THREE.CylinderGeometry(.003, .003, .1, 4), std(0x4a4038)); pole.position.y = .07; um.add(pole);
@@ -358,9 +370,9 @@ function person(shirt, o) {
 function lying(shirt, o) {
   o = o || {};
   const g = new THREE.Group();
-  const torso = box(.06, .026, .042, std(shirt)); torso.position.set(-.01, .018, 0);
-  const legs = box(.06, .022, .034, std(o.pants || 0x3a4a63)); legs.position.set(.05, .016, 0);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(.02, 8, 6), std(o.skin || 0xf0c9a0)); head.position.set(-.058, .024, 0);
+  const torso = new THREE.Mesh(new THREE.IcosahedronGeometry(.03, 2), std(shirt)); torso.scale.set(1.35, .75, 1); torso.position.set(-.012, .02, 0);
+  const legs = new THREE.Mesh(new THREE.IcosahedronGeometry(.022, 1), std(o.pants || 0x3a4a63)); legs.scale.set(1.6, .8, 1.1); legs.position.set(.05, .016, 0);
+  const head = new THREE.Mesh(new THREE.IcosahedronGeometry(.026, 2), std(o.skin || 0xf0c9a0)); head.position.set(-.06, .026, 0);
   g.add(torso, legs, head);
   g.userData.role = 'sunL'; g.userData.idx = ALLP.length; ALLP.push(g);
   return g;
