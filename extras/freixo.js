@@ -308,6 +308,21 @@ function ribbon(pts, width, mat, lift, dash, flo, noSkip) {
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
   const m = new THREE.Mesh(g, mat); m.userData.ribbon = true; return m;
 }
+// a ribbon of water that follows the ground uphill and gets narrower (widths per point)
+function ribbonW(pts, widths, mat, lift) {
+  const H = pts.map((q) => groundH(q[0], q[1]));
+  for (let pass = 0; pass < 5; pass++) for (let i = 1; i < H.length - 1; i++) H[i] = H[i] * .5 + (H[i - 1] + H[i + 1]) * .25;
+  const P = pts.map((q, i) => dirFrom(q[0], q[1], new THREE.Vector3()).multiplyScalar(R + H[i] + lift));
+  const pos = [], idx = [], tan = new THREE.Vector3(), side = new THREE.Vector3(), nrm = new THREE.Vector3();
+  for (let i = 0; i < P.length; i++) {
+    tan.copy(P[Math.min(P.length - 1, i + 1)]).sub(P[Math.max(0, i - 1)]).normalize(); nrm.copy(P[i]).normalize();
+    side.crossVectors(tan, nrm).normalize().multiplyScalar(widths[i] / 2);
+    pos.push(P[i].x + side.x, P[i].y + side.y, P[i].z + side.z, P[i].x - side.x, P[i].y - side.y, P[i].z - side.z);
+    if (i < P.length - 1) { const o = i * 2; idx.push(o, o + 1, o + 2, o + 1, o + 3, o + 2); }
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+  const m = new THREE.Mesh(g, mat); m.userData.ribbon = true; return m;
+}
 function route(pts) {
   const len = [0]; let t = 0;
   for (let i = 1; i < pts.length; i++) { t += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); len.push(t); }
@@ -456,6 +471,7 @@ export function open(opts) {
   const SHUTC = [0x2f6fa8, 0x3b8f6a, 0xa23a30];
   const mk = (floors, extra) => { const k = hc++; return Object.assign({ w: .44 + rnd() * .2, d: .4 + rnd() * .07, floors, wall: WALLS[k % WALLS.length], roof: ROOF[(k * 3 + 1) % ROOF.length], gal: floors > 1 && k % 2 === 0, shut: k % 4 === 0 ? SHUTC[(k >> 2) % 3] : 0, fr: k, turn: (rnd() - .5) * .14 }, extra || {}); };
   // village squares (x range, inland range): houses keep out of them
+  let riverPts = [];
   const SQ = [[-13.95, -11.65, 1.8, 3.55], [-8.9, -7.4, 2.1, 3.4], [1.1, 2.5, 2.1, 3.4], [8.9, 10.4, 2.1, 3.4]];
   const inSq = (x, inl) => SQ.some((q) => x > q[0] && x < q[1] && inl > q[2] && inl < q[3]);
   const JX = [7.0], LINKX = [7.0];
@@ -596,6 +612,12 @@ export function open(opts) {
     const a = roadS[k - 1], b = roadS[k + 1], yaw = Math.atan2(-(b[1] - a[1]), b[0] - a[0]), br = stoneBridge(.4, 3, .7, std(0xa9a28f), std(0x9d978a), 0); br.scale.y = .5;
     const g = new THREE.Group(); g.add(br); W(put(g, roadS[k][0], roadS[k][1], yaw, 0, true)); }
   const routes = [route(roadN), route(roadS)];
+  // the river of Outes keeps going up the hillside, getting narrower and narrower until it is a thread
+  const RIVER2 = relax([[INLET2[3][0], INLET2[3][1] + .9], [INLET2[3][0], INLET2[3][1] + .1], [6.4, -7.0], [6.9, -8.6], [7.9, -9.9], [8.8, -10.9], [9.9, -11.7], [10.9, -12.2]], 0);
+  { const dense = []; for (let i = 0; i < RIVER2.length - 1; i++) for (let k = 0; k < 6; k++) dense.push([RIVER2[i][0] + (RIVER2[i + 1][0] - RIVER2[i][0]) * k / 6, RIVER2[i][1] + (RIVER2[i + 1][1] - RIVER2[i][1]) * k / 6]); dense.push(RIVER2[RIVER2.length - 1]);
+    const sm = relax(dense, 6), n = sm.length, widths = sm.map((_, i) => .46 * Math.pow(1 - i / (n - 1), 1.1) + .045);
+    riverPts = sm; W(ribbonW(sm, widths, std(0x69b9d0, { transparent: true, opacity: .92, roughness: .2, side: THREE.DoubleSide, emissive: 0x2a6f86, emissiveIntensity: .15, polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 }), .08));
+    W(ribbonW(sm, widths.map((w) => w * 1.55), std(0xcdbf94, { roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }), .06)); }
   const foamMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .5, depthWrite: false, side: THREE.DoubleSide });
   W(ribbon(smooth(shore, -22, 21, .07), .13, foamMat, .085, false, -1)); W(ribbon(smooth(shoreS, -23, 15, -.07), .13, foamMat, .085, false, -1));
   function car(color, bus) {
@@ -875,7 +897,8 @@ export function open(opts) {
   }
   // ---- trees: round oaks, pines and eucalyptus, only where nobody lives or drives
   const forbid = (x, z) => {
-    if (Math.hypot(x - ISL[2].cx, z - ISL[2].cz) < 2.2) return true;      // the little island keeps its clearing for the house and the horses
+    if (Math.hypot(x - ISL[2].cx, z - ISL[2].cz) < 2.2) return true;
+    for (const q of riverPts) if (Math.abs(q[0] - x) < .45 && Math.abs(q[1] - z) < .45) return true;      // the little island keeps its clearing for the house and the horses
     const s = shore(x);
     for (const rt of mtRoads) for (let q = 0; q < rt.pts.length; q += 2) if (Math.abs(rt.pts[q][0] - x) < .6 && Math.abs(rt.pts[q][1] - z) < .6) return true;
     if (x > -23 && x < 17 && z > s - 6.6 && z < s + .1) { for (const [a, b] of [[-17.4, -9.5], [-9.4, -2.8], [-1.2, 4.6], [7.4, 13.3]]) if (x > a && x < b && z > s - 5.8) return true; if (Math.abs(z - (s - 1.2)) < .45) return true; }
