@@ -1405,9 +1405,10 @@ export function open(opts) {
   let lastNight = night0;
   const info = root.querySelector('.x-pl-info'), moreBtn = root.querySelector('.x-pl-more');
   const toggleInfo = (on) => { if (on === !info.hidden) return; if (on) { info.hidden = false; requestAnimationFrame(() => info.classList.add('x-on')); } else { info.classList.remove('x-on'); setTimeout(() => { if (!info.classList.contains('x-on')) info.hidden = true; }, 420); } moreBtn.classList.toggle('x-open', on); if (audio) audio.sfx(on ? 'learn' : 'learnoff'); };
-  moreBtn.addEventListener('click', () => toggleInfo(info.hidden));
+  // for now the "Aprende más" button is only a placeholder: it does nothing (to switch it on again: moreBtn.addEventListener('click', () => toggleInfo(info.hidden)))
+  moreBtn.setAttribute('aria-disabled', 'true'); moreBtn.tabIndex = -1;
   info.querySelector('.x-pl-ix').addEventListener('click', () => toggleInfo(false));
-  if (audio) for (const bt of root.querySelectorAll('button')) {                 // every button answers with a little pop when the pointer touches it and a deeper one when pressed
+  if (audio) for (const bt of root.querySelectorAll('button:not(.x-pl-more)')) {                 // every button answers with a little pop when the pointer touches it and a deeper one when pressed
     bt.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') audio.sfx('hover'); });
     bt.addEventListener('pointerdown', () => audio.sfx('press'));
   }
@@ -1723,7 +1724,7 @@ function injectCss() {
     '.x-pl-nav button:hover{background:rgba(18,48,74,.2)}',
     '.x-pl-nav .x-pl-cx{margin-left:auto;width:34px;height:34px;padding:0;display:grid;place-items:center;font-size:13px}',
     '.x-pl-more{position:absolute;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);border:0;border-radius:999px;padding:9px 20px 10px;background:rgba(255,253,248,.72);color:#2c4a5a;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 2px 14px rgba(20,50,80,.12);font:500 13px/1 "Switzer","Switzer Placeholder",system-ui,sans-serif;letter-spacing:.02em;transition:background .5s ease,transform .6s cubic-bezier(.22,.8,.24,1),box-shadow .6s ease}',
-    '.x-pl-more:hover{transform:translateX(-50%) translateY(-2px);box-shadow:0 6px 20px rgba(20,50,80,.18);background:rgba(255,253,248,.92)}',
+    '.x-pl-more{cursor:default}',
     '.x-pl-more.x-open{opacity:0;pointer-events:none}',
     '.x-pl.x-night .x-pl-more{background:rgba(20,34,66,.7);color:#cbe3ff}',
     '.x-pl-info{position:absolute;left:50%;bottom:max(16px,env(safe-area-inset-bottom));width:min(430px,calc(100% - 28px));max-height:min(62vh,520px);overflow:auto;padding:20px 22px 16px;border-radius:22px;background:rgba(255,253,248,.88);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:0 10px 36px rgba(20,50,80,.2);color:#12304a;opacity:0;transform:translate(-50%,16px);transition:opacity .45s ease,transform .6s cubic-bezier(.22,.8,.24,1);-webkit-user-select:text;user-select:text}',
