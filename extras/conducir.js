@@ -670,12 +670,10 @@ export function open(opts) {
   const tourGo = (i, jump) => {
     if (i < 0) i = 0; if (i >= orbs.length) { tourStop(); return; }
     tour.i = i; tour.phase = 'wait'; closeCard(); const o = orbs[i];
-    const go = () => { if (jump) { const zs = clamp(o.position.z - 14, -92, 92); S.x = ROADX(zs); S.z = zs; S.v = 0; S.steer = 0; S.yaw = 0; S.cyaw = 0; }
-      const pts = []; let z = S.z; const tx = o.position.x, tz = o.position.z; if (Math.abs(S.x - ROADX(z)) > 5) pts.push([ROADX(z), z]); const sg = Math.sign(tz - z) || 1; for (z += sg * 4; (tz - z) * sg > 10; z += sg * 4) pts.push([ROADX(z), z]); pts.push([tx, tz]);
-      tour.route = pts; tour.stuck = 0; tour.ghost = 0; tour.phase = 'ride'; };
-    if (jump) { root.classList.add('x-fade'); setTimeout(() => { if (!tour.on) { root.classList.remove('x-fade'); return; } go(); root.classList.remove('x-fade'); }, 480); } else go();
+    const pts = []; let z = S.z; const tx = o.position.x, tz = o.position.z; if (Math.abs(S.x - ROADX(z)) > 5) pts.push([ROADX(z), z]); const sg = Math.sign(tz - z) || 1; for (z += sg * 4; (tz - z) * sg > 10; z += sg * 4) pts.push([ROADX(z), z]); pts.push([tx, tz]);
+    tour.route = pts; tour.stuck = 0; tour.ghost = 0; tour.boost = !!jump; tour.phase = 'ride';
   };
-  const tourStart = () => { tour.on = true; root.classList.add('x-tour', 'x-drove'); tLab.textContent = tr('Stop the tour'); tourGo(0, true); };
+  const tourStart = () => { tour.on = true; root.classList.add('x-tour', 'x-drove'); tLab.textContent = tr('Stop the tour'); tourGo(0, Math.hypot(S.x - orbs[0].position.x, S.z - orbs[0].position.z) > 40); };
   tBtn.addEventListener('click', () => { if (tour.on) tourStop(); else tourStart(); });
   root.querySelector('.x-dr-tp').addEventListener('click', () => tourGo(Math.max(0, tour.i - 1), true));
   root.querySelector('.x-dr-tn').addEventListener('click', () => tourGo(tour.i + 1, true));
@@ -731,8 +729,8 @@ export function open(opts) {
       if (K.up || K.down || K.left || K.right) tourStop();
       else if (tour.phase === 'ride') {
         const o = orbs[tour.i], w = tour.route[0] || [o.position.x, o.position.z], dx = w[0] - S.x, dz = w[1] - S.z, d = Math.hypot(dx, dz), last = tour.route.length <= 1;
-        if (last && d < 5.2) tour.phase = 'arrive'; else if (!last && d < 3.4) tour.route.shift();
-        else { let er = Math.atan2(dx, dz) - S.yaw; er = Math.atan2(Math.sin(er), Math.cos(er)); aS = clamp(er * 2.2, -1, 1); aT = Math.abs(er) > 1.1 ? 0 : (S.v < (last ? clamp(d * .9, 2, 6.5) : 6.5) ? 1 : 0);
+        if (last && d < 5.2) tour.phase = 'arrive'; else if (!last && d < (tour.boost ? 5.5 : 3.4)) tour.route.shift();
+        else { let er = Math.atan2(dx, dz) - S.yaw; er = Math.atan2(Math.sin(er), Math.cos(er)); aS = clamp(er * 2.2, -1, 1); aT = Math.abs(er) > 1.1 ? 0 : (S.v < (last ? clamp(d * .9, 2, tour.boost ? 10 : 6.5) : (tour.boost ? 10 : 6.5)) ? 1 : 0);
           const mv = Math.hypot(S.x - tour.lx, S.z - tour.lz); if (aT > 0 && mv < dt * 1.1) tour.stuck += dt; else tour.stuck = 0; if (tour.stuck > 1.1) { tour.ghost = 2.5; tour.stuck = 0; } }
       } else if (tour.phase === 'arrive') { aT = S.v > .5 ? -1 : 0; if (S.v < .6) { tour.phase = 'read'; S.v = 0; openCard(orbs[tour.i]); } }
       tour.lx = S.x; tour.lz = S.z; if (tour.ghost > 0) tour.ghost -= dt;
