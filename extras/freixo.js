@@ -3,7 +3,7 @@
 // fishermen on anchored boats, cars, boats under sail, birds and clouds that keep moving. Opened from the Contact page (three clicks on the creature).
 // open({ night, onClose }) shows it on top of the page and returns { close }.
 import * as THREE from './three.module.min.js';
-import { mochiText, MOCHI, tr } from './i18n.js?v=5';
+import { mochiText, MOCHI, tr } from './i18n.js?v=6';
 const mochiLen = MOCHI.length;
 
 const R = 12, PI = Math.PI, SEA = -.06;    // SEA: the water level, a little below the shore line, so waves and tides never reach the roads and houses                // radius of the planet
@@ -1619,7 +1619,7 @@ export function open(opts) {
   const mRect = { x: 0, y: 0, n: 0 }; let M3 = null, mex = innerWidth / 2, mey = innerHeight / 2, mStep = -1, mType = 0, mEye = 4, mBlink = 0, mt2 = 0, mpx = innerWidth / 2, mpy = innerHeight / 2;
   const mTxt = (txt, i) => { if (!mBub.children.length) mBub.innerHTML = '<span></span><span style="opacity:0"></span>'; mBub.children[0].textContent = txt.slice(0, i); mBub.children[1].textContent = txt.slice(i); };   // the whole text is laid out from the start (the unwritten part is invisible), so typing never reflows the bubble
   const typeMsg = (txt) => { clearInterval(mType); mochi.classList.remove('x-done'); mTxt(txt, 0); let i = 0; mType = setInterval(() => { if (i >= txt.length) { clearInterval(mType); mochi.classList.add('x-done'); return; } mTxt(txt, ++i); if (i % 3 === 1 && audio) audio.sfx('mochitalk'); }, 34); };
-  const mochiClose = () => { if (M3) { try { M3.r.dispose(); M3.r.forceContextLoss(); } catch (e) {} M3 = null; } clearInterval(mType); mochi.classList.remove('x-on', 'x-ctaw', 'x-cta', 'x-ctaon'); root.classList.remove('x-mochi'); mStep = -1; setTimeout(() => { if (mStep < 0) mochi.hidden = true; }, 700); if (audio) audio.sfx('mochiend'); };
+  const mochiClose = () => { mochi.classList.remove('x-load'); if (M3) { try { M3.r.dispose(); M3.r.forceContextLoss(); } catch (e) {} M3 = null; } clearInterval(mType); mochi.classList.remove('x-on', 'x-ctaw', 'x-cta', 'x-ctaon'); root.classList.remove('x-mochi'); mStep = -1; setTimeout(() => { if (mStep < 0) mochi.hidden = true; }, 700); if (audio) audio.sfx('mochiend'); };
   const mochiPop = () => { mSp.classList.remove('x-hop'); mochi.classList.remove('x-pop'); void mSp.offsetWidth; mSp.classList.add('x-hop'); mochi.classList.add('x-pop'); };
   const mochiCta = () => {                                 // after the last text: Mochi hides behind a box and peeks out over its top edge
     mochi.classList.add('x-ctaw'); if (audio) audio.sfx('mochinext');
@@ -1638,7 +1638,18 @@ export function open(opts) {
   };
   moreBtn.addEventListener('click', () => { if (mStep >= 0) return; buildMochi().catch(() => {}); mStep = 0; look(3, 3, .62); mochi.hidden = false; root.classList.add('x-mochi'); requestAnimationFrame(() => requestAnimationFrame(() => mochi.classList.add('x-on'))); if (audio) audio.sfx('mochi'); setTimeout(() => mStep === 0 && typeMsg(MSG[0]), 1100); });
   mochi.addEventListener('click', () => mochiNext());
-  mochi.querySelector('.x-pl-cta').addEventListener('click', (e) => { e.stopPropagation(); if (audio) audio.sfx('mochiend'); mochiClose(); });   // the tour itself comes next
+  // "Start the tour": everything blurs and Mochi bobs up and down softly while the seabed is made ready, then the dive under the sea opens
+  let tourOn = false, tourMuted = false;
+  const endTour = () => { tourOn = false; root.classList.remove('x-tour'); if (audio && !tourMuted) audio.mute(false); };
+  const startTour = () => {
+    if (tourOn) return; tourOn = true; tourMuted = !!(audio && audio.muted);
+    mochi.classList.remove('x-ctaon'); mochi.classList.add('x-load'); root.classList.add('x-tour'); if (audio) { audio.sfx('mochinext'); setTimeout(() => audio && audio.mute(true), 500); }
+    const t0 = performance.now();
+    import('./abismo.js?v=2').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
+      .then((m) => { const ab = m.open({ onClose: endTour }); if (!ab) throw new Error('no webgl'); setTimeout(mochiClose, 700); })
+      .catch(() => { endTour(); mochiClose(); });
+  };
+  mochi.querySelector('.x-pl-cta').addEventListener('click', (e) => { e.stopPropagation(); startTour(); });
   addEventListener('pointermove', (e) => { mpx = e.clientX; mpy = e.clientY; });
   const mo = mochi.querySelector('.x-pl-mo'), mshadow = mochi.querySelector('.x-pl-sh'), J = { x: 0, y: 0, vx: 0, vy: 0, p: 1, since: 9, sq: 0, last: 0, dir: 1, rot: 0 };
   const mochiSwim = (now) => {                       // swims like a jellyfish: a soft pulse every ~2 s squeezes it, shoots it up and sideways, then it glides and sinks slowly
@@ -1920,6 +1931,7 @@ export function open(opts) {
     e.stopImmediatePropagation(); e.preventDefault(); beginDrag(o, false, e);
   }, true);
   const onKey = (e) => {
+    if (tourOn) return;
     if (e.key === 'Escape' && mStep >= 0) { mochiClose(); }
     else if (e.key === 'Escape') { if (!info.hidden) toggleInfo(false); else if (cur >= 0) hideCard(); else close(); }
     else if (e.key === 'n' || e.key === 'N') { manual = true; night = night > .5 ? 0 : 1; }
@@ -1937,6 +1949,7 @@ export function open(opts) {
   const tv = new THREE.Vector3(), camDir = new THREE.Vector3(0, 0, 1), prj = new THREE.Vector3();
   const loop = (now) => {
     raf = requestAnimationFrame(loop);
+    if (tourOn) { last = now; return; }            // the planet rests while the dive under the sea is open
     const dt = Math.min(.05, (now - last) / 1000); last = now; t += dt; frame++;
     if (!manual && opts.getDark) night = opts.getDark();       // the planet follows the real hour of the visitor (and the dial of the page)
     const nb2 = night > .5 ? 1 : 0; if (audio && nb2 !== lastNight) { lastNight = nb2; audio.setNight(!!nb2); audio.sfx(nb2 ? 'night' : 'day'); }
@@ -2245,6 +2258,10 @@ function injectCss() {
     '.x-pl-cta:hover{box-shadow:0 14px 40px rgba(80,40,40,.3)}',
     '.x-pl-mochi.x-cta .x-pl-cta{display:block}.x-pl-mochi.x-ctaon .x-pl-cta{opacity:1;transform:none}',
     '.x-pl-mochi.x-cta .x-pl-mq{z-index:1;margin-bottom:-62px}.x-pl-mochi.x-cta .x-pl-sh{display:none}',
+    '.x-pl-mochi.x-load{-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);background:rgba(190,232,240,.4);cursor:progress}',
+    '.x-pl-top,.x-pl-more,.x-pl-build{transition:opacity .5s ease}.x-pl.x-tour .x-pl-top,.x-pl.x-tour .x-pl-more,.x-pl.x-tour .x-pl-build{opacity:0;pointer-events:none}',
+    '.x-pl-mochi.x-load .x-pl-cta,.x-pl-mochi.x-load .x-pl-bub{display:none}',
+    '.x-pl-mochi.x-load .x-pl-mq{margin-bottom:0;animation:x-mo-load 1.7s ease-in-out infinite}@keyframes x-mo-load{0%,100%{transform:translateY(-18px)}50%{transform:translateY(18px)}}',
     '.x-pl.x-night .x-pl-cta{background:rgba(24,34,64,.95);color:#e4eeff}',
     '.x-pl.x-night .x-pl-bub{background:rgba(24,34,64,.92);color:#e4eeff}',
     '.x-pl-bub p{margin:0;min-height:3em;font:500 17px/1.5 "Switzer","Switzer Placeholder",system-ui,sans-serif}',

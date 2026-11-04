@@ -69,6 +69,10 @@ const ROWS = [
   ['Add to the island', 'Añadir a la isla', 'Engadir á illa'],
   ['Tree', 'Árbol', 'Árbore'], ['Flowers', 'Flores', 'Flores'], ['House', 'Casa', 'Casa'], ['Granary', 'Hórreo', 'Hórreo'],
   ['Sheep', 'Oveja', 'Ovella'], ['Lighthouse', 'Faro', 'Farol'], ['Boat', 'Barco', 'Barco'],
+  ['Scroll to dive', 'Haz scroll para sumergirte', 'Fai scroll para mergullarte'],
+  ['Back to the map', 'Volver al mapa', 'Volver ao mapa'],
+  ['Under the sea', 'Bajo el mar', 'Baixo o mar'],
+  ['Sound', 'Sonido', 'Son'],
   ['Learn more', 'Saber más', 'Saber máis'],
   ['Start the tour', 'Comenzar la visita', 'Comezar a visita'],
   ['CLICK 3 TIMES · CLICK 3 TIMES · CLICK 3 TIMES ·', 'HAZ CLIC 3 VECES · HAZ CLIC 3 VECES · HAZ CLIC 3 VECES ·', 'FAI CLIC 3 VECES · FAI CLIC 3 VECES · FAI CLIC 3 VECES ·'],
@@ -99,6 +103,27 @@ export const MOCHI = [
     'Se te animas a probalo, fai clic no botón de comezar que aparecerá a continuación.']
 ];
 
+// the dive under the sea: heading and text of each stop
+export const TOUR = [
+  { k: ['01 · Ría de Muros e Noia', '01 · Ría de Muros e Noia', '01 · Ría de Muros e Noia'],
+    h: ['Known as “A Ría da Estrela”', 'Conocida como “A Ría da Estrela”', 'Coñecida como “A Ría da Estrela”'],
+    p: ['Its geographic shape and the union of its five historic municipalities (Muros, Outes, Noia, Lousame and Porto do Son) give it this very characteristic name.',
+      'Su forma geográfica y la unión de sus cinco municipios históricos (Muros, Outes, Noia, Lousame y Porto do Son) hacen que reciba este nombre tan característico.',
+      'A súa forma xeográfica e a unión dos seus cinco concellos históricos (Muros, Outes, Noia, Lousame e Porto do Son) fan que reciba este nome tan característico.'] },
+  { k: ['02 · 1905', '02 · 1905', '02 · 1905'],
+    h: ['Wreck of the Cardenal Cisneros', 'Naufragio del Cardenal Cisneros', 'Naufraxio do Cardenal Cisneros'],
+    p: ['Off the coast of Monte Louro, the armoured cruiser of the Spanish Navy Cardenal Cisneros sank in 1905 after running aground on a shoal.',
+      'Frente a las costas del Monte Louro se hundió en 1905 el crucero acorazado de la Armada española Cardenal Cisneros tras encallar en un bajo.',
+      'Fronte ás costas do Monte Louro afundiuse en 1905 o cruceiro encoirazado da Armada española Cardenal Cisneros tras encallar nun baixo.'] },
+  { k: ['03 · Neighbours of the seabed', '03 · Vecinos del fondo', '03 · Veciños do fondo'],
+    h: ['Life in the ría', 'La vida en la ría', 'A vida na ría'],
+    p: ['Sardines, bream, octopus, spider crabs, seahorses and bottlenose dolphins live in these waters. The Galician rías are a natural nursery of the sea.',
+      'Sardinas, doradas, pulpos, centollas, caballitos de mar y delfines mulares viven en estas aguas. Las rías gallegas son una guardería natural del mar.',
+      'Sardiñas, doradas, polbos, centolas, cabaliños de mar e golfiños moleiros viven nestas augas. As rías galegas son unha gardería natural do mar.'] },
+  { k: ['04', '04', '04'],
+    h: ['Thank you for diving with me', 'Gracias por bucear conmigo', 'Grazas por mergullarte comigo'],
+    p: ['Go back to the map whenever you like: there is still a lot to discover.', 'Vuelve al mapa cuando quieras: aún queda mucho por descubrir.', 'Volve ao mapa cando queiras: aínda queda moito por descubrir.'] }
+];
 let lang = 'en';
 try {
   const q = /[?&]lang=(en|es|gl)\b/.exec(location.search);
