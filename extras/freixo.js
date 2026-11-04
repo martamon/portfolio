@@ -544,6 +544,10 @@ function makeAudio(night0) {
       else if (name === 'night') { note(69, .07, 2.6); setTimeout(() => note(64, .06, 3), 160); }
       else if (name === 'tick') note(88, .03, .9);
       else if (name === 'boom') { const t = ctx.currentTime, b2 = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = ctx.createGain(); b2.buffer = nb; fl.type = 'lowpass'; fl.frequency.setValueAtTime(420, t + .5); fl.frequency.exponentialRampToValueAtTime(90, t + 1.6); g.gain.setValueAtTime(0, t); g.gain.setValueAtTime(0, t + .5); g.gain.linearRampToValueAtTime(.09, t + .53); g.gain.exponentialRampToValueAtTime(.0005, t + 1.8); b2.connect(fl); fl.connect(g); g.connect(tone); g.connect(rev); b2.start(t + .5, Math.random() * 2); b2.stop(t + 1.9); const w = ctx.createOscillator(), wg = ctx.createGain(); w.type = 'sine'; w.frequency.setValueAtTime(500, t); w.frequency.exponentialRampToValueAtTime(1400, t + .5); wg.gain.setValueAtTime(.012, t); wg.gain.linearRampToValueAtTime(0, t + .5); w.connect(wg); wg.connect(tone); w.start(t); w.stop(t + .55); for (let k = 0; k < 6; k++) setTimeout(() => alive && !muted && note(84 + Math.floor(Math.random() * 12), .012, .35), 650 + k * 90 + Math.random() * 120); }
+      else if (name === 'mochi') { [64, 71, 76, 83, 88].forEach((m, k) => setTimeout(() => alive && note(m, .05, 3.4), k * 140)); setTimeout(() => { if (!alive || muted) return; for (let k = 0; k < 3; k++) { const t = ctx.currentTime + k * .13, o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(700 + k * 120, t); o.frequency.exponentialRampToValueAtTime(1500 + k * 160, t + .09); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.03, t + .01); g.gain.exponentialRampToValueAtTime(.0005, t + .2); o.connect(g); g.connect(tone); g.connect(rev); o.start(t); o.stop(t + .25); } }, 760); }
+      else if (name === 'mochitalk') { const t = ctx.currentTime, f = 520 + Math.random() * 380, o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * (1.1 + Math.random() * .25), t + .06); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.022, t + .008); g.gain.exponentialRampToValueAtTime(.0005, t + .11); o.connect(g); g.connect(tone); o.start(t); o.stop(t + .13); }
+      else if (name === 'mochinext') { note(79, .045, 1.8); setTimeout(() => note(86, .04, 2.2), 110); }
+      else if (name === 'mochiend') { [86, 79, 74, 67].forEach((m, k) => setTimeout(() => alive && note(m, .04 - k * .004, 2.4), k * 120)); }
       else if (name === 'learn') { [72, 76, 79, 83].forEach((m, k) => setTimeout(() => note(m, .04 - k * .004, 2.8), k * 105)); }
       else if (name === 'learnoff') { [83, 79, 74].forEach((m, k) => setTimeout(() => note(m, .03, 1.8), k * 95)); }
       else if (name === 'rain') { note(76, .05, 2.6); setTimeout(() => note(71, .045, 2.8), 160); setTimeout(() => note(67, .04, 3), 330); }
@@ -578,6 +582,7 @@ export function open(opts) {
     '<button type="button" class="x-pl-mu" aria-label="Sound"></button><button type="button" class="x-pl-rn" aria-label="Rain"></button><button type="button" class="x-pl-dn" aria-label="Day / night"></button>' +
     '<button type="button" class="x-pl-x" aria-label="Close"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button></div></div>' +
     '<button type="button" class="x-pl-more">Aprende más</button>' +
+    '<div class="x-pl-mochi" hidden><div class="x-pl-mq"><div class="x-pl-mo"><div class="x-pl-ms"></div></div><div class="x-pl-sh"></div></div><div class="x-pl-bub"><p></p><span class="x-pl-go">▾</span></div></div>' +
     '<div class="x-pl-info" hidden><button type="button" class="x-pl-ix" aria-label="Cerrar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button>' +
     '<h2>Ría de Muros e Noia</h2><p class="x-pl-sub">A Coruña · Galicia</p>' +
     '<p>Una de las Rías Baixas, entre el monte Louro y la desembocadura del Tambre. Esta maqueta es una versión simplificada y soñada de su costa.</p>' +
@@ -1538,10 +1543,22 @@ export function open(opts) {
   if (!audio) muBtn.style.display = 'none'; else { if (muteSaved) audio.mute(true); audio.start(); audio.sfx('open'); paintMu(); }
   muBtn.addEventListener('click', () => { if (!audio) return; audio.mute(!audio.muted); try { localStorage.setItem('xpl-mute', audio.muted ? '1' : '0'); } catch (e) {} paintMu(); if (!audio.muted) audio.sfx('tick'); });
   let lastNight = night0;
+  let mStepRef = 0;
   const info = root.querySelector('.x-pl-info'), moreBtn = root.querySelector('.x-pl-more');
   const toggleInfo = (on) => { if (on === !info.hidden) return; if (on) { info.hidden = false; requestAnimationFrame(() => info.classList.add('x-on')); } else { info.classList.remove('x-on'); setTimeout(() => { if (!info.classList.contains('x-on')) info.hidden = true; }, 420); } moreBtn.classList.toggle('x-open', on); if (audio) audio.sfx(on ? 'learn' : 'learnoff'); };
   // for now the "Aprende más" button is only a placeholder: it does nothing (to switch it on again: moreBtn.addEventListener('click', () => toggleInfo(info.hidden)))
-  moreBtn.setAttribute('aria-disabled', 'true'); moreBtn.tabIndex = -1;
+  // "Aprende más": Mochi, the little assistant, appears in front of a blurred map and tells two short messages (a click anywhere moves on / closes it)
+  const mochi = root.querySelector('.x-pl-mochi'), mSp = mochi.querySelector('.x-pl-ms'), mBub = mochi.querySelector('.x-pl-bub p'), MSG = ['Thank you so much for staying until here! My name is Mochi and I am Martamon’s assistant (actually, I am her digitalised kitten).', 'Martamon comes from a tiny village in the north of Spain, in Galicia. It is a VERY, VERY pretty and quiet fishing village. This map is a recreation of that very special place.'];
+  let mStep = -1, mType = 0, mEye = 4, mBlink = 0, mt2 = 0, mpx = innerWidth / 2, mpy = innerHeight / 2;
+  const typeMsg = (txt) => { clearInterval(mType); mBub.textContent = ''; mochi.classList.remove('x-done'); let i = 0; mType = setInterval(() => { if (i >= txt.length) { clearInterval(mType); mochi.classList.add('x-done'); return; } mBub.textContent = txt.slice(0, ++i); if (i % 3 === 1 && audio) audio.sfx('mochitalk'); }, 34); };
+  const mochiClose = () => { clearInterval(mType); mochi.classList.remove('x-on'); root.classList.remove('x-mochi'); mStep = -1; setTimeout(() => { if (mStep < 0) mochi.hidden = true; }, 700); if (audio) audio.sfx('mochiend'); };
+  const mochiNext = () => { if (mStep < 0) return; if (!mochi.classList.contains('x-done')) { clearInterval(mType); mBub.textContent = MSG[mStep]; mochi.classList.add('x-done'); return; } mStep++; if (mStep >= MSG.length) { mochiClose(); return; } if (audio) audio.sfx('mochinext'); typeMsg(MSG[mStep]); };
+  moreBtn.addEventListener('click', () => { if (mStep >= 0) return; mStep = 0; mochi.hidden = false; root.classList.add('x-mochi'); requestAnimationFrame(() => requestAnimationFrame(() => mochi.classList.add('x-on'))); if (audio) audio.sfx('mochi'); setTimeout(() => mStep === 0 && typeMsg(MSG[0]), 1100); });
+  mochi.addEventListener('click', () => mochiNext());
+  addEventListener('pointermove', (e) => { mpx = e.clientX; mpy = e.clientY; });
+  const mochiTick = (now) => { if (mStep < 0 && mochi.hidden) return; requestAnimationFrame(mochiTick); const r = mSp.getBoundingClientRect(), dx = mpx - (r.left + r.width / 2), dy = mpy - (r.top + r.height / 2), d = Math.hypot(dx, dy); mBlink -= .016; let fr; if (mBlink < -3.2) mBlink = .14; if (mBlink > 0) fr = 9; else { const cx = d < 30 ? 1 : (dx < -d * .45 ? 0 : dx > d * .45 ? 2 : 1), cy = d < 30 ? 1 : (dy < -d * .45 ? 0 : dy > d * .45 ? 2 : 1); fr = cy * 3 + cx; } if (fr !== mEye) { mEye = fr; mSp.style.backgroundPosition = (fr / 9 * 100) + '% 0'; } };
+  new MutationObserver(() => { if (!mochi.hidden) requestAnimationFrame(mochiTick); }).observe(mochi, { attributes: true, attributeFilter: ['hidden'] });
+  // ESC closes it too; the planet keeps turning behind the blur
   info.querySelector('.x-pl-ix').addEventListener('click', () => toggleInfo(false));
   if (audio) for (const bt of root.querySelectorAll('button:not(.x-pl-more)')) {                 // every button answers with a little pop when the pointer touches it and a deeper one when pressed
     bt.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') audio.sfx('hover'); });
@@ -1616,7 +1633,8 @@ export function open(opts) {
   cv.addEventListener('wheel', (e) => { e.preventDefault(); distT = Math.min(baseDist * 1.7, Math.max(14.3, distT * Math.exp(e.deltaY * .0016))); lastInput = performance.now(); focus = null; }, { passive: false });
   cv.addEventListener('click', () => { if (moved < 6 && cur >= 0) hideCard(); });
   const onKey = (e) => {
-    if (e.key === 'Escape') { if (!info.hidden) toggleInfo(false); else if (cur >= 0) hideCard(); else close(); }
+    if (e.key === 'Escape' && mStep >= 0) { mochiClose(); }
+    else if (e.key === 'Escape') { if (!info.hidden) toggleInfo(false); else if (cur >= 0) hideCard(); else close(); }
     else if (e.key === 'n' || e.key === 'N') { manual = true; night = night > .5 ? 0 : 1; }
     else if (/^[wasd]$/i.test(e.key)) { const k = e.key.toLowerCase(); rot(k === 'a' ? 28 : k === 'd' ? -28 : 0, k === 'w' ? 28 : k === 's' ? -28 : 0); focus = null; }
     else return;
@@ -1904,7 +1922,24 @@ function injectCss() {
     '.x-pl-nav button:hover{background:rgba(18,48,74,.2)}',
     '.x-pl-nav .x-pl-cx{margin-left:auto;width:34px;height:34px;padding:0;display:grid;place-items:center;font-size:13px}',
     '.x-pl-more{position:absolute;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);border:0;border-radius:999px;padding:9px 20px 10px;background:rgba(255,253,248,.72);color:#2c4a5a;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 2px 14px rgba(20,50,80,.12);font:500 13px/1 "Switzer","Switzer Placeholder",system-ui,sans-serif;letter-spacing:.02em;transition:background .5s ease,transform .6s cubic-bezier(.22,.8,.24,1),box-shadow .6s ease}',
-    '.x-pl-more{cursor:default}',
+    '.x-pl-more{cursor:pointer}',
+    '.x-pl-more:hover{transform:translateX(-50%) translateY(-2px);box-shadow:0 6px 20px rgba(20,50,80,.18);background:rgba(255,253,248,.92)}',
+    '.x-pl-mochi{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;padding:24px;cursor:pointer;background:rgba(251,222,196,0);-webkit-backdrop-filter:blur(0);backdrop-filter:blur(0);transition:background .9s ease,-webkit-backdrop-filter .9s ease,backdrop-filter .9s ease}',
+    '.x-pl-mochi[hidden]{display:none}.x-pl-mochi.x-on{background:rgba(251,222,196,.36);-webkit-backdrop-filter:blur(15px);backdrop-filter:blur(15px)}',
+    '.x-pl.x-night .x-pl-mochi.x-on{background:rgba(14,22,48,.5)}',
+    '.x-pl-mq{position:relative;width:min(300px,60vw);aspect-ratio:224/183;opacity:0;transform:translateY(34px) scale(.6);transition:opacity .8s ease .15s,transform 1.1s cubic-bezier(.22,1.3,.3,1) .15s}',
+    '.x-pl-mochi.x-on .x-pl-mq{opacity:1;transform:none}',
+    '.x-pl-mo{position:absolute;inset:0;animation:x-mo-float 4.2s ease-in-out infinite}',
+    '.x-pl-ms{position:absolute;inset:0;background:url(/extras/blob-sprite.webp) 44.4% 0/1000% 100% no-repeat;-webkit-filter:hue-rotate(14deg) saturate(.95) brightness(1.12);filter:hue-rotate(14deg) saturate(.95) brightness(1.12)}',
+    '.x-pl-sh{position:absolute;left:14%;right:2%;bottom:-12%;height:16%;border-radius:50%;background:radial-gradient(closest-side,rgba(120,72,64,.3),rgba(120,72,64,0));animation:x-mo-sh 4.2s ease-in-out infinite}',
+    '@keyframes x-mo-float{50%{transform:translateY(-14px) rotate(1.6deg)}}@keyframes x-mo-sh{50%{transform:scale(.86);opacity:.7}}',
+    '.x-pl-bub{position:relative;max-width:min(470px,86vw);padding:18px 24px 20px;border-radius:24px;background:rgba(255,253,248,.92);color:#4a3340;box-shadow:0 10px 36px rgba(80,40,40,.18);opacity:0;transform:translateY(14px);transition:opacity .6s ease .5s,transform .8s cubic-bezier(.22,.8,.24,1) .5s}',
+    '.x-pl-mochi.x-on .x-pl-bub{opacity:1;transform:none}',
+    '.x-pl.x-night .x-pl-bub{background:rgba(24,34,64,.92);color:#e4eeff}',
+    '.x-pl-bub p{margin:0;min-height:3em;font:500 17px/1.5 "Switzer","Switzer Placeholder",system-ui,sans-serif}',
+    '.x-pl-go{position:absolute;right:16px;bottom:6px;opacity:0;font-size:14px;animation:x-mo-nudge 1.3s ease-in-out infinite}.x-pl-mochi.x-done .x-pl-go{opacity:.5}',
+    '@keyframes x-mo-nudge{50%{transform:translateY(4px)}}',
+    '.x-pl.x-mochi .x-pl-more{opacity:0;pointer-events:none}',
     '.x-pl-more.x-open{opacity:0;pointer-events:none}',
     '.x-pl.x-night .x-pl-more{background:rgba(20,34,66,.7);color:#cbe3ff}',
     '.x-pl-info{position:absolute;left:50%;bottom:max(16px,env(safe-area-inset-bottom));width:min(430px,calc(100% - 28px));max-height:min(62vh,520px);overflow:auto;padding:20px 22px 16px;border-radius:22px;background:rgba(255,253,248,.88);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:0 10px 36px rgba(20,50,80,.2);color:#12304a;opacity:0;transform:translate(-50%,16px);transition:opacity .45s ease,transform .6s cubic-bezier(.22,.8,.24,1);-webkit-user-select:text;user-select:text}',
