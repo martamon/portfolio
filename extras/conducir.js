@@ -542,6 +542,11 @@ export function open(opts) {
   };
   addEventListener('keydown', onKey, true); addEventListener('keyup', onKey, true);
   root.querySelectorAll('.x-dr-pad button').forEach((b) => { const k = b.dataset.k, on = (e) => { K[k] = 1; b.classList.add('x-on'); root.classList.add('x-drove'); e.preventDefault(); }, off = () => { K[k] = 0; b.classList.remove('x-on'); }; b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('pointerleave', off); });
+  // hold the mouse (or a finger) and drag to look round the bike; let go and the view glides back behind it
+  const orb = { yaw: 0, pitch: 0, hold: false, idle: 0, id: -1, x: 0, y: 0 };
+  root.addEventListener('pointerdown', (e) => { if (e.target.closest('button,.x-dr-card,.x-dr-pad') || e.button) return; orb.hold = true; orb.id = e.pointerId; orb.x = e.clientX; orb.y = e.clientY; try { root.setPointerCapture(e.pointerId); } catch (er) {} });
+  root.addEventListener('pointermove', (e) => { if (!orb.hold || e.pointerId !== orb.id) return; orb.yaw -= (e.clientX - orb.x) * .008; orb.pitch = clamp(orb.pitch + (e.clientY - orb.y) * .004, -.15, 1.0); orb.x = e.clientX; orb.y = e.clientY; orb.idle = 0; });
+  const orbUp = (e) => { if (e.pointerId === orb.id) orb.hold = false; }; root.addEventListener('pointerup', orbUp); root.addEventListener('pointercancel', orbUp);
   let zoomK = 1; root.addEventListener('wheel', (e) => { e.preventDefault(); zoomK = clamp(zoomK * Math.exp(e.deltaY * (e.deltaMode ? .03 : .0012)), .55, 3.4); }, { passive: false });
   const size = () => { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.fov = w / h < .8 ? 70 : 55; camera.updateProjectionMatrix(); }; size(); addEventListener('resize', size);
 
@@ -579,7 +584,8 @@ export function open(opts) {
     root.classList.toggle('x-uw', camera.position.y < -.15);
     // camera
     let dy = S.yaw - S.cyaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); S.cyaw += dy * Math.min(1, dt * 3.2);
-    const cd = (9.2 + Math.min(2.5, Math.abs(S.v) * .2)) * zoomK, cp = _v.set(S.x - Math.sin(S.cyaw) * cd, 0, S.z - Math.cos(S.cyaw) * cd); cp.y = Math.max(S.y, 0) + 4.3 * (.6 + .4 * zoomK) + (zoomK > 1 ? (zoomK - 1) * 3 : 0) + (S.uw ? -S.y * .35 : 0);
+    const cd = (9.2 + Math.min(2.5, Math.abs(S.v) * .2)) * zoomK, cp = _v.set(S.x - Math.sin(S.cyaw + orb.yaw) * cd * (1 - orb.pitch * .25), 0, S.z - Math.cos(S.cyaw + orb.yaw) * cd * (1 - orb.pitch * .25)); cp.y = Math.max(S.y, 0) + 4.3 * (.6 + .4 * zoomK) + (zoomK > 1 ? (zoomK - 1) * 3 : 0) + (S.uw ? -S.y * .35 : 0);
+    cp.y += orb.pitch * cd * .55; if (!orb.hold) { orb.idle += dt; if (orb.idle > .5) { const k = Math.min(1, dt * 2.2); orb.yaw *= 1 - k; orb.pitch *= 1 - k; } }
     camera.position.lerp(cp, Math.min(1, dt * 6)); camera.position.y = Math.max(camera.position.y, H(camera.position.x, camera.position.z) + 1.2);
     camera.lookAt(S.x + Math.sin(S.yaw) * 3, S.y + 1.7, S.z + Math.cos(S.yaw) * 3);
     // atmosphere
