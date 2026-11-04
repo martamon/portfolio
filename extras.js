@@ -1118,13 +1118,13 @@
     if (!JF.on) { if (now > JF.next) jfLaunch(); else return; }
     var slow = matchMedia('(prefers-reduced-motion:reduce)').matches ? 0.5 : 1;
     JF.t += dt;
-    if (JF.walk) {                        // it always walks along the bottom of the screen, and above the "© 2025 · Made by Martamon" row once that comes into view
+    if (JF.walk) {                        // it shows once the page is scrolled to the footer and walks along just above the "© 2025 · Made by Martamon" row
       if (!JF.fe || !JF.fe.isConnected || (JF.fc = (JF.fc || 0) + 1) % 90 === 0) {
         JF.fe = null; var fa = document.querySelectorAll('a');
-        for (var fi = 0; fi < fa.length; fi++) if (/Made by Martamon/.test(fa[fi].textContent)) { JF.fe = fa[fi]; break; }
+        for (var fi = 0; fi < fa.length; fi++) if (/(Made by|Hecho por|Feito por)\s+Martamon/.test(fa[fi].textContent)) { JF.fe = fa[fi]; break; }
       }
-      var ftop = JF.fe ? JF.fe.getBoundingClientRect().top : 1e9, show = true, base = innerHeight - JF.h * 0.55;
-      JF.fl = ftop < innerHeight - 6 && ftop > JF.h * 1.2 ? Math.min(base, ftop - JF.h * 0.5 - 4) : base;      // always at the bottom of the screen, and standing on the footer row once that scrolls into view
+      var ftop = JF.fe ? JF.fe.getBoundingClientRect().top : document.documentElement.scrollHeight - scrollY - 140, show = ftop < innerHeight - 6 && ftop > 24;
+      if (show) JF.fl = Math.max(JF.h * 0.5 + 4, ftop - JF.h * 0.5 - 4);      // it only shows at the very bottom of the page, standing right on top of the "© 2025 · Made by Martamon" row
       if (show !== JF.shown) { JF.shown = show; JF.el.style.opacity = show ? '1' : '0'; JF.el.style.pointerEvents = show ? '' : 'none'; if (show && !JF.held) { JF.y = JF.fl + JF.h * 0.9; JF.vy = -260; } }
       if (!show) { JF.hid = true; if (JF.hint && JF.hint.isConnected) JF.hint.style.visibility = 'hidden'; JF.last2 = now; return; }
       JF.hid = false;
