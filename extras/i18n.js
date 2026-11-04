@@ -69,7 +69,7 @@ const ROWS = [
   ['Add to the island', 'Añadir a la isla', 'Engadir á illa'],
   ['Tree', 'Árbol', 'Árbore'], ['Flowers', 'Flores', 'Flores'], ['House', 'Casa', 'Casa'], ['Granary', 'Hórreo', 'Hórreo'],
   ['Sheep', 'Oveja', 'Ovella'], ['Lighthouse', 'Faro', 'Farol'], ['Boat', 'Barco', 'Barco'],
-  ['Drive with the arrow keys', 'Conduce con las flechas del teclado · E para leer', 'Conduce coas frechas do teclado · E para ler'],
+  ['Ride with the arrow keys', 'Pedalea con las flechas del teclado · E para leer', 'Pedalea coas frechas do teclado · E para ler'],
   ['Press E to read', 'Pulsa E para leer', 'Preme E para ler'],
   ['Close', 'Cerrar', 'Pechar'],
   ['Day / night', 'Día / noche', 'Día / noite'],

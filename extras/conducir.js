@@ -3,7 +3,7 @@
 // into the sea, where the world turns turquoise and the car keeps rolling along the seabed, past fish and an old wreck. Glowing orbs hold
 // information about the ría; press E (or tap the button) next to one to read it.
 import * as THREE from './three.module.min.js';
-import { INFO, getLang, tr } from './i18n.js?v=8';
+import { INFO, getLang, tr } from './i18n.js?v=9';
 
 const PI = Math.PI, LI = ['en', 'es', 'gl'];
 const sstep = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
@@ -143,31 +143,45 @@ function rbox(w, h, d, r) {
   for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i); c.copy(v).clamp(new THREE.Vector3(-lim.x, -lim.y, -lim.z), lim); v.sub(c); if (v.lengthSq() > 1e-10) v.normalize().multiplyScalar(r); p.setXYZ(i, c.x + v.x, c.y + v.y, c.z + v.z); }
   g.computeVertexNormals(); return g;
 }
-function buildCar() {
-  const g = new THREE.Group(), body = 0xf6cf68, cream = 0xfff3dc, dark = 0x3a3f4a, coral = 0xf0907a;
-  const m = (geo, col, extra) => { const o = new THREE.Mesh(geo, std(col, extra)); o.castShadow = true; return o; };
-  const lower = m(rbox(3.5, 1.0, 2.1, .42), body); lower.position.set(0, .85, 0); g.add(lower);
-  const cab = m(rbox(1.95, 1.0, 1.85, .45), body); cab.position.set(-.25, 1.62, 0); g.add(cab);
-  const roof = m(rbox(1.9, .22, 1.75, .1), cream); roof.position.set(-.25, 2.12, 0); g.add(roof);
-  const glass = m(rbox(2.0, .6, 1.9, .28), 0x8bc3d6, { roughness: .25, metalness: .1 }); glass.position.set(-.25, 1.62, 0); glass.scale.set(1.0, 1, .96); g.add(glass);
-  const pill = m(rbox(1.55, .45, 1.93, .2), cream); pill.position.set(-.25, 1.62, 0); pill.scale.set(.2, 1, 1); g.add(pill);                     // the post between the windows
-  for (const sz of [-1, 1]) {
-    const hl = m(new THREE.SphereGeometry(.34, 14, 10), cream, { emissive: 0xffeaa0, emissiveIntensity: .25 }); hl.scale.set(.55, 1, 1); hl.position.set(1.72, .95, sz * .68); g.add(hl);
-    const pu = m(new THREE.SphereGeometry(.14, 10, 8), dark); pu.scale.set(.5, 1, 1); pu.position.set(1.88, .95, sz * .68); g.add(pu);
-    const ck = m(new THREE.SphereGeometry(.2, 10, 8), 0xf7a9a6); ck.scale.set(.35, .7, 1); ck.position.set(1.7, .6, sz * .95); g.add(ck);
-    const tl = m(new THREE.SphereGeometry(.2, 10, 8), coral); tl.scale.set(.5, .9, 1); tl.position.set(-1.72, .95, sz * .75); g.add(tl);
-    const mir = m(new THREE.SphereGeometry(.17, 8, 6), body); mir.position.set(.6, 1.45, sz * 1.1); g.add(mir);
-  }
-  const bump = m(rbox(.4, .32, 1.8, .14), cream); bump.position.set(1.8, .45, 0); g.add(bump); const bump2 = bump.clone(); bump2.position.x = -1.8; g.add(bump2);
-  const wheels = [];
-  for (const [wx, wz] of [[1.15, 1.02], [1.15, -1.02], [-1.15, 1.02], [-1.15, -1.02]]) {
-    const w = new THREE.Group(); w.position.set(wx, .52, wz); const tire = m(new THREE.CylinderGeometry(.52, .52, .46, 16), dark); tire.rotation.x = PI / 2; w.add(tire); const hub = m(new THREE.CylinderGeometry(.27, .27, .5, 12), cream); hub.rotation.x = PI / 2; w.add(hub); const cap = m(new THREE.CylinderGeometry(.1, .1, .54, 8), coral); cap.rotation.x = PI / 2; w.add(cap); g.add(w); wheels.push(w);
-  }
-  const flower = m(new THREE.SphereGeometry(.12, 8, 6), 0xf59ab8); flower.position.set(.3, 2.34, .5); g.add(flower);       // a little flower on the roof
-  const stem = m(new THREE.CylinderGeometry(.02, .02, .2, 5), 0x5fae8a); stem.position.set(.3, 2.22, .5); g.add(stem);
-  g.userData.wheels = wheels; return g;
+function buildBike() {
+  // a little coral bicycle with a flower basket, and a very cute rider in a straw hat who pedals
+  const g = new THREE.Group(), coral = 0xf08a76, cream = 0xfff3dc, dark = 0x3a3f4a, shirtC = 0x7fb8e0, skin = 0xf3cba5;
+  const m = (geo, col, p, extra) => { const o = new THREE.Mesh(geo, std(col, extra)); if (p) o.position.set(p[0], p[1], p[2]); o.castShadow = true; g.add(o); return o; };
+  const tube = (a, b, r, col) => { const d = new THREE.Vector3(b[0] - a[0], b[1] - a[1], b[2] - a[2]), L = d.length(), o = new THREE.Mesh(new THREE.CylinderGeometry(r, r, L, 8), std(col)); o.position.set((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2); o.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); o.castShadow = true; g.add(o); return o; };
+  const wheel = (x) => { const w = new THREE.Group(); w.position.set(x, .6, 0); const tire = new THREE.Mesh(new THREE.TorusGeometry(.56, .1, 8, 24), std(dark)); tire.castShadow = true; w.add(tire); const rim = new THREE.Mesh(new THREE.TorusGeometry(.5, .03, 6, 24), std(cream)); w.add(rim); for (let k = 0; k < 6; k++) { const sp = new THREE.Mesh(new THREE.CylinderGeometry(.012, .012, 1.0, 4), std(0xe9e2d2)); sp.rotation.z = k * PI / 6; w.add(sp); } const hub = new THREE.Mesh(new THREE.CylinderGeometry(.07, .07, .2, 8), std(coral)); hub.rotation.x = PI / 2; w.add(hub); g.add(w); return w; };
+  const fw = wheel(1.05), bw = wheel(-1.05);
+  // the frame, fork, bars, seat and basket
+  const BB = [-.05, .7, 0], ST = [-.45, 1.45, 0], HT = [.62, 1.4, 0];
+  tube([-1.05, .6, 0], BB, .05, coral); tube(BB, ST, .055, coral); tube(ST, HT, .05, coral); tube(BB, HT, .055, coral); tube([-1.05, .6, 0], ST, .045, coral);
+  tube(HT, [.78, 1.7, 0], .05, cream);
+  const fork = new THREE.Group(); fork.position.set(.7, 1.5, 0); g.add(fork); const fk = tube([0, 0, 0], [.35, -.9, 0], .05, cream); g.remove(fk); fork.add(fk);
+  const bar = new THREE.Mesh(new THREE.CylinderGeometry(.04, .04, 1.1, 6), std(dark)); bar.rotation.x = PI / 2; bar.position.set(-.02, .22, 0); fork.add(bar); for (const sz of [-1, 1]) { const gr = new THREE.Mesh(new THREE.SphereGeometry(.07, 6, 5), std(coral)); gr.position.set(-.02, .22, sz * .56); fork.add(gr); }
+  const basket = new THREE.Mesh(new THREE.CylinderGeometry(.42, .34, .38, 10, 1, true), std(0xd9b27a, { side: THREE.DoubleSide })); basket.position.set(.5, -.05, 0); fork.add(basket); const bb = new THREE.Mesh(new THREE.CylinderGeometry(.34, .34, .04, 10), std(0xc9a066)); bb.position.set(.5, -.23, 0); fork.add(bb);
+  [[0xf59ab8, 0, .2, .1], [0xffd86b, .12, .23, -.12], [0xffffff, -.1, .22, -.1], [0xc9a5e8, .05, .28, 0]].forEach(([c, x, y, z]) => { const f = new THREE.Mesh(new THREE.IcosahedronGeometry(.13, 1), std(c)); f.position.set(.5 + x, y, z); fork.add(f); });
+  m(rbox(.7, .14, .34, .06), dark, [-.5, 1.52, 0]); const crank = new THREE.Group(); crank.position.set(BB[0], BB[1], BB[2]); g.add(crank); const ring = new THREE.Mesh(new THREE.CylinderGeometry(.22, .22, .05, 12), std(0xe9e2d2)); ring.rotation.x = PI / 2; ring.position.z = .1; crank.add(ring);
+  const pedals = []; for (const sz of [-1, 1]) { const arm = new THREE.Mesh(new THREE.BoxGeometry(.4, .06, .06), std(dark)); arm.position.set(sz < 0 ? .2 : -.2, 0, sz * .16); crank.add(arm); const pd = new THREE.Mesh(new THREE.BoxGeometry(.3, .06, .18), std(dark)); pd.position.set(sz < 0 ? .4 : -.4, 0, sz * .22); crank.add(pd); pedals.push([arm, pd, sz]); }
+  // the rider: an egg body, a big round head with dot eyes, pink cheeks and a straw hat
+  const rider = new THREE.Group(); rider.position.set(-.45, 1.55, 0); g.add(rider);
+  const rm = (geo, col, p, extra) => { const o = new THREE.Mesh(geo, std(col, extra)); o.position.set(p[0], p[1], p[2]); o.castShadow = true; rider.add(o); return o; };
+  const torso = rm(new THREE.IcosahedronGeometry(.5, 2), shirtC, [.1, .62, 0]); torso.scale.set(.95, 1.2, .9); torso.rotation.z = -.25;
+  rm(new THREE.IcosahedronGeometry(.46, 2), skin, [.38, 1.55, 0]);
+  for (const sz of [-1, 1]) { rm(new THREE.IcosahedronGeometry(.055, 1), 0x2b2530, [.8, 1.62, sz * .17]); rm(new THREE.IcosahedronGeometry(.08, 1), 0xf08a8a, [.74, 1.46, sz * .3]).scale.set(.5, .8, 1); }
+  rm(new THREE.CylinderGeometry(.78, .78, .06, 16), 0xe9cf8a, [.36, 1.93, 0]); const dome = rm(new THREE.SphereGeometry(.44, 12, 6, 0, PI * 2, 0, PI / 2), 0xe9cf8a, [.36, 1.93, 0]); dome.scale.y = .8; const band = rm(new THREE.CylinderGeometry(.46, .46, .1, 14), 0xf08a9a, [.36, 2.0, 0]);
+  const arms = []; for (const sz of [-1, 1]) { const a = new THREE.Mesh(new THREE.CylinderGeometry(.09, .08, 1, 6), std(skin)); a.castShadow = true; rider.add(a); arms.push([a, sz]); }
+  const legs = []; for (const sz of [-1, 1]) { const l = new THREE.Mesh(new THREE.CylinderGeometry(.13, .1, 1, 6), std(0x4f6b8c)); l.castShadow = true; rider.add(l); const f = new THREE.Mesh(new THREE.IcosahedronGeometry(.14, 1), std(0xf08a76)); f.scale.set(1.6, .8, 1); rider.add(f); legs.push([l, f, sz]); }
+  const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _up = new THREE.Vector3(0, 1, 0);
+  const seg = (o, a, b) => { _b.copy(b).sub(a); const L = _b.length(); o.position.copy(a).addScaledVector(_b, .5); o.scale.set(1, L, 1); o.quaternion.setFromUnitVectors(_up, _b.normalize()); };
+  let ang = 0;
+  g.userData.anim = (v, dt, steer) => {
+    fw.rotation.z -= v * dt / .56; bw.rotation.z -= v * dt / .56; fork.rotation.y = steer * .5; ang -= v * dt * .9;
+    crank.rotation.z = ang; for (const [arm, pd, sz] of pedals) { /* the pedals stay flat as the cranks turn */ pd.rotation.z = -ang; }
+    const R = (ph) => [Math.cos(ang + ph) * .4, Math.sin(ang + ph) * .4];
+    legs.forEach(([l, f, sz], k) => { const [px, py] = R(k ? PI : 0), hip = _a.set(.05, .2, sz * .2).clone(), foot = new THREE.Vector3(BB[0] + px - rider.position.x + .02, BB[1] + py - rider.position.y, sz * .22); seg(l, hip, foot); f.position.copy(foot).add(new THREE.Vector3(.1, -.02, 0)); });
+    arms.forEach(([a, sz]) => { const sh = new THREE.Vector3(.3, 1.0, sz * .36), hand = new THREE.Vector3(1.13, .17, sz * .56); seg(a, sh, hand); });
+    rider.rotation.z = Math.sin(ang * 2) * .02;
+  };
+  g.userData.anim(0, 0, 0); return g;
 }
-
 // ---------------------------------------------------------------- buildings
 const WALLS = [0xd9aeb0, 0xe9cbb6, 0xf3e4ca, 0xcaa3a8, 0xe7c1b0, 0xf1ddc2, 0xd4b2b8, 0xc9c0b0];
 const ROOFS = [0xe36d57, 0xd95f4e, 0xea866c, 0xcb5a4e, 0xe5785e];
@@ -300,7 +314,7 @@ export function open(opts) {
   const root = document.createElement('div'); root.className = 'x-dr';
   root.innerHTML = '<canvas class="x-dr-cv"></canvas><div class="x-dr-uw"></div>' +
     '<div class="x-dr-top"><div class="x-dr-t"><b>Ría de Muros e Noia</b><span class="x-dr-sub"></span></div><div class="x-dr-btns"><button type="button" class="x-dr-dn" aria-label="' + tr('Day / night') + '"></button><button type="button" class="x-dr-mu" aria-label="' + tr('Sound') + '"></button><button type="button" class="x-dr-x" aria-label="' + tr('Back to the map') + '"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button></div></div>' +
-    '<div class="x-dr-count"><i class="x-dr-arrow"></i><span></span></div><div class="x-dr-help">' + tr('Drive with the arrow keys') + '</div>' +
+    '<div class="x-dr-count"><i class="x-dr-arrow"></i><span></span></div><div class="x-dr-help">' + tr('Ride with the arrow keys') + '</div>' +
     '<button type="button" class="x-dr-prompt"></button><div class="x-dr-card"><div class="x-dr-art"></div><b></b><p></p><button type="button">' + tr('Close') + '</button></div>' +
     (touch ? '<div class="x-dr-pad"><div><button data-k="left">◀</button><button data-k="right">▶</button></div><div><button data-k="up">▲</button><button data-k="down">▼</button></div></div>' : '');
   document.body.appendChild(root);
@@ -458,7 +472,7 @@ export function open(opts) {
   const ripples = [];
 
   // ---- the car
-  const car = buildCar(), carW = new THREE.Group(); carW.add(car); scene.add(carW);
+  const car = buildBike(), carW = new THREE.Group(); carW.add(car); scene.add(carW);
   const S = { x: ROADX(-90), z: -90, yaw: 0, v: 0, steer: 0, y: 0, pitch: 0, roll: 0, cyaw: 0, uw: false };
   S.y = H(S.x, S.z); carW.position.set(S.x, S.y, S.z);
   // ---- the orbs of information
@@ -509,12 +523,12 @@ export function open(opts) {
     const dt = Math.min(.05, (now - last) / 1000); last = now; t += dt;
     // driving: arcade physics
     const throttle = (cardOn ? 0 : K.up - K.down), steerIn = cardOn ? 0 : (K.left - K.right);
-    if (throttle > 0) S.v += (S.v < 0 ? 18 : 10) * dt; else if (throttle < 0) S.v -= (S.v > 0 ? 18 : 8) * dt; else S.v -= Math.sign(S.v) * Math.min(Math.abs(S.v), 6 * dt);
-    const vmax = S.uw ? 10 : 17; S.v = clamp(S.v, -6, vmax);
+    if (throttle > 0) S.v += (S.v < 0 ? 14 : 6.5) * dt; else if (throttle < 0) S.v -= (S.v > 0 ? 14 : 6) * dt; else S.v -= Math.sign(S.v) * Math.min(Math.abs(S.v), 6 * dt);
+    const vmax = S.uw ? 6.5 : 11; S.v = clamp(S.v, -3.5, vmax);
     S.steer += (steerIn - S.steer) * Math.min(1, dt * 7); S.yaw += S.steer * 1.75 * Math.min(1, Math.abs(S.v) / 4.5) * Math.sign(S.v || 1) * dt;
     S.x += Math.sin(S.yaw) * S.v * dt; S.z += Math.cos(S.yaw) * S.v * dt;
     for (const c of colliders) {
-      const dx = S.x - c[0], dz = S.z - c[1], CR = 1.3;
+      const dx = S.x - c[0], dz = S.z - c[1], CR = .85;
       if (c.length === 6) {                                                               // a building: an oriented box, the car is pushed out of it
         if (dx * dx + dz * dz > (c[2] + 3) * (c[2] + 3)) continue; const ca = Math.cos(c[5]), sa = Math.sin(c[5]), lx = dx * ca - dz * sa, lz = dx * sa + dz * ca, qx = clamp(lx, -c[3], c[3]), qz = clamp(lz, -c[4], c[4]), ex = lx - qx, ez = lz - qz, ed = Math.hypot(ex, ez);
         let ox, oz; if (ed > 1e-4) { if (ed >= CR) continue; ox = ex / ed * (CR - ed); oz = ez / ed * (CR - ed); } else { const px = c[3] - Math.abs(lx), pz = c[4] - Math.abs(lz); if (px < pz) { ox = Math.sign(lx || 1) * (px + CR); oz = 0; } else { oz = Math.sign(lz || 1) * (pz + CR); ox = 0; } }
@@ -528,14 +542,14 @@ export function open(opts) {
     const hF = H(S.x + fx * 1.7, S.z + fz * 1.7), hB = H(S.x - fx * 1.7, S.z - fz * 1.7), hL = H(S.x + rxx * 1.1, S.z + rzz * 1.1), hR = H(S.x - rxx * 1.1, S.z - rzz * 1.1);
     S.pitch += (Math.atan2(hF - hB, 3.4) - S.pitch) * Math.min(1, dt * 8); S.roll += (Math.atan2(hL - hR, 2.2) - S.roll) * Math.min(1, dt * 8);
     carW.position.set(S.x, S.y + Math.sin(t * 9) * Math.min(.03, Math.abs(S.v) * .003), S.z); carW.rotation.set(0, 0, 0); carW.rotation.y = S.yaw - PI / 2; car.rotation.set(0, 0, -S.pitch * .9); car.rotation.x = S.roll * .8; car.rotation.z += -Math.sin(S.steer) * 0 ;
-    car.userData.wheels.forEach((w, i) => { w.rotation.order = 'YZX'; w.rotation.z -= S.v * dt / .52; w.rotation.y = i < 2 ? S.steer * .45 : 0; });
+    car.userData.anim(S.v, dt, S.steer); car.rotation.x = S.roll * .8 - S.steer * Math.min(1, Math.abs(S.v) / 7) * .32;
     // water: in and out
     const uwNow = S.y < -.6; if (uwNow !== S.uw) { S.uw = uwNow; if (snd) snd.splash(); ripples.push({ x: S.x, z: S.z, t: 0 }); }
     uwMix += ((camera.position.y < -.15 ? 1 : 0) - uwMix) * Math.min(1, dt * 5);
     root.classList.toggle('x-uw', camera.position.y < -.15);
     // camera
     let dy = S.yaw - S.cyaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); S.cyaw += dy * Math.min(1, dt * 3.2);
-    const cd = 9.5 + Math.min(3, Math.abs(S.v) * .2), cp = _v.set(S.x - Math.sin(S.cyaw) * cd, 0, S.z - Math.cos(S.cyaw) * cd); cp.y = Math.max(S.y, 0) + 4.4 + (S.uw ? -S.y * .35 : 0);
+    const cd = 9.2 + Math.min(2.5, Math.abs(S.v) * .2), cp = _v.set(S.x - Math.sin(S.cyaw) * cd, 0, S.z - Math.cos(S.cyaw) * cd); cp.y = Math.max(S.y, 0) + 4.3 + (S.uw ? -S.y * .35 : 0);
     camera.position.lerp(cp, Math.min(1, dt * 6)); camera.position.y = Math.max(camera.position.y, H(camera.position.x, camera.position.z) + 1.2);
     camera.lookAt(S.x + Math.sin(S.yaw) * 3, S.y + 1.7, S.z + Math.cos(S.yaw) * 3);
     // atmosphere
