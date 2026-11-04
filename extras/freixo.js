@@ -92,11 +92,18 @@ const Y = new THREE.Vector3(0, 1, 0), Zax = new THREE.Vector3(0, 0, 1);
 const _d = new THREE.Vector3(), _e = new THREE.Vector3(), _f = new THREE.Vector3(), _m = new THREE.Matrix4(), _q = new THREE.Quaternion();
 // stands an object on the planet at map position (x, z), facing yaw (0 = along the map's z axis), lift above the ground (sea = on the water)
 function put(obj, x, z, yaw, lift, sea) {
+  let gh = sea ? SEA : groundH(x, z), drop = 0; lift = lift || 0;
+  if (!sea) {
+    const fp = obj.userData && obj.userData.fp;
+    if (fp) { let lo = gh; for (let k = 0; k < 6; k++) { const a = k * PI / 3 + .4, hh = groundH(x + Math.cos(a) * fp * .6, z + Math.sin(a) * fp * .6); gh = Math.max(gh, hh); lo = Math.min(lo, hh); } drop = gh - lo; }       // stand on the highest point under the footprint
+    if (lift < 0) lift = 0;                                                                                                                                  // and never sink into the grass
+    if (obj.userData && obj.userData.skirt && fp && !obj.userData.skirted) { obj.userData.skirted = true; const sk = new THREE.Mesh(new THREE.CylinderGeometry(fp * .6, fp * .66, drop + .16, 14), std(0xb9b2a2)); sk.position.y = -(drop + .16) / 2 + .015; obj.add(sk); }       // a stone base that reaches the ground on the low side
+  }
   dirFrom(x, z, _d); dirFrom(x + .05, z, _e); _e.sub(_d); _e.addScaledVector(_d, -_e.dot(_d)).normalize();
   _f.crossVectors(_e, _d);
   obj.quaternion.setFromRotationMatrix(_m.makeBasis(_e, _d, _f));
   if (yaw) obj.quaternion.multiply(_q.setFromAxisAngle(Y, yaw));
-  obj.position.copy(_d).multiplyScalar(R + (sea ? SEA : groundH(x, z)) + (lift || 0));
+  obj.position.copy(_d).multiplyScalar(R + gh + lift);
   return obj;
 }
 
@@ -280,7 +287,7 @@ function house(o) {
     const dw = box(.05, .06, .012, winMat); dw.position.set(0, bodyH + .1, d / 2 - .1 + .008); g.add(dw);
   }
   if (!o.stone) for (const sx of [-1, 1]) { const q = box(.03, bodyH, .03, std(0xc9c2b0)); q.position.set(sx * (w / 2 - .004), bodyH / 2, z - .004); g.add(q); }
-  g.userData.fp = Math.max(w, d) / 2 * 1.45 + .14; g.userData.pri = 1; g.userData.home = 1;
+  g.userData.fp = Math.max(w, d) / 2 * 1.45 + .14; g.userData.pri = 1; g.userData.home = 1; g.userData.skirt = 1;
   return g;
 }
 // stone arcades (soportales): shops under round granite arches, two storeys above, one long roof
@@ -332,7 +339,7 @@ function mercado() {
     for (let q = 0; q < 6; q++) { const ba = new THREE.Mesh(new THREE.CylinderGeometry(.012, .016, .1, 6), std(0xf2ecdc)); ba.position.set(sx * (.34 + q * .08), .43, .86); g.add(ba); }
     const ball = new THREE.Mesh(new THREE.SphereGeometry(.03, 8, 6), std(0xf2ecdc)); ball.position.set(sx * .84, .5, .86); g.add(ball);
   }
-  g.scale.setScalar(.9); g.userData.fp = .95; g.userData.pri = 5; return g;
+  g.scale.setScalar(.9); g.userData.fp = .95; g.userData.pri = 5; g.userData.skirt = 1; return g;
 }
 // the fish market (lonja): a long, low hall with big blue doors, a pale roof, a sign, and boxes of fish waiting outside
 function lonja() {
@@ -354,7 +361,7 @@ function lonja() {
       for (let f = 0; f < 4; f++) { const fl = new THREE.Mesh(new THREE.SphereGeometry(.016, 6, 5), std([0xe36d57, 0xf2c14a][f % 2])); fl.position.set(sx - .2 + f * .13, .12, .805); g.add(fl); } });
     const heap = new THREE.Mesh(new THREE.IcosahedronGeometry(.16, 1), new THREE.MeshStandardMaterial({ color: PASTEL(0x4f8fc0), map: nt, roughness: 1 })); heap.scale.set(1.5, .5, 1); heap.position.set(.78, .06, .66); g.add(heap);
     for (let f = 0; f < 5; f++) { const fl = new THREE.Mesh(new THREE.SphereGeometry(.018, 6, 5), std(0xe36d57)); fl.position.set(.7 + f * .04, .1 + (f % 2) * .02, .6 + (f % 3) * .05); g.add(fl); } }
-  g.userData.fp = 1.3; g.userData.pri = 5; return g;
+  g.userData.fp = 1.3; g.userData.pri = 5; g.userData.skirt = 1; return g;
 }
 
 function church(scale) {
@@ -377,7 +384,7 @@ function church(scale) {
   const cr1 = box(.016, .12, .016, std(0xdddddd)); cr1.position.set(-.38, 1.56, .22); g.add(cr1);
   const cr2 = box(.07, .016, .016, std(0xdddddd)); cr2.position.set(-.38, 1.58, .22); g.add(cr2);
   g.scale.setScalar(scale || 1);
-  g.userData.fp = 1.15 * (scale || 1); g.userData.pri = 3;
+  g.userData.fp = 1.15 * (scale || 1); g.userData.pri = 3; g.userData.skirt = 1;
   return g;
 }
 // a granite hórreo on stone legs with ventilation slits and a tiled roof (after the one of the photo)
@@ -395,7 +402,7 @@ function horreo() {
   const cr2 = box(.06, .014, .014, std(0xcccccc)); cr2.position.set(0, .89, .46); g.add(cr2);
   for (let i = 0; i < 5; i++) { const stp = box(.2, .07, .11, std(0xcfc8b6)); stp.position.set(0, .035 + i * .07, .93 - i * .1); g.add(stp); }          // a little flight of stone steps up to the door
   for (const sx of [-1, 1]) { const sw = box(.025, .2, .5, std(0xb7b09e)); sw.position.set(sx * .11, .1, .7); sw.rotation.x = .38; g.add(sw); }
-  g.userData.fp = .62; g.userData.pri = 1;
+  g.userData.fp = .62; g.userData.pri = 1; g.userData.skirt = 1;
   return g;
 }
 const ALLP = [];
@@ -1581,7 +1588,7 @@ export function open(opts) {
     else if (q < .6) oaks.push([x, z, .75 + rnd() * .6]); else if (q < .74) pines.push([x, z, .75 + rnd() * .6]); else if (inl || q > .9) euc.push([x, z, .8 + rnd() * .6]);
     else oaks.push([x, z, .6 + rnd() * .4]);
   }
-  const trunkG = new THREE.CylinderGeometry(.028, .04, .26, 6), trunkM = std(0x7a5a3c);
+  const trunkG = new THREE.CylinderGeometry(.028, .04, .32, 6), trunkM = std(0x7a5a3c); trunkG.translate(0, -.03, 0);
   // faceted, slightly lumpy crowns, like the low-poly trees of the reference
   const lowpoly = (g, a) => { const ps = g.attributes.position; for (let q = 0; q < ps.count; q++) { const x = ps.getX(q), y = ps.getY(q), z = ps.getZ(q), k = 1 + (hash2(x * 37.1 + y * 11.3, z * 53.7 + y * 5.1) - .5) * a; ps.setXYZ(q, x * k, y * k, z * k); } g.computeVertexNormals(); return g; };
   const oakG = lowpoly(new THREE.IcosahedronGeometry(.27, 1), .34), pineG = lowpoly(new THREE.IcosahedronGeometry(.2, 1).scale(1, 1.7, 1), .26), pine2G = lowpoly(new THREE.IcosahedronGeometry(.14, 1).scale(1, 1.6, 1), .26);
@@ -1739,7 +1746,7 @@ export function open(opts) {
     if (tourOn) return; tourOn = true; tourMuted = !!(audio && audio.muted);
     mochi.classList.remove('x-ctaon'); mochi.classList.add('x-load'); root.classList.add('x-tour'); if (audio) { audio.sfx('mochinext'); setTimeout(() => audio && audio.mute(true), 500); }
     const t0 = performance.now();
-    import('./conducir.js?v=9').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
+    import('./conducir.js?v=12').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
       .then((m) => { const ab = m.open({ onClose: endTour, getDark: () => nightT }); if (!ab) throw new Error('no webgl'); setTimeout(mochiClose, 700); })
       .catch(() => { endTour(); mochiClose(); });
   };
