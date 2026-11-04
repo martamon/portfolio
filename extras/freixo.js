@@ -81,7 +81,7 @@ function groundRaw(x, z) {
 // the school yards and the little pitch sit on flat ground: the hill is levelled round them
 let FLAT = null; const flatList = () => FLAT;
 function groundH(x, z) {
-  if (!FLAT) { FLAT = []; for (const [fx, inl, r] of [[-.5, 5.05, 2.1], [15.6, 4.55, 2.1], [-7.6, 4.85, 1.3], [8.3, 1.4, 1.0]]) { const cz = shore(fx) - inl; FLAT.push([fx, cz, r * 1.25, groundRaw(fx, cz) - .14]); } }
+  if (!FLAT) { FLAT = []; for (const [fx, inl, r, so] of [[-.5, 5.05, 2.1], [15.6, 4.55, 2.1], [-7.6, 4.85, 1.3], [8.3, 1.4, 1.0], [2.2, 5.4, 1.9, 1]]) { const cz = so ? shoreS(fx) + inl : shore(fx) - inl; FLAT.push([fx, cz, r * 1.25, groundRaw(fx, cz) - .14]); } }
   let h = groundRaw(x, z);
   for (const f of FLAT) { const d = Math.hypot(x - f[0], z - f[1]); if (d < f[2] * 1.9) h += (f[3] - h) * (1 - sstep(f[2] * .8, f[2] * 1.9, d)); }
   return h;
@@ -224,7 +224,7 @@ function house(o) {
     const dw = box(.05, .06, .012, winMat); dw.position.set(0, bodyH + .1, d / 2 - .1 + .008); g.add(dw);
   }
   if (!o.stone) for (const sx of [-1, 1]) { const q = box(.03, bodyH, .03, std(0xc9c2b0)); q.position.set(sx * (w / 2 - .004), bodyH / 2, z - .004); g.add(q); }
-  g.userData.fp = Math.max(w, d) / 2 * 1.12 + .06; g.userData.pri = 1; g.userData.home = 1;
+  g.userData.fp = Math.max(w, d) / 2 * 1.45 + .14; g.userData.pri = 1; g.userData.home = 1;
   return g;
 }
 // stone arcades (soportales): shops under round granite arches, two storeys above, one long roof
@@ -271,7 +271,7 @@ function church(scale) {
   const cr1 = box(.016, .12, .016, std(0xdddddd)); cr1.position.set(-.38, 1.56, .22); g.add(cr1);
   const cr2 = box(.07, .016, .016, std(0xdddddd)); cr2.position.set(-.38, 1.58, .22); g.add(cr2);
   g.scale.setScalar(scale || 1);
-  g.userData.fp = .8 * (scale || 1); g.userData.pri = 3;
+  g.userData.fp = 1.15 * (scale || 1); g.userData.pri = 3;
   return g;
 }
 // a granite hórreo on stone legs with ventilation slits and a tiled roof (after the one of the photo)
@@ -341,6 +341,7 @@ function stoneBridge(span, nA, bw, mat, deckMat, hump) {
 function ribbon(pts, width, mat, lift, dash, flo, noSkip) {
   flo = flo === undefined ? .07 : flo;
   const H = pts.map((q, i) => { const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)], tx = b[0] - a[0], tz = b[1] - a[1], l = Math.hypot(tx, tz) || 1, nx = -tz / l * .3, nz = tx / l * .3; return Math.max(groundH(q[0], q[1]), groundH(q[0] + nx, q[1] + nz), groundH(q[0] - nx, q[1] - nz), flo); });
+  { const M = H.slice(); for (let i = 0; i < H.length; i++) for (let k = -2; k <= 2; k++) M[i] = Math.max(M[i], H[Math.min(H.length - 1, Math.max(0, i + k))]); for (let i = 0; i < H.length; i++) H[i] = M[i]; }
   for (let pass = 0; pass < 6; pass++) for (let i = 1; i < H.length - 1; i++) H[i] = Math.max(H[i] * .5 + (H[i - 1] + H[i + 1]) * .25, Math.min(H[i], flo + .0));
   const P = pts.map((q, i) => dirFrom(q[0], q[1], new THREE.Vector3()).multiplyScalar(R + H[i] + lift));
   const pos = [], idx = [], tan = new THREE.Vector3(), side = new THREE.Vector3(), nrm = new THREE.Vector3();
@@ -555,7 +556,7 @@ export function open(opts) {
     spot('Muros arcades', 'Soportales', 'The arcades (soportales) of Muros: granite arches along the waterfront, shops at street level and white galleries above, all looking at the sea.', hubAt(-14.6, shore(-14.6) - 1.2, .4), .5);
     spot('Muros old town', 'Casco antiguo', 'Granite houses, narrow cobbled lanes and a stone cruceiro in the little square: the old town of Muros climbs up the slope behind the arcades.', hubAt(-13.1, shore(-13.1) - 2.6, .5), .5); }
   // the quay and the seafarers’ quarter of Muros
-  for (let x = -17.2; x < -9.6; x += .4) { const q = new THREE.Group(); q.add(box(.46, .5, .5, std(0xb2ac9c))); const c = box(.5, .06, .52, std(0xd0cabb)); c.position.y = .26; q.add(c); W(put(q, x, shore(x) + .1, 0, .02, true)); }
+  for (let x = -17.2; x < -9.6; x += .52) { const q = new THREE.Group(); q.userData.stoneBlock = 1; q.add(box(.46, .5, .5, std(0xb2ac9c))); const c = box(.5, .06, .52, std(0xd0cabb)); c.position.y = .26; q.add(c); W(put(q, x, shore(x) + .1, 0, .02, true)); }
   for (const x of [-15.0, -10.4]) { const [px, pz] = onShore(x, .5); const shed = house({ w: .36, d: .28, floors: 1, wall: 0xf7f1e4, roof: ROOF[1], gal: false, shut: 0x2f6fa8, fr: 2, chim: false, door: 0x2f6fa8 }); W(put(shed, px, pz, seaYaw(px), -.02)); }
   for (const x of [-13.9, -11.0]) { const [px, pz] = onShore(x, .38); const cs = new THREE.Group(); for (let k = 0; k < 6; k++) { const cr2 = box(.1, .07, .08, std(0x8a6a44)); cr2.position.set((k % 3 - 1) * .11, .035 + Math.floor(k / 3) * .075, 0); cs.add(cr2); } W(put(cs, px, pz, seaYaw(px) + .3, -.01)); }
   for (const x of [-12.4]) { const [px, pz] = onShore(x, .4); const nt = new THREE.Group(); for (const dx of [-.3, .3]) { const pole = new THREE.Mesh(new THREE.CylinderGeometry(.014, .014, .34, 4), std(0x6b5a46)); pole.position.set(dx, .17, 0); nt.add(pole); } const net = box(.6, .2, .01, std(0x5f8f8a, { transparent: true, opacity: .6 })); net.position.y = .22; nt.add(net); W(put(nt, px, pz, seaYaw(px), -.01)); }
@@ -571,8 +572,8 @@ export function open(opts) {
     for (let k = 0; k < 6; k++) { const w2 = box(.09, .06, .02, winMat); w2.position.set(-.4 + k * .16, .17, .29); lonja.add(w2); }
     const dr2 = box(.2, .16, .02, std(0x7a8f9a)); dr2.position.set(0, .09, .29); lonja.add(dr2);
     W(put(lonja, mx, mz, seaYaw(mx), -.02)); }
-  for (let s = 0; s < 8; s++) { const x = -8.9 + s * .38, z = shore(x) + .12; const q = new THREE.Group(); q.add(box(.46, .5, .5, std(0xb2ac9c))); const c = box(.5, .06, .52, std(0xd0cabb)); c.position.y = .26; q.add(c); W(put(q, x, z, 0, .02, true)); }
-  for (let s = 1; s < 4; s++) { const x = -6.2, z = shore(-6.2) + .12 + s * .4; const q = new THREE.Group(); q.add(box(.5, .5, .46, std(0xb2ac9c))); const c = box(.54, .06, .5, std(0xd0cabb)); c.position.y = .26; q.add(c); W(put(q, x, z, 0, .02, true)); }
+  for (let s = 0; s < 6; s++) { const x = -8.9 + s * .52, z = shore(x) + .12; const q = new THREE.Group(); q.userData.stoneBlock = 1; q.add(box(.46, .5, .5, std(0xb2ac9c))); const c = box(.5, .06, .52, std(0xd0cabb)); c.position.y = .26; q.add(c); W(put(q, x, z, 0, .02, true)); }
+  for (let s = 1; s < 3; s++) { const x = -6.2, z = shore(-6.2) + .12 + s * .52; const q = new THREE.Group(); q.userData.stoneBlock = 1; q.add(box(.5, .5, .46, std(0xb2ac9c))); const c = box(.54, .06, .5, std(0xd0cabb)); c.position.y = .26; q.add(c); W(put(q, x, z, 0, .02, true)); }
   const stoneM = std(0xb8b19f), deckM = std(0xc9c2b2);
   spot('Esteiro harbour', 'Puerto', 'Esteiro opens onto its own little inlet: houses on both banks, a bridge across the water, boats at anchor in the calm, and the big harbour building at the end of the mole.', hubAt(-7.0, shore(-7.0) - 1.1, .5), .5);
 
@@ -597,7 +598,7 @@ export function open(opts) {
   const pier = new THREE.Group(); W(pier);
   const pierX = 1.5, shoreZ = shore(pierX), PIER_LEN = 4.6;
   for (let s = 0; s * .5 < PIER_LEN; s++) {
-    const z = shoreZ - .6 + s * .5, p = new THREE.Group(); p.add(box(.4, .6, .6, std(0xb2ac9c))); const top = box(.46, .08, .6, std(0xd0cabb)); top.position.y = .34; p.add(top);
+    const z = shoreZ - .6 + s * .5, p = new THREE.Group(); p.userData.stoneBlock = 1; p.add(box(.4, .6, .6, std(0xb2ac9c))); const top = box(.46, .08, .6, std(0xd0cabb)); top.position.y = .34; p.add(top);
     pier.add(put(p, pierX, z, 0, .02, true));
     if (s % 2 === 1) { const bol = new THREE.Mesh(new THREE.CylinderGeometry(.045, .06, .12, 6), std(0x2b3036)); bol.position.y = .44; const pb = new THREE.Group(); pb.add(bol); pier.add(put(pb, pierX + .15, z, 0, .02, true)); }
   }
@@ -626,8 +627,8 @@ export function open(opts) {
   const buildRoad = (pts, up) => { roadList.push([pts, up || 0]); };
   const flushRoads = () => {
     // every road is laid at the same height, all the pavements first and all the asphalt above them, so crossings and junctions merge with no seams
-    for (const [pts] of roadList) { const m = ribbon(pts, .56, walkMat, .012, false, undefined, true); m.renderOrder = 1; W(m); }
-    for (const [pts] of roadList) { const m = ribbon(pts, .4, asphalt, .03, false, undefined, true); m.renderOrder = 2; W(m); }
+    for (const [pts] of roadList) { const m = ribbon(pts, .56, walkMat, .03, false, undefined, true); m.renderOrder = 1; W(m); }
+    for (const [pts] of roadList) { const m = ribbon(pts, .4, asphalt, .05, false, undefined, true); m.renderOrder = 2; W(m); }
   };
   // the roundabout: a flat ring (pavement + asphalt + grass island) where the coast road is cut; the cars follow the inland half of the ring
   const RB = 0.62, roadRaw = relax(roadN, 4);
@@ -677,11 +678,11 @@ export function open(opts) {
   { const rs = relax(roadS, 3); roadBridge(rs, INLET3[0][0], 1.3); }
   const routes = [route(roadN), route(roadS)];
   // the river of Outes keeps going up the hillside, getting narrower and narrower until it is a thread
-  const RIVER2 = relax([[INLET2[3][0], INLET2[3][1] + .9], [INLET2[3][0], INLET2[3][1] + .1], [6.4, -7.0], [6.9, -8.6], [7.9, -9.9], [8.8, -10.9], [9.9, -11.7], [10.9, -12.2]], 0);
+  const RIVER2 = relax([[INLET2[2][0], INLET2[2][1] + .2], [INLET2[3][0], INLET2[3][1] + .1], [6.4, -7.0], [6.9, -8.6], [7.9, -9.9], [8.8, -10.9], [9.9, -11.7], [10.9, -12.2]], 0);
   { const dense = []; for (let i = 0; i < RIVER2.length - 1; i++) for (let k = 0; k < 6; k++) dense.push([RIVER2[i][0] + (RIVER2[i + 1][0] - RIVER2[i][0]) * k / 6, RIVER2[i][1] + (RIVER2[i + 1][1] - RIVER2[i][1]) * k / 6]); dense.push(RIVER2[RIVER2.length - 1]);
-    const sm = relax(dense, 6), n = sm.length, widths = sm.map((_, i) => .46 * Math.pow(1 - i / (n - 1), 1.1) + .045);
-    riverPts = sm; W(ribbonW(sm, widths, std(0x69b9d0, { transparent: true, opacity: .92, roughness: .2, side: THREE.DoubleSide, emissive: 0x2a6f86, emissiveIntensity: .15, polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 }), .08));
-    W(ribbonW(sm, widths.map((w) => w * 1.55), std(0xcdbf94, { roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }), .06)); }
+    const sm = relax(dense, 6), n = sm.length, widths = sm.map((_, i) => .78 * Math.pow(1 - i / (n - 1), 1.25) + .05);
+    riverPts = sm; W(ribbonW(sm, widths, std(0x69b9d0, { transparent: true, opacity: .92, roughness: .2, side: THREE.DoubleSide, emissive: 0x2a6f86, emissiveIntensity: .15, polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 }), .03));
+    W(ribbonW(sm, widths.map((w) => w * 1.45), std(0xcdbf94, { roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }), .015)); }
   const foamMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .5, depthWrite: false, side: THREE.DoubleSide });
   W(ribbon(smooth(shore, -22, 21, .07), .13, foamMat, .085, false, -1)); W(ribbon(smooth(shoreS, -23, 15, -.07), .13, foamMat, .085, false, -1));
   function car(color, bus) {
@@ -722,7 +723,7 @@ export function open(opts) {
   for (let x = -10.2; x < -6.2; x += .72) hhS(x, .62, 1 + (hc % 2)); for (let x = -9.8; x < -6.4; x += .78) hhS(x, 2.15, 2); hhS(-8.6, 3.2, 1);
   for (let x = 2.0; x < 5.8; x += .72) hhS(x, .62, 1 + (hc % 2)); for (let x = 2.4; x < 5.6; x += .8) hhS(x, 2.15, 2);
   for (const [fx, inl] of [[-2.4, 3.1]]) { hhS(fx, inl, 2); hhS(fx + .7, inl + .4, 1); const [hx, hz] = onShoreS(fx + .3, inl + 1.0); const hr = horreo(); W(put(hr, hx, hz, seaYawS(hx) + .2, -.02)); }
-  for (let s = 0; s < 6; s++) { const x = 2.2 + s * .38, z = shoreS(x) - .12; const q = new THREE.Group(); q.add(box(.46, .5, .5, std(0xb2ac9c))); const c = box(.5, .06, .52, std(0xd0cabb)); c.position.y = .26; q.add(c); W(put(q, x, z, 0, .02, true)); }
+  for (let s = 0; s < 5; s++) { const x = 2.2 + s * .52, z = shoreS(x) - .12; const q = new THREE.Group(); q.userData.stoneBlock = 1; q.add(box(.46, .5, .5, std(0xb2ac9c))); const c = box(.5, .06, .52, std(0xd0cabb)); c.position.y = .26; q.add(c); W(put(q, x, z, 0, .02, true)); }
 
   // ---- boats: smaller than before; every one has its own place (anchored, moored) or its own lane, so none touches another
   const boats = [], sailers = [], occupied = [];
@@ -971,10 +972,10 @@ export function open(opts) {
     for (const [hx, hz, c, mn, ry] of [[-.9, .35, 0x7a4a2e, 0x2a1a10, .6], [.95, -.2, 0xf1ece0, 0x8a7a66, 3.4]]) { const h = horse(c, mn), w = new THREE.Group(); h.g.scale.setScalar(.5); w.add(h.g); const x = ix + hx, z = iz + hz; put(w, x, z, ry, -.02); W(w); horses.push({ h, ph: rnd() * 6 }); } }
 
   // ---- a pretty street of little houses with tulip borders, leading inland from the south road (after the reference miniatures)
-  const stX = 4.6, stZ0 = shoreS(stX) + 1.8;
+  const stX = 4.6, stZ0 = shoreS(stX) + 1.5;
   const stPts = []; for (let k = 0; k <= 22; k++) stPts.push([stX + .28 * Math.sin(k * .38), stZ0 + k * .2]);
-  W(ribbon(relax(stPts, 3), .34, std(0xcfc6b4, { roughness: 1, side: THREE.DoubleSide }), .02, false, undefined, true));
-  W(ribbon(relax(stPts, 3), .5, std(0xe3dac4, { roughness: 1, side: THREE.DoubleSide }), .008, false, undefined, true));
+  W(ribbon(relax(stPts, 3), .34, std(0xcfc6b4, { roughness: 1, side: THREE.DoubleSide }), .012, false, undefined, true));
+  W(ribbon(relax(stPts, 3), .5, std(0xe3dac4, { roughness: 1, side: THREE.DoubleSide }), .004, false, undefined, true));
   { const PAST = [0xf6e6b4, 0xaed0dc, 0xb9d9c3, 0xf2c6a8, 0xf3d9a0, 0xa9c6d8], RF = [0xc9462e, 0xd0693a, 0x5f7f96, 0xc45a30, 0xdc7a48, 0xb04a36];
     for (let k = 0; k < 5; k++) for (const sd of [-1, 1]) {
       const z = stZ0 + .55 + k * .78 + (sd > 0 ? .3 : 0), px = stX + .28 * Math.sin((z - stZ0) / .2 * .38), x = px + sd * .62;
@@ -998,7 +999,7 @@ export function open(opts) {
     const c1 = mkP(2, 3, 0, .8, 0, -.12, sr); pathers[pathers.length - 1].still = true; const c2 = mkP(5, 0, 0, .815, 0, -.12, sr); pathers[pathers.length - 1].still = true; }
 
   // ---- the seafront of the south road: a stone sea wall with steps, bollards and moored boats beside the road
-  for (let x = 1.9; x < 7.6; x += .34) { const q = new THREE.Group(); q.add(box(.4, .5, .3, std(0xb9b19d))); const c = box(.42, .05, .32, std(0xd6cdb8)); c.position.y = .26; q.add(c); W(put(q, x, shoreS(x) - .02, 0, .02, true)); }
+  for (let x = 1.9; x < 7.6; x += .46) { const q = new THREE.Group(); q.userData.stoneBlock = 1; q.add(box(.4, .5, .3, std(0xb9b19d))); const c = box(.42, .05, .32, std(0xd6cdb8)); c.position.y = .26; q.add(c); W(put(q, x, shoreS(x) - .02, 0, .02, true)); }
   for (const x of [2.6, 4.0, 5.3, 6.6]) { const bo = new THREE.Mesh(new THREE.CylinderGeometry(.03, .04, .08, 6), std(0x2b3036)); const g = new THREE.Group(); g.add(bo); W(put(g, x, shoreS(x) - .02, 0, .3, true)); }
   for (const x of [3.0, 4.7, 6.3]) moor(x, shoreS(x) - .62, 1.6 + (rnd() - .5) * .2, .85, undefined, .5);
 
@@ -1019,7 +1020,7 @@ export function open(opts) {
     }
     { const sp = []; for (let k = 0; k <= 12; k++) sp.push([base[0] - .3 + k * .05 + Math.sin(k * .6) * .12, base[1] + 1.0 - k * .22]); const sr = route(relax(sp, 2));
       for (const [c, u, v, off] of [[1, .1, .05, .06], [5, .7, -.045, -.06], [3, .4, .03, 0]]) { const pp = person(SHIRTS[c], { skin: SKINS[c % 4] }); pp.scale.setScalar(.85); W(pp); pathers.push({ p: pp, r: sr, u, v, off, bob: 1, lift: 0 }); } }
-    const [cx, cz] = [base[0] + 1.9, base[1] - .5]; if (groundH(cx, cz) > .3) { const pl = new THREE.Group(); pl.add(box(1.0, .4, .9, stoneT)); const mt = box(1.02, .04, .92, moss); mt.position.y = .22; pl.add(mt); W(put(pl, cx, cz, 0, -.05)); const ch = church(.7); ch.position.y = .22; const cg = new THREE.Group(); cg.add(ch); W(put(cg, cx, cz, -.3, -.05)); }
+    const [cx, cz] = [base[0] + 1.9, base[1] - .5]; if (groundH(cx, cz) > .3) { const pl = new THREE.Group(); pl.userData.fp = .95; pl.userData.pri = 3; pl.add(box(1.0, .4, .9, stoneT)); const mt = box(1.02, .04, .92, moss); mt.position.y = .22; pl.add(mt); W(put(pl, cx, cz, 0, -.05)); const ch = church(.7); ch.position.y = .22; const cg = new THREE.Group(); cg.add(ch); W(put(cg, cx, cz, -.3, -.05)); }
     const [px, pz] = [base[0] - 1.9, base[1] + .8]; if (groundH(px, pz) > .2) { const pool = new THREE.Mesh(new THREE.CylinderGeometry(.34, .34, .03, 18), std(0x45b6d0, { transparent: true, opacity: .92, roughness: .15 })); pool.scale.z = .7; const pg = new THREE.Group(); pg.add(pool); W(put(pg, px, pz, .3, .02));
       const arch = new THREE.Group(); const ab = box(.5, .36, .24, stoneT); ab.position.y = .1; arch.add(ab); const ah = new THREE.Mesh(new THREE.CylinderGeometry(.11, .11, .26, 12), std(0x1b1a18)); ah.rotation.x = PI / 2; ah.position.set(0, .06, .02); arch.add(ah); W(put(arch, px + .35, pz - .4, -.3, -.04)); }
   }
@@ -1155,6 +1156,78 @@ export function open(opts) {
     }
   }
 
+  // ---- a shopping street and a village fiesta (verbena) on the south shore: bar with terrace, supermarket, pulpería, the stage of an orchestra, stalls, string lights and a "saltamontes" (little roller-coaster)
+  const fiestaObj = [];
+  { const sx = 2.0, sz0 = shoreS(sx) + 1.45, sline = []; for (let k = 0; k <= 19; k++) sline.push([sx + .12 * Math.sin(k * .5), sz0 + .75 + k * .2]);
+    const sr = relax(sline, 3);
+    W(ribbon(sr, .42, std(0xcfc6b4, { roughness: 1, side: THREE.DoubleSide }), .012, false, undefined, true)); W(ribbon(sr, .6, std(0xe3dac4, { roughness: 1, side: THREE.DoubleSide }), .004, false, undefined, true));
+    const px = (z) => sx + .12 * Math.sin((z - sz0) / .2 * .5);
+    const shopFront = (sd, z, wall, roof, awn, kind) => {
+      const g = new THREE.Group(), w = .44, d = .4, bd = box(w, .32, d, std(wall)); bd.position.y = .16; g.add(bd);
+      const rf = gable(w + .06, d + .06, .17, std(roof)); rf.position.y = .32; g.add(rf);
+      const gl = box(w * .7, .15, .02, winMat); gl.position.set(0, .15, d / 2 + .008); g.add(gl);
+      const aw = box(w * .85, .02, .12, std(awn)); aw.position.set(0, .27, d / 2 + .06); aw.rotation.x = .25; g.add(aw);
+      for (let k = 0; k < 4; k++) { const st = box(w * .85 / 8, .021, .12, std(0xfff8ea)); st.position.set(-w * .32 + k * w * .21, .271, d / 2 + .06); st.rotation.x = .25; g.add(st); }
+      const sign = box(.3, .06, .02, std(0xfff8ea)); sign.position.set(0, .37, d / 2 - .01); g.add(sign);
+      if (kind === 'pulperia') { const oc = new THREE.Group(), hd = new THREE.Mesh(new THREE.SphereGeometry(.026, 8, 6), std(0xc9462e)); hd.position.y = .0; oc.add(hd); for (let k = 0; k < 6; k++) { const t = new THREE.Mesh(new THREE.CylinderGeometry(.004, .003, .045, 4), std(0xc9462e)); t.position.set(Math.cos(k) * .02, -.035, Math.sin(k) * .02); oc.add(t); } oc.position.set(0, .37, d / 2 + .0); g.add(oc); }
+      if (kind === 'bar') { const cup = new THREE.Mesh(new THREE.CylinderGeometry(.018, .012, .03, 8), std(0xd9a441)); cup.position.set(0, .375, d / 2); g.add(cup); }
+      g.userData.fp = .27; g.userData.pri = 4; g.userData.home = 1;
+      W(put(g, px(z) + sd * .56, z, sd > 0 ? -PI / 2 : PI / 2, -.01)); return g;
+    };
+    shopFront(-1, sz0 + .75 + .55, 0xf6e6b4, 0xc9462e, 0xc9462e, 'bar'); shopFront(1, sz0 + .75 + .55, 0xaed0dc, 0x5f7f96, 0x2f6fa8, 'shop');
+    shopFront(-1, sz0 + .75 + 1.2, 0xf2c6a8, 0xd0693a, 0x3b8f6a, 'pulperia'); shopFront(1, sz0 + .75 + 1.2, 0xb9d9c3, 0xc45a30, 0xe9b94a, 'shop');
+    { const sm = supermarket(0x2f6fa8); sm.scale.setScalar(.6); sm.userData.fp = .45; sm.userData.pri = 4; W(put(sm, px(sz0 + .75 + 1.95) + .8, sz0 + .75 + 1.95, -PI / 2, -.02)); }
+    // terrace of the bar: tables with parasols on the pavement
+    for (let k = 0; k < 2; k++) { const tz = sz0 + .75 + .5 + k * .3, g = new THREE.Group(), tb = new THREE.Mesh(new THREE.CylinderGeometry(.045, .045, .012, 10), std(0xf4efe4)); tb.position.y = .08; g.add(tb); const ps = new THREE.Mesh(new THREE.CylinderGeometry(.01, .01, .08, 5), std(0xeeeeee)); ps.position.y = .04; g.add(ps); const pa = parasol(0xc9462e); pa.scale.setScalar(.6); g.add(pa); W(put(g, px(tz) - .24, tz, 0, 0)); }
+    // the pulpería's long table, with people eating octopus
+    { const g = new THREE.Group(); g.add(box(.5, .02, .09, std(0x9a7a52))); g.children[0].position.y = .07; for (const lx of [-.2, .2]) { const lg = box(.02, .07, .02, std(0x6b4a2a)); lg.position.set(lx, .035, 0); g.add(lg); } const pl = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, .01, 10), std(0xfff8ea)); pl.position.set(.1, .085, 0); g.add(pl); const oc = new THREE.Mesh(new THREE.SphereGeometry(.014, 6, 5), std(0xe9744a)); oc.position.set(.1, .095, 0); g.add(oc); W(put(g, px(sz0 + .75 + 1.2) - .26, sz0 + .75 + 1.2, PI / 2, 0));
+      for (let k = 0; k < 3; k++) { const pp = person(SHIRTS[(k * 3 + 1) % SHIRTS.length], { skin: SKINS[k % 4], role: 'town' }); pp.scale.setScalar(.8); W(put(pp, px(sz0 + .75 + 1.2) - .26 + .12 * (k - 1), sz0 + .75 + 1.2 + .1, PI, .0)); } }
+    // string lights over the street
+    for (let k = 0; k < 5; k++) { const z = sz0 + .75 + .35 + k * .42, a = new THREE.Group(); for (let b = 0; b < 7; b++) { const bu = new THREE.Mesh(new THREE.SphereGeometry(.014, 6, 5), lampMat); bu.position.set(-.35 + b * .117, .38 - Math.sin(b / 6 * PI) * .05, 0); a.add(bu); } const ln = box(.7, .004, .004, std(0x3a3a3a)); ln.position.y = .39; a.add(ln); W(put(a, px(z), z, 0, 0)); }
+    // the fiesta field at the end of the street
+    const fx = px(sz0 + .75 + 3.0), fz = sz0 + .75 + 3.0 + .6;
+    { const slab = new THREE.Group(); slab.add(box(2.7, .12, 2.4, std(0xe6dcc0))); slab.userData.fp = 0; W(put(slab, fx, fz, 0, -.05)); }
+    // orchestra stage with a roof, musicians and a banner
+    { const g = new THREE.Group(), bs = box(.9, .1, .5, std(0x8a6a44)); bs.position.y = .05; g.add(bs); for (const sx of [-.42, .42]) { const po = box(.03, .34, .03, std(0x6b4a2a)); po.position.set(sx, .27, .22); g.add(po); const po2 = po.clone(); po2.position.z = -.22; g.add(po2); }
+      const rf = box(1.0, .035, .62, std(0xc9462e)); rf.position.y = .45; g.add(rf); const bn = box(.7, .08, .01, std(0xfff8ea)); bn.position.set(0, .4, .3); g.add(bn); const back = box(.9, .3, .02, std(0x5b3a2a)); back.position.set(0, .25, -.24); g.add(back);
+      for (let k = 0; k < 5; k++) { const m = person(SHIRTS[(k * 2 + 3) % SHIRTS.length], { skin: SKINS[k % 4], pants: 0x1f2937, role: 'band' }); m.scale.setScalar(.75); m.position.set(-.32 + k * .16, .1, .02); g.add(m); const ins = box(.03, .03, .05, std([0xd9a441, 0x8a5a3a, 0xc0c0c0][k % 3])); ins.position.set(-.32 + k * .16, .14, .06); g.add(ins); fiestaObj.push(m); }
+      g.userData.fp = .5; g.userData.pri = 4; W(put(g, fx - .75, fz - .6, PI / 2, .0)); }
+    // stalls (churros, pulpo, tombola) with striped awnings and a crowd that dances and strolls
+    for (const [dx, dz, c, ry] of [[.1, -.95, 0xc9462e, 0], [.8, -.95, 0x2f6fa8, 0], [1.05, .1, 0xe9b94a, -PI / 2], [1.05, .8, 0x3b8f6a, -PI / 2]]) { const g = new THREE.Group(), bd = box(.34, .16, .22, std(0xfff8ea)); bd.position.y = .08; g.add(bd); const aw = box(.4, .02, .16, std(c)); aw.position.set(0, .26, .1); aw.rotation.x = .25; g.add(aw); for (let k = 0; k < 4; k++) { const st = box(.05, .021, .16, std(0xfff8ea)); st.position.set(-.15 + k * .1, .261, .1); st.rotation.x = .25; g.add(st); } for (const sx of [-.18, .18]) { const po = box(.015, .2, .015, std(0x6b4a2a)); po.position.set(sx, .13, .17); g.add(po); } g.userData.fp = .22; g.userData.pri = 4; W(put(g, fx + dx, fz + dz, ry, 0)); }
+    const crowd = []; for (let k = 0; k < 14; k++) { const pp = person(SHIRTS[(k * 3 + 2) % SHIRTS.length], { skin: SKINS[k % 4], role: 'town' }); pp.scale.setScalar(.85); W(pp); crowd.push({ p: pp, a: k * .9, cx: fx - .1 + (k % 5 - 2) * .14, cz: fz + .1 + (Math.floor(k / 5) - 1) * .22, dance: k % 2 }); }
+    window.__crowd = crowd;
+    // the saltamontes: a small ring roller-coaster with a train of three cars
+    { const cx = fx + .25, cz = fz - .0, N = 20, pts = [];
+      for (let k = 0; k < N; k++) { const a = k / N * PI * 2, rr = .62 + .06 * Math.sin(a * 3); const x = cx + Math.cos(a) * rr * 1.1, z = cz + Math.sin(a) * rr; const y = .14 + (Math.sin(a * 3 + .5) * .5 + .5) * .3; dirFrom(x, z, _e).multiplyScalar(R + groundH(x, z) + y); pts.push(_e.clone()); }
+      const curve = new THREE.CatmullRomCurve3(pts, true), tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 120, .018, 6, true), std(0xc9462e)); W(tube);
+      for (let k = 0; k < N; k += 2) { const pp = pts[k], gp = dirFrom(0, 0, _f), base = pp.clone().normalize().multiplyScalar(R + .03), leg = new THREE.Mesh(new THREE.CylinderGeometry(.008, .008, pp.length() - base.length(), 4), std(0xeeeeee)); leg.position.copy(pp.clone().add(base).multiplyScalar(.5)); leg.quaternion.setFromUnitVectors(Y, pp.clone().sub(base).normalize()); W(leg); }
+      const cars = []; for (let k = 0; k < 3; k++) { const g = new THREE.Group(), cb = box(.11, .045, .07, std([0xf2c14a, 0x2f6fa8, 0x3b9a6a][k])); cb.position.y = .03; g.add(cb); const pp = person(SHIRTS[(k * 2) % SHIRTS.length], { skin: SKINS[k], role: 'kid' }); pp.scale.setScalar(.45); pp.position.y = .05; g.add(pp); W(g); cars.push(g); }
+      const lap = (cx2, cz2) => 0;
+      const sp = new THREE.Mesh(new THREE.CylinderGeometry(.04, .05, .02, 10), std(0xfff8ea)); const gg = new THREE.Group(); gg.add(sp); gg.userData.fp = .3; gg.userData.pri = 4; W(put(gg, cx, cz, 0, -.04));
+      fiestaObj.push({ curve, cars }); }
+    // flags between lamp posts and a little lamp for the stage
+    for (const [dx, dz] of [[-1.1, -1.0], [1.1, -1.0], [-1.1, 1.0], [1.1, 1.0]]) { const lp = new THREE.Group(); const pole = new THREE.Mesh(new THREE.CylinderGeometry(.01, .013, .4, 5), std(0x2b3036)); pole.position.y = .2; lp.add(pole); const lb = new THREE.Mesh(new THREE.SphereGeometry(.03, 8, 6), lampMat); lb.position.y = .42; lp.add(lb); W(put(lp, fx + dx, fz + dz, 0, 0)); }
+  }
+
+  // ---- a second, prettier lighthouse on the cape of Punta Uhía: tapered white tower with red bands, a gallery with railing, a glass lantern whose beam turns at night, the keeper's house and a rocky base
+  const beamPivot = new THREE.Group();
+  { const g = new THREE.Group(), white = std(0xf6f1e4), red = std(0xc9462e);
+    const rock = new THREE.Mesh(new THREE.IcosahedronGeometry(.5, 2), std(0x9a968a)); rock.scale.set(1, .45, .85); rock.position.y = .06; g.add(rock);
+    const tw = new THREE.Mesh(new THREE.CylinderGeometry(.12, .2, 1.1, 14), white); tw.position.y = .72; g.add(tw);
+    for (const [y, h] of [[.45, .17], [.88, .17]]) { const bd = new THREE.Mesh(new THREE.CylinderGeometry(.165 - y * .07 + .05, .185 - y * .07 + .05, h, 14), red); bd.position.y = y + .26; g.add(bd); }
+    const gal = new THREE.Mesh(new THREE.CylinderGeometry(.19, .15, .045, 16), std(0x2b3036)); gal.position.y = 1.29; g.add(gal);
+    for (let k = 0; k < 16; k++) { const a2 = k / 16 * PI * 2, r1 = box(.012, .07, .012, std(0x2b3036)); r1.position.set(Math.cos(a2) * .18, 1.34, Math.sin(a2) * .18); g.add(r1); }
+    const rl = new THREE.Mesh(new THREE.TorusGeometry(.18, .008, 5, 20), std(0x2b3036)); rl.rotation.x = PI / 2; rl.position.y = 1.375; g.add(rl);
+    const lan = new THREE.Mesh(new THREE.CylinderGeometry(.095, .095, .16, 12), new THREE.MeshStandardMaterial({ color: 0xfff3c4, emissive: 0xffd36b, emissiveIntensity: .5, transparent: true, opacity: .85 })); lan.position.y = 1.4; g.add(lan); g.userData.lan = lan;
+    const cap = new THREE.Mesh(new THREE.ConeGeometry(.13, .13, 12), red); cap.position.y = 1.54; g.add(cap); const ball = new THREE.Mesh(new THREE.SphereGeometry(.02, 8, 6), std(0x2b3036)); ball.position.y = 1.62; g.add(ball);
+    const dr = box(.07, .12, .02, std(0x2f6fa8)); dr.position.set(0, .14, .2); g.add(dr);
+    const kh = house({ w: .38, d: .3, floors: 1, wall: 0xf6f1e4, roof: ROOF[0], gal: false, shut: 0x2f6fa8, fr: 2, door: 0x2f6fa8 }); kh.position.set(.5, -.0, .12); kh.scale.setScalar(.85); g.add(kh);
+    beamPivot.position.y = 1.4; const bm = new THREE.Mesh(new THREE.ConeGeometry(.12, 1.3, 12, 1, true), new THREE.MeshBasicMaterial({ color: 0xffe9a8, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending })); bm.rotation.z = -PI / 2; bm.position.x = .7; beamPivot.add(bm); g.add(beamPivot); beamPivot.userData.m = bm;
+    const sl = new THREE.PointLight(0xffd36b, 0, 5, 1.8); sl.position.y = 1.4; g.add(sl); g.userData.sl = sl;
+    g.scale.setScalar(.8); g.userData.fp = .75; g.userData.pri = 4;
+    const cx = -2.3, cz = shore(cx) - .1; W(put(g, cx, cz, seaYaw(cx), -.03)); fiestaObj.push({ lh2: g });
+  }
+
   // ---- tidy up: no building may overlap another one or stand on a road; the most important ones (churches, schools, squares, arcades) stay
   { const items = [], dd2 = new THREE.Vector3();
     for (const o of world.children) { const u = o.userData; if (!u || !(u.fp || u.fps)) continue; if (u.fp === 0) continue; dd2.copy(o.position).normalize(); const [x, z] = planeOf(dd2); items.push({ o, x, z, home: !!u.home, pri: u.pri || 1, circles: u.fps ? u.fps.map(([dx, r]) => [x + dx, z, r]) : [[x, z, u.fp]] }); }
@@ -1162,9 +1235,12 @@ export function open(opts) {
     const roads = [roadRaw, roadS, relax(stPts, 3)]; const nearRoad = (c, withStreet) => roads.some((pts, ri) => (ri < 2 || withStreet) && pts.some((q) => Math.hypot(q[0] - c[0], q[1] - c[1]) < c[2] + .6));
     const kept = [];
     for (const it of items) {
-      const bad = it.circles.some((c) => kept.some((k) => k.circles.some((kc) => Math.hypot(c[0] - kc[0], c[1] - kc[1]) < c[2] + kc[2] + .3)) || (it.pri < 3 && nearRoad(c, it.pri < 2)) || (it.pri < 3 && kept.some((k) => k.pri === 3 && k.circles.some((kc) => Math.hypot(c[0] - kc[0], c[1] - kc[1]) < c[2] + kc[2] + .7))));
+      const bad = it.circles.some((c) => kept.some((k) => k.circles.some((kc) => Math.hypot(c[0] - kc[0], c[1] - kc[1]) < c[2] + kc[2] + (it.pri >= 4 && k.pri >= 4 ? -.05 : .3))) || (it.pri < 3 && nearRoad(c, it.pri < 2)) || (it.pri < 3 && kept.some((k) => k.pri === 3 && k.circles.some((kc) => Math.hypot(c[0] - kc[0], c[1] - kc[1]) < c[2] + kc[2] + .7))));
       if (bad) world.remove(it.o); else { if (it.home) HOMES.push([it.x, it.z, it.circles[0][2]]); kept.push(it); for (const c of it.circles) keptC.push(c); }
     } }
+  { const solids = [], dd3 = new THREE.Vector3();
+    for (const o of world.children) if (o.userData && o.userData.stoneBlock) { dd3.copy(o.position).normalize(); const [x, z] = planeOf(dd3); solids.push([x, z]); }
+    for (let i = boats.length - 1; i >= 0; i--) { const b = boats[i]; dd3.copy(b.w.position).normalize(); const [x, z] = planeOf(dd3); if (solids.some((q) => Math.hypot(q[0] - x, q[1] - z) < (b.calm ? .9 : .5))) { world.remove(b.w); boats.splice(i, 1); } } }
   const oaks = [], pines = [], euc = [];
   const dd = new THREE.Vector3();
   for (let i = 0; i < 14000 && oaks.length + pines.length + euc.length < 330; i++) {
@@ -1491,6 +1567,8 @@ export function open(opts) {
       }
     }
     for (const fl of flags) fl.rotation.y = Math.sin(t * 3 + fl.position.x * 5) * .35;
+    { const fo = fiestaObj; for (const m of fo) { if (m.lh2) { beamPivot.rotation.y = t * .8; beamPivot.userData.m.material.opacity = .32 * nightT + rainT * .1; m.lh2.userData.sl.intensity = 1.8 * nightT; m.lh2.userData.lan.material.emissiveIntensity = .5 + 2.2 * nightT; continue; } if (m.curve) { m.cars.forEach((g, k) => { const u = ((t * .05 + .96 - k * .045) % 1 + 1) % 1, p = m.curve.getPointAt(u), q = m.curve.getPointAt((u + .01) % 1); g.position.copy(p); _m.lookAt(q, p, p.clone().normalize()); g.quaternion.setFromRotationMatrix(_m); }); } else m.rotation.z = Math.sin(t * 6 + m.position.x * 40) * .08; } }
+    if (window.__crowd) for (const c of window.__crowd) { const a = t * (c.dance ? 1.1 : .35) + c.a; put(c.p, c.cx + Math.cos(a) * (c.dance ? .05 : .18), c.cz + Math.sin(a) * (c.dance ? .05 : .12), a + PI / 2, Math.abs(Math.sin(t * (c.dance ? 5 : 7) + c.a)) * (c.dance ? .018 : .006)); }
     for (const bl of balls) { const c = Math.cos(t * 2.6 + bl.ph), h = .07 + .24 * Math.abs(Math.sin(t * 2.6 + bl.ph)); put(bl.m, bl.x, bl.z + c * .3 * bl.sg, 0, h); }
     for (const s of swimmers) {
       const a = t * s.sp + s.ph, x = s.x + Math.sin(a) * s.rx;
