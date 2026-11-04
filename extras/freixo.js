@@ -137,22 +137,35 @@ const matCache = new Map();
 const std = (color, extra) => {
   const key = extra ? null : color;
   if (key !== null && matCache.has(key)) return matCache.get(key);
-  const m = new THREE.MeshStandardMaterial(Object.assign({ color, roughness: .85 }, extra || {}));
+  const m = new THREE.MeshStandardMaterial(Object.assign({ color, roughness: .95 }, extra || {}));
   if (key !== null) matCache.set(key, m);
   return m;
 };
 const winMat = new THREE.MeshStandardMaterial({ color: 0x2c2a33, emissive: 0xffc46b, emissiveIntensity: 0, roughness: .5 });
 const lampMat = new THREE.MeshStandardMaterial({ color: 0xfff3c4, emissive: 0xffd36b, emissiveIntensity: .4, roughness: .3 });
 const boxG = new Map();
+// every "box" is softly rounded, like a little clay model: the corners are pulled onto a small sphere and the normals follow, so there are no hard edges
+function roundBox(w, h, d) {
+  const mn = Math.min(w, h, d);
+  if (mn < .05) return new THREE.BoxGeometry(w, h, d);
+  const r = Math.min(.03, mn * .32), seg = mn > .12 ? 4 : 2, g = new THREE.BoxGeometry(w, h, d, seg, seg, seg), pos = g.attributes.position, nor = g.attributes.normal, v = new THREE.Vector3(), c = new THREE.Vector3(), n = new THREE.Vector3();
+  const hx = w / 2 - r, hy = h / 2 - r, hz = d / 2 - r;
+  for (let i = 0; i < pos.count; i++) {
+    v.fromBufferAttribute(pos, i); c.set(Math.max(-hx, Math.min(hx, v.x)), Math.max(-hy, Math.min(hy, v.y)), Math.max(-hz, Math.min(hz, v.z)));
+    n.copy(v).sub(c); if (n.lengthSq() < 1e-10) { n.fromBufferAttribute(nor, i); } else n.normalize();
+    pos.setXYZ(i, c.x + n.x * r, c.y + n.y * r, c.z + n.z * r); nor.setXYZ(i, n.x, n.y, n.z);
+  }
+  return g;
+}
 const box = (w, h, d, mat) => {
-  const k = w + ',' + h + ',' + d; let g = boxG.get(k);
-  if (!g) { g = new THREE.BoxGeometry(w, h, d); boxG.set(k, g); }
+  const k = w.toFixed(3) + ',' + h.toFixed(3) + ',' + d.toFixed(3); let g = boxG.get(k);
+  if (!g) { g = roundBox(w, h, d); boxG.set(k, g); }
   return new THREE.Mesh(g, mat);
 };
 const gable = (len, span, rh, mat) => {              // a gabled roof, ridge along x
   const sh = new THREE.Shape(); sh.moveTo(-span / 2, 0); sh.lineTo(span / 2, 0); sh.lineTo(0, rh); sh.closePath();
-  const g = new THREE.ExtrudeGeometry(sh, { depth: len, bevelEnabled: false });
-  g.rotateY(PI / 2); g.translate(-len / 2, 0, 0);
+  const bv = Math.min(.03, rh * .3), g = new THREE.ExtrudeGeometry(sh, { depth: len - bv * 2, bevelEnabled: true, bevelSize: bv, bevelThickness: bv, bevelSegments: 3 });
+  g.rotateY(PI / 2); g.translate(-(len - bv * 2) / 2, 0, 0); g.computeVertexNormals();
   return new THREE.Mesh(g, mat);
 };
 const ROOF = [0xd0693a, 0xc45a30, 0xdc7a48, 0xc9623a, 0xd8703f, 0x5f7f96], SLATE = 0x5d636b;
@@ -465,7 +478,7 @@ export function open(opts) {
   const W = (o) => { world.add(o); return o; };
 
   // lights stay with the camera, so the sun does not move when the planet turns (the shadows do)
-  const hemi = new THREE.HemisphereLight(0xf1f6ec, 0xd8c690, 1.05); scene.add(hemi);
+  const hemi = new THREE.HemisphereLight(0xfff6e2, 0xd9c28c, 1.35); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xfff2dc, 2.5); sun.position.set(16, 20, 24); scene.add(sun);
   sun.castShadow = true; sun.shadow.mapSize.set(innerWidth < 700 ? 1024 : 2048, innerWidth < 700 ? 1024 : 2048);
   Object.assign(sun.shadow.camera, { left: -16, right: 16, top: 16, bottom: -16, near: 1, far: 90 }); sun.shadow.bias = -.0005; sun.shadow.normalBias = .03;
@@ -1007,7 +1020,7 @@ export function open(opts) {
     else oaks.push([x, z, .6 + rnd() * .4]);
   }
   const trunkG = new THREE.CylinderGeometry(.028, .04, .26, 6), trunkM = std(0x7a5a3c);
-  const oakG = new THREE.IcosahedronGeometry(.27, 2), pineG = new THREE.ConeGeometry(.2, .75, 8), pine2G = new THREE.ConeGeometry(.15, .5, 8);
+  const oakG = new THREE.IcosahedronGeometry(.27, 3), pineG = new THREE.SphereGeometry(.2, 14, 10).scale(1, 1.7, 1), pine2G = new THREE.SphereGeometry(.14, 12, 8).scale(1, 1.6, 1);
   const eucG = new THREE.SphereGeometry(.16, 8, 6), eucT = new THREE.CylinderGeometry(.014, .026, .8, 5);
   const inst = (geo, mat, list, place) => {
     const m = new THREE.InstancedMesh(geo, mat, Math.max(1, list.length)), o = new THREE.Object3D(), hold = new THREE.Object3D(), c = new THREE.Color();
@@ -1019,8 +1032,8 @@ export function open(opts) {
   W(inst(trunkG, trunkM, oaks, pl((o) => o.translateY(.13 * o.scale.x))));
   W(inst(oakG, std(0xffffff, { flatShading: false, roughness: .8 }), oaks, pl((o) => { o.translateY(.5 * o.scale.x); o.scale.y *= .9; }, green(0x62ae4a, .12))));
   W(inst(trunkG, trunkM, pines, pl((o) => o.translateY(.13 * o.scale.x))));
-  W(inst(pineG, std(0xffffff, { roughness: .8 }), pines, pl((o) => o.translateY(.48 * o.scale.x), green(0x1f6b3a, .1))));
-  W(inst(pine2G, std(0xffffff, { roughness: .8 }), pines, pl((o) => o.translateY(.84 * o.scale.x), green(0x24763f, .1))));
+  W(inst(pineG, std(0xffffff, { roughness: .8 }), pines, pl((o) => o.translateY(.5 * o.scale.x), green(0x3b8a46, .1))));
+  W(inst(pine2G, std(0xffffff, { roughness: .8 }), pines, pl((o) => o.translateY(.98 * o.scale.x), green(0x4a9a4c, .1))));
   W(inst(eucT, std(0xcfc7b0), euc, pl((o) => o.translateY(.4 * o.scale.x))));
   W(inst(eucG, std(0xffffff, { roughness: .8 }), euc, pl((o) => { o.translateY(.88 * o.scale.x); o.scale.y *= 1.5; }, green(0x7da45a, .1))));
 
