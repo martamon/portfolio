@@ -99,8 +99,13 @@ export const MOCHI = [
 let lang = 'en';
 try {
   const q = /[?&]lang=(en|es|gl)\b/.exec(location.search);
-  lang = q ? q[1] : (localStorage.getItem('xlang') || 'en');
-  if (NAMES.indexOf(lang) < 0) lang = 'en';
+  lang = q ? q[1] : localStorage.getItem('xlang');
+  if (NAMES.indexOf(lang) < 0) {
+    // first visit: the language of the visitor's computer / phone (the first of its preferred languages we speak), English otherwise
+    lang = 'en';
+    const prefs = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || '']);
+    for (const p of prefs) { const c = String(p).toLowerCase().slice(0, 2); if (NAMES.indexOf(c) >= 0) { lang = c; break; } }
+  }
 } catch (e) {}
 export const getLang = () => lang;
 export const tr = (s) => { const r = MAP.get(norm(s)); return r ? r[NAMES.indexOf(lang)] : s; };
@@ -169,10 +174,9 @@ const mo = new MutationObserver((ms) => {
 function css() {
   if (document.getElementById('x-lang-css')) return;
   const s = document.createElement('style'); s.id = 'x-lang-css';
-  s.textContent = '.x-lang{position:fixed;left:14px;bottom:12px;z-index:11;display:flex;gap:2px;align-items:center;font:500 11px/1 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.08em;color:var(--xfg,#1b1b1b);opacity:.62;transition:opacity .3s}' +
-    '.x-lang:hover,.x-lang:focus-within{opacity:1}.x-lang button{all:unset;cursor:pointer;padding:6px 5px;text-transform:uppercase;opacity:.6;border-bottom:1px solid transparent;transition:opacity .2s}' +
-    '.x-lang button:hover{opacity:1}.x-lang button[aria-pressed="true"]{opacity:1;border-bottom-color:currentColor}.x-lang i{font-style:normal;opacity:.4}' +
-    'html[data-xnight] .x-lang,html[data-xdark] .x-lang{color:rgb(203,237,255)}';
+  s.textContent = '.x-lang{position:fixed;left:14px;bottom:12px;z-index:11;display:flex;gap:2px;align-items:center;font:500 11px/1 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.08em;color:#fff;mix-blend-mode:difference;opacity:.85;transition:opacity .3s}' +
+    '.x-lang:hover,.x-lang:focus-within{opacity:1}.x-lang button{all:unset;cursor:pointer;padding:6px 5px;text-transform:uppercase;opacity:.62;border-bottom:1px solid transparent;transition:opacity .2s}' +
+    '.x-lang button:hover{opacity:1}.x-lang button[aria-pressed="true"]{opacity:1;border-bottom-color:currentColor}.x-lang i{font-style:normal;opacity:.4}';
   document.head.appendChild(s);
 }
 function ui() {
