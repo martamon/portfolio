@@ -990,8 +990,8 @@
     if (planet) return;
     planet = { loading: true };
     jfHint(0);
-    import('/extras/freixo.js?v=59').then(function (m) {
-      planet = m.open({ night: document.documentElement.hasAttribute('data-xdark'), onClose: function () { planet = null; } });
+    import('/extras/freixo.js?v=60').then(function (m) {
+      planet = m.open({ getDark: function () { return darkness(theme.hour); }, onClose: function () { planet = null; } });
     }).catch(function () { planet = null; });
   }
   function jfLaunch() {
