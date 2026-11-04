@@ -47,7 +47,16 @@
       var card = function (src) {
         var m = /\/embed\/([\w-]{6,})/.exec(src), id = m && m[1];
         if (!id) return '<!doctype html><body style="margin:0;background:#000">';
-        return '<!doctype html><meta name="viewport" content="width=device-width"><style>html,body{margin:0;height:100%;background:#000}a{display:block;position:relative;height:100%;background:#000 url(https://i.ytimg.com/vi/' + id + '/hqdefault.jpg) center/cover no-repeat}a:after{content:"";position:absolute;left:50%;top:50%;width:68px;height:68px;margin:-34px;border-radius:50%;background:rgba(0,0,0,.55) url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\'%3E%3Cpath fill=\'%23fff\' d=\'M9 7l8 5-8 5z\'/%3E%3C/svg%3E") center/60% no-repeat}</style><a href="https://www.youtube.com/watch?v=' + id + '" target="_blank" rel="noopener" aria-label="Play on YouTube"></a>';
+        // in these browsers a tap (or, for the home reel, the page itself) starts the video right here in the page: nothing sends you to YouTube
+        var reelId = id === 'NrxFBp4bl2Q';
+        return '<!doctype html><meta name="viewport" content="width=device-width"><style>html,body{margin:0;height:100%;background:#000;overflow:hidden}#p{display:block;position:absolute;inset:0;background:#000 url(https://i.ytimg.com/vi/' + id + '/hqdefault.jpg) center/cover no-repeat;cursor:pointer}#p:after{content:"";position:absolute;left:50%;top:50%;width:68px;height:68px;margin:-34px;border-radius:50%;background:rgba(0,0,0,.55) url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\'%3E%3Cpath fill=\'%23fff\' d=\'M9 7l8 5-8 5z\'/%3E%3C/svg%3E") center/60% no-repeat}#s{position:absolute;right:12px;bottom:12px;width:44px;height:44px;border:0;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;display:none;padding:0}#s svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}</style><a id="p" role="button" aria-label="Play"></a><button id="s" aria-label="Sound"></button>' +
+          '<script>(function(){var id="' + id + '",reel=' + (reelId ? 'true' : 'false') + ',f=null,muted=true,on=\'<svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>\',off=\'<svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m16 9 5 6M21 9l-5 6"/></svg>\',s=document.getElementById("s"),p=document.getElementById("p");' +
+          'function cmd(fn,a){try{f.contentWindow.postMessage(JSON.stringify({event:"command",func:fn,args:a||[]}),"*")}catch(e){}}' +
+          'function go(){if(f)return;f=document.createElement("iframe");f.src="https://www.youtube.com/embed/"+id+"?autoplay=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1"+(reel?"&mute=1&loop=1&playlist="+id+"&controls=0&disablekb=1":"");f.allow="autoplay; encrypted-media; picture-in-picture; fullscreen";f.setAttribute("allowfullscreen","");f.style.cssText="position:absolute;inset:0;width:100%;height:100%;border:0";document.body.insertBefore(f,s);p.style.display="none";' +
+          'if(reel){s.style.display="block";s.innerHTML=off;[800,2000,4000].forEach(function(t){setTimeout(function(){cmd("mute");cmd("playVideo")},t)})}}' +
+          'p.addEventListener("click",go);' +
+          's.addEventListener("click",function(){muted=!muted;if(muted)cmd("mute");else{cmd("unMute");cmd("setVolume",[100])}cmd("playVideo");s.innerHTML=muted?off:on});' +
+          'if(reel)go();})()</script>';
       };
       var d = Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype, 'src');
       if (d && d.set) {
@@ -216,7 +225,7 @@
     '.x-hint{position:fixed;left:0;top:0;z-index:8;pointer-events:none;opacity:0;transition:opacity .5s ease;color:var(--xfg,#1b1b1b)}',
     '.x-hint.x-on{opacity:.95}',
     '.x-hint svg{width:100%;height:100%;overflow:visible;animation:x-hint-spin 14s linear infinite}',
-    '.x-hint text{fill:currentColor;font:500 12.5px "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.14em}',
+    '.x-hint text{fill:currentColor;font:500 14.5px "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.06em}',
     '@keyframes x-hint-spin{to{transform:rotate(360deg)}}',
     'html[data-xnight] .x-hint,html[data-xdark] .x-hint{color:rgb(203,237,255)}',
     // it follows the time of day like the type: as the page darkens it turns paler and lighter (towards the light grey-blue of the night type)
@@ -1003,7 +1012,6 @@
     if (JF.walk) { JF.y = innerHeight - JF.h * 0.55; JF.wp = 0; JF.wT = 10; JF.ph = 0; }
     JF.vx = JF.dir * 60; JF.vy = 0; JF.t = 0; JF.pulse = 0.2; jfPick(); JF.since = 1; JF.sq = 0; JF.blink = 2 + Math.random() * 2; JF.blinkT = 0;
     JF.on = true;
-    if (JF.walk && innerWidth >= 600) setTimeout(function () { if (JF.on) jfHint(3600); }, 900);
     e.style.width = w + 'px'; e.style.height = JF.h + 'px';
     e.style.display = 'block';
   }
@@ -1178,7 +1186,7 @@
     JF.el.style.transform = 'translate3d(' + (JF.x - JF.w / 2).toFixed(1) + 'px,' + (JF.y - JF.h / 2 - lift).toFixed(1) + 'px,0) rotate(' + (sway + JF.rot).toFixed(1) + 'deg) scale(' + sx.toFixed(3) + ',' + sy.toFixed(3) + ')';
     if (mob && !planet && !(JF.hint && JF.hint.isConnected && JF.hint.classList.contains('x-on')) && !JF.held) jfHint(86400000);   // on phones the message around it is always there
     if (JF.hint && JF.hint.isConnected) JF.hint.style.visibility = JF.el.style.display === 'none' ? 'hidden' : '';
-    if (JF.hint && JF.hint.isConnected) { var hs = JF.walk ? Math.max(150, JF.w * 2.3) : Math.max(176, Math.max(JF.w, JF.h) * 1.7); JF.hint.style.width = JF.hint.style.height = hs.toFixed(0) + 'px'; JF.hint.style.transform = 'translate3d(' + (JF.x - hs / 2).toFixed(1) + 'px,' + (JF.y - hs / 2 - (JF.walk ? hs * 0.22 : 0)).toFixed(1) + 'px,0)'; }
+    if (JF.hint && JF.hint.isConnected) { var hs = Math.max(112, JF.w * 2.05);                    /* the ring hugs the creature */ JF.hint.style.width = JF.hint.style.height = hs.toFixed(0) + 'px'; JF.hint.style.transform = 'translate3d(' + (JF.x - hs / 2).toFixed(1) + 'px,' + (JF.y - hs / 2 - (JF.walk ? hs * 0.2 : 0)).toFixed(1) + 'px,0)'; }
   }
   // a click or tap on the page sends it swimming over there
   addEventListener('pointerdown', function (ev) {
