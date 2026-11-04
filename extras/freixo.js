@@ -518,7 +518,7 @@ export function open(opts) {
   root.className = 'x-pl';
   root.setAttribute('role', 'dialog'); root.setAttribute('aria-label', 'Ría de Muros e Noia');
   root.innerHTML = '<canvas class="x-pl-cv"></canvas><div class="x-pl-ts x-pl-ts-t"></div><div class="x-pl-ts x-pl-ts-b"></div>' +
-    '<div class="x-pl-top"><div class="x-pl-t"><b>Ría de Muros e Noia</b><span>A Coruña</span></div><div class="x-pl-btns">' +
+    '<div class="x-pl-top"><div class="x-pl-t"><b>Ría de Muros e Noia</b><span>A Coruña</span><span class="x-pl-clock"><em>Hora local</em> <b class="x-pl-hh"></b><i>:</i><b class="x-pl-mm"></b></span></div><div class="x-pl-btns">' +
     '<button type="button" class="x-pl-mu" aria-label="Sound"></button><button type="button" class="x-pl-rn" aria-label="Rain"></button><button type="button" class="x-pl-dn" aria-label="Day / night"></button>' +
     '<button type="button" class="x-pl-x" aria-label="Close"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button></div></div>' +
     '<button type="button" class="x-pl-more">Aprende más</button>' +
@@ -1425,10 +1425,10 @@ export function open(opts) {
   const RAINBG = C(0x9fb1c0), RAINSKY = C(0xc6d3dc), CLD_DAY = C(0xffffff), CLD_RAIN = C(0x8d9aa8), SEA_RAIN = C(0x5d8fa0);
 
   // ---- day / night
-  const DAY = { bg: C(0xfbd3a8), hemi: 1.15, sun: 2.1, sunC: C(0xffdfb4), sky: C(0xfff0dc), sea: C(0x62d0ee) };
+  const DUSK_BG = C(0xf6bfa6), DAY = { bg: C(0xbfe0f6), hemi: 1.15, sun: 2.1, sunC: C(0xffdfb4), sky: C(0xfff0dc), sea: C(0x62d0ee) };
   const NIGHT = { bg: C(0x0a1430), hemi: .5, sun: .6, sunC: C(0x8fb0ff), sky: C(0x6f8ad0), sea: C(0x1b3a63) };
   let manual = false, night = typeof opts.getDark === 'function' ? opts.getDark() : (opts.night ? 1 : 0), nightT = night; const night0 = night > .5 ? 1 : 0;
-  const dnBtn = root.querySelector('.x-pl-dn');
+  const dnBtn = root.querySelector('.x-pl-dn'), hhEl = root.querySelector('.x-pl-hh'), mmEl = root.querySelector('.x-pl-mm');
   let muteSaved = false; try { muteSaved = localStorage.getItem('xpl-mute') === '1'; } catch (e) {}
   const audio = makeAudio(!!opts.night), muBtn = root.querySelector('.x-pl-mu');
   const paintMu = () => { const m = audio ? audio.muted : true; muBtn.innerHTML = m ? '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l4 6M21 9l-4 6"/></svg>' : '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>'; muBtn.setAttribute('aria-pressed', m ? 'true' : 'false'); };
@@ -1453,7 +1453,7 @@ export function open(opts) {
   paintRn();
   const light = (k) => {
     const r = rainT;
-    bgc.copy(DAY.bg).lerp(NIGHT.bg, k).lerp(RAINBG, r * (1 - k * .75)); scene.background = bgc;
+    bgc.copy(DAY.bg).lerp(DUSK_BG, sstep(0, .5, k)).lerp(NIGHT.bg, sstep(.45, 1, k)).lerp(RAINBG, r * (1 - k * .75)); scene.background = bgc;
     hemi.intensity = (DAY.hemi + (NIGHT.hemi - DAY.hemi) * k) * (1 - r * .12); hemi.color.copy(DAY.sky).lerp(NIGHT.sky, k).lerp(RAINSKY, r * (1 - k * .6));
     sun.intensity = (DAY.sun + (NIGHT.sun - DAY.sun) * k) * (1 - r * .62); sun.color.copy(DAY.sunC).lerp(NIGHT.sunC, k).lerp(RAINSKY, r * .6);
     sea.material.color.copy(DAY.sea).lerp(NIGHT.sea, k).lerp(SEA_RAIN, r * (1 - k)); for (const m of cloudMats) m.color.copy(CLD_DAY).lerp(CLD_RAIN, r * (1 - k * .5));
@@ -1533,6 +1533,7 @@ export function open(opts) {
     nightT += (night - nightT) * (1 - Math.exp(-dt * (manual ? 2.2 : 4))); if (Math.abs(night - nightT) < .002) nightT = night;
     light(nightT); if ((nightT > .5) !== root.classList.contains('x-night')) paintBtn();
     rainT += (rainTarget - rainT) * (1 - Math.exp(-dt * 1.1)); if (Math.abs(rainTarget - rainT) < .003) rainT = rainTarget; rainMat.uniforms.uT.value = t;
+    if (frame % 20 === 1) { const hr = opts.getHour ? opts.getHour() : new Date().getHours() + new Date().getMinutes() / 60; const hh = Math.floor(hr) % 24, mm = Math.floor((hr - Math.floor(hr)) * 60); hhEl.textContent = String(hh).padStart(2, '0'); mmEl.textContent = String(mm).padStart(2, '0'); }
     dist += (distT - dist) * (1 - Math.exp(-dt * 3.4));
     if (focus) { world.quaternion.slerp(focus.q, 1 - Math.exp(-dt * 3.2)); distT += (focus.dist - distT) * (1 - Math.exp(-dt * 3)); }
     else if (!ptrs.size) {
@@ -1710,7 +1711,7 @@ function injectCss() {
   if (cssDone) return; cssDone = true;
   const s = document.createElement('style');
   s.textContent = [
-    '.x-pl{position:fixed;inset:0;z-index:90;background:#fbd3a8;opacity:0;transition:opacity .9s cubic-bezier(.4,0,.2,1);color:#4a3340;font:500 13px/1.45 "Switzer","Switzer Placeholder",system-ui,sans-serif;overscroll-behavior:contain;-webkit-user-select:none;user-select:none}',
+    '.x-pl{position:fixed;inset:0;z-index:90;background:#bfe0f6;opacity:0;transition:opacity .9s cubic-bezier(.4,0,.2,1);color:#4a3340;font:500 13px/1.45 "Switzer","Switzer Placeholder",system-ui,sans-serif;overscroll-behavior:contain;-webkit-user-select:none;user-select:none}',
     '.x-pl.x-in{opacity:1}',
     '.x-pl.x-night{color:#cbe3ff;background:#0a1430}',
     '.x-pl-cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}',
@@ -1722,6 +1723,9 @@ function injectCss() {
     '.x-pl-t{display:flex;flex-direction:column;gap:2px}',
     '.x-pl-t b{font:600 19px/1.15 "Switzer","Switzer Placeholder",system-ui,sans-serif;letter-spacing:-.01em}',
     '.x-pl-t span{opacity:.7;font-size:12px}',
+    '.x-pl-clock{display:flex;align-items:baseline;gap:6px;margin-top:6px;opacity:.85!important;font:500 12px/1.2 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace!important;letter-spacing:.06em;text-transform:uppercase}',
+    '.x-pl-clock em{font-style:normal;opacity:.7}.x-pl-clock b{font:500 12px/1.2 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace!important;letter-spacing:.06em}.x-pl-clock i{font-style:normal;display:inline-block;width:.5em;text-align:center;animation:x-pl-blink 1s step-end infinite}',
+    '@keyframes x-pl-blink{50%{opacity:0}}',
     '.x-pl-btns{display:flex;gap:10px;pointer-events:auto}',
     '.x-pl button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}',
     '.x-pl-dn,.x-pl-x,.x-pl-mu,.x-pl-rn{width:44px;height:44px;border-radius:50%;border:0;padding:0;display:grid;place-items:center;background:rgba(255,255,255,.7);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 2px 10px rgba(20,50,80,.12);transition:background .5s ease,transform .5s cubic-bezier(.22,.8,.24,1)}',
