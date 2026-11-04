@@ -3,9 +3,12 @@
 // fishermen on anchored boats, cars, boats under sail, birds and clouds that keep moving. Opened from the Contact page (three clicks on the creature).
 // open({ night, onClose }) shows it on top of the page and returns { close }.
 import * as THREE from './three.module.min.js';
-import { mochiText, MOCHI, tr } from './i18n.js?v=10';
+import { mochiText, MOCHI, tr } from './i18n.js?v=11';
 const mochiLen = MOCHI.length;
 
+// phones and weak devices get a lighter version: fewer pixels, no velvet sheen and cheaper shadows
+const LOW = (typeof innerWidth !== 'undefined' && innerWidth < 760) || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+const PM = (o) => { if (!LOW) return new THREE.MeshPhysicalMaterial(o); const q = Object.assign({}, o); delete q.sheen; delete q.sheenRoughness; delete q.sheenColor; delete q.bumpMap; delete q.bumpScale; return new THREE.MeshStandardMaterial(q); };
 const R = 12, PI = Math.PI, SEA = -.06;    // SEA: the water level, a little below the shore line, so waves and tides never reach the roads and houses                // radius of the planet
 const sstep = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 const n2 = (x, z) => Math.sin(x * .9 + 1.3) * Math.cos(z * .8 - .4) * .5 + Math.sin(x * 2.1 + z * 1.7) * .25 + Math.sin(x * .35 - z * .5 + 2) * .6;
@@ -164,7 +167,7 @@ const SAND = PASTEL(0xeed3a0), SEABED_SHORE = PASTEL(0xf1dcb4), SEABED_DEEP = PA
 const FIELDS = [PASTEL(0xcfd078), PASTEL(0xe8bb68), PASTEL(0x86c87c), PASTEL(0xe2d890), PASTEL(0xe2a082)];
 
 function buildTerrain() {
-  const src = new THREE.IcosahedronGeometry(R, 64), sp = src.attributes.position, m = new THREE.Vector3(), out = new THREE.Color();
+  const src = new THREE.IcosahedronGeometry(R, LOW ? 46 : 64), sp = src.attributes.position, m = new THREE.Vector3(), out = new THREE.Color();
   const map = new Map(), P = [], idx = [];
   for (let i = 0; i < sp.count; i++) {                  // weld the vertices that touch so that normals and colours are shared (soft surface)
     m.fromBufferAttribute(sp, i).normalize();
@@ -197,7 +200,7 @@ function buildTerrain() {
   const uv = new Float32Array(nv * 2); for (let v = 0; v < nv; v++) { m.set(P[v * 3], P[v * 3 + 1], P[v * 3 + 2]); const [ux, uz] = planeOf(m); uv[v * 2] = ux / 2.4; uv[v * 2 + 1] = uz / 2.4; }
   g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); g.setIndex(idx);
   g.computeVertexNormals();
-  return new THREE.Mesh(g, new THREE.MeshPhysicalMaterial({ vertexColors: true, map: paintTex(), flatShading: false, roughness: 1, bumpMap: feltTex(), bumpScale: 1.2, sheen: 1, sheenRoughness: .6, sheenColor: new THREE.Color(0xfff0dc) }));
+  return new THREE.Mesh(g, PM({ vertexColors: true, map: paintTex(), flatShading: false, roughness: 1, bumpMap: feltTex(), bumpScale: 1.2, sheen: 1, sheenRoughness: .6, sheenColor: new THREE.Color(0xfff0dc) }));
 }
 
 // ---- small building blocks
@@ -209,7 +212,7 @@ const addOutline = (root) => { const list = []; root.traverse((o) => { if (o.isM
 const std = (color, extra) => {
   const key = extra ? null : color;
   if (key !== null && matCache.has(key)) return matCache.get(key);
-  const base = PASTEL(color), m = new THREE.MeshPhysicalMaterial(Object.assign({ color: base, roughness: .95, map: paintTex(), bumpMap: feltTex(), bumpScale: 1.1, sheen: 1, sheenRoughness: .55, sheenColor: base.clone().lerp(new THREE.Color(0xfff3e4), .6) }, extra || {}));
+  const base = PASTEL(color), m = PM(Object.assign({ color: base, roughness: .95, map: paintTex(), bumpMap: feltTex(), bumpScale: 1.1, sheen: 1, sheenRoughness: .55, sheenColor: base.clone().lerp(new THREE.Color(0xfff3e4), .6) }, extra || {}));
   if (key !== null) matCache.set(key, m);
   return m;
 };
@@ -688,14 +691,14 @@ export function open(opts) {
 
   const cv = root.querySelector('.x-pl-cv');
   let renderer;
-  try { renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, powerPreference: 'high-performance' }); }
+  try { renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: !LOW, powerPreference: 'high-performance' }); }
   catch (e) {
     root.querySelector('.x-pl-more span').textContent = 'Your browser cannot show the 3D map.';
     root.querySelector('.x-pl-x').addEventListener('click', () => { root.remove(); document.documentElement.style.overflow = prevOverflow; opts.onClose && opts.onClose(); });
     return { close() { root.remove(); document.documentElement.style.overflow = prevOverflow; } };
   }
-  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
-  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.setPixelRatio(LOW ? Math.min(devicePixelRatio || 1, 1.25) : Math.min(devicePixelRatio || 1, 2));
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = LOW ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(36, 1, .03, 400);
   const world = new THREE.Group();
@@ -1739,7 +1742,7 @@ export function open(opts) {
     if (tourOn) return; tourOn = true; tourMuted = !!(audio && audio.muted);
     mochi.classList.remove('x-ctaon'); mochi.classList.add('x-load'); root.classList.add('x-tour'); if (audio) { audio.sfx('mochinext'); setTimeout(() => audio && audio.mute(true), 500); }
     const t0 = performance.now();
-    import('./conducir.js?v=13').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
+    import('./conducir.js?v=17').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
       .then((m) => { const ab = m.open({ onClose: endTour, getDark: () => nightT }); if (!ab) throw new Error('no webgl'); setTimeout(mochiClose, 700); })
       .catch(() => { endTour(); mochiClose(); });
   };

@@ -71,6 +71,7 @@ const ROWS = [
   ['Sheep', 'Oveja', 'Ovella'], ['Lighthouse', 'Faro', 'Farol'], ['Boat', 'Barco', 'Barco'],
   ['Ride with the arrow keys', 'Pedalea con las flechas del teclado · E para leer', 'Pedalea coas frechas do teclado · E para ler'],
   ['Press E to read', 'Pulsa E para leer', 'Preme E para ler'],
+  ['Tap to read', 'Toca para leer', 'Toca para ler'],
   ['Close', 'Cerrar', 'Pechar'],
   ['Day / night', 'Día / noche', 'Día / noite'],
   ['Rain', 'Lluvia', 'Chuvia'],
