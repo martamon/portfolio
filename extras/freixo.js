@@ -101,9 +101,11 @@ function put(obj, x, z, yaw, lift, sea) {
 // ---- colours (soft, like a miniature)
 const C = (h) => new THREE.Color(h);
 // the pastel look: every colour is softened (less saturated, lighter, a touch warm), like gouache on paper
-const PASTEL = (h, k) => { const c = new THREE.Color(h), hsl = {}; c.getHSL(hsl); k = k === undefined ? 1 : k; if (hsl.h > .17 && hsl.h < .45) { hsl.h -= .012 * k; hsl.s *= 1 - .05 * k; } hsl.s *= 1 - .2 * k; hsl.l = hsl.l + (1 - hsl.l) * (hsl.l < .3 ? .1 : .2) * k; c.setHSL(hsl.h, hsl.s, hsl.l); c.lerp(new THREE.Color(0xffe3c4), .1 * k); return c; };
+const PASTEL = (h, k) => { const c = new THREE.Color(h), hsl = {}; c.getHSL(hsl); k = k === undefined ? 1 : k; hsl.s = Math.min(1, hsl.s * (1 - .02 * k)); hsl.l = hsl.l + (1 - hsl.l) * (hsl.l < .3 ? .08 : .18) * k; c.setHSL(hsl.h, hsl.s, hsl.l); c.lerp(new THREE.Color(0xfff0dc), .04 * k); return c; };
 // a hand-painted paper texture: soft mottling, tiny brush dabs and a fine grain; it multiplies the colours, so it only adds texture
 let PAINT = null;
+const paintRep = {};
+const paintTexR = (n) => { if (!paintRep[n]) { const t = paintTex().clone(); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(n, n); t.needsUpdate = true; paintRep[n] = t; } return paintRep[n]; };
 const paintTex = () => {
   if (PAINT) return PAINT;
   const N = 512, cv = document.createElement('canvas'); cv.width = cv.height = N; const g = cv.getContext('2d');
@@ -125,9 +127,9 @@ const paintTex = () => {
   const im = g.getImageData(0, 0, N, N), d = im.data; for (let i = 0; i < d.length; i += 4) { const n = (r() - .5) * 9; d[i] = Math.max(0, Math.min(255, d[i] + n)); d[i + 1] = Math.max(0, Math.min(255, d[i + 1] + n)); d[i + 2] = Math.max(0, Math.min(255, d[i + 2] + n)); } g.putImageData(im, 0, 0);
   const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; PAINT = t; return t;
 };
-const SAND = PASTEL(0xf4d6a6), SEABED_SHORE = PASTEL(0xf0dcb4), SEABED_DEEP = PASTEL(0x5f9fc0, .4), FAR = PASTEL(0x7db4cc, .4), GRASS_A = PASTEL(0xb0cc8c), GRASS_B = PASTEL(0x9fbf7e),
-  WOOD = PASTEL(0x86a65a), ROCK = PASTEL(0xc4b0c4), ROCK_G = PASTEL(0xa8b08e), HEATH = PASTEL(0xd2b4d6);
-const FIELDS = [PASTEL(0xcdc67c), PASTEL(0xe3b968), PASTEL(0x9fb872), PASTEL(0xd9d391), PASTEL(0xd9a477)];
+const SAND = PASTEL(0xf8d89a), SEABED_SHORE = PASTEL(0xf4dcae), SEABED_DEEP = PASTEL(0x4f9fd0, .4), FAR = PASTEL(0x6cb8dc, .4), GRASS_A = PASTEL(0x9fd36a), GRASS_B = PASTEL(0x8ac85e),
+  WOOD = PASTEL(0x6fb34e), ROCK = PASTEL(0xcdb0d4), ROCK_G = PASTEL(0xa7c288), HEATH = PASTEL(0xe0b0e4);
+const FIELDS = [PASTEL(0xd6d060), PASTEL(0xf0b84e), PASTEL(0x8fcf60), PASTEL(0xe6dc7a), PASTEL(0xeb9a64)];
 
 function buildTerrain() {
   const src = new THREE.IcosahedronGeometry(R, 64), sp = src.attributes.position, m = new THREE.Vector3(), out = new THREE.Color();
@@ -206,11 +208,11 @@ const gable = (len, span, rh, mat) => {              // a gabled roof, ridge alo
   g.rotateY(PI / 2); g.translate(-(len - bv * 2) / 2, 0, 0); g.computeVertexNormals();
   return new THREE.Mesh(g, mat);
 };
-const ROOF = [0xd9825a, 0xc9694c, 0xe3a05a, 0xcf7a68, 0xdc9060, 0x7f94b4], SLATE = 0x7a7f9a;
+const ROOF = [0xee7f50, 0xe0694a, 0xf2a24e, 0xe27a72, 0xf09460, 0x7f9ed0], SLATE = 0x7f86b0;
 const GRANITE = [0xb8b19f, 0xaaa391, 0xc2bba9];
-const WALLS = [0xf8e8c8, 0xf4d6a0, 0xd8b8d8, 0xfaf0dc, 0xb4c99a, 0xf0b8a0, 0xf8e8c8, 0xe8c888, 0x9fb4c8, 0xfaf0dc];
+const WALLS = [0xfbe6b4, 0xf8cf8c, 0xdcb2ea, 0xfdf0d8, 0xa9dcae, 0xf8b49c, 0xfbe6b4, 0xf2c878, 0x9cc8ee, 0xfdf0d8];
 const FLG = new THREE.SphereGeometry(.014, 6, 5), FLM = [0xe9577a, 0xf2a43a, 0xf5e04a, 0xf07a5a].map((c) => new THREE.MeshStandardMaterial({ color: c, roughness: .8 }));
-const FRAMEC = [0xfff8ea, 0x6f8fb0, 0x7d9650, 0xfff8ea, 0xc9694c, 0xe0a24a];
+const FRAMEC = [0xfff8ea, 0x5f8fd0, 0x5fae60, 0xfff8ea, 0xe0694a, 0xf0b040];
 
 // a house: simple, warm walls, terracotta roof with a little overhang, dark windows, a door, a chimney
 function house(o) {
@@ -553,7 +555,7 @@ export function open(opts) {
   Object.assign(sun.shadow.camera, { left: -16, right: 16, top: 16, bottom: -16, near: 1, far: 90 }); sun.shadow.bias = -.0005; sun.shadow.normalBias = .03;
 
   const terrain = buildTerrain(); W(terrain);
-  const sea = new THREE.Mesh(new THREE.IcosahedronGeometry(R, 30), new THREE.MeshStandardMaterial({ color: 0x9ccfdc, transparent: true, opacity: .82, flatShading: true, roughness: .25, metalness: .05 }));
+  const sea = new THREE.Mesh(new THREE.IcosahedronGeometry(R, 30), new THREE.MeshStandardMaterial({ color: 0x62d0ee, map: paintTexR(26), transparent: true, opacity: .9, flatShading: true, roughness: .25, metalness: .05 }));
   sea.scale.setScalar((R + SEA) / R); W(sea);
   const seaOrig = sea.geometry.attributes.position.array.slice();
   const spots = [];
@@ -1324,12 +1326,12 @@ export function open(opts) {
   const green = (base, v) => (c) => c.set(base).offsetHSL((rnd() - .5) * .03, (rnd() - .5) * .08, (rnd() - .5) * v);
   const pl = (fn, colFn) => { fn.color = colFn; return fn; };
   W(inst(trunkG, trunkM, oaks, pl((o) => o.translateY(.13 * o.scale.x))));
-  W(inst(oakG, std(0xffffff, { flatShading: false, roughness: .8 }), oaks, pl((o) => { o.translateY(.5 * o.scale.x); o.scale.y *= .9; }, green(0x62ae4a, .12))));
+  W(inst(oakG, std(0xffffff, { flatShading: false, roughness: .8, map: paintTexR(3) }), oaks, pl((o) => { o.translateY(.5 * o.scale.x); o.scale.y *= .9; }, green(0x6ec65a, .12))));
   W(inst(trunkG, trunkM, pines, pl((o) => o.translateY(.13 * o.scale.x))));
-  W(inst(pineG, std(0xffffff, { roughness: .8 }), pines, pl((o) => o.translateY(.5 * o.scale.x), green(0x3b8a46, .1))));
-  W(inst(pine2G, std(0xffffff, { roughness: .8 }), pines, pl((o) => o.translateY(.98 * o.scale.x), green(0x4a9a4c, .1))));
+  W(inst(pineG, std(0xffffff, { roughness: .8, map: paintTexR(3) }), pines, pl((o) => o.translateY(.5 * o.scale.x), green(0x4aa856, .1))));
+  W(inst(pine2G, std(0xffffff, { roughness: .8, map: paintTexR(3) }), pines, pl((o) => o.translateY(.98 * o.scale.x), green(0x5cb85c, .1))));
   W(inst(eucT, std(0xcfc7b0), euc, pl((o) => o.translateY(.4 * o.scale.x))));
-  W(inst(eucG, std(0xffffff, { roughness: .8 }), euc, pl((o) => { o.translateY(.88 * o.scale.x); o.scale.y *= 1.5; }, green(0x7da45a, .1))));
+  W(inst(eucG, std(0xffffff, { roughness: .8, map: paintTexR(3) }), euc, pl((o) => { o.translateY(.88 * o.scale.x); o.scale.y *= 1.5; }, green(0x92c466, .1))));
 
   // Monte Louro
   spot('Monte Louro', 'Monte', 'Across the water, Monte Louro rises over the mouth of the ría, with pines on its slopes and the sea on three sides.', hubAt(LOURO[0], LOURO[1], 1.9), .6);
@@ -1423,7 +1425,7 @@ export function open(opts) {
   const RAINBG = C(0x9fb1c0), RAINSKY = C(0xc6d3dc), CLD_DAY = C(0xffffff), CLD_RAIN = C(0x8d9aa8), SEA_RAIN = C(0x5d8fa0);
 
   // ---- day / night
-  const DAY = { bg: C(0xfbd3a8), hemi: 1.15, sun: 2.1, sunC: C(0xffdfb4), sky: C(0xfff0dc), sea: C(0x9ccfdc) };
+  const DAY = { bg: C(0xfbd3a8), hemi: 1.15, sun: 2.1, sunC: C(0xffdfb4), sky: C(0xfff0dc), sea: C(0x62d0ee) };
   const NIGHT = { bg: C(0x0a1430), hemi: .5, sun: .6, sunC: C(0x8fb0ff), sky: C(0x6f8ad0), sea: C(0x1b3a63) };
   let manual = false, night = typeof opts.getDark === 'function' ? opts.getDark() : (opts.night ? 1 : 0), nightT = night; const night0 = night > .5 ? 1 : 0;
   const dnBtn = root.querySelector('.x-pl-dn');
