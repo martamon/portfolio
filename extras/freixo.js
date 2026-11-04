@@ -101,22 +101,33 @@ function put(obj, x, z, yaw, lift, sea) {
 // ---- colours (soft, like a miniature)
 const C = (h) => new THREE.Color(h);
 // the pastel look: every colour is softened (less saturated, lighter, a touch warm), like gouache on paper
-const PASTEL = (h, k) => { const c = new THREE.Color(h), hsl = {}; c.getHSL(hsl); k = k === undefined ? 1 : k; hsl.s *= 1 - .16 * k; hsl.l = hsl.l + (1 - hsl.l) * (hsl.l < .3 ? .12 : .28) * k; c.setHSL(hsl.h, hsl.s, hsl.l); c.lerp(new THREE.Color(0xfff4e6), .06 * k); return c; };
+const PASTEL = (h, k) => { const c = new THREE.Color(h), hsl = {}; c.getHSL(hsl); k = k === undefined ? 1 : k; if (hsl.h > .17 && hsl.h < .45) { hsl.h -= .012 * k; hsl.s *= 1 - .05 * k; } hsl.s *= 1 - .2 * k; hsl.l = hsl.l + (1 - hsl.l) * (hsl.l < .3 ? .1 : .2) * k; c.setHSL(hsl.h, hsl.s, hsl.l); c.lerp(new THREE.Color(0xffe3c4), .1 * k); return c; };
 // a hand-painted paper texture: soft mottling, tiny brush dabs and a fine grain; it multiplies the colours, so it only adds texture
 let PAINT = null;
 const paintTex = () => {
   if (PAINT) return PAINT;
-  const cv = document.createElement('canvas'); cv.width = cv.height = 256; const g = cv.getContext('2d');
-  g.fillStyle = '#f4efe6'; g.fillRect(0, 0, 256, 256);
-  let sd = 5; const r = () => { sd = (sd * 16807) % 2147483647; return (sd - 1) / 2147483646; };
-  for (let i = 0; i < 70; i++) { const x = r() * 256, y = r() * 256, rad = 14 + r() * 40, a = .05 + r() * .08, l = 215 + Math.floor(r() * 40); for (const ox of [-256, 0, 256]) for (const oy of [-256, 0, 256]) { const gr = g.createRadialGradient(x + ox, y + oy, 0, x + ox, y + oy, rad); gr.addColorStop(0, `rgba(${l},${l - 4},${l - 14},${a})`); gr.addColorStop(1, 'rgba(255,250,240,0)'); g.fillStyle = gr; g.fillRect(x + ox - rad, y + oy - rad, rad * 2, rad * 2); } }
-  for (let i = 0; i < 520; i++) { const x = r() * 256, y = r() * 256, w = 3 + r() * 11, a = r() * 6.28, l = r() < .5 ? 255 : 205; g.strokeStyle = `rgba(${l},${l - 6},${l - 18},${.05 + r() * .06})`; g.lineWidth = 1 + r() * 2.2; g.lineCap = 'round'; for (const ox of [-256, 0, 256]) for (const oy of [-256, 0, 256]) { g.beginPath(); g.moveTo(x + ox, y + oy); g.lineTo(x + ox + Math.cos(a) * w, y + oy + Math.sin(a) * w); g.stroke(); } }
-  const im = g.getImageData(0, 0, 256, 256), d = im.data; for (let i = 0; i < d.length; i += 4) { const n = (r() - .5) * 11; d[i] = Math.max(0, Math.min(255, d[i] + n)); d[i + 1] = Math.max(0, Math.min(255, d[i + 1] + n)); d[i + 2] = Math.max(0, Math.min(255, d[i + 2] + n)); } g.putImageData(im, 0, 0);
+  const N = 512, cv = document.createElement('canvas'); cv.width = cv.height = N; const g = cv.getContext('2d');
+  g.fillStyle = '#f3ece0'; g.fillRect(0, 0, N, N);
+  let sd = 9; const r = () => { sd = (sd * 16807) % 2147483647; return (sd - 1) / 2147483646; };
+  const wrap = (fn) => { for (const ox of [-N, 0, N]) for (const oy of [-N, 0, N]) fn(ox, oy); };
+  // big soft colour washes (warm peach, lilac, sage), like watered gouache
+  const WASH = [[255, 214, 176], [236, 212, 236], [214, 228, 196], [255, 244, 226], [246, 205, 190]];
+  for (let i = 0; i < 46; i++) { const x = r() * N, y = r() * N, rad = 40 + r() * 90, c = WASH[Math.floor(r() * WASH.length)], a = .12 + r() * .16; wrap((ox, oy) => { const gr = g.createRadialGradient(x + ox, y + oy, 0, x + ox, y + oy, rad); gr.addColorStop(0, `rgba(${c[0]},${c[1]},${c[2]},${a})`); gr.addColorStop(1, `rgba(${c[0]},${c[1]},${c[2]},0)`); g.fillStyle = gr; g.fillRect(x + ox - rad, y + oy - rad, rad * 2, rad * 2); }); }
+  // dry-brush strokes: long, mostly diagonal, made of many thin parallel hairs that skip here and there
+  const ANG = -.62;
+  for (let i = 0; i < 150; i++) {
+    const x = r() * N, y = r() * N, len = 50 + r() * 150, a = ANG + (r() - .5) * .5, w = 6 + r() * 18, light = r() < .55, hairs = Math.floor(w / 1.7), tone = light ? [255, 250, 238] : [170, 140, 142];
+    for (let h = 0; h < hairs; h++) { const off = (h - hairs / 2) * 1.7, nx = -Math.sin(a) * off, ny = Math.cos(a) * off, s0 = r() * .25, s1 = .7 + r() * .3; g.strokeStyle = `rgba(${tone[0]},${tone[1]},${tone[2]},${(light ? .16 : .1) * (.4 + r() * .8)})`; g.lineWidth = 1 + r() * 1.3; g.lineCap = 'round';
+      wrap((ox, oy) => { g.beginPath(); g.moveTo(x + ox + nx + Math.cos(a) * len * s0, y + oy + ny + Math.sin(a) * len * s0); g.lineTo(x + ox + nx + Math.cos(a) * len * s1, y + oy + ny + Math.sin(a) * len * s1); g.stroke(); }); }
+  }
+  // a few short dark flecks (paint caught in the paper)
+  for (let i = 0; i < 260; i++) { const x = r() * N, y = r() * N, a = ANG + (r() - .5) * 1.2, l = 2 + r() * 6; g.strokeStyle = `rgba(120,92,96,${.05 + r() * .08})`; g.lineWidth = 1 + r(); wrap((ox, oy) => { g.beginPath(); g.moveTo(x + ox, y + oy); g.lineTo(x + ox + Math.cos(a) * l, y + oy + Math.sin(a) * l); g.stroke(); }); }
+  const im = g.getImageData(0, 0, N, N), d = im.data; for (let i = 0; i < d.length; i += 4) { const n = (r() - .5) * 9; d[i] = Math.max(0, Math.min(255, d[i] + n)); d[i + 1] = Math.max(0, Math.min(255, d[i + 1] + n)); d[i + 2] = Math.max(0, Math.min(255, d[i + 2] + n)); } g.putImageData(im, 0, 0);
   const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; PAINT = t; return t;
 };
-const SAND = PASTEL(0xf6e7bd), SEABED_SHORE = PASTEL(0xf1e6c2), SEABED_DEEP = PASTEL(0x3f8fae, .6), FAR = PASTEL(0x58a4b8, .6), GRASS_A = PASTEL(0xb4dc86), GRASS_B = PASTEL(0xa2d27a),
-  WOOD = PASTEL(0x86b968), ROCK = PASTEL(0xbfb8a8), ROCK_G = PASTEL(0x9bb08a), HEATH = PASTEL(0xcbb6d4);
-const FIELDS = [PASTEL(0xc2de78), PASTEL(0xe6d77e), PASTEL(0x9fd36a), PASTEL(0xd2e48f), PASTEL(0xdcc983)];
+const SAND = PASTEL(0xf4d6a6), SEABED_SHORE = PASTEL(0xf0dcb4), SEABED_DEEP = PASTEL(0x5f9fc0, .4), FAR = PASTEL(0x7db4cc, .4), GRASS_A = PASTEL(0xb0cc8c), GRASS_B = PASTEL(0x9fbf7e),
+  WOOD = PASTEL(0x86a65a), ROCK = PASTEL(0xc4b0c4), ROCK_G = PASTEL(0xa8b08e), HEATH = PASTEL(0xd2b4d6);
+const FIELDS = [PASTEL(0xcdc67c), PASTEL(0xe3b968), PASTEL(0x9fb872), PASTEL(0xd9d391), PASTEL(0xd9a477)];
 
 function buildTerrain() {
   const src = new THREE.IcosahedronGeometry(R, 64), sp = src.attributes.position, m = new THREE.Vector3(), out = new THREE.Color();
@@ -157,6 +168,10 @@ function buildTerrain() {
 
 // ---- small building blocks
 const matCache = new Map();
+// a dark brush-like outline round the buildings and boats, as in ink-and-gouache illustrations (inverted hull pushed out along the normals)
+let OUTLINE = null;
+const outlineMat = () => OUTLINE || (OUTLINE = (() => { const m = new THREE.MeshBasicMaterial({ color: 0x4a3236, side: THREE.BackSide }); m.onBeforeCompile = (sh) => { sh.vertexShader = sh.vertexShader.replace('#include <begin_vertex>', 'vec3 transformed = position + normalize(normal) * .011;'); }; return m; })());
+const addOutline = (root) => { const list = []; root.traverse((o) => { if (o.isMesh && !o.userData.ol && o.material && !o.material.transparent && !o.isInstancedMesh && o.geometry && o.geometry.attributes.normal) { o.geometry.computeBoundingBox && !o.geometry.boundingBox && o.geometry.computeBoundingBox(); const b = o.geometry.boundingBox, sz = b ? Math.max(b.max.x - b.min.x, b.max.y - b.min.y, b.max.z - b.min.z) * Math.max(o.scale.x, o.scale.y, o.scale.z) : 0; if (sz > .16) list.push(o); } }); for (const o of list) { const ol = new THREE.Mesh(o.geometry, outlineMat()); ol.userData.ol = 1; ol.castShadow = false; ol.receiveShadow = false; o.add(ol); } };
 const std = (color, extra) => {
   const key = extra ? null : color;
   if (key !== null && matCache.has(key)) return matCache.get(key);
@@ -191,11 +206,11 @@ const gable = (len, span, rh, mat) => {              // a gabled roof, ridge alo
   g.rotateY(PI / 2); g.translate(-(len - bv * 2) / 2, 0, 0); g.computeVertexNormals();
   return new THREE.Mesh(g, mat);
 };
-const ROOF = [0xd0693a, 0xc45a30, 0xdc7a48, 0xc9623a, 0xd8703f, 0x5f7f96], SLATE = 0x5d636b;
+const ROOF = [0xd9825a, 0xc9694c, 0xe3a05a, 0xcf7a68, 0xdc9060, 0x7f94b4], SLATE = 0x7a7f9a;
 const GRANITE = [0xb8b19f, 0xaaa391, 0xc2bba9];
-const WALLS = [0xf6e6b4, 0xf3d9a0, 0xaed0dc, 0xf8efd9, 0xb9d9c3, 0xf2c6a8, 0xf6e6b4, 0xe8d29a, 0xa9c6d8, 0xf8efd9];
+const WALLS = [0xf8e8c8, 0xf4d6a0, 0xd8b8d8, 0xfaf0dc, 0xb4c99a, 0xf0b8a0, 0xf8e8c8, 0xe8c888, 0x9fb4c8, 0xfaf0dc];
 const FLG = new THREE.SphereGeometry(.014, 6, 5), FLM = [0xe9577a, 0xf2a43a, 0xf5e04a, 0xf07a5a].map((c) => new THREE.MeshStandardMaterial({ color: c, roughness: .8 }));
-const FRAMEC = [0xfff8ea, 0x3d78a8, 0x4a9a74, 0xfff8ea, 0xb4483a, 0xd9a441];
+const FRAMEC = [0xfff8ea, 0x6f8fb0, 0x7d9650, 0xfff8ea, 0xc9694c, 0xe0a24a];
 
 // a house: simple, warm walls, terracotta roof with a little overhang, dark windows, a door, a chimney
 function house(o) {
@@ -532,13 +547,13 @@ export function open(opts) {
   const W = (o) => { world.add(o); return o; };
 
   // lights stay with the camera, so the sun does not move when the planet turns (the shadows do)
-  const hemi = new THREE.HemisphereLight(0xfff8ea, 0xe6d3a8, 1.55); scene.add(hemi);
+  const hemi = new THREE.HemisphereLight(0xfff4e4, 0xd8bcd8, 1.75); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffeccf, 2.15); sun.position.set(16, 20, 24); scene.add(sun);
   sun.castShadow = true; sun.shadow.mapSize.set(innerWidth < 700 ? 1024 : 2048, innerWidth < 700 ? 1024 : 2048);
   Object.assign(sun.shadow.camera, { left: -16, right: 16, top: 16, bottom: -16, near: 1, far: 90 }); sun.shadow.bias = -.0005; sun.shadow.normalBias = .03;
 
   const terrain = buildTerrain(); W(terrain);
-  const sea = new THREE.Mesh(new THREE.IcosahedronGeometry(R, 30), new THREE.MeshStandardMaterial({ color: 0x7fcfd0, transparent: true, opacity: .8, flatShading: true, roughness: .25, metalness: .05 }));
+  const sea = new THREE.Mesh(new THREE.IcosahedronGeometry(R, 30), new THREE.MeshStandardMaterial({ color: 0x9ccfdc, transparent: true, opacity: .82, flatShading: true, roughness: .25, metalness: .05 }));
   sea.scale.setScalar((R + SEA) / R); W(sea);
   const seaOrig = sea.geometry.attributes.position.array.slice();
   const spots = [];
@@ -1279,7 +1294,7 @@ export function open(opts) {
     const kept = [];
     for (const it of items) {
       const bad = it.circles.some((c) => kept.some((k) => k.circles.some((kc) => Math.hypot(c[0] - kc[0], c[1] - kc[1]) < c[2] + kc[2] + (it.pri >= 4 && k.pri >= 4 ? -.05 : .3))) || (it.pri < 3 && nearRoad(c, it.pri < 2)) || (it.pri < 3 && kept.some((k) => k.pri === 3 && k.circles.some((kc) => Math.hypot(c[0] - kc[0], c[1] - kc[1]) < c[2] + kc[2] + .7))));
-      if (bad) world.remove(it.o); else { if (it.home) HOMES.push([it.x, it.z, it.circles[0][2]]); kept.push(it); for (const c of it.circles) keptC.push(c); }
+      if (bad) world.remove(it.o); else { addOutline(it.o); if (it.home) HOMES.push([it.x, it.z, it.circles[0][2]]); kept.push(it); for (const c of it.circles) keptC.push(c); }
     } }
   { const solids = [], dd3 = new THREE.Vector3();
     for (const o of world.children) if (o.userData && o.userData.stoneBlock) { dd3.copy(o.position).normalize(); const [x, z] = planeOf(dd3); solids.push([x, z]); }
@@ -1408,7 +1423,7 @@ export function open(opts) {
   const RAINBG = C(0x9fb1c0), RAINSKY = C(0xc6d3dc), CLD_DAY = C(0xffffff), CLD_RAIN = C(0x8d9aa8), SEA_RAIN = C(0x5d8fa0);
 
   // ---- day / night
-  const DAY = { bg: C(0xdcecf0), hemi: 1.15, sun: 2.2, sunC: C(0xffecc8), sky: C(0xf1f6ec), sea: C(0x7fcfd0) };
+  const DAY = { bg: C(0xfbd3a8), hemi: 1.15, sun: 2.1, sunC: C(0xffdfb4), sky: C(0xfff0dc), sea: C(0x9ccfdc) };
   const NIGHT = { bg: C(0x0a1430), hemi: .5, sun: .6, sunC: C(0x8fb0ff), sky: C(0x6f8ad0), sea: C(0x1b3a63) };
   let manual = false, night = typeof opts.getDark === 'function' ? opts.getDark() : (opts.night ? 1 : 0), nightT = night; const night0 = night > .5 ? 1 : 0;
   const dnBtn = root.querySelector('.x-pl-dn');
@@ -1693,7 +1708,7 @@ function injectCss() {
   if (cssDone) return; cssDone = true;
   const s = document.createElement('style');
   s.textContent = [
-    '.x-pl{position:fixed;inset:0;z-index:90;background:#cfe9f4;opacity:0;transition:opacity .9s cubic-bezier(.4,0,.2,1);color:#12304a;font:500 13px/1.45 "Switzer","Switzer Placeholder",system-ui,sans-serif;overscroll-behavior:contain;-webkit-user-select:none;user-select:none}',
+    '.x-pl{position:fixed;inset:0;z-index:90;background:#fbd3a8;opacity:0;transition:opacity .9s cubic-bezier(.4,0,.2,1);color:#4a3340;font:500 13px/1.45 "Switzer","Switzer Placeholder",system-ui,sans-serif;overscroll-behavior:contain;-webkit-user-select:none;user-select:none}',
     '.x-pl.x-in{opacity:1}',
     '.x-pl.x-night{color:#cbe3ff;background:#0a1430}',
     '.x-pl-cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}',
