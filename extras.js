@@ -218,7 +218,7 @@
     '.x-ct-social{display:flex;flex-wrap:wrap;gap:6px 22px;margin-top:18px;text-transform:uppercase}',
     '@media(max-width:600px){.x-contact{height:400px}.x-ct-arc{width:250px;transform:translateX(-30%) rotate(12deg)}.x-ct-text{font-size:12px}}',
     // the little creature that drifts by now and then (see setupDrifter); a drop shadow behind it
-    '.x-drift{position:fixed;left:0;top:0;z-index:9;display:none;background:url(/extras/blob-sprite.webp) 0 0/1000% 100% no-repeat;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;will-change:transform}',
+    '.x-drift{position:fixed;left:0;top:0;z-index:9;display:none;transition:opacity .5s ease;background:url(/extras/blob-sprite.webp) 0 0/1000% 100% no-repeat;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;will-change:transform}',
     // its shadow: a soft blurred oval behind and below it (a gradient, not a copy of its silhouette, so it can never look like a second one)
     '.x-drift::before{content:"";position:absolute;left:8%;right:-4%;top:62%;height:52%;z-index:-1;border-radius:50%;background:radial-gradient(closest-side,rgba(20,32,80,.32),rgba(20,32,80,.14) 55%,rgba(20,32,80,0));transform:translate(calc(6% + var(--sd,.5) * 12%),calc(10% + var(--sd,.5) * 22%));pointer-events:none}',
     '.x-drift.x-grab{cursor:grabbing}',
@@ -1009,7 +1009,7 @@
     JF.dir = Math.random() < 0.5 ? 1 : -1;
     JF.x = JF.dir > 0 ? -w : innerWidth + w;
     JF.y = innerHeight * (0.25 + Math.random() * 0.5);
-    if (JF.walk) { JF.y = innerHeight - JF.h * 0.55; JF.wp = 0; JF.wT = 10; JF.ph = 0; }
+    if (JF.walk) { JF.y = innerHeight - JF.h * 0.55; JF.wp = 0; JF.wT = 10; JF.ph = 0; JF.shown = null; JF.gr = false; JF.el.style.opacity = '0'; } else { e.style.opacity = ''; e.style.pointerEvents = ''; }
     JF.vx = JF.dir * 60; JF.vy = 0; JF.t = 0; JF.pulse = 0.2; jfPick(); JF.since = 1; JF.sq = 0; JF.blink = 2 + Math.random() * 2; JF.blinkT = 0;
     JF.on = true;
     e.style.width = w + 'px'; e.style.height = JF.h + 'px';
@@ -1070,7 +1070,7 @@
       // eyes shut; it drops like a stone (gravity), lands on the bottom of the screen with a squash and a little bounce, lies a
       // little on its side and dozes, breathing; when it wakes it pushes off upwards and swims on
       if (a.t > a.d) { JF.act = null; JF.vy = -260; JF.pulse = 0.1; return; }
-      var floor = innerHeight - JF.h * 0.55;
+      var floor = JF.walk && JF.fl ? JF.fl : innerHeight - JF.h * 0.55;
       JF.fo = 9; JF.vx *= Math.exp(-3 * dt);
       if (!a.landed) {
         JF.vy += 1500 * dt; JF.y += JF.vy * dt; JF.x += JF.vx * dt;
@@ -1115,6 +1115,17 @@
     if (!JF.on) { if (now > JF.next) jfLaunch(); else return; }
     var slow = matchMedia('(prefers-reduced-motion:reduce)').matches ? 0.5 : 1;
     JF.t += dt;
+    if (JF.walk) {                        // it lives on the footer: it only shows when the page is scrolled down to "© 2025 · Made by Martamon", and walks along just above that row
+      if (!JF.fe || !JF.fe.isConnected || (JF.fc = (JF.fc || 0) + 1) % 90 === 0) {
+        JF.fe = null; var fa = document.querySelectorAll('a');
+        for (var fi = 0; fi < fa.length; fi++) if (/Made by Martamon/.test(fa[fi].textContent)) { JF.fe = fa[fi]; break; }
+      }
+      var ftop = JF.fe ? JF.fe.getBoundingClientRect().top : 1e9, show = ftop < innerHeight - 6 && ftop > JF.h;
+      if (show) JF.fl = ftop - JF.h * 0.5 - 4;
+      if (show !== JF.shown) { JF.shown = show; JF.el.style.opacity = show ? '1' : '0'; JF.el.style.pointerEvents = show ? '' : 'none'; if (show && !JF.held) { JF.y = JF.fl + JF.h * 0.9; JF.vy = -260; } }
+      if (!show) { JF.hid = true; if (JF.hint && JF.hint.isConnected) JF.hint.style.visibility = 'hidden'; JF.last2 = now; return; }
+      JF.hid = false;
+    }
     if (JF.held) {
       var k = Math.min(1, dt * 16), ox = JF.x, oy = JF.y;
       JF.x += (JF.px - JF.gx - JF.x) * k; JF.y += (JF.py - JF.gy - JF.y) * k;
@@ -1127,7 +1138,7 @@
       // Home and About: it walks to and fro along the bottom of the screen, stops now and then, and still answers taps, drags and 3 clicks
       if (JF.act) jfActStep(dt);
       JF.rot = 0; JF.km = 1; JF.fo = -1;
-      var chasing = !!JF.act, wdx = JF.tx - JF.x, want = 0, fl = innerHeight - JF.h * 0.55, spd = innerWidth < 600 ? 30 : 38;
+      var chasing = !!JF.act, wdx = JF.tx - JF.x, want = 0, fl = JF.fl || innerHeight - JF.h * 0.55, spd = innerWidth < 600 ? 30 : 38;
       if (JF.wp > 0 && !chasing) { JF.wp -= dt; if (JF.wp <= 0) { JF.tx = innerWidth * (0.06 + Math.random() * 0.88); JF.wT = 10; } }
       else if (!chasing && (Math.abs(wdx) < 6 || (JF.wT -= dt) < 0)) JF.wp = 1.6 + Math.random() * 3.2;
       else if (Math.abs(wdx) >= 6) want = (wdx > 0 ? 1 : -1) * (chasing ? 95 : spd);
@@ -1136,7 +1147,9 @@
       JF.x = Math.max(JF.w * 0.6, Math.min(innerWidth - JF.w * 0.6, JF.x + JF.vx * dt));
       JF.vy += 1500 * dt; JF.y += JF.vy * dt;
       var ground = false;
+      if (JF.gr && !JF.held && JF.y < fl + 30) JF.y = fl;       // glued to the row while the page scrolls
       if (JF.y >= fl) { if (JF.vy > 240) { JF.vy = -JF.vy * 0.28; JF.sq = 0.25; } else { JF.vy = 0; ground = true; } JF.y = fl; }
+      JF.gr = ground;
       JF.ph += Math.abs(JF.vx) * dt / (JF.w * 0.55) * Math.PI; JF.bob = ground ? Math.abs(Math.sin(JF.ph)) : 0;
       if (ground) JF.sq += ((want ? 0.07 * (1 - JF.bob) - 0.01 : 0.02 + 0.02 * Math.sin(JF.t * 2.2)) - JF.sq) * Math.min(1, dt * 12);
     } else {
@@ -1662,7 +1675,7 @@
       for (var tq = 0; tq < ti.length; tq++) if (ti[tq].textContent.trim() === 'Regular Studio') ti[tq].textContent = 'Martamon';
     }
     setupReel(p === 'home');
-    setupDrifter(p === 'contact' ? 'swim' : (p === 'home' || p === 'about') ? 'walk' : false);
+    setupDrifter(p === 'contact' ? 'swim' : 'walk');
     setupContact(p === 'contact');
 
     var faces = document.querySelectorAll('a[href="./#hero"],a[href="/#hero"],a[href="./"]');
