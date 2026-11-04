@@ -1080,6 +1080,53 @@ export function open(opts) {
       else { const hr = horreo(); W(put(hr, cx0 - .3, cz0 + .35, rnd() * 6, -.02)); }
     } }
 
+
+  // ---- supermarkets, small blocks of flats, more houses and crop fields (everything goes through the tidy pass below, so nothing overlaps)
+  function supermarket(col) {
+    const g = new THREE.Group(), w = .9, d = .55;
+    const b = box(w, .2, d, std(0xf4efe2)); b.position.y = .1; g.add(b);
+    const rf = box(w + .06, .035, d + .06, std(col)); rf.position.y = .215; g.add(rf);
+    const gl = box(w * .8, .11, .02, winMat); gl.position.set(-.04, .09, d / 2 + .008); g.add(gl);
+    for (let k = 0; k <= 6; k++) { const m = box(.012, .12, .026, std(0xffffff)); m.position.set(-.04 - w * .4 + k * w * .8 / 6, .09, d / 2 + .012); g.add(m); }
+    const aw = box(w * .85, .025, .12, std(col)); aw.position.set(-.04, .17, d / 2 + .06); aw.rotation.x = .2; g.add(aw);
+    const sign = box(.36, .07, .02, std(col)); sign.position.set(.26, .27, d / 2 - .02); g.add(sign); const sl = box(.28, .035, .022, std(0xfff8ea)); sl.position.set(.26, .27, d / 2 - .01); g.add(sl);
+    for (let k = 0; k < 4; k++) { const tr = box(.045, .028, .03, std(0x8a929a)); tr.position.set(-.3 + k * .06, .02, d / 2 + .16); g.add(tr); }
+    g.userData.fp = .85; g.userData.pri = 2; return g;
+  }
+  function flats(col) {
+    const g = new THREE.Group(), w = .5, d = .42, fl = 3, fh = .17;
+    const b = box(w, fl * fh, d, std(col)); b.position.y = fl * fh / 2; g.add(b);
+    for (let f = 0; f < fl; f++) for (let k = -1; k <= 1; k++) { const fr = box(.07, .09, .014, std(0xfff8ea)); fr.position.set(k * .15, f * fh + .1, d / 2 + .004); g.add(fr); const gl = box(.048, .068, .018, winMat); gl.position.set(k * .15, f * fh + .1, d / 2 + .008); g.add(gl); if (f > 0 && k !== 0) { const bc = box(.1, .016, .045, std(0xd9d0bc)); bc.position.set(k * .15, f * fh + .04, d / 2 + .03); g.add(bc); } }
+    const rf = box(w + .04, .03, d + .04, std(0xb9b19d)); rf.position.y = fl * fh + .015; g.add(rf);
+    const dr = box(.09, .12, .02, std(0x3d78a8)); dr.position.set(0, .06, d / 2 + .008); g.add(dr);
+    g.userData.fp = .5; g.userData.pri = 2; return g;
+  }
+  { const FLATC = [0xf2c6a8, 0xaed0dc, 0xf3d9a0, 0xb9d9c3];
+    [[-3.0, 2.3, 0xc9462e], [10.6, 1.9, 0x2f6fa8]].forEach(([x, inl, c]) => { const [px, pz] = onShore(x, inl); W(put(supermarket(c), px, pz, seaYaw(px), -.02)); });
+    [[-10.2, 2.1], [-5.9, 2.5], [2.0, 2.2], [6.4, 2.2], [12.1, 2.4]].forEach(([x, inl], i) => { const [px, pz] = onShore(x, inl); W(put(flats(FLATC[i % 4]), px, pz, seaYaw(px), -.02)); });
+    // more houses along the village streets, in rows that keep a clear gap
+    for (const [x0, x1, inl] of [[-17.2, -9.6, 4.6], [-9.0, -2.4, 3.9], [-.8, 4.2, 4.2], [7.4, 13.4, 4.3], [-8.7, -6.2, 5.3]]) for (let x = x0; x < x1; x += .95) hh(x, inl + (rnd() - .5) * .25, 1 + (hc % 2), { shut: [0x3d78a8, 0x4a9a74, 0xb4483a][hc % 3] });
+    for (const x of [-18.6, -16.9, -15.4]) hh(x, 2.4, 1 + (hc % 2)); for (const x of [14.0, 15.1, 17.9]) hh(x, 2.6, 1 + (hc % 2));
+    // crop fields: rows of vegetables, vines, wheat, ploughed earth and flower beds on the gentle slopes
+    const CROPS = [[0x6fae3a, 0x4f8f2d], [0xe6c85a, 0xcfa83a], [0x8a5a3a, 0x6f452c], [0x7aa84a, 0x9c5fb0], [0x5f8f3a, 0x3d6f26], [0xe9a23a, 0xd4812a]];
+    const field = (x, z, ang, w, d, ci) => {
+      const g = new THREE.Group(), [c1, c2] = CROPS[ci % CROPS.length], base = box(w, .03, d, std(0x8a6a44)); base.position.y = .0; g.add(base);
+      const rows = Math.floor(d / .09);
+      for (let r = 0; r < rows; r++) {
+        const rw = box(w - .06, ci % 3 === 2 ? .028 : .05, .045, std(r % 2 ? c1 : c2)); rw.position.set(0, ci % 3 === 2 ? .02 : .03, -d / 2 + .06 + r * .09); g.add(rw);
+        if (ci % 6 === 3) for (let k = 0; k < 6; k++) { const bl = new THREE.Mesh(new THREE.SphereGeometry(.022, 6, 5), std([0xe9577a, 0xf5e04a, 0xfff8ea][(k + r) % 3])); bl.position.set(-w / 2 + .1 + k * (w - .2) / 5, .065, -d / 2 + .06 + r * .09); g.add(bl); }
+      }
+      const fn = box(w + .04, .05, .012, std(0x8a6a44)); fn.position.set(0, .03, d / 2 + .01); g.add(fn); const fn2 = fn.clone(); fn2.position.z = -d / 2 - .01; g.add(fn2);
+      g.userData.fp = Math.max(w, d) * .55; g.userData.pri = 0; g.userData.field = 1; W(put(g, x, z, ang, -.01)); return g;
+    };
+    let fi = 0;
+    for (const [fx, inl] of [[-16.2, 5.6], [-12.4, 6.6], [-7.2, 6.0], [-3.8, 6.5], [-.2, 5.9], [3.4, 6.3], [8.6, 6.4], [12.2, 6.2], [16.3, 6.0], [-10.6, 4.9], [5.4, 5.0], [-1.9, 7.4]]) {
+      const x = fx, z = shore(x) - inl, sl = Math.abs(groundH(x + .5, z) - groundH(x - .5, z)) + Math.abs(groundH(x, z + .5) - groundH(x, z - .5));
+      if (groundH(x, z) < .35 || sl > .5 || inletD(x, z) < .8) continue;
+      field(x, z, seaYaw(x) + (fi % 2 ? .25 : -.2), 1.0 + (fi % 3) * .12, .75 + (fi % 2) * .12, fi); fi++;
+    }
+  }
+
   // ---- tidy up: no building may overlap another one or stand on a road; the most important ones (churches, schools, squares, arcades) stay
   { const items = [], dd2 = new THREE.Vector3();
     for (const o of world.children) { const u = o.userData; if (!u || !(u.fp || u.fps)) continue; if (u.fp === 0) continue; dd2.copy(o.position).normalize(); const [x, z] = planeOf(dd2); items.push({ o, x, z, pri: u.pri || 1, circles: u.fps ? u.fps.map(([dx, r]) => [x + dx, z, r]) : [[x, z, u.fp]] }); }
