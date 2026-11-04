@@ -1577,7 +1577,7 @@ export function open(opts) {
     mo.style.transform = 'translate3d(' + J.x.toFixed(1) + 'px,' + J.y.toFixed(1) + 'px,0) rotate(' + J.rot.toFixed(2) + 'deg) scale(' + (1 - J.sq * .9).toFixed(3) + ',' + (1 + J.sq).toFixed(3) + ')';
     mshadow.style.transform = 'translateX(' + (J.x * .6).toFixed(1) + 'px) scale(' + (1 - Math.max(-.2, Math.min(.3, -J.y / 120))).toFixed(3) + ')'; mshadow.style.opacity = (.8 + Math.max(-.3, Math.min(.2, J.y / 200))).toFixed(2);
   };
-  const mochiTick = (now) => { if (mStep < 0 && mochi.hidden) return; requestAnimationFrame(mochiTick); mochiSwim(now); const r = mSp.getBoundingClientRect(), ccx = r.left + r.width / 2, ccy = r.top + r.height / 2; mex += (mpx - mex) * .035; mey += (mpy - mey) * .035; const dx = mex - ccx, dy = mey - ccy, d = Math.hypot(dx, dy); const lean = 0; mBlink -= .016; if (mBlink < -3.6) mBlink = .22;
+  const mochiTick = (now) => { if (mStep < 0 && mochi.hidden) return; requestAnimationFrame(mochiTick); mochiSwim(now); const r = mSp.getBoundingClientRect(), ccx = r.left + r.width / 2, ccy = r.top + r.height / 2; mex += (mpx - mex) * .06; mey += (mpy - mey) * .06; const dx = mex - ccx, dy = mey - ccy, d = Math.hypot(dx, dy); const lean = 0; mBlink -= .016; if (mBlink < -3.6) mBlink = .22;
     if (M3) {                                          // the live 3D Mochi: pupils glide to where the mouse is, the head and body turn softly after them
       const gx = Math.max(-1, Math.min(1, dx / 420)), gy = Math.max(-1, Math.min(1, dy / 320));
       M3.px += (gx - M3.px) * .075; M3.py += (gy - M3.py) * .075; M3.ry += (gx * .5 - M3.ry) * .05; M3.rx += (gy * .32 - M3.rx) * .05;
