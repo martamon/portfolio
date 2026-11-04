@@ -74,7 +74,7 @@
     // about: soft edges for the hair video
     // about: no photo tiles over the hero (Framer's "Tile" blocks), only the head video and the text
     'html[data-xp="about"] [data-framer-name="Tile"]{display:none!important}',
-    'html[data-xp="about"] video{-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 9%,#000 78%,transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 9%,#000 78%,transparent 100%)}',
+    'html[data-xp="about"] video,html[data-xp="about"] canvas.x-head{-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 9%,#000 78%,transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 9%,#000 78%,transparent 100%)}',
     '[data-xh]{display:none!important}',
     // menu and project captions in the typeface, colour and hover animation of paul-michel.framer.website
     '@font-face{font-family:"IBM Plex Mono";font-weight:500;font-style:normal;font-display:swap;src:url(/fonts.gstatic.com/s/ibmplexmono/v20/-F6qfjptAgt5VM-kVkqdyU8n3twJwlBFgg.woff2) format("woff2")}',
@@ -117,7 +117,7 @@
     '.x-vfade{position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;opacity:var(--xt);background:color-mix(in srgb,rgb(181,197,217) calc((1 - var(--xt)) * 100%),rgb(41,60,89) calc(var(--xt) * 100%));-webkit-mask-image:radial-gradient(ellipse 40% 70% at 50% 47%,transparent 0,transparent 50%,#000 100%);mask-image:radial-gradient(ellipse 40% 70% at 50% 47%,transparent 0,transparent 50%,#000 100%)}',
     // phones: the hero box is tall and narrow, and covering it blew the head up and cut it at the sides; show the whole frame,
     // a little enlarged, and fit the night fade to it
-    '@media(max-width:809px){html[data-xp="about"] [data-framer-name="Hero Video"] video{object-fit:contain!important;transform:scale(var(--xhs,2.25)) translate(0,var(--xhy,5px));transform-origin:50% 47%;-webkit-mask-image:linear-gradient(to bottom,transparent calc(50% - 28.125vw),#000 calc(50% - 22.5vw),#000 calc(50% + 22.5vw),transparent calc(50% + 28.125vw)),radial-gradient(ellipse 42.3vw 38.5vw at 50% 50%,#000 0,#000 66%,rgba(0,0,0,.5) 84%,transparent 100%)!important;mask-image:linear-gradient(to bottom,transparent calc(50% - 28.125vw),#000 calc(50% - 22.5vw),#000 calc(50% + 22.5vw),transparent calc(50% + 28.125vw)),radial-gradient(ellipse 42.3vw 38.5vw at 50% 50%,#000 0,#000 66%,rgba(0,0,0,.5) 84%,transparent 100%)!important;-webkit-mask-composite:source-in!important;mask-composite:intersect!important}html[data-xp="about"] .x-vfade{display:none!important}}',
+    'html[data-xp="about"] canvas.x-head{opacity:0;transition:opacity .8s ease}html[data-xp="about"] canvas.x-head.x-on{opacity:1}html[data-xp="about"] [data-framer-name="Hero Video"] video{opacity:0!important;pointer-events:none!important}html[data-xp="about"] .x-vfade{display:none!important}@media(max-width:809px){html[data-xp="about"] [data-framer-name="Hero Video"] video,html[data-xp="about"] [data-framer-name="Hero Video"] canvas.x-head{object-fit:contain!important;transform:scale(var(--xhs,2.25)) translate(0,var(--xhy,5px));transform-origin:50% 47%;-webkit-mask-image:linear-gradient(to bottom,transparent calc(50% - 28.125vw),#000 calc(50% - 22.5vw),#000 calc(50% + 22.5vw),transparent calc(50% + 28.125vw)),radial-gradient(ellipse 42.3vw 38.5vw at 50% 50%,#000 0,#000 66%,rgba(0,0,0,.5) 84%,transparent 100%)!important;mask-image:linear-gradient(to bottom,transparent calc(50% - 28.125vw),#000 calc(50% - 22.5vw),#000 calc(50% + 22.5vw),transparent calc(50% + 28.125vw)),radial-gradient(ellipse 42.3vw 38.5vw at 50% 50%,#000 0,#000 66%,rgba(0,0,0,.5) 84%,transparent 100%)!important;-webkit-mask-composite:source-in!important;mask-composite:intersect!important}html[data-xp="about"] .x-vfade{display:none!important}}',
     // text that sits on that video is blended with it (exclusion): in the dark it is plain light type instead, or it would vanish
     'html[data-xdark] [data-xbl]{mix-blend-mode:normal!important}',
     'html[data-xdark][data-xp="about"] [data-xtc]{text-shadow:0 0 6px rgba(22,32,52,.8),0 0 18px rgba(22,32,52,.65)}',
@@ -1564,10 +1564,13 @@
     // the footage must keep playing: browsers on phones are strict about it (and reloading used to leave the head blank)
     for (i = 0; i < vids.length; i++) {
       v = vids[i];
-      if (!v.__xk) {
-        v.__xk = 1; v.muted = true; v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', ''); v.preload = 'auto';
+      if (!v.__xk) {                                   // the footage is replaced by the cut-out head (extras/head.js): the video never loads or plays
+        v.__xk = 1; v.preload = 'none'; v.play = function () { return Promise.resolve(); }; try { v.pause(); v.removeAttribute('src'); v.load(); } catch (e) {}
       }
-      if (v.paused && getComputedStyle(v).visibility !== 'hidden' && document.visibilityState === 'visible') { var pr = v.play(); if (pr && pr.catch) pr.catch(function () {}); }
+      if (v.parentNode && !v.parentNode.querySelector('canvas.x-head')) {
+        var cv = document.createElement('canvas'); cv.className = 'x-head'; cv.width = 960; cv.height = 540; cv.setAttribute('aria-label', 'Martamon'); cv.style.cssText = 'position:absolute;left:0;top:0;cursor:grab;width:100%;height:100%;display:block;object-fit:cover;border-radius:0';
+        v.parentNode.appendChild(cv); import('/extras/head.js?v=1').then(function (m) { m.mount(cv); }).catch(function () {});
+      }
     }
   }
   (function () {
