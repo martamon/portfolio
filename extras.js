@@ -37,6 +37,9 @@
   // ?xoff switches every addition of this file off (to tell whether a problem comes from it or from the mirrored page)
   if (/[?&]xoff\b/.test(location.search)) return;
 
+  // language of the site (English, Spanish, Galician): the switch in the corner and the translation of every text
+  try { import('/extras/i18n.js?v=3').catch(function () {}); } catch (e) {}
+
   // In-app browsers (LinkedIn, Instagram, ...) end up on a blank page as soon as the YouTube player of the home page is created, so
   // there every YouTube iframe shows its still picture with a link to YouTube instead (?xinapp forces this in any browser).
   var INAPP = /LinkedInApp|FBAN|FBAV|Instagram|MicroMessenger|Twitter/i.test(navigator.userAgent) || (/iP(hone|ad|od)/.test(navigator.userAgent) && !/Safari\//.test(navigator.userAgent)) || /[?&]xinapp\b/.test(location.search);
@@ -999,7 +1002,7 @@
     if (planet) return;
     planet = { loading: true };
     jfHint(0);
-    import('/extras/freixo.js?v=102').then(function (m) {
+    import('/extras/freixo.js?v=104').then(function (m) {
       planet = m.open({ getDark: function () { return darkness(theme.hour); }, getHour: function () { return theme.hour; }, onClose: function () { planet = null; } });
     }).catch(function () { planet = null; });
   }
