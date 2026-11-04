@@ -1549,7 +1549,7 @@ export function open(opts) {
   // for now the "Aprende más" button is only a placeholder: it does nothing (to switch it on again: moreBtn.addEventListener('click', () => toggleInfo(info.hidden)))
   // "Aprende más": Mochi, the little assistant, appears in front of a blurred map and tells two short messages (a click anywhere moves on / closes it)
   const mochi = root.querySelector('.x-pl-mochi'), mSp = mochi.querySelector('.x-pl-ms'), mBub = mochi.querySelector('.x-pl-bub p'), MSG = ['Thank you so much for staying until here! My name is Mochi and I am Martamon’s assistant (actually, I am her digitalised kitten).', 'Martamon comes from a tiny village in the north of Spain, in Galicia. It is a VERY, VERY pretty and quiet fishing village. This map is a recreation of that very special place.'];
-  let mStep = -1, mType = 0, mEye = 4, mBlink = 0, mt2 = 0, mpx = innerWidth / 2, mpy = innerHeight / 2;
+  let mex = innerWidth / 2, mey = innerHeight / 2, mStep = -1, mType = 0, mEye = 4, mBlink = 0, mt2 = 0, mpx = innerWidth / 2, mpy = innerHeight / 2;
   const typeMsg = (txt) => { clearInterval(mType); mBub.textContent = ''; mochi.classList.remove('x-done'); let i = 0; mType = setInterval(() => { if (i >= txt.length) { clearInterval(mType); mochi.classList.add('x-done'); return; } mBub.textContent = txt.slice(0, ++i); if (i % 3 === 1 && audio) audio.sfx('mochitalk'); }, 34); };
   const mochiClose = () => { clearInterval(mType); mochi.classList.remove('x-on'); root.classList.remove('x-mochi'); mStep = -1; setTimeout(() => { if (mStep < 0) mochi.hidden = true; }, 700); if (audio) audio.sfx('mochiend'); };
   const mochiPop = () => { mSp.classList.remove('x-hop'); mochi.classList.remove('x-pop'); void mSp.offsetWidth; mSp.classList.add('x-hop'); mochi.classList.add('x-pop'); };
@@ -1560,14 +1560,14 @@ export function open(opts) {
   const mo = mochi.querySelector('.x-pl-mo'), mshadow = mochi.querySelector('.x-pl-sh'), J = { x: 0, y: 0, vx: 0, vy: 0, p: 1, since: 9, sq: 0, last: 0, dir: 1, rot: 0 };
   const mochiSwim = (now) => {                       // swims like a jellyfish: a soft pulse every ~2 s squeezes it, shoots it up and sideways, then it glides and sinks slowly
     const dt = Math.min(.05, (now - (J.last || now)) / 1000); J.last = now; J.p -= dt;
-    if (J.p <= 0) { J.p = 1.7 + Math.random() * .7; J.since = 0; J.dir = Math.random() < .5 ? -1 : 1; if (Math.abs(J.x) > 30) J.dir = J.x > 0 ? -1 : 1; J.vy -= 78; J.vx += J.dir * 34; }
-    J.since += dt; const sq = J.since < .45 ? Math.sin(J.since / .45 * PI) : 0; J.sq += (sq * .13 - J.sq) * Math.min(1, dt * 12);
-    J.vy += 22 * dt; J.vy += -J.y * 1.5 * dt; J.vx += -J.x * 1.2 * dt; const dr = Math.exp(-1.15 * dt); J.vx *= dr; J.vy *= dr; J.x += J.vx * dt; J.y += J.vy * dt;
-    J.rot += (J.vx * .09 - J.rot) * Math.min(1, dt * 4);
+    if (J.p <= 0) { J.p = 2.6 + Math.random() * 1.0; J.since = 0; J.dir = Math.random() < .5 ? -1 : 1; if (Math.abs(J.x) > 30) J.dir = J.x > 0 ? -1 : 1; J.vy -= 46; J.vx += J.dir * 18; }
+    J.since += dt; const sq = J.since < .8 ? Math.sin(J.since / .8 * PI) : 0; J.sq += (sq * .075 - J.sq) * Math.min(1, dt * 5);
+    J.vy += 12 * dt; J.vy += -J.y * 1.1 * dt; J.vx += -J.x * .9 * dt; const dr = Math.exp(-1.5 * dt); J.vx *= dr; J.vy *= dr; J.x += J.vx * dt; J.y += J.vy * dt;
+    J.rot += (J.vx * .07 - J.rot) * Math.min(1, dt * 2.5);
     mo.style.transform = 'translate3d(' + J.x.toFixed(1) + 'px,' + J.y.toFixed(1) + 'px,0) rotate(' + J.rot.toFixed(2) + 'deg) scale(' + (1 - J.sq * .9).toFixed(3) + ',' + (1 + J.sq).toFixed(3) + ')';
     mshadow.style.transform = 'translateX(' + (J.x * .6).toFixed(1) + 'px) scale(' + (1 - Math.max(-.2, Math.min(.3, -J.y / 120))).toFixed(3) + ')'; mshadow.style.opacity = (.8 + Math.max(-.3, Math.min(.2, J.y / 200))).toFixed(2);
   };
-  const mochiTick = (now) => { if (mStep < 0 && mochi.hidden) return; requestAnimationFrame(mochiTick); mochiSwim(now); const r = mSp.getBoundingClientRect(), dx = mpx - (r.left + r.width / 2), dy = mpy - (r.top + r.height / 2), d = Math.hypot(dx, dy); mBlink -= .016; let fr; if (mBlink < -3.2) mBlink = .14; if (mBlink > 0) fr = 9; else { const cx = d < 30 ? 1 : (dx < -d * .45 ? 0 : dx > d * .45 ? 2 : 1), cy = d < 30 ? 1 : (dy < -d * .45 ? 0 : dy > d * .45 ? 2 : 1); fr = cy * 3 + cx; } if (fr !== mEye) { mEye = fr; mSp.style.backgroundPosition = (fr / 9 * 100) + '% 0'; } };
+  const mochiTick = (now) => { if (mStep < 0 && mochi.hidden) return; requestAnimationFrame(mochiTick); mochiSwim(now); const r = mSp.getBoundingClientRect(), ccx = r.left + r.width / 2, ccy = r.top + r.height / 2; mex += (mpx - mex) * .06; mey += (mpy - mey) * .06; const dx = mex - ccx, dy = mey - ccy, d = Math.hypot(dx, dy); const lean = Math.min(1, d / 400); mSp.style.transform = 'translate(' + (dx / (d || 1) * lean * 5).toFixed(2) + 'px,' + (dy / (d || 1) * lean * 4).toFixed(2) + 'px)'; mBlink -= .016; let fr; if (mBlink < -3.6) mBlink = .22; if (mBlink > 0) fr = 9; else { const cx = d < 60 ? 1 : (dx < -d * .5 ? 0 : dx > d * .5 ? 2 : 1), cy = d < 60 ? 1 : (dy < -d * .5 ? 0 : dy > d * .5 ? 2 : 1); fr = cy * 3 + cx; } if (fr !== mEye) { mEye = fr; mSp.style.backgroundPosition = (fr / 9 * 100) + '% 0'; } };
   new MutationObserver(() => { if (!mochi.hidden) requestAnimationFrame(mochiTick); }).observe(mochi, { attributes: true, attributeFilter: ['hidden'] });
   // ESC closes it too; the planet keeps turning behind the blur
   info.querySelector('.x-pl-ix').addEventListener('click', () => toggleInfo(false));
@@ -1945,14 +1945,18 @@ function injectCss() {
     '.x-pl-more:hover{transform:translateX(-50%) translateY(-2px);box-shadow:0 6px 22px rgba(20,50,80,.18);background:rgba(255,255,255,.85)}',
     '.x-pl-mochi{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;padding:24px;cursor:pointer;background:rgba(251,222,196,0);-webkit-backdrop-filter:blur(0);backdrop-filter:blur(0);transition:background .9s ease,-webkit-backdrop-filter .9s ease,backdrop-filter .9s ease}',
     '.x-pl-mochi[hidden]{display:none}.x-pl-mochi.x-on{background:rgba(251,226,206,.1);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px)}',
-    '.x-pl.x-night .x-pl-mochi.x-on{background:rgba(14,22,48,.5)}',
-    '.x-pl-mq{position:relative;width:min(300px,60vw);aspect-ratio:224/183;opacity:0;transform:translateY(34px) scale(.6);transition:opacity .8s ease .15s,transform 1.1s cubic-bezier(.22,1.3,.3,1) .15s}',
+    '.x-pl.x-night .x-pl-mochi.x-on{background:rgba(14,22,48,.45)}',
+    '.x-pl-ms{transition:filter 1.4s ease}',
+    '.x-pl.x-night .x-pl-ms{-webkit-filter:hue-rotate(22deg) saturate(.7) brightness(1.5) contrast(.86) drop-shadow(0 0 10px rgba(205,190,255,.9)) drop-shadow(0 0 30px rgba(170,150,255,.75));filter:hue-rotate(22deg) saturate(.7) brightness(1.5) contrast(.86) drop-shadow(0 0 10px rgba(205,190,255,.9)) drop-shadow(0 0 30px rgba(170,150,255,.75))}',
+    '.x-pl.x-night .x-pl-mq:before{content:"";position:absolute;inset:-35%;border-radius:50%;background:radial-gradient(closest-side,rgba(190,170,255,.45),rgba(190,170,255,0));animation:x-mo-glow 3.6s ease-in-out infinite;pointer-events:none}',
+    '@keyframes x-mo-glow{50%{transform:scale(1.16);opacity:.7}}',
+    '.x-pl-mq{position:relative;width:min(196px,44vw);aspect-ratio:224/183;opacity:0;transform:translateY(34px) scale(.6);transition:opacity .8s ease .15s,transform 1.1s cubic-bezier(.22,1.3,.3,1) .15s}',
     '.x-pl-mochi.x-on .x-pl-mq{opacity:1;transform:none}',
     '.x-pl-mo{position:absolute;inset:0;will-change:transform}',
     '.x-pl-ms{position:absolute;inset:0;background:url(/extras/blob-sprite.webp) 44.4% 0/1000% 100% no-repeat;-webkit-filter:hue-rotate(22deg) saturate(.5) brightness(1.3) contrast(.86);filter:hue-rotate(22deg) saturate(.5) brightness(1.3) contrast(.86)}',
     '.x-pl-sh{position:absolute;left:14%;right:2%;bottom:-12%;height:16%;border-radius:50%;background:radial-gradient(closest-side,rgba(120,72,64,.3),rgba(120,72,64,0));}',
     '@keyframes x-mo-float{50%{transform:translateY(-14px) rotate(1.6deg)}}@keyframes x-mo-sh{50%{transform:scale(.86);opacity:.7}}',
-    '.x-pl-bub{position:relative;max-width:min(470px,86vw);padding:18px 24px 20px;border-radius:24px;background:rgba(255,253,248,.92);color:#4a3340;box-shadow:0 10px 36px rgba(80,40,40,.18);opacity:0;transform:translateY(14px);transition:opacity .6s ease .5s,transform .8s cubic-bezier(.22,.8,.24,1) .5s}',
+    '.x-pl-bub{position:relative;max-width:min(430px,86vw);padding:16px 22px 18px;border-radius:24px;background:rgba(255,253,248,.92);color:#4a3340;box-shadow:0 10px 36px rgba(80,40,40,.18);opacity:0;transform:translateY(14px);transition:opacity .6s ease .5s,transform .8s cubic-bezier(.22,.8,.24,1) .5s}',
     '.x-pl-mochi.x-on .x-pl-bub{opacity:1;transform:none}',
     '.x-pl.x-night .x-pl-bub{background:rgba(24,34,64,.92);color:#e4eeff}',
     '.x-pl-bub p{margin:0;min-height:3em;font:500 17px/1.5 "Switzer","Switzer Placeholder",system-ui,sans-serif}',
