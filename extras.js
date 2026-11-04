@@ -962,6 +962,7 @@
       try { e.releasePointerCapture(ev.pointerId); } catch (err) {}
       JF.vx = Math.max(-500, Math.min(500, JF.vx)); JF.vy = Math.max(-500, Math.min(500, JF.vy));
       if (Math.abs(JF.vx) > 60) JF.dir = JF.vx > 0 ? 1 : -1;
+      if (JF.walk) { JF.vx = 0; JF.vy = 0; JF.tx = JF.x; JF.wp = 1.2; }      // at the bottom of the page it is simply let go: it drops straight down and stays where it lands
       JF.pulse = 0.6; JF.since = 1;
       // a tap (not a drag) makes it react, in a different way each time
       // a double tap/click (not a drag) makes it react, in a different way each time
