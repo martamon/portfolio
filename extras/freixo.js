@@ -2078,6 +2078,7 @@ export function open(opts) {
     // people react to the weather: when it rains or night falls they run to the nearest house, then wait at its door (some go in); when it clears they run back to what they were doing
     for (const g of ALLP) {
       const u = g.userData, role = u.role; if (role === 'fish' || role === 'bike' || role === 'fest' || role === 'farm') continue;
+      if (g.parent !== world) continue;                       // those on a stage, a boat or a pitch live in the space of their group: sending them 'home' as if in the world's space threw them up into the sky
       if (u.s0 === undefined) { u.s0 = g.scale.x; u.v = 1; u.mode = 0; u.lastX = null; const pp = planeOf(_d.copy(g.position).normalize()); u.p0 = pp; }
       if (u.umb) u.umb.visible = rainT > .5 && u.mode !== 3;
       const h = (u.idx * 37 % 100) / 100;
