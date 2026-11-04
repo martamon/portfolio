@@ -100,9 +100,23 @@ function put(obj, x, z, yaw, lift, sea) {
 
 // ---- colours (soft, like a miniature)
 const C = (h) => new THREE.Color(h);
-const SAND = C(0xf2e5b8), SEABED_SHORE = C(0xeee2b8), SEABED_DEEP = C(0x1f6f8f), FAR = C(0x2b7f9c), GRASS_A = C(0xa3d36f), GRASS_B = C(0x8fc862),
-  WOOD = C(0x6fae53), ROCK = C(0xb2ab9a), ROCK_G = C(0x8aa070), HEATH = C(0xb9a3c6);
-const FIELDS = [C(0xc2de78), C(0xe6d77e), C(0x9fd36a), C(0xd2e48f), C(0xdcc983)];
+// the pastel look: every colour is softened (less saturated, lighter, a touch warm), like gouache on paper
+const PASTEL = (h, k) => { const c = new THREE.Color(h), hsl = {}; c.getHSL(hsl); k = k === undefined ? 1 : k; hsl.s *= 1 - .16 * k; hsl.l = hsl.l + (1 - hsl.l) * (hsl.l < .3 ? .12 : .28) * k; c.setHSL(hsl.h, hsl.s, hsl.l); c.lerp(new THREE.Color(0xfff4e6), .06 * k); return c; };
+// a hand-painted paper texture: soft mottling, tiny brush dabs and a fine grain; it multiplies the colours, so it only adds texture
+let PAINT = null;
+const paintTex = () => {
+  if (PAINT) return PAINT;
+  const cv = document.createElement('canvas'); cv.width = cv.height = 256; const g = cv.getContext('2d');
+  g.fillStyle = '#f4efe6'; g.fillRect(0, 0, 256, 256);
+  let sd = 5; const r = () => { sd = (sd * 16807) % 2147483647; return (sd - 1) / 2147483646; };
+  for (let i = 0; i < 70; i++) { const x = r() * 256, y = r() * 256, rad = 14 + r() * 40, a = .05 + r() * .08, l = 215 + Math.floor(r() * 40); for (const ox of [-256, 0, 256]) for (const oy of [-256, 0, 256]) { const gr = g.createRadialGradient(x + ox, y + oy, 0, x + ox, y + oy, rad); gr.addColorStop(0, `rgba(${l},${l - 4},${l - 14},${a})`); gr.addColorStop(1, 'rgba(255,250,240,0)'); g.fillStyle = gr; g.fillRect(x + ox - rad, y + oy - rad, rad * 2, rad * 2); } }
+  for (let i = 0; i < 520; i++) { const x = r() * 256, y = r() * 256, w = 3 + r() * 11, a = r() * 6.28, l = r() < .5 ? 255 : 205; g.strokeStyle = `rgba(${l},${l - 6},${l - 18},${.05 + r() * .06})`; g.lineWidth = 1 + r() * 2.2; g.lineCap = 'round'; for (const ox of [-256, 0, 256]) for (const oy of [-256, 0, 256]) { g.beginPath(); g.moveTo(x + ox, y + oy); g.lineTo(x + ox + Math.cos(a) * w, y + oy + Math.sin(a) * w); g.stroke(); } }
+  const im = g.getImageData(0, 0, 256, 256), d = im.data; for (let i = 0; i < d.length; i += 4) { const n = (r() - .5) * 11; d[i] = Math.max(0, Math.min(255, d[i] + n)); d[i + 1] = Math.max(0, Math.min(255, d[i + 1] + n)); d[i + 2] = Math.max(0, Math.min(255, d[i + 2] + n)); } g.putImageData(im, 0, 0);
+  const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; PAINT = t; return t;
+};
+const SAND = PASTEL(0xf6e7bd), SEABED_SHORE = PASTEL(0xf1e6c2), SEABED_DEEP = PASTEL(0x3f8fae, .6), FAR = PASTEL(0x58a4b8, .6), GRASS_A = PASTEL(0xb4dc86), GRASS_B = PASTEL(0xa2d27a),
+  WOOD = PASTEL(0x86b968), ROCK = PASTEL(0xbfb8a8), ROCK_G = PASTEL(0x9bb08a), HEATH = PASTEL(0xcbb6d4);
+const FIELDS = [PASTEL(0xc2de78), PASTEL(0xe6d77e), PASTEL(0x9fd36a), PASTEL(0xd2e48f), PASTEL(0xdcc983)];
 
 function buildTerrain() {
   const src = new THREE.IcosahedronGeometry(R, 64), sp = src.attributes.position, m = new THREE.Vector3(), out = new THREE.Color();
@@ -135,9 +149,10 @@ function buildTerrain() {
     col[v * 3] = out.r; col[v * 3 + 1] = out.g; col[v * 3 + 2] = out.b;
   }
   const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.setIndex(idx);
+  const uv = new Float32Array(nv * 2); for (let v = 0; v < nv; v++) { m.set(P[v * 3], P[v * 3 + 1], P[v * 3 + 2]); const [ux, uz] = planeOf(m); uv[v * 2] = ux / 2.4; uv[v * 2 + 1] = uz / 2.4; }
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); g.setIndex(idx);
   g.computeVertexNormals();
-  return new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: false, roughness: 1 }));
+  return new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, map: paintTex(), flatShading: false, roughness: 1 }));
 }
 
 // ---- small building blocks
@@ -145,7 +160,7 @@ const matCache = new Map();
 const std = (color, extra) => {
   const key = extra ? null : color;
   if (key !== null && matCache.has(key)) return matCache.get(key);
-  const m = new THREE.MeshStandardMaterial(Object.assign({ color, roughness: .95 }, extra || {}));
+  const m = new THREE.MeshStandardMaterial(Object.assign({ color: PASTEL(color), roughness: .95, map: paintTex() }, extra || {}));
   if (key !== null) matCache.set(key, m);
   return m;
 };
@@ -517,13 +532,13 @@ export function open(opts) {
   const W = (o) => { world.add(o); return o; };
 
   // lights stay with the camera, so the sun does not move when the planet turns (the shadows do)
-  const hemi = new THREE.HemisphereLight(0xfff6e2, 0xd9c28c, 1.35); scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xfff2dc, 2.5); sun.position.set(16, 20, 24); scene.add(sun);
+  const hemi = new THREE.HemisphereLight(0xfff8ea, 0xe6d3a8, 1.55); scene.add(hemi);
+  const sun = new THREE.DirectionalLight(0xffeccf, 2.15); sun.position.set(16, 20, 24); scene.add(sun);
   sun.castShadow = true; sun.shadow.mapSize.set(innerWidth < 700 ? 1024 : 2048, innerWidth < 700 ? 1024 : 2048);
   Object.assign(sun.shadow.camera, { left: -16, right: 16, top: 16, bottom: -16, near: 1, far: 90 }); sun.shadow.bias = -.0005; sun.shadow.normalBias = .03;
 
   const terrain = buildTerrain(); W(terrain);
-  const sea = new THREE.Mesh(new THREE.IcosahedronGeometry(R, 30), new THREE.MeshStandardMaterial({ color: 0x4ab5c4, transparent: true, opacity: .78, flatShading: true, roughness: .25, metalness: .05 }));
+  const sea = new THREE.Mesh(new THREE.IcosahedronGeometry(R, 30), new THREE.MeshStandardMaterial({ color: 0x7fcfd0, transparent: true, opacity: .8, flatShading: true, roughness: .25, metalness: .05 }));
   sea.scale.setScalar((R + SEA) / R); W(sea);
   const seaOrig = sea.geometry.attributes.position.array.slice();
   const spots = [];
@@ -1393,7 +1408,7 @@ export function open(opts) {
   const RAINBG = C(0x9fb1c0), RAINSKY = C(0xc6d3dc), CLD_DAY = C(0xffffff), CLD_RAIN = C(0x8d9aa8), SEA_RAIN = C(0x5d8fa0);
 
   // ---- day / night
-  const DAY = { bg: C(0xd6ebf1), hemi: 1.05, sun: 2.55, sunC: C(0xffecc8), sky: C(0xf1f6ec), sea: C(0x4ab5c4) };
+  const DAY = { bg: C(0xdcecf0), hemi: 1.15, sun: 2.2, sunC: C(0xffecc8), sky: C(0xf1f6ec), sea: C(0x7fcfd0) };
   const NIGHT = { bg: C(0x0a1430), hemi: .5, sun: .6, sunC: C(0x8fb0ff), sky: C(0x6f8ad0), sea: C(0x1b3a63) };
   let manual = false, night = typeof opts.getDark === 'function' ? opts.getDark() : (opts.night ? 1 : 0), nightT = night; const night0 = night > .5 ? 1 : 0;
   const dnBtn = root.querySelector('.x-pl-dn');
