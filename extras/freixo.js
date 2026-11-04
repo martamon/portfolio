@@ -598,7 +598,7 @@ export function open(opts) {
   Object.assign(sun.shadow.camera, { left: -16, right: 16, top: 16, bottom: -16, near: 1, far: 90 }); sun.shadow.bias = -.0005; sun.shadow.normalBias = .03;
 
   const terrain = buildTerrain(); W(terrain);
-  const sea = new THREE.Mesh(new THREE.IcosahedronGeometry(R, 30), new THREE.MeshStandardMaterial({ color: 0x62d0ee, map: paintTexR(26), transparent: true, opacity: .9, flatShading: true, roughness: .25, metalness: .05 }));
+  const sea = new THREE.Mesh(new THREE.IcosahedronGeometry(R, 30), new THREE.MeshStandardMaterial({ color: 0x62d0ee, map: paintTexR(26), transparent: true, opacity: .9, flatShading: true, roughness: .9, metalness: 0 }));
   sea.scale.setScalar((R + SEA) / R); W(sea);
   const seaOrig = sea.geometry.attributes.position.array.slice();
   const spots = [];
@@ -735,7 +735,6 @@ export function open(opts) {
   buildRoad(roadS);
   const linkRoads = [];
   const inlRoute = null;
-  for (const [a, b] of [[-17.2, -9.6], [-9.2, -2.8], [-.9, 3.6], [7.4, 13.2]]) W(ribbon(smooth(shore, a, b, -.3), .14, pathMat, .012));
   const posts = [];
   for (let i = 3; i < roadN.length - 3; i += 14) if (inletD(roadN[i][0], roadN[i][1]) > .6) posts.push([roadN[i][0], roadN[i][1] - .34]);
   for (const [x, z] of posts) { const lp = new THREE.Group(); const pole = new THREE.Mesh(new THREE.CylinderGeometry(.012, .015, .34, 5), std(0x2b3036)); pole.position.y = .17; lp.add(pole); const lb = new THREE.Mesh(new THREE.SphereGeometry(.035, 8, 6), lampMat); lb.position.y = .36; lp.add(lb); W(put(lp, x, z, 0, 0)); }
@@ -767,7 +766,6 @@ export function open(opts) {
     riverPts = sm; W(ribbonW(sm, widths, std(0x69b9d0, { transparent: true, opacity: .92, roughness: .2, side: THREE.DoubleSide, emissive: 0x2a6f86, emissiveIntensity: .15, polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 }), .03));
     W(ribbonW(sm, widths.map((w) => w * 1.45), std(0xcdbf94, { roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }), .015)); }
   const foamMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .5, depthWrite: false, side: THREE.DoubleSide });
-  W(ribbon(smooth(shore, -22, 21, .07), .13, foamMat, .085, false, -1)); W(ribbon(smooth(shoreS, -23, 15, -.07), .13, foamMat, .085, false, -1));
   function car(color, bus) {
     const g = new THREE.Group(), L = bus ? .5 : .3;
     const bd = box(L, bus ? .12 : .07, bus ? .17 : .15, std(color)); bd.position.y = bus ? .09 : .07; g.add(bd);
