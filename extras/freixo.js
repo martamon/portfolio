@@ -616,6 +616,9 @@ export function open(opts) {
   // ---- roads (joined to every village), promenades and street lamps
   const smooth = (fn, a, b, off) => { const out = []; for (let x = a; x <= b; x += .22) { let zz = 0; for (let k = -3; k <= 3; k++) zz += fn(x + k * .22); out.push([x, zz / 7 + off]); } return out; };
   const roadN = smooth(shore, -19.2, 21, -1.4), roadS = smooth(shoreS, -13.5, 9, 1.45);
+  // near the beaches the roads keep further back from the water, so the sand has room for people, parasols and the kiosk
+  for (const q of roadN) q[1] -= 1.1 * Math.min(1, cove(q[0], q[1]) * 1.6) * (1 - gs(q[0], 1.8, 1.0)) * sstep(21, 18.6, q[0]) * sstep(-19.2, -17.6, q[0]); for (const q of roadS) q[1] += 1.1 * Math.min(1, cove(q[0], q[1]) * 1.6) * sstep(9, 7.4, q[0]) * sstep(-13.5, -12, q[0]);
+  { const sm = (r) => { for (let k = 0; k < 6; k++) for (let i = 1; i < r.length - 1; i++) { r[i][1] = (r[i - 1][1] + 2 * r[i][1] + r[i + 1][1]) / 4; } }; sm(roadN); sm(roadS); for (let k = 0; k < 40; k++) for (let i = 1; i < roadN.length - 1; i++) if (roadN[i][0] > 11.5) roadN[i][1] = (roadN[i - 1][1] + 2 * roadN[i][1] + roadN[i + 1][1]) / 4; }
   const walkMat = std(0xe6dcc4, { roughness: 1, side: THREE.DoubleSide }), asphalt = std(0x565b62, { roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }), lineMat = std(0xf4f0e4, { roughness: 1, side: THREE.DoubleSide }), pathMat = std(0xeee5d0, { roughness: 1, side: THREE.DoubleSide });
   const sideOf = (pts, d) => pts.map((q, i) => { const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)], tx = b[0] - a[0], tz = b[1] - a[1], l = Math.hypot(tx, tz) || 1; return [q[0] - tz / l * d, q[1] + tx / l * d]; });
   const relax = (pts, passes) => { let q = pts; for (let k = 0; k < passes; k++) q = q.map((p, i) => (i === 0 || i === q.length - 1) ? p : [(q[i - 1][0] + 2 * p[0] + q[i + 1][0]) / 4, (q[i - 1][1] + 2 * p[1] + q[i + 1][1]) / 4]); return q; };
@@ -849,18 +852,22 @@ export function open(opts) {
     const top = new THREE.Mesh(new THREE.ConeGeometry(.19, .1, 10), std(col)); top.position.y = .37; g.add(top);
     return g;
   }
+  // one shared "is this spot free?" test for every beach item: clear of roads, buildings, the water and everything already placed
+  const beachOcc = [];
+  const beachFree = (x, z, r) => groundH(x, z) > .03 && inletD(x, z) > .5 + r && !roadN.some((q) => Math.abs(q[0] - x) < .9 && Math.hypot(q[0] - x, q[1] - z) < .46 + r) && !roadS.some((q) => Math.abs(q[0] - x) < .9 && Math.hypot(q[0] - x, q[1] - z) < .46 + r) && !keptC.some((c) => Math.hypot(c[0] - x, c[1] - z) < c[2] + r) && !beachOcc.some((o) => Math.hypot(o[0] - x, o[1] - z) < o[2] + r) && (beachOcc.push([x, z, r]), true);
   function beach(cx, fn, sg, nSun, nSwim, nWalk, title, type, text) {
     const wl = (x) => fn(x);
     for (let k = 0; k < nSun; k++) {
       const x = cx + (rnd() - .5) * 2.8, off = .3 + rnd() * .55, z = wl(x) + sg * off;
-      if (groundH(x, z) < .02) continue;
+      const withPz = k % 3 === 0;
+      if (!beachFree(x, z, withPz ? .3 : .13)) continue;
       const tw = new THREE.Group(), tc = SHIRTS[(k * 3) % SHIRTS.length];
       tw.add(box(.17, .008, .085, std(tc === 0xf2efe6 ? 0xe277a0 : tc)));
       const ly = lying(SHIRTS[(k * 5 + 2) % SHIRTS.length], { skin: SKINS[k % 4] }); ly.position.y = .01; tw.add(ly);
       W(put(tw, x, z, rnd() * 6.28, .0));
-      if (k % 3 === 0) { const pz = parasol([0xc9473a, 0x2f6fa8, 0xe9b94a, 0xf2efe6, 0xe277a0][k % 5]); W(put(pz, x + .14, z + .04, 0, .0)); }
+      if (withPz) { const pz = parasol([0xc9473a, 0x2f6fa8, 0xe9b94a, 0xf2efe6, 0xe277a0][k % 5]); W(put(pz, x + .14, z + .04, 0, .0)); }
     }
-    for (let k = 0; k < 1; k++) { const x = cx + (rnd() - .5) * 2.4, z = wl(x) + sg * (.5 + rnd() * .35); if (groundH(x, z) < .02) continue; const p1 = person(SHIRTS[(k * 2 + 1) % SHIRTS.length], { skin: SKINS[k % 4], role: 'sun' }); W(put(p1, x, z, rnd() * 6, 0)); const p2 = person(SHIRTS[(k * 2 + 4) % SHIRTS.length], { skin: SKINS[(k + 1) % 4], role: 'sun' }); W(put(p2, x + .07, z + .03, rnd() * 6, 0)); }
+    for (let k = 0; k < 1; k++) { const x = cx + (rnd() - .5) * 2.4, z = wl(x) + sg * (.5 + rnd() * .35); if (!beachFree(x, z, .2)) continue; const p1 = person(SHIRTS[(k * 2 + 1) % SHIRTS.length], { skin: SKINS[k % 4], role: 'sun' }); W(put(p1, x, z, rnd() * 6, 0)); const p2 = person(SHIRTS[(k * 2 + 4) % SHIRTS.length], { skin: SKINS[(k + 1) % 4], role: 'sun' }); W(put(p2, x + .07, z + .03, rnd() * 6, 0)); }
     for (let k = 0; k < nSwim; k++) {
       const p = person(SHIRTS[(k * 3 + 1) % SHIRTS.length], { skin: SKINS[k % 4], role: 'swim' }); W(p);
       swimmers.push({ p, x: cx + (rnd() - .5) * 2.2, off: .45 + rnd() * .55, fn, sg, ph: rnd() * 6.28, sp: .25 + rnd() * .2, rx: .25 + rnd() * .35 });
@@ -871,17 +878,17 @@ export function open(opts) {
     }
     // boardwalk along the back of the sand, tufts of dune grass, a lifeguard tower, a kiosk with an awning and a volleyball net
     for (let k = 0; k < 0; k++) { const x = cx + (rnd() - .5) * 3.6, z = wl(x) + sg * (1.45 + rnd() * .3); if (groundH(x, z) < .05) continue; const tu = new THREE.Group(); for (let b = 0; b < 3; b++) { const bl = new THREE.Mesh(new THREE.ConeGeometry(.018, .14, 4), std(0x8fb35a)); bl.position.set((b - 1) * .025, .07, (b % 2) * .02); bl.rotation.z = (b - 1) * .25; tu.add(bl); } W(put(tu, x, z, rnd() * 6, 0)); }
-    { const vx = cx - .9, vz = wl(vx) + sg * .72, g = new THREE.Group();            // a volleyball game: net, four players and a ball going back and forth
+    for (let tr = 0, vx = cx - .9, vz = wl(vx) + sg * .72; tr < 6; tr++, vx = cx - 1.9 + tr * .45, vz = wl(vx) + sg * (.6 + (tr % 2) * .2)) { if (!beachFree(vx, vz, .55)) continue; const g = new THREE.Group();            // a volleyball game: net, four players and a ball going back and forth
       for (const sx of [-.2, .2]) { const po = box(.012, .16, .012, std(0x6b4a2a)); po.position.set(sx, .08, 0); g.add(po); }
       const net = box(.4, .06, .004, std(0xffffff, { transparent: true, opacity: .7 })); net.position.y = .13; g.add(net);
       W(put(g, vx, vz, 0, 0));
       for (const [px, pz, c] of [[-.2, .28, 0], [.2, .3, 3], [-.15, -.28, 5], [.22, -.3, 1]]) { const pp = person(SHIRTS[c], { skin: SKINS[c % 4], role: 'sun' }); pp.scale.setScalar(.95); W(put(pp, vx + px, vz + pz * sg * -1, pz > 0 ? PI : 0, 0)); }
-      const bl = new THREE.Mesh(new THREE.SphereGeometry(.03, 10, 8), std(0xf6f1e4)); W(bl); balls.push({ m: bl, x: vx, z: vz, ph: rnd() * 6, sg });
+      const bl = new THREE.Mesh(new THREE.SphereGeometry(.03, 10, 8), std(0xf6f1e4)); W(bl); balls.push({ m: bl, x: vx, z: vz, ph: rnd() * 6, sg }); break;
     }
-    { const kx = cx + 1.1, kz = wl(kx) + sg * .95, g = new THREE.Group();
+    for (let tr = 0, kx = cx + 1.1, kz = wl(kx) + sg * .95; tr < 6; tr++, kx = cx + .5 + tr * .35, kz = wl(kx) + sg * (.8 + (tr % 2) * .25)) { if (!beachFree(kx, kz, .3)) continue; const g = new THREE.Group();
       const kb = box(.22, .12, .16, std(0xf7f1e4)); kb.position.y = .06; g.add(kb); const aw = box(.26, .02, .1, std(0xc9473a)); aw.position.set(0, .15, .13); aw.rotation.x = .25; g.add(aw);
       const aw2 = box(.065, .021, .1, std(0xf7f1e4)); aw2.position.set(-.06, .151, .13); aw2.rotation.x = .25; g.add(aw2); const aw3 = box(.065, .021, .1, std(0xf7f1e4)); aw3.position.set(.07, .151, .13); aw3.rotation.x = .25; g.add(aw3);
-      W(put(g, kx, kz, 0, 0)); }
+      W(put(g, kx, kz, 0, 0)); break; }
     spot(title, type, text, hubAt(cx, wl(cx) + sg * .5, .05), .5);
   }
   beach(-4.2, shore, -1, 11, 2, 1, 'Area Maior beach', 'Playa', 'A long white sand spit that closes the inlet of Esteiro, with pines behind it. People take the sun, swim and walk along the water.');
@@ -1166,7 +1173,7 @@ export function open(opts) {
     const spit = x > -5.8 && x < -2.6 && z > shore(x) - 1.7 && z < shore(x) - .5;
     if (r > .985 || h < (spit ? .04 : .28) || (!spit && (forbid(x, z) || cove(x, z) > .45))) continue;
     const inl = z < shore(x) - 5.2;
-    if (spit) { pines.push([x, z, .85 + rnd() * .4]); continue; }
+    if (spit) { if (!roadN.some((q) => Math.abs(q[0] - x) < 1 && Math.hypot(q[0] - x, q[1] - z) < .7)) pines.push([x, z, .85 + rnd() * .4]); continue; }
     const q = rnd();
     if (h > 1.6) { if (q < .5) pines.push([x, z, .8 + rnd() * .7]); else oaks.push([x, z, .8 + rnd() * .5]); }
     else if (q < .6) oaks.push([x, z, .75 + rnd() * .6]); else if (q < .74) pines.push([x, z, .75 + rnd() * .6]); else if (inl || q > .9) euc.push([x, z, .8 + rnd() * .6]);
