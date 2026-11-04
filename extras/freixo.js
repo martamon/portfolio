@@ -815,18 +815,29 @@ export function open(opts) {
     riverWidths = widths; }
   const foamMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .5, depthWrite: false, side: THREE.DoubleSide });
   function car(color, bus) {
-    const g = new THREE.Group(), L = bus ? .5 : .3;
-    const bd = box(L, bus ? .12 : .07, bus ? .17 : .15, std(color)); bd.position.y = bus ? .09 : .07; g.add(bd);
-    if (!bus) { const ca = box(.16, .07, .13, std(color)); ca.position.set(-.02, .13, 0); g.add(ca); const ws = box(.165, .045, .135, winMat); ws.position.set(-.02, .135, 0); g.add(ws); }
-    else { const ws = box(L * .9, .04, .172, winMat); ws.position.set(0, .11, 0); g.add(ws); }
-    for (const [wx, wz] of [[-L * .3, -.075], [L * .3, -.075], [-L * .3, .075], [L * .3, .075]]) { const wl = new THREE.Mesh(new THREE.CylinderGeometry(.028, .028, .03, 10), std(0x1d1f23)); wl.rotation.x = PI / 2; wl.position.set(wx, .03, wz); g.add(wl); }
+    // a chubby little toy car: rounded body and cabin, big dark windows, round headlights, tail lights and fat wheels
+    const g = new THREE.Group(), L = bus ? .5 : .3, body = std(color), hl = std(0xfff0b8, { emissive: 0xffe9a0, emissiveIntensity: .35 }), tl = std(0xe0584a);
+    const bd = box(L, bus ? .13 : .085, bus ? .18 : .16, body); bd.position.y = bus ? .1 : .075; g.add(bd);
+    if (!bus) {
+      const ca = box(.17, .075, .14, body); ca.position.set(-.03, .15, 0); g.add(ca);
+      const ws = box(.178, .05, .146, winMat); ws.position.set(-.03, .152, 0); g.add(ws);                       // the dark windows run right round the cabin
+      const roof = box(.18, .016, .146, body); roof.position.set(-.03, .192, 0); g.add(roof);
+    } else { const ws = box(L * .9, .05, .184, winMat); ws.position.set(0, .125, 0); g.add(ws); }
+    for (const sz of [-1, 1]) {
+      const h = new THREE.Mesh(new THREE.IcosahedronGeometry(.02, 1), hl); h.scale.set(.6, 1, 1); h.position.set(L / 2 - .004, .08, sz * .055); g.add(h);
+      const t = new THREE.Mesh(new THREE.IcosahedronGeometry(.016, 1), tl); t.scale.set(.6, 1, 1); t.position.set(-L / 2 + .004, .08, sz * .055); g.add(t);
+    }
+    for (const [wx, wz] of [[-L * .3, -.08], [L * .3, -.08], [-L * .3, .08], [L * .3, .08]]) {
+      const wl = new THREE.Mesh(new THREE.CylinderGeometry(.034, .034, .034, 12), std(0x1d1f23)); wl.rotation.x = PI / 2; wl.position.set(wx, .034, wz); g.add(wl);
+      const hub = new THREE.Mesh(new THREE.CylinderGeometry(.016, .016, .036, 8), std(0xe6e2d6)); hub.rotation.x = PI / 2; hub.position.set(wx, .034, wz); g.add(hub);
+    }
     return g;
   }
   const cars = [];
   // every lane carries its cars at one speed and evenly spaced, so a car never catches up with the one in front
   const addCars = (ri, dir, n, speed, colors, bus, ping) => {
     for (let k = 0; k < n; k++) {
-      const m = car(colors[k % colors.length], bus && k === 0), w = new THREE.Group(); m.scale.setScalar(.5); w.add(m); W(w);
+      const m = car(colors[k % colors.length], bus && k === 0), w = new THREE.Group(); m.scale.setScalar(.64); w.add(m); W(w);
       cars.push({ w, r: routes[ri], u: (k + (dir > 0 ? .1 : .6)) / n, v: speed * dir, off: dir > 0 ? .095 : -.095, ping: !!ping });
     }
   };
@@ -1136,7 +1147,7 @@ export function open(opts) {
       }
     }
     for (const z of [stZ0 + 1.0, stZ0 + 2.6]) { const px = stX + .28 * Math.sin((z - stZ0) / .2 * .38), lp = new THREE.Group(); const pole = new THREE.Mesh(new THREE.CylinderGeometry(.01, .013, .3, 5), std(0x2b3036)); pole.position.y = .15; lp.add(pole); const lb = new THREE.Mesh(new THREE.SphereGeometry(.03, 8, 6), lampMat); lb.position.y = .32; lp.add(lb); W(put(lp, px + .24, z, 0, 0)); }
-    const pc = car(0x9fd0d6, false); pc.scale.setScalar(.5); const pw = new THREE.Group(); pw.add(pc); W(put(pw, stX + .1, stZ0 + 1.9, -PI / 2, .03));
+    const pc = car(0x9fd0d6, false); pc.scale.setScalar(.64); const pw = new THREE.Group(); pw.add(pc); W(put(pw, stX + .1, stZ0 + 1.9, -PI / 2, .03));
     const [wx, wz] = [stX + .28 * Math.sin(2.7 / .2 * .38), stZ0 + 2.9]; const wb = new THREE.Group(); wb.add(box(.5, .02, .2, std(0x8a6a44))); W(put(wb, wx - .0, wz, 0, .01)); }
 
   // life in the street: cars that come and go, neighbours walking, a child running, two friends chatting
