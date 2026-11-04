@@ -1388,7 +1388,7 @@ export function open(opts) {
   // ---- day / night
   const DAY = { bg: C(0xd6ebf1), hemi: 1.05, sun: 2.55, sunC: C(0xffecc8), sky: C(0xf1f6ec), sea: C(0x4ab5c4) };
   const NIGHT = { bg: C(0x0a1430), hemi: .5, sun: .6, sunC: C(0x8fb0ff), sky: C(0x6f8ad0), sea: C(0x1b3a63) };
-  let night = opts.night ? 1 : 0, nightT = night; const night0 = night;
+  let manual = false, night = typeof opts.getDark === 'function' ? opts.getDark() : (opts.night ? 1 : 0), nightT = night; const night0 = night > .5 ? 1 : 0;
   const dnBtn = root.querySelector('.x-pl-dn');
   let muteSaved = false; try { muteSaved = localStorage.getItem('xpl-mute') === '1'; } catch (e) {}
   const audio = makeAudio(!!opts.night), muBtn = root.querySelector('.x-pl-mu');
@@ -1417,7 +1417,7 @@ export function open(opts) {
     winMat.emissiveIntensity = Math.min(1.5, k * 1.5 + r * .9);
  lampMat.emissiveIntensity = .4 + k * 2.4; lamp.intensity = k * 2.2; starMat.opacity = k;
   };
-  dnBtn.addEventListener('click', () => { night = night ? 0 : 1; });
+  dnBtn.addEventListener('click', () => { manual = true; night = night > .5 ? 0 : 1; });
   light(nightT); paintBtn();
 
   // the turn that brings direction d (on the planet) in front of the camera, with north (towards -z on the map) kept at the top of the screen
@@ -1469,7 +1469,7 @@ export function open(opts) {
   cv.addEventListener('click', () => { if (moved < 6 && cur >= 0) hideCard(); });
   const onKey = (e) => {
     if (e.key === 'Escape') { if (cur >= 0) hideCard(); else close(); }
-    else if (e.key === 'n' || e.key === 'N') night = night ? 0 : 1;
+    else if (e.key === 'n' || e.key === 'N') { manual = true; night = night > .5 ? 0 : 1; }
     else if (/^[wasd]$/i.test(e.key)) { const k = e.key.toLowerCase(); rot(k === 'a' ? 28 : k === 'd' ? -28 : 0, k === 'w' ? 28 : k === 's' ? -28 : 0); focus = null; }
     else return;
     e.preventDefault(); e.stopPropagation();
@@ -1484,8 +1484,9 @@ export function open(opts) {
   const loop = (now) => {
     raf = requestAnimationFrame(loop);
     const dt = Math.min(.05, (now - last) / 1000); last = now; t += dt; frame++;
-    if (audio && night !== lastNight) { lastNight = night; audio.setNight(!!night); audio.sfx(night ? 'night' : 'day'); }
-    nightT += (night - nightT) * (1 - Math.exp(-dt * 2.2)); if (Math.abs(night - nightT) < .002) nightT = night;
+    if (!manual && opts.getDark) night = opts.getDark();       // the planet follows the real hour of the visitor (and the dial of the page)
+    const nb2 = night > .5 ? 1 : 0; if (audio && nb2 !== lastNight) { lastNight = nb2; audio.setNight(!!nb2); audio.sfx(nb2 ? 'night' : 'day'); }
+    nightT += (night - nightT) * (1 - Math.exp(-dt * (manual ? 2.2 : 4))); if (Math.abs(night - nightT) < .002) nightT = night;
     light(nightT); if ((nightT > .5) !== root.classList.contains('x-night')) paintBtn();
     rainT += (rainTarget - rainT) * (1 - Math.exp(-dt * 1.1)); if (Math.abs(rainTarget - rainT) < .003) rainT = rainTarget; rainMat.uniforms.uT.value = t;
     dist += (distT - dist) * (1 - Math.exp(-dt * 3.4));
