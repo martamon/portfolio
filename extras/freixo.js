@@ -199,6 +199,7 @@ const std = (color, extra) => {
   return m;
 };
 const winMat = new THREE.MeshStandardMaterial({ color: 0x2c2a33, emissive: 0xffc46b, emissiveIntensity: 0, roughness: .5 });
+const lampMats = [];
 const lampMat = new THREE.MeshStandardMaterial({ color: 0xfff3c4, emissive: 0xffd36b, emissiveIntensity: .4, roughness: .3 });
 const boxG = new Map();
 // every "box" is softly rounded, like a little clay model: the corners are pulled onto a small sphere and the normals follow, so there are no hard edges
@@ -249,24 +250,20 @@ function house(o) {
       const t2 = box(w * .9, .016, .03, fm); t2.position.set(0, y - fh * .32, z + .012); g.add(t2);
       continue;
     }
-    for (let i = 0; i < n; i++) {
-      const x = (i - (n - 1) / 2) * (w / n);
-      if (f === 0 && Math.abs(x) < w / n * .55 && n % 2 === 1) continue;
-      const fr = box(.07, .1, .014, fm); fr.position.set(x, y, z + .004); g.add(fr);
-      const gl = box(.046, .075, .018, winMat); gl.position.set(x, y, z + .008); g.add(gl);
-      if (o.shut) for (const sx of [-1, 1]) { const sw = box(.022, .095, .014, std(o.shut)); sw.position.set(x + sx * .052, y, z + .005); g.add(sw); }
+    // long dark window bands with pale mullions, as on the houses of the reference (the door splits the ground floor band in two)
+    const bands = f === 0 ? [[-w * .27, w * .3], [w * .27, w * .3]] : [[0, w * .8]];
+    for (const [bx, bw] of bands) {
+      const gl = box(bw, fh * .36, .016, winMat); gl.position.set(bx, y, z + .006); g.add(gl);
+      const fr2 = box(bw + .016, .012, .02, fm); fr2.position.set(bx, y + fh * .19, z + .008); g.add(fr2);
+      const fr3 = box(bw + .016, .012, .02, fm); fr3.position.set(bx, y - fh * .19, z + .008); g.add(fr3);
+      const nm = Math.max(1, Math.round(bw / .16));
+      for (let q = 0; q <= nm; q++) { const mu = box(.01, fh * .38, .02, fm); mu.position.set(bx - bw / 2 + q * bw / nm, y, z + .008); g.add(mu); }
     }
   }
   const dcol = std(o.door || 0x8a4f2e);
   const door = box(.07, .12, .02, dcol); door.position.set(0, .06, z + .008); g.add(door);
-  const ar0 = new THREE.Mesh(new THREE.CylinderGeometry(.045, .045, .014, 12), fm); ar0.rotation.x = PI / 2; ar0.position.set(0, .12, z + .004); g.add(ar0);
-  const ar1 = new THREE.Mesh(new THREE.CylinderGeometry(.035, .035, .02, 12), dcol); ar1.rotation.x = PI / 2; ar1.position.set(0, .12, z + .01); g.add(ar1);
+  const aw = box(.15, .014, .06, std(o.roof)); aw.position.set(0, .16, z + .03); aw.rotation.x = .18; g.add(aw);                // a small coral awning over the door
   const st0 = box(.1, .02, .05, std(0xd9d0bc)); st0.position.set(0, .01, z + .035); g.add(st0);
-  if (o.floors >= 1) for (let i = 0; i < n; i++) {                       // flower boxes under the ground-floor windows
-    const x = (i - (n - 1) / 2) * (w / n); if (Math.abs(x) < w / n * .55 && n % 2 === 1) continue;
-    const fb = box(.06, .02, .03, std(0x8a5a3a)); fb.position.set(x, fh * .56 - .06, z + .022); g.add(fb);
-    for (let q = -1; q <= 1; q++) { const fl = new THREE.Mesh(FLG, FLM[(i + q + 2) % FLM.length]); fl.position.set(x + q * .018, fh * .56 - .04, z + .026); g.add(fl); }
-  }
   if (o.floors >= 2 && (o.fr || 0) % 2 === 0) {                           // a dormer window in the roof
     const dm = box(.13, .1, .1, wall); dm.position.set(0, bodyH + .1, d / 2 - .26 + .1); g.add(dm);
     const dr2 = gable(.17, .17, .07, std(o.roof)); dr2.position.set(0, bodyH + .15, d / 2 - .16); g.add(dr2);
@@ -779,7 +776,7 @@ export function open(opts) {
     mk(RB - .27, RB + .34, new THREE.MeshStandardMaterial({ color: 0xe2cba0, roughness: 1, side: THREE.DoubleSide }), lift0 + .012);
     mk(RB - .2, RB + .2, new THREE.MeshStandardMaterial({ color: 0x808a98, roughness: 1, side: THREE.DoubleSide }), lift0 + .03);
     const isl2 = new THREE.Mesh(new THREE.CylinderGeometry(RB - .3, RB - .27, .05, 28), std(0x7fb35a)); const ig = new THREE.Group(); ig.add(isl2);
-    const tr = new THREE.Mesh(new THREE.CylinderGeometry(.015, .02, .16, 6), std(0x7a5a3c)); tr.position.y = .1; ig.add(tr); const cr = new THREE.Mesh(new THREE.IcosahedronGeometry(.11, 2), std(0x62ae4a)); cr.position.y = .24; ig.add(cr);
+    const tr = new THREE.Mesh(new THREE.CylinderGeometry(.015, .02, .16, 6), std(0x7a5a3c)); tr.position.y = .1; ig.add(tr); const cr = new THREE.Mesh(new THREE.IcosahedronGeometry(.11, 2), std(0x3f9576, { flatShading: true })); cr.position.y = .24; ig.add(cr);
     W(put(ig, jx, z0, 0, hb + .04, true));
   }
   buildRoad(roadS);
@@ -794,9 +791,13 @@ export function open(opts) {
     for (const sx of [-1, 1]) {
       const hd = new THREE.Mesh(new THREE.CylinderGeometry(.018, .03, .016, 8), dk); hd.position.set(sx * .075, .512, 0); lp.add(hd);
       const bulb = new THREE.Mesh(new THREE.IcosahedronGeometry(.014, 1), lampMat); bulb.position.set(sx * .075, .5, 0); lp.add(bulb);
+      const halo = new THREE.Mesh(glowG, lampGlow); halo.position.set(sx * .075, .49, 0); lp.add(halo);        // the glow round each lamp at night
     }
+    const pool = new THREE.Mesh(poolG, lampPool); pool.rotation.x = -PI / 2; pool.position.set(0, .012, 0); pool.userData.ribbon = true; lp.add(pool);       // and a pool of light on the ground
     return W(put(lp, x, z, yaw, 0));
   };
+  const lampGlow = new THREE.MeshBasicMaterial({ color: 0xffd98a, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }), lampPool = new THREE.MeshBasicMaterial({ color: 0xffc66a, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }); lampMats.push(lampGlow, lampPool);
+  const glowG = new THREE.IcosahedronGeometry(.05, 1), poolG = new THREE.CircleGeometry(.24, 20);
   const lampLine = (pts, step, off) => {
     const made = [];
     for (let i = 3; i < pts.length - 3; i += step) {
@@ -1104,7 +1105,7 @@ export function open(opts) {
     slab.userData.fp = Math.max(w, d) * .62; slab.userData.pri = 3; W(put(slab, px, pz, yaw, -.04));
     for (const [qx, qz] of [[-.5, -.4], [.5, -.4], [-.5, .4], [.5, .4]].slice(0, o.trees === undefined ? 2 : o.trees)) {
       const tr = new THREE.Group(), tk = new THREE.Mesh(new THREE.CylinderGeometry(.02, .028, .24, 6), std(0x7a5a3c)); tk.position.y = .12; tr.add(tk);
-      const cr = new THREE.Mesh(new THREE.IcosahedronGeometry(.17, 1), std(0x62ae4a)); cr.position.y = .36; tr.add(cr);
+      const cr = new THREE.Mesh(new THREE.IcosahedronGeometry(.17, 1), std(0x3f9576, { flatShading: true })); cr.position.y = .36; tr.add(cr);
       const a = yaw, tx = px + (qx * w * .8) * Math.cos(a) + (qz * d * .8) * Math.sin(a), tz = pz - (qx * w * .8) * Math.sin(a) + (qz * d * .8) * Math.cos(a);
       W(put(tr, tx, tz, 0, .03));
     }
@@ -1487,8 +1488,10 @@ export function open(opts) {
     else oaks.push([x, z, .6 + rnd() * .4]);
   }
   const trunkG = new THREE.CylinderGeometry(.028, .04, .26, 6), trunkM = std(0x7a5a3c);
-  const oakG = new THREE.IcosahedronGeometry(.27, 3), pineG = new THREE.SphereGeometry(.2, 14, 10).scale(1, 1.7, 1), pine2G = new THREE.SphereGeometry(.14, 12, 8).scale(1, 1.6, 1);
-  const eucG = new THREE.SphereGeometry(.16, 8, 6), eucT = new THREE.CylinderGeometry(.014, .026, .8, 5);
+  // faceted, slightly lumpy crowns, like the low-poly trees of the reference
+  const lowpoly = (g, a) => { const ps = g.attributes.position; for (let q = 0; q < ps.count; q++) { const x = ps.getX(q), y = ps.getY(q), z = ps.getZ(q), k = 1 + (hash2(x * 37.1 + y * 11.3, z * 53.7 + y * 5.1) - .5) * a; ps.setXYZ(q, x * k, y * k, z * k); } g.computeVertexNormals(); return g; };
+  const oakG = lowpoly(new THREE.IcosahedronGeometry(.27, 1), .34), pineG = lowpoly(new THREE.IcosahedronGeometry(.2, 1).scale(1, 1.7, 1), .26), pine2G = lowpoly(new THREE.IcosahedronGeometry(.14, 1).scale(1, 1.6, 1), .26);
+  const eucG = lowpoly(new THREE.IcosahedronGeometry(.16, 1), .3), eucT = new THREE.CylinderGeometry(.014, .026, .8, 5);
   const inst = (geo, mat, list, place) => {
     const m = new THREE.InstancedMesh(geo, mat, Math.max(1, list.length)), o = new THREE.Object3D(), hold = new THREE.Object3D(), c = new THREE.Color();
     list.forEach((t, i) => { put(hold, t[0], t[1], rnd() * 6.28, -.02); o.position.copy(hold.position); o.quaternion.copy(hold.quaternion); o.scale.setScalar(t[2]); place(o, t); o.updateMatrix(); m.setMatrixAt(i, o.matrix); m.setColorAt(i, place.color ? place.color(c, t) : c.set(0xffffff)); });
@@ -1498,12 +1501,12 @@ export function open(opts) {
   const green = (base, v) => (c) => c.set(base).offsetHSL((rnd() - .5) * .03, (rnd() - .5) * .08, (rnd() - .5) * v);
   const pl = (fn, colFn) => { fn.color = colFn; return fn; };
   W(inst(trunkG, trunkM, oaks, pl((o) => o.translateY(.13 * o.scale.x))));
-  W(inst(oakG, std(0xffffff, { flatShading: false, roughness: .8, map: paintTexR(3) }), oaks, pl((o) => { o.translateY(.5 * o.scale.x); o.scale.y *= .9; }, gorse(0x4a9a78, .12, .22))));
+  W(inst(oakG, std(0xffffff, { flatShading: true, roughness: .85, map: paintTexR(3) }), oaks, pl((o) => { o.translateY(.5 * o.scale.x); o.scale.y *= .9; }, gorse(0x4a9a78, .12, .22))));
   W(inst(trunkG, trunkM, pines, pl((o) => o.translateY(.13 * o.scale.x))));
-  W(inst(pineG, std(0xffffff, { roughness: .8, map: paintTexR(3) }), pines, pl((o) => o.translateY(.5 * o.scale.x), green(0x3c8c6c, .1))));
-  W(inst(pine2G, std(0xffffff, { roughness: .8, map: paintTexR(3) }), pines, pl((o) => o.translateY(.98 * o.scale.x), green(0x4e9e7a, .1))));
+  W(inst(pineG, std(0xffffff, { flatShading: true, roughness: .85, map: paintTexR(3) }), pines, pl((o) => o.translateY(.5 * o.scale.x), green(0x3c8c6c, .1))));
+  W(inst(pine2G, std(0xffffff, { flatShading: true, roughness: .85, map: paintTexR(3) }), pines, pl((o) => o.translateY(.98 * o.scale.x), green(0x4e9e7a, .1))));
   W(inst(eucT, std(0xcfc7b0), euc, pl((o) => o.translateY(.4 * o.scale.x))));
-  W(inst(eucG, std(0xffffff, { roughness: .8, map: paintTexR(3) }), euc, pl((o) => { o.translateY(.88 * o.scale.x); o.scale.y *= 1.5; }, gorse(0x7fb48a, .1, .12))));
+  W(inst(eucG, std(0xffffff, { flatShading: true, roughness: .85, map: paintTexR(3) }), euc, pl((o) => { o.translateY(.88 * o.scale.x); o.scale.y *= 1.5; }, gorse(0x7fb48a, .1, .12))));
 
   // Monte Louro
   spot('Monte Louro', 'Monte', 'Across the water, Monte Louro rises over the mouth of the ría, with pines on its slopes and the sea on three sides.', hubAt(LOURO[0], LOURO[1], 1.9), .6);
@@ -1679,7 +1682,7 @@ export function open(opts) {
     sea.material.color.copy(DAY.sea).lerp(NIGHT.sea, kI).lerp(SEA_RAIN, r * (1 - k)); for (const m of cloudMats) m.color.copy(CLD_DAY).lerp(CLD_DUSK, dsk * .85).lerp(CLD_RAIN, r * (1 - k * .5));
     rainMat.uniforms.uA.value = r; rain.visible = r > .01;
     winMat.emissiveIntensity = Math.min(1.5, k * 1.5 + r * .9);
- lampMat.emissiveIntensity = .4 + k * 2.4; lamp.intensity = k * 2.2; starMat.opacity = k;
+ lampMat.emissiveIntensity = .4 + k * 3.2; if (lampMats.length) { lampMats[0].opacity = Math.min(.8, k * 1.1) * .55; lampMats[1].opacity = Math.min(.8, k * 1.1) * .5; } lamp.intensity = k * 2.2; starMat.opacity = k;
   };
   dnBtn.addEventListener('click', () => { manual = true; night = night > .5 ? 0 : 1; });
   light(nightT); paintBtn();
