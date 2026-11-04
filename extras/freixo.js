@@ -290,6 +290,7 @@ function horreo() {
   g.userData.fp = .5; g.userData.pri = 1;
   return g;
 }
+const ALLP = [];
 function person(shirt, o) {
   o = o || {};
   const g = new THREE.Group(), skin = std(o.skin || 0xf0c9a0);
@@ -298,6 +299,13 @@ function person(shirt, o) {
   const head = new THREE.Mesh(new THREE.SphereGeometry(.021, 8, 6), skin); head.position.y = .124;
   g.add(legs, torso, head);
   if (o.hat) { const hat = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, .008, 8), std(o.hat)); hat.position.y = .142; g.add(hat); const hc = new THREE.Mesh(new THREE.CylinderGeometry(.016, .02, .02, 8), std(o.hat)); hc.position.y = .152; g.add(hc); }
+  g.userData.role = o.role || 'town'; g.userData.idx = ALLP.length;
+  if (g.userData.role === 'town' || g.userData.role === 'walk') {                           // a little umbrella, only shown while it rains
+    const um = new THREE.Group(), pole = new THREE.Mesh(new THREE.CylinderGeometry(.003, .003, .1, 4), std(0x4a4038)); pole.position.y = .07; um.add(pole);
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(.055, 12, 6, 0, PI * 2, 0, PI / 2), std([0xd9473a, 0x2f6fa8, 0xf2c14a, 0x3b9a6a, 0xe277a0][ALLP.length % 5])); dome.position.y = .12; dome.scale.y = .6; um.add(dome);
+    um.position.set(.02, .035, 0); um.visible = false; g.add(um); g.userData.umb = um;
+  }
+  ALLP.push(g);
   return g;
 }
 function lying(shirt, o) {
@@ -307,6 +315,7 @@ function lying(shirt, o) {
   const legs = box(.06, .022, .034, std(o.pants || 0x3a4a63)); legs.position.set(.05, .016, 0);
   const head = new THREE.Mesh(new THREE.SphereGeometry(.02, 8, 6), std(o.skin || 0xf0c9a0)); head.position.set(-.058, .024, 0);
   g.add(torso, legs, head);
+  g.userData.role = 'sun'; g.userData.idx = ALLP.length; ALLP.push(g);
   return g;
 }
 const SHIRTS = [0xd9473a, 0x2f6fa8, 0xf2c14a, 0x3b9a6a, 0xf2efe6, 0xe277a0, 0x7a58b5, 0xf08a3c];
@@ -743,7 +752,7 @@ export function open(opts) {
     const bc = BOATS[bi++ % BOATS.length], b = boat(bc[0], bc[1], kind); b.scale.setScalar(sc || 1);
     const w = new THREE.Group(); w.add(b);
     if (kind === 'fisher') {                          // a fisherman on the deck with his rod and line
-      const p = person(SHIRTS[bi % SHIRTS.length], { hat: [0xf2c14a, 0xe9e2d2, 0x2f6fa8][bi % 3], skin: SKINS[bi % 4] }); p.position.set(.28, .13, .05); p.scale.setScalar(.9); b.add(p);
+      const p = person(SHIRTS[bi % SHIRTS.length], { hat: [0xf2c14a, 0xe9e2d2, 0x2f6fa8][bi % 3], skin: SKINS[bi % 4], role: 'fish' }); p.position.set(.28, .13, .05); p.scale.setScalar(.9); b.add(p);
       const rod = new THREE.Mesh(new THREE.CylinderGeometry(.004, .006, .5, 4), std(0x6b4a2a)); rod.position.set(.46, .32, .08); rod.rotation.z = -.9; b.add(rod);
       const line = new THREE.Mesh(new THREE.CylinderGeometry(.0015, .0015, .33, 3), std(0xffffff)); line.position.set(.65, .16, .08); b.add(line);
     }
@@ -839,13 +848,13 @@ export function open(opts) {
       W(put(tw, x, z, rnd() * 6.28, .0));
       if (k % 3 === 0) { const pz = parasol([0xc9473a, 0x2f6fa8, 0xe9b94a, 0xf2efe6, 0xe277a0][k % 5]); W(put(pz, x + .14, z + .04, 0, .0)); }
     }
-    for (let k = 0; k < 1; k++) { const x = cx + (rnd() - .5) * 2.4, z = wl(x) + sg * (.5 + rnd() * .35); if (groundH(x, z) < .02) continue; const p1 = person(SHIRTS[(k * 2 + 1) % SHIRTS.length], { skin: SKINS[k % 4] }); W(put(p1, x, z, rnd() * 6, 0)); const p2 = person(SHIRTS[(k * 2 + 4) % SHIRTS.length], { skin: SKINS[(k + 1) % 4] }); W(put(p2, x + .07, z + .03, rnd() * 6, 0)); }
+    for (let k = 0; k < 1; k++) { const x = cx + (rnd() - .5) * 2.4, z = wl(x) + sg * (.5 + rnd() * .35); if (groundH(x, z) < .02) continue; const p1 = person(SHIRTS[(k * 2 + 1) % SHIRTS.length], { skin: SKINS[k % 4], role: 'sun' }); W(put(p1, x, z, rnd() * 6, 0)); const p2 = person(SHIRTS[(k * 2 + 4) % SHIRTS.length], { skin: SKINS[(k + 1) % 4], role: 'sun' }); W(put(p2, x + .07, z + .03, rnd() * 6, 0)); }
     for (let k = 0; k < nSwim; k++) {
-      const p = person(SHIRTS[(k * 3 + 1) % SHIRTS.length], { skin: SKINS[k % 4] }); W(p);
+      const p = person(SHIRTS[(k * 3 + 1) % SHIRTS.length], { skin: SKINS[k % 4], role: 'swim' }); W(p);
       swimmers.push({ p, x: cx + (rnd() - .5) * 2.2, off: .45 + rnd() * .55, fn, sg, ph: rnd() * 6.28, sp: .25 + rnd() * .2, rx: .25 + rnd() * .35 });
     }
     for (let k = 0; k < nWalk; k++) {
-      const p = person(SHIRTS[(k * 2 + 5) % SHIRTS.length], { skin: SKINS[(k + 2) % 4] }); W(p);
+      const p = person(SHIRTS[(k * 2 + 5) % SHIRTS.length], { skin: SKINS[(k + 2) % 4], role: 'walk' }); W(p);
       walkers.push({ p, cx, fn, sg, half: 1.0 + rnd() * .5, ph: rnd() * 6.28, sp: .13 + rnd() * .08, off: .1 + rnd() * .12 });
     }
     // boardwalk along the back of the sand, tufts of dune grass, a lifeguard tower, a kiosk with an awning and a volleyball net
@@ -854,7 +863,7 @@ export function open(opts) {
       for (const sx of [-.2, .2]) { const po = box(.012, .16, .012, std(0x6b4a2a)); po.position.set(sx, .08, 0); g.add(po); }
       const net = box(.4, .06, .004, std(0xffffff, { transparent: true, opacity: .7 })); net.position.y = .13; g.add(net);
       W(put(g, vx, vz, 0, 0));
-      for (const [px, pz, c] of [[-.2, .28, 0], [.2, .3, 3], [-.15, -.28, 5], [.22, -.3, 1]]) { const pp = person(SHIRTS[c], { skin: SKINS[c % 4] }); pp.scale.setScalar(.95); W(put(pp, vx + px, vz + pz * sg * -1, pz > 0 ? PI : 0, 0)); }
+      for (const [px, pz, c] of [[-.2, .28, 0], [.2, .3, 3], [-.15, -.28, 5], [.22, -.3, 1]]) { const pp = person(SHIRTS[c], { skin: SKINS[c % 4], role: 'sun' }); pp.scale.setScalar(.95); W(put(pp, vx + px, vz + pz * sg * -1, pz > 0 ? PI : 0, 0)); }
       const bl = new THREE.Mesh(new THREE.SphereGeometry(.03, 10, 8), std(0xf6f1e4)); W(bl); balls.push({ m: bl, x: vx, z: vz, ph: rnd() * 6, sg });
     }
     { const kx = cx + 1.1, kz = wl(kx) + sg * .95, g = new THREE.Group();
@@ -1030,7 +1039,7 @@ export function open(opts) {
     const pt = pitch(1.15, .7, true); const [qx, qz] = loc(0, .5); W(put(pt, qx, qz, yaw, .1));
     for (const lx of [-1.0, 1.0]) for (const lz of [.5, 1.1]) { const tr = new THREE.Group(), tk = new THREE.Mesh(new THREE.CylinderGeometry(.02, .028, .24, 6), std(0x7a5a3c)); tk.position.y = .12; tr.add(tk); const cr = new THREE.Mesh(new THREE.IcosahedronGeometry(.16, 2), std(0x62ae4a)); cr.position.y = .34; tr.add(cr); const [tx, tz] = loc(lx, lz); W(put(tr, tx, tz, 0, .03)); }
     const ball = new THREE.Mesh(new THREE.SphereGeometry(.026, 10, 8), std(0xf6f1e4)); W(ball);
-    const kids = []; for (let k = 0; k < nKids; k++) { const kd = person(SHIRTS[(k * 3 + (k % 2 ? 1 : 0)) % SHIRTS.length], { skin: SKINS[k % 4], pants: k % 2 ? 0x2f3f66 : 0x8a2f2f }); kd.scale.setScalar(.7); W(kd); kids.push({ kd, x: (rnd() - .5) * 1.4, z: (rnd() - .5) * .7, team: k % 2, ph: rnd() * 6 }); }
+    const kids = []; for (let k = 0; k < nKids; k++) { const kd = person(SHIRTS[(k * 3 + (k % 2 ? 1 : 0)) % SHIRTS.length], { skin: SKINS[k % 4], pants: k % 2 ? 0x2f3f66 : 0x8a2f2f, role: 'kid' }); kd.scale.setScalar(.7); W(kd); kids.push({ kd, x: (rnd() - .5) * 1.4, z: (rnd() - .5) * .7, team: k % 2, ph: rnd() * 6 }); }
     kickers.push({ loc, qx: 0, qz: .5, ball, kids, bx: 0, bz: 0, vx: .3, vz: .2, ph: rnd() * 6 });
     // two kids chatting by the school door and a teacher
     for (const [lx, c] of [[-.2, 1], [.15, 4]]) { const pp = person(SHIRTS[c], { skin: SKINS[c % 4] }); pp.scale.setScalar(.85); const [ax, az] = loc(lx, -.52); W(put(pp, ax, az, yaw + PI, .03)); }
@@ -1041,7 +1050,7 @@ export function open(opts) {
     const pt = pitch(1.2, .7, true); W(put(pt, px, pz, yaw, .1));
     const loc = (lx, lz) => [px + lx * Math.cos(yaw) + lz * Math.sin(yaw), pz - lx * Math.sin(yaw) + lz * Math.cos(yaw)];
     const ball = new THREE.Mesh(new THREE.SphereGeometry(.026, 10, 8), std(0xf6f1e4)); W(ball);
-    const kids = []; for (let k = 0; k < 4; k++) { const kd = person(SHIRTS[(k * 2 + 1) % SHIRTS.length], { skin: SKINS[k % 4], pants: 0x2f3f66 }); kd.scale.setScalar(.7); W(kd); kids.push({ kd, x: (rnd() - .5) * 1, z: (rnd() - .5) * .5, team: k % 2, ph: rnd() * 6 }); }
+    const kids = []; for (let k = 0; k < 4; k++) { const kd = person(SHIRTS[(k * 2 + 1) % SHIRTS.length], { skin: SKINS[k % 4], pants: 0x2f3f66, role: 'kid' }); kd.scale.setScalar(.7); W(kd); kids.push({ kd, x: (rnd() - .5) * 1, z: (rnd() - .5) * .5, team: k % 2, ph: rnd() * 6 }); }
     kickers.push({ loc, qx: 0, qz: 0, ball, kids, bx: 0, bz: 0, vx: .3, vz: .2, ph: rnd() * 6, small: true }); }
 
   // rocks on the tips of the capes (puntas)
@@ -1109,7 +1118,7 @@ export function open(opts) {
     for (const x of [-18.6, -16.9, -15.4]) hh(x, 2.4, 1 + (hc % 2)); for (const x of [14.0, 15.1, 17.9]) hh(x, 2.6, 1 + (hc % 2));
     // crop fields: rows of vegetables, vines, wheat, ploughed earth and flower beds on the gentle slopes
     const CROPS = [[0x6fae3a, 0x4f8f2d], [0xe6c85a, 0xcfa83a], [0x8a5a3a, 0x6f452c], [0x7aa84a, 0x9c5fb0], [0x5f8f3a, 0x3d6f26], [0xe9a23a, 0xd4812a]];
-    const field = (x, z, ang, w, d, ci) => {
+    const field = (x, z, ang, w, d, ci, lift) => {
       const g = new THREE.Group(), [c1, c2] = CROPS[ci % CROPS.length], base = box(w, .03, d, std(0x8a6a44)); base.position.y = .0; g.add(base);
       const rows = Math.floor(d / .09);
       for (let r = 0; r < rows; r++) {
@@ -1117,13 +1126,13 @@ export function open(opts) {
         if (ci % 6 === 3) for (let k = 0; k < 6; k++) { const bl = new THREE.Mesh(new THREE.SphereGeometry(.022, 6, 5), std([0xe9577a, 0xf5e04a, 0xfff8ea][(k + r) % 3])); bl.position.set(-w / 2 + .1 + k * (w - .2) / 5, .065, -d / 2 + .06 + r * .09); g.add(bl); }
       }
       const fn = box(w + .04, .05, .012, std(0x8a6a44)); fn.position.set(0, .03, d / 2 + .01); g.add(fn); const fn2 = fn.clone(); fn2.position.z = -d / 2 - .01; g.add(fn2);
-      g.userData.fp = Math.max(w, d) * .55; g.userData.pri = 0; g.userData.field = 1; W(put(g, x, z, ang, -.01)); return g;
+      g.userData.fp = Math.max(w, d) * .5 + .12; g.userData.pri = 0; g.userData.field = 1; W(put(g, x, z, ang, .03 + lift)); return g;
     };
     let fi = 0;
-    for (const [fx, inl] of [[-16.2, 5.6], [-12.4, 6.6], [-7.2, 6.0], [-3.8, 6.5], [-.2, 5.9], [3.4, 6.3], [8.6, 6.4], [12.2, 6.2], [16.3, 6.0], [-10.6, 4.9], [5.4, 5.0], [-1.9, 7.4]]) {
+    for (const [fx, inl] of [[-16.2, 5.6], [-12.4, 6.6], [-7.2, 6.0], [-3.8, 6.5], [-.2, 5.9], [3.4, 6.3], [8.6, 6.4], [12.2, 6.2], [16.3, 6.0], [-10.6, 4.9], [5.4, 5.0], [-1.9, 7.4], [-14.2, 5.2], [-5.4, 7.2], [1.4, 7.0], [10.2, 7.0], [14.2, 5.6], [-18.4, 6.4], [18.0, 5.2]]) {
       const x = fx, z = shore(x) - inl, sl = Math.abs(groundH(x + .5, z) - groundH(x - .5, z)) + Math.abs(groundH(x, z + .5) - groundH(x, z - .5));
-      if (groundH(x, z) < .35 || sl > .5 || inletD(x, z) < .8) continue;
-      field(x, z, seaYaw(x) + (fi % 2 ? .25 : -.2), 1.0 + (fi % 3) * .12, .75 + (fi % 2) * .12, fi); fi++;
+      if (groundH(x, z) < .35 || sl > .16 || inletD(x, z) < 1.2) continue;
+      field(x, z, seaYaw(x) + (fi % 2 ? .15 : -.12), .55 + (fi % 3) * .08, .45 + (fi % 2) * .06, fi, sl * .7); fi++;
     }
   }
 
@@ -1462,6 +1471,18 @@ export function open(opts) {
       }
     }
     for (const fl of flags) fl.rotation.y = Math.sin(t * 3 + fl.position.x * 5) * .35;
+    // people react to the weather: umbrellas and shelter in the rain; at night most go home, and the children, bathers and sunbathers leave first
+    for (const g of ALLP) {
+      const u = g.userData; if (u.s0 === undefined) { u.s0 = g.scale.x; u.v = 1; }
+      const role = u.role, h = (u.idx * 37 % 100) / 100;
+      let want = 1;
+      if (role === 'sun' || role === 'swim') want = rainT > .35 || nightT > .35 ? 0 : 1;
+      else if (role === 'kid') want = nightT > .3 || rainT > .85 && h > .4 ? 0 : 1;
+      else if (role === 'walk') want = nightT > .4 || (rainT > .7 && h > .5) ? 0 : 1;
+      else if (role === 'town') want = nightT > .5 && h > .3 ? 0 : (rainT > .85 && h > .7 ? 0 : 1);
+      u.v += (want - u.v) * (1 - Math.exp(-dt * 2.6)); const sc = u.s0 * Math.max(.001, u.v); g.scale.setScalar(sc); g.visible = u.v > .03;
+      if (u.umb) u.umb.visible = rainT > .5;
+    }
     for (const bl of balls) { const c = Math.cos(t * 2.6 + bl.ph), h = .07 + .24 * Math.abs(Math.sin(t * 2.6 + bl.ph)); put(bl.m, bl.x, bl.z + c * .3 * bl.sg, 0, h); }
     for (const s of swimmers) {
       const a = t * s.sp + s.ph, x = s.x + Math.sin(a) * s.rx;
