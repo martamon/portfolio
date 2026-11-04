@@ -1200,16 +1200,25 @@ export function open(opts) {
     fiestaFx.x = fx; fiestaFx.z = fz;
     window.__crowd = crowd;
     // the saltamontes: a small ring roller-coaster with a train of three cars
-    { const cx = fx + .25, cz = fz - .0, N = 20, pts = [];
-      for (let k = 0; k < N; k++) { const a = k / N * PI * 2, rr = .62 + .06 * Math.sin(a * 3); const x = cx + Math.cos(a) * rr * 1.1, z = cz + Math.sin(a) * rr; const y = .14 + (Math.sin(a * 3 + .5) * .5 + .5) * .3; dirFrom(x, z, _e).multiplyScalar(R + groundH(x, z) + y); pts.push(_e.clone()); }
-      const curve = new THREE.CatmullRomCurve3(pts, true), tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 120, .018, 6, true), std(0xc9462e)); W(tube);
+    { const cx = fx + .3, cz = fz - .45, N = 20, pts = [];
+      for (let k = 0; k < N; k++) { const a = k / N * PI * 2, rr = .3 + .03 * Math.sin(a * 3); const x = cx + Math.cos(a) * rr * 1.1, z = cz + Math.sin(a) * rr; const y = .09 + (Math.sin(a * 3 + .5) * .5 + .5) * .14; dirFrom(x, z, _e).multiplyScalar(R + groundH(x, z) + y); pts.push(_e.clone()); }
+      const curve = new THREE.CatmullRomCurve3(pts, true), tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 120, .01, 6, true), std(0xc9462e)); W(tube);
       for (let k = 0; k < N; k += 2) { const pp = pts[k], gp = dirFrom(0, 0, _f), base = pp.clone().normalize().multiplyScalar(R + .03), leg = new THREE.Mesh(new THREE.CylinderGeometry(.008, .008, pp.length() - base.length(), 4), std(0xeeeeee)); leg.position.copy(pp.clone().add(base).multiplyScalar(.5)); leg.quaternion.setFromUnitVectors(Y, pp.clone().sub(base).normalize()); W(leg); }
-      const cars = []; for (let k = 0; k < 3; k++) { const g = new THREE.Group(), cb = box(.11, .045, .07, std([0xf2c14a, 0x2f6fa8, 0x3b9a6a][k])); cb.position.y = .03; g.add(cb); const pp = person(SHIRTS[(k * 2) % SHIRTS.length], { skin: SKINS[k], role: 'kid' }); pp.scale.setScalar(.45); pp.position.y = .05; g.add(pp); W(g); cars.push(g); }
+      const cars = []; for (let k = 0; k < 3; k++) { const g = new THREE.Group(); g.scale.setScalar(.5); const cb = box(.11, .045, .07, std([0xf2c14a, 0x2f6fa8, 0x3b9a6a][k])); cb.position.y = .03; g.add(cb); const pp = person(SHIRTS[(k * 2) % SHIRTS.length], { skin: SKINS[k], role: 'kid' }); pp.scale.setScalar(.45); pp.position.y = .05; g.add(pp); W(g); cars.push(g); }
       const lap = (cx2, cz2) => 0;
-      const sp = new THREE.Mesh(new THREE.CylinderGeometry(.04, .05, .02, 10), std(0xfff8ea)); const gg = new THREE.Group(); gg.add(sp); gg.userData.fp = .3; gg.userData.pri = 4; W(put(gg, cx, cz, 0, -.04));
+      const sp = new THREE.Mesh(new THREE.CylinderGeometry(.04, .05, .02, 10), std(0xfff8ea)); const gg = new THREE.Group(); gg.add(sp); gg.userData.fp = .2; gg.userData.pri = 4; W(put(gg, cx, cz, 0, -.04));
       for (let k = 0; k < N; k += 2) { const bl = new THREE.Mesh(new THREE.SphereGeometry(.016, 6, 5), lampMat); bl.position.copy(pts[k]).addScaledVector(pts[k].clone().normalize(), .03); W(bl); }
       const rl = new THREE.PointLight(0xff7aa8, 0, 2.6, 1.6); const rg = new THREE.Object3D(); rg.add(rl); W(put(rg, cx, cz, 0, .5)); fiestaLights.push([rl, 1.3]);
       fiestaObj.push({ curve, cars }); }
+    // a second, small stage for a singer: platform, backdrop, speakers, a microphone stand, coloured spot lights and the singer, with a few fans in front
+    { const g = new THREE.Group(), bs = box(.62, .09, .42, std(0x6b4a2a)); bs.position.y = .045; g.add(bs); const back = box(.62, .3, .02, std(0x2b2d42)); back.position.set(0, .24, -.19); g.add(back); for (let k = 0; k < 5; k++) { const bl = new THREE.Mesh(new THREE.SphereGeometry(.014, 6, 5), new THREE.MeshStandardMaterial({ color: [0xff5a7a, 0xffd36b, 0x6bd0ff, 0x9bff7a, 0xff9a3b][k], emissive: [0xff5a7a, 0xffd36b, 0x6bd0ff, 0x9bff7a, 0xff9a3b][k], emissiveIntensity: .6 })); bl.position.set(-.24 + k * .12, .4, -.17); g.add(bl); g.userData['b' + k] = bl; }
+      for (const sx of [-.27, .27]) { const sp = box(.07, .12, .06, std(0x1d1f23)); sp.position.set(sx, .15, -.1); g.add(sp); const cn = new THREE.Mesh(new THREE.CircleGeometry(.02, 10), std(0x555a63)); cn.position.set(sx, .17, -.068); g.add(cn); }
+      const rf = box(.7, .025, .46, std(0xc9462e)); rf.position.y = .48; g.add(rf); for (const sx of [-.3, .3]) { const po = box(.02, .38, .02, std(0xeeeeee)); po.position.set(sx, .28, .2); g.add(po); }
+      const st = box(.006, .13, .006, std(0x2b3036)); st.position.set(0, .16, .05); g.add(st); const mc = new THREE.Mesh(new THREE.SphereGeometry(.01, 6, 5), std(0x2b3036)); mc.position.set(0, .23, .05); g.add(mc);
+      const sg = person(0xe9577a, { skin: SKINS[1], pants: 0x2f2f4a, role: 'band', hat: 0xf6f1e4 }); sg.scale.setScalar(.85); sg.position.set(0, .09, .0); g.add(sg); fiestaObj.push(sg);
+      const spl = new THREE.PointLight(0xff7ac8, 0, 2.2, 1.6); spl.position.set(0, .42, .1); g.add(spl); fiestaLights.push([spl, 1.2]);
+      g.userData.fp = .42; g.userData.pri = 4; W(put(g, fx + .15, fz + 1.0, 0, 0)); }
+    for (let k = 0; k < 8; k++) { const pp = person(SHIRTS[(k * 3 + 1) % SHIRTS.length], { skin: SKINS[k % 4], role: 'fest' }); pp.scale.setScalar(.8); W(pp); crowd.push({ p: pp, a: k * 1.3, cx: fx + .15 + (k % 4 - 1.5) * .13, cz: fz + 1.0 + .33 + Math.floor(k / 4) * .18, dance: 1, night: false, s0: .8 }); }
     // flags between lamp posts and a little lamp for the stage
     for (const [dx, dz] of [[-1.1, -1.0], [1.1, -1.0], [-1.1, 1.0], [1.1, 1.0]]) { const lp = new THREE.Group(); const pole = new THREE.Mesh(new THREE.CylinderGeometry(.01, .013, .4, 5), std(0x2b3036)); pole.position.y = .2; lp.add(pole); const lb = new THREE.Mesh(new THREE.SphereGeometry(.03, 8, 6), lampMat); lb.position.y = .42; lp.add(lb); W(put(lp, fx + dx, fz + dz, 0, 0)); }
   }
@@ -1581,7 +1590,7 @@ export function open(opts) {
       }
     }
     for (const fl of flags) fl.rotation.y = Math.sin(t * 3 + fl.position.x * 5) * .35;
-    { const fo = fiestaObj; for (const m of fo) { if (m.lh2) { beamPivot.rotation.y = t * .8; beamPivot.userData.m.material.opacity = .32 * nightT + rainT * .1; m.lh2.userData.sl.intensity = 1.8 * nightT; m.lh2.userData.lan.material.emissiveIntensity = .5 + 2.2 * nightT; continue; } if (m.curve) { m.cars.forEach((g, k) => { const u = ((t * .05 + .96 - k * .045) % 1 + 1) % 1, p = m.curve.getPointAt(u), q = m.curve.getPointAt((u + .01) % 1); g.position.copy(p); _m.lookAt(q, p, p.clone().normalize()); g.quaternion.setFromRotationMatrix(_m); }); } else m.rotation.z = Math.sin(t * 6 + m.position.x * 40) * .08; } }
+    { const fo = fiestaObj; for (const m of fo) { if (m.lh2) { beamPivot.rotation.y = t * .8; beamPivot.userData.m.material.opacity = .32 * nightT + rainT * .1; m.lh2.userData.sl.intensity = 1.8 * nightT; m.lh2.userData.lan.material.emissiveIntensity = .5 + 2.2 * nightT; continue; } if (m.curve) { m.cars.forEach((g, k) => { const u = ((t * .07 + .96 - k * .06) % 1 + 1) % 1, p = m.curve.getPointAt(u), q = m.curve.getPointAt((u + .01) % 1); g.position.copy(p); _m.lookAt(q, p, p.clone().normalize()); g.quaternion.setFromRotationMatrix(_m); }); } else m.rotation.z = Math.sin(t * 6 + m.position.x * 40) * .08; } }
     if (window.__crowd) for (const c of window.__crowd) { if (c.night) { const v = Math.max(.001, nightT); c.p.scale.setScalar(c.s0 * v); c.p.visible = nightT > .03; if (!c.p.visible) continue; } const a = t * (c.dance ? 1.1 : .35) + c.a; put(c.p, c.cx + Math.cos(a) * (c.dance ? .05 : .18), c.cz + Math.sin(a) * (c.dance ? .05 : .12), a + PI / 2, Math.abs(Math.sin(t * (c.dance ? 5 : 7) + c.a)) * (c.dance ? .018 : .006)); }
     for (const l of fiestaLights) l[0].intensity = l[1] * nightT * (1 - rainT * .4);
     { // fireworks: now and then, at night, a soft burst rises over the fiesta, opens into a sphere of sparks and fades
