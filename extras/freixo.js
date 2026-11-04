@@ -1430,7 +1430,7 @@ export function open(opts) {
     // houses on both banks, a little way beyond the bridge ends
     [[-1, 1.15, 0], [1, 1.15, 1], [-1, 1.95, 2], [1, 2.0, 3], [-1, 2.8, 4]].forEach(([sd, dist, i3]) => { const ex = c0[0] + nx * sd * (len / 2 + dist) + (tx / tl) * (i3 % 2 ? .5 : -.5), ez = c0[1] + nz * sd * (len / 2 + dist) + (tz / tl) * (i3 % 2 ? .5 : -.5); if (groundH(ex, ez) < .3 || inletD(ex, ez) < .7) return; const hs = house({ w: .44, d: .38, floors: 1 + (i3 % 2), wall: WALLS[(i3 * 3 + 2) % WALLS.length], roof: ROOF[i3 % ROOF.length], gal: false, shut: [0x3d78a8, 0x4a9a74, 0xb4483a][i3 % 3], fr: i3 + 7, stone: i3 % 2 === 1 }); hs.userData.pri = 2; W(put(hs, ex, ez, yaw + (sd > 0 ? PI / 2 : -PI / 2), -.02)); });
     const pts = [[c0[0] + nx * (len / 2 + .5), c0[1] + nz * (len / 2 + .5)], [c0[0] - nx * (len / 2 + .5), c0[1] - nz * (len / 2 + .5)]], rt = route(pts);
-    [[0, 1, .05, 1], [4, 0, .04, -1], [2, 2, .06, 1]].forEach(([c, sk, v, d], i2) => { const pp = person(SHIRTS[c % SHIRTS.length], { skin: SKINS[sk], role: 'town' }); pp.scale.setScalar(.85); W(pp); pathers.push({ p: pp, r: rt, u: .15 + i2 * .3, v: v * d * .35, off: (i2 - 1) * .04, lift: hm + .08 - groundH(c0[0], c0[1]) }); }); }
+    [[0, 1, .05, 1], [4, 0, .04, -1], [2, 2, .06, 1]].forEach(([c, sk, v, d], i2) => { const pp = person(SHIRTS[c % SHIRTS.length], { skin: SKINS[sk], role: 'town' }); pp.scale.setScalar(.85); W(pp); pathers.push({ p: pp, r: rt, u: .15 + i2 * .3, v: v * d * .35, off: (i2 - 1) * .04, lift: 0, bridge: { cx: c0[0], cz: c0[1], half: len / 2, top: hm + .215 } }); }); }
 
   // ---- tidy up: no building may overlap another one or stand on a road; the most important ones (churches, schools, squares, arcades) stay
   { const items = [], dd2 = new THREE.Vector3();
@@ -2020,7 +2020,9 @@ export function open(opts) {
     for (const q of pathers) {
       if (!q.still) { q.u += q.v * dt / Math.max(.5, q.r.total); if (q.u > 1 || q.u < 0) { q.u = Math.min(1, Math.max(0, q.u)); q.v = -q.v; q.off = -q.off; } }
       const [x, z, yaw] = routeAt(q.r, q.u), sy = Math.sin(yaw), cy = Math.cos(yaw);
-      put(q.p, x + sy * q.off, z + cy * q.off, yaw + (q.v < 0 ? PI : 0), (q.still ? 0 : Math.abs(Math.sin(t * 7 + q.u * 30)) * .008) + (q.lift || 0));
+      const qx = x + sy * q.off, qz = z + cy * q.off;
+      if (q.bridge) { const B = q.bridge, tgt = Math.hypot(qx - B.cx, qz - B.cz) <= B.half ? Math.max(0, B.top - groundH(qx, qz)) : 0; q.lift = (q.lift || 0) + (tgt - (q.lift || 0)) * Math.min(1, dt * 12); }   // on the deck they stand on its planks, on the banks on the ground
+      put(q.p, qx, qz, yaw + (q.v < 0 ? PI : 0), (q.still ? 0 : Math.abs(Math.sin(t * 7 + q.u * 30)) * .008) + (q.lift || 0));
     }
     for (const k of kickers) {                                              // the ball drifts across the pitch, every child runs after it, and now and then it is kicked towards a goal
       const hw = k.small ? .5 : .5, hd = k.small ? .27 : .27;
