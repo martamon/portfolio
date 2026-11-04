@@ -1209,6 +1209,25 @@ export function open(opts) {
     for (const [dx, dz] of [[-1.1, -1.0], [1.1, -1.0], [-1.1, 1.0], [1.1, 1.0]]) { const lp = new THREE.Group(); const pole = new THREE.Mesh(new THREE.CylinderGeometry(.01, .013, .4, 5), std(0x2b3036)); pole.position.y = .2; lp.add(pole); const lb = new THREE.Mesh(new THREE.SphereGeometry(.03, 8, 6), lampMat); lb.position.y = .42; lp.add(lb); W(put(lp, fx + dx, fz + dz, 0, 0)); }
   }
 
+  // ---- a second, prettier lighthouse on the cape of Punta Uhía: tapered white tower with red bands, a gallery with railing, a glass lantern whose beam turns at night, the keeper's house and a rocky base
+  const beamPivot = new THREE.Group();
+  { const g = new THREE.Group(), white = std(0xf6f1e4), red = std(0xc9462e);
+    const rock = new THREE.Mesh(new THREE.IcosahedronGeometry(.5, 2), std(0x9a968a)); rock.scale.set(1, .45, .85); rock.position.y = .06; g.add(rock);
+    const tw = new THREE.Mesh(new THREE.CylinderGeometry(.12, .2, 1.1, 14), white); tw.position.y = .72; g.add(tw);
+    for (const [y, h] of [[.45, .17], [.88, .17]]) { const bd = new THREE.Mesh(new THREE.CylinderGeometry(.165 - y * .07 + .05, .185 - y * .07 + .05, h, 14), red); bd.position.y = y + .26; g.add(bd); }
+    const gal = new THREE.Mesh(new THREE.CylinderGeometry(.19, .15, .045, 16), std(0x2b3036)); gal.position.y = 1.29; g.add(gal);
+    for (let k = 0; k < 16; k++) { const a2 = k / 16 * PI * 2, r1 = box(.012, .07, .012, std(0x2b3036)); r1.position.set(Math.cos(a2) * .18, 1.34, Math.sin(a2) * .18); g.add(r1); }
+    const rl = new THREE.Mesh(new THREE.TorusGeometry(.18, .008, 5, 20), std(0x2b3036)); rl.rotation.x = PI / 2; rl.position.y = 1.375; g.add(rl);
+    const lan = new THREE.Mesh(new THREE.CylinderGeometry(.095, .095, .16, 12), new THREE.MeshStandardMaterial({ color: 0xfff3c4, emissive: 0xffd36b, emissiveIntensity: .5, transparent: true, opacity: .85 })); lan.position.y = 1.4; g.add(lan); g.userData.lan = lan;
+    const cap = new THREE.Mesh(new THREE.ConeGeometry(.13, .13, 12), red); cap.position.y = 1.54; g.add(cap); const ball = new THREE.Mesh(new THREE.SphereGeometry(.02, 8, 6), std(0x2b3036)); ball.position.y = 1.62; g.add(ball);
+    const dr = box(.07, .12, .02, std(0x2f6fa8)); dr.position.set(0, .14, .2); g.add(dr);
+    const kh = house({ w: .38, d: .3, floors: 1, wall: 0xf6f1e4, roof: ROOF[0], gal: false, shut: 0x2f6fa8, fr: 2, door: 0x2f6fa8 }); kh.position.set(.5, -.0, .12); kh.scale.setScalar(.85); g.add(kh);
+    beamPivot.position.y = 1.4; const bm = new THREE.Mesh(new THREE.ConeGeometry(.12, 1.3, 12, 1, true), new THREE.MeshBasicMaterial({ color: 0xffe9a8, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending })); bm.rotation.z = -PI / 2; bm.position.x = .7; beamPivot.add(bm); g.add(beamPivot); beamPivot.userData.m = bm;
+    const sl = new THREE.PointLight(0xffd36b, 0, 5, 1.8); sl.position.y = 1.4; g.add(sl); g.userData.sl = sl;
+    g.scale.setScalar(.8); g.userData.fp = .75; g.userData.pri = 4;
+    const cx = -2.3, cz = shore(cx) - .1; W(put(g, cx, cz, seaYaw(cx), -.03)); fiestaObj.push({ lh2: g });
+  }
+
   // ---- tidy up: no building may overlap another one or stand on a road; the most important ones (churches, schools, squares, arcades) stay
   { const items = [], dd2 = new THREE.Vector3();
     for (const o of world.children) { const u = o.userData; if (!u || !(u.fp || u.fps)) continue; if (u.fp === 0) continue; dd2.copy(o.position).normalize(); const [x, z] = planeOf(dd2); items.push({ o, x, z, home: !!u.home, pri: u.pri || 1, circles: u.fps ? u.fps.map(([dx, r]) => [x + dx, z, r]) : [[x, z, u.fp]] }); }
@@ -1548,7 +1567,7 @@ export function open(opts) {
       }
     }
     for (const fl of flags) fl.rotation.y = Math.sin(t * 3 + fl.position.x * 5) * .35;
-    { const fo = fiestaObj; for (const m of fo) { if (m.curve) { m.cars.forEach((g, k) => { const u = ((t * .05 + .96 - k * .045) % 1 + 1) % 1, p = m.curve.getPointAt(u), q = m.curve.getPointAt((u + .01) % 1); g.position.copy(p); _m.lookAt(q, p, p.clone().normalize()); g.quaternion.setFromRotationMatrix(_m); }); } else m.rotation.z = Math.sin(t * 6 + m.position.x * 40) * .08; } }
+    { const fo = fiestaObj; for (const m of fo) { if (m.lh2) { beamPivot.rotation.y = t * .8; beamPivot.userData.m.material.opacity = .32 * nightT + rainT * .1; m.lh2.userData.sl.intensity = 1.8 * nightT; m.lh2.userData.lan.material.emissiveIntensity = .5 + 2.2 * nightT; continue; } if (m.curve) { m.cars.forEach((g, k) => { const u = ((t * .05 + .96 - k * .045) % 1 + 1) % 1, p = m.curve.getPointAt(u), q = m.curve.getPointAt((u + .01) % 1); g.position.copy(p); _m.lookAt(q, p, p.clone().normalize()); g.quaternion.setFromRotationMatrix(_m); }); } else m.rotation.z = Math.sin(t * 6 + m.position.x * 40) * .08; } }
     if (window.__crowd) for (const c of window.__crowd) { const a = t * (c.dance ? 1.1 : .35) + c.a; put(c.p, c.cx + Math.cos(a) * (c.dance ? .05 : .18), c.cz + Math.sin(a) * (c.dance ? .05 : .12), a + PI / 2, Math.abs(Math.sin(t * (c.dance ? 5 : 7) + c.a)) * (c.dance ? .018 : .006)); }
     for (const bl of balls) { const c = Math.cos(t * 2.6 + bl.ph), h = .07 + .24 * Math.abs(Math.sin(t * 2.6 + bl.ph)); put(bl.m, bl.x, bl.z + c * .3 * bl.sg, 0, h); }
     for (const s of swimmers) {
