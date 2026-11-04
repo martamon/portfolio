@@ -1191,15 +1191,20 @@ export function open(opts) {
     g.scale.setScalar(s2 * 1.15);
     return { g, head, legs };
   }
-  { const SPOTS = [['sheep', -14.5, 6.6], ['sheep', -2.9, 7.2], ['sheep', 10.4, 6.9], ['deer', -17.6, 7.8], ['deer', -5.4, 8.1], ['deer', 6.3, 8.4], ['goat', -19.6, 8.6], ['goat', 12.9, 8.8], ['rabbit', -9.8, 6.4], ['rabbit', .3, 6.6], ['rabbit', 4.2, 6.8], ['rabbit', 14.8, 6.2], ['fox', -12.4, 9.0], ['fox', 2.0, 9.3]];
-    for (const [kind, ax, inl] of SPOTS) {
-      const cnt = kind === 'sheep' ? 3 : kind === 'deer' || kind === 'goat' ? 2 : 1;
+  // they live up on the mountains only: high ground, well away from every building, field, road, river and beach
+  { const KINDS = ['sheep', 'sheep', 'deer', 'goat', 'rabbit', 'rabbit', 'fox'];
+    const okSpot = (x, z) => groundH(x, z) > 1.5 && !forbid(x, z) && inletD(x, z) > 1 && cove(x, z) < .05 && keptC.every((c) => Math.hypot(x - c[0], z - c[1]) > c[2] + 1.3);
+    let placed = 0;
+    for (let g = 0; g < 400 && placed < 15; g++) {
+      const ax = -20 + rnd() * 38, az = shore(ax) - (6.5 + rnd() * 6.5);
+      if (!okSpot(ax, az)) continue;
+      const kind = KINDS[placed % KINDS.length], cnt = kind === 'sheep' ? 3 : kind === 'deer' || kind === 'goat' ? 2 : 1;
       for (let k = 0; k < cnt; k++) {
-        let x = ax + (rnd() - .5) * 1.1 + k * .22, z = shore(ax) - inl + (rnd() - .5) * .8;
-        for (let tries = 0; tries < 10 && (groundH(x, z) < .5 || forbid(x, z) || inletD(x, z) < .6); tries++) { x = ax + (rnd() - .5) * 2.4; z = shore(ax) - inl + (rnd() - .5) * 2.2; }
-        if (groundH(x, z) < .4 || inletD(x, z) < .5) continue;
-        const an = animal(kind); W(an.g); critters.push({ ...an, kind, hx: x, hz: z, ph: rnd() * 6, r: .35 + rnd() * .4, sp: .12 + rnd() * .1 });
+        const x = ax + (k - 1) * .3 + (rnd() - .5) * .2, z = az + (rnd() - .5) * .4;
+        if (!okSpot(x, z)) continue;
+        const an = animal(kind); W(an.g); critters.push({ ...an, kind, hx: x, hz: z, ph: rnd() * 6, r: .3 + rnd() * .25, sp: .12 + rnd() * .1 });
       }
+      placed++;
     } }
 
   // ---- sky: clouds, gulls and a few birds that keep going round the planet
