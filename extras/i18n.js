@@ -73,6 +73,7 @@ const ROWS = [
   ['Press E to read', 'Pulsa E para leer', 'Preme E para ler'],
   ['Close', 'Cerrar', 'Pechar'],
   ['Day / night', 'Día / noche', 'Día / noite'],
+  ['Rain', 'Lluvia', 'Chuvia'],
   ['Back to the map', 'Volver al mapa', 'Volver ao mapa'],
   ['Under the sea', 'Bajo el mar', 'Baixo o mar'],
   ['Sound', 'Sonido', 'Son'],

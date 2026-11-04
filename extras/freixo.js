@@ -3,7 +3,7 @@
 // fishermen on anchored boats, cars, boats under sail, birds and clouds that keep moving. Opened from the Contact page (three clicks on the creature).
 // open({ night, onClose }) shows it on top of the page and returns { close }.
 import * as THREE from './three.module.min.js';
-import { mochiText, MOCHI, tr } from './i18n.js?v=9';
+import { mochiText, MOCHI, tr } from './i18n.js?v=10';
 const mochiLen = MOCHI.length;
 
 const R = 12, PI = Math.PI, SEA = -.06;    // SEA: the water level, a little below the shore line, so waves and tides never reach the roads and houses                // radius of the planet
@@ -1720,7 +1720,7 @@ export function open(opts) {
     if (tourOn) return; tourOn = true; tourMuted = !!(audio && audio.muted);
     mochi.classList.remove('x-ctaon'); mochi.classList.add('x-load'); root.classList.add('x-tour'); if (audio) { audio.sfx('mochinext'); setTimeout(() => audio && audio.mute(true), 500); }
     const t0 = performance.now();
-    import('./conducir.js?v=5').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
+    import('./conducir.js?v=7').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
       .then((m) => { const ab = m.open({ onClose: endTour, getDark: () => nightT }); if (!ab) throw new Error('no webgl'); setTimeout(mochiClose, 700); })
       .catch(() => { endTour(); mochiClose(); });
   };
@@ -1794,7 +1794,7 @@ export function open(opts) {
     const w = root.clientWidth || innerWidth, h = root.clientHeight || innerHeight;
     renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
     baseDist = Math.max(34, Math.min(86, 39 / Math.min(1, camera.aspect * 1.05)));
-    distT = Math.min(Math.max(distT, 14.3), baseDist * 1.7);
+    distT = Math.min(Math.max(distT, 14.3), baseDist * 2.7);
   };
   size();
   distT = baseDist; dist = baseDist * 2.6;
@@ -1814,11 +1814,11 @@ export function open(opts) {
     const p = ptrs.get(e.pointerId); if (!p) return;
     const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY; lastInput = performance.now(); moved += Math.abs(dx) + Math.abs(dy);
     if (ptrs.size === 1) { rot(dx, dy); vel.set(dx, dy); }
-    else if (ptrs.size === 2) { const [a, b] = [...ptrs.values()], d = Math.hypot(a.x - b.x, a.y - b.y); if (pinch) distT = Math.min(baseDist * 1.7, Math.max(14.3, distT * pinch / d)); pinch = d; }
+    else if (ptrs.size === 2) { const [a, b] = [...ptrs.values()], d = Math.hypot(a.x - b.x, a.y - b.y); if (pinch) distT = Math.min(baseDist * 2.7, Math.max(14.3, distT * pinch / d)); pinch = d; }
   });
   const up = (e) => { ptrs.delete(e.pointerId); pinch = 0; };
   cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
-  cv.addEventListener('wheel', (e) => { e.preventDefault(); distT = Math.min(baseDist * 1.7, Math.max(14.3, distT * Math.exp(e.deltaY * .0016))); lastInput = performance.now(); focus = null; }, { passive: false });
+  cv.addEventListener('wheel', (e) => { e.preventDefault(); distT = Math.min(baseDist * 2.7, Math.max(14.3, distT * Math.exp(e.deltaY * .0016))); lastInput = performance.now(); focus = null; }, { passive: false });
   cv.addEventListener('click', () => { if (moved < 6 && cur >= 0) hideCard(); });
 
   // ---- the island kit: little things to put on the island (a tree, flowers, a house, a granary, a sheep, a lighthouse, a boat).
