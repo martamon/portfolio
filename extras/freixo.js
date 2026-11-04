@@ -140,11 +140,13 @@ const paintTex = () => {
   // a few short dark flecks (paint caught in the paper)
   for (let i = 0; i < 260; i++) { const x = r() * N, y = r() * N, a = ANG + (r() - .5) * 1.2, l = 2 + r() * 6; g.strokeStyle = `rgba(120,92,96,${.05 + r() * .08})`; g.lineWidth = 1 + r(); wrap((ox, oy) => { g.beginPath(); g.moveTo(x + ox, y + oy); g.lineTo(x + ox + Math.cos(a) * l, y + oy + Math.sin(a) * l); g.stroke(); }); }
   const im = g.getImageData(0, 0, N, N), d = im.data; for (let i = 0; i < d.length; i += 4) { const n = (r() - .5) * 9; d[i] = Math.max(0, Math.min(255, d[i] + n)); d[i + 1] = Math.max(0, Math.min(255, d[i + 1] + n)); d[i + 2] = Math.max(0, Math.min(255, d[i + 2] + n)); } g.putImageData(im, 0, 0);
+  { const im2 = g.getImageData(0, 0, N, N), q = im2.data; for (let i = 0; i < q.length; i += 4) { q[i] = 243 + (q[i] - 243) * .5; q[i + 1] = 240 + (q[i + 1] - 240) * .5; q[i + 2] = 232 + (q[i + 2] - 232) * .5; } g.putImageData(im2, 0, 0); }   // the same brush texture, half as strong: calmer, flatter surfaces
   const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; PAINT = t; return t;
 };
-const SAND = PASTEL(0xf8d89a), SEABED_SHORE = PASTEL(0xf4dcae), SEABED_DEEP = PASTEL(0x4f9fd0, .4), FAR = PASTEL(0x6cb8dc, .4), GRASS_A = PASTEL(0x9fd36a), GRASS_B = PASTEL(0x8ac85e),
-  WOOD = PASTEL(0x6fb34e), ROCK = PASTEL(0xcdb0d4), ROCK_G = PASTEL(0xa7c288), HEATH = PASTEL(0xe0b0e4);
-const FIELDS = [PASTEL(0xd6d060), PASTEL(0xf0b84e), PASTEL(0x8fcf60), PASTEL(0xe6dc7a), PASTEL(0xeb9a64)];
+// palette after the "Summer Afternoon" look: minty greens, sandy kerbs, dusty mauve and coral, teal trees, blue-grey roads
+const SAND = PASTEL(0xeed3a0), SEABED_SHORE = PASTEL(0xf1dcb4), SEABED_DEEP = PASTEL(0x4f9fd0, .4), FAR = PASTEL(0x6cb8dc, .4), GRASS_A = PASTEL(0x86c892), GRASS_B = PASTEL(0x72b784),
+  WOOD = PASTEL(0x56a37c), ROCK = PASTEL(0xc7b6a8), ROCK_G = PASTEL(0x96b88e), HEATH = PASTEL(0xd8bccb);
+const FIELDS = [PASTEL(0xcfd078), PASTEL(0xe8bb68), PASTEL(0x86c87c), PASTEL(0xe2d890), PASTEL(0xe2a082)];
 
 function buildTerrain() {
   const src = new THREE.IcosahedronGeometry(R, 64), sp = src.attributes.position, m = new THREE.Vector3(), out = new THREE.Color();
@@ -223,9 +225,9 @@ const gable = (len, span, rh, mat) => {              // a gabled roof, ridge alo
   g.rotateY(PI / 2); g.translate(-(len - bv * 2) / 2, 0, 0); g.computeVertexNormals();
   return new THREE.Mesh(g, mat);
 };
-const ROOF = [0xee7f50, 0xe0694a, 0xf2a24e, 0xe27a72, 0xf09460, 0x7f9ed0], SLATE = 0x7f86b0;
+const ROOF = [0xe36d57, 0xd95f4e, 0xea866c, 0xcb5a4e, 0xe5785e, 0x7597ac], SLATE = 0x7f86b0;
 const GRANITE = [0xb8b19f, 0xaaa391, 0xc2bba9];
-const WALLS = [0xfbe6b4, 0xf8cf8c, 0xdcb2ea, 0xfdf0d8, 0xa9dcae, 0xf8b49c, 0xfbe6b4, 0xf2c878, 0x9cc8ee, 0xfdf0d8];
+const WALLS = [0xd9aeb0, 0xe9cbb6, 0xf3e4ca, 0xcaa3a8, 0xe7c1b0, 0xf1ddc2, 0xd4b2b8, 0xeacfb7, 0xf2e7d4, 0xd0a9a2];
 const FLG = new THREE.SphereGeometry(.014, 6, 5), FLM = [0xe9577a, 0xf2a43a, 0xf5e04a, 0xf07a5a].map((c) => new THREE.MeshStandardMaterial({ color: c, roughness: .8 }));
 const FRAMEC = [0xfff8ea, 0x5f8fd0, 0x5fae60, 0xfff8ea, 0xe0694a, 0xf0b040];
 
@@ -751,7 +753,7 @@ export function open(opts) {
   // near the beaches the roads keep further back from the water, so the sand has room for people, parasols and the kiosk
   for (const q of roadN) q[1] -= 1.1 * Math.min(1, cove(q[0], q[1]) * 1.6) * (1 - gs(q[0], 1.8, 1.0)) * sstep(21, 18.6, q[0]) * sstep(-19.2, -17.6, q[0]); for (const q of roadS) q[1] += 1.1 * Math.min(1, cove(q[0], q[1]) * 1.6) * sstep(9, 7.4, q[0]) * sstep(-13.5, -12, q[0]);
   { const sm = (r) => { for (let k = 0; k < 6; k++) for (let i = 1; i < r.length - 1; i++) { r[i][1] = (r[i - 1][1] + 2 * r[i][1] + r[i + 1][1]) / 4; } }; sm(roadN); sm(roadS); for (let k = 0; k < 40; k++) for (let i = 1; i < roadN.length - 1; i++) if (roadN[i][0] > 11.5) roadN[i][1] = (roadN[i - 1][1] + 2 * roadN[i][1] + roadN[i + 1][1]) / 4; }
-  const walkMat = std(0xe6dcc4, { roughness: 1, side: THREE.DoubleSide }), asphalt = std(0x565b62, { roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }), lineMat = std(0xf4f0e4, { roughness: 1, side: THREE.DoubleSide }), pathMat = std(0xeee5d0, { roughness: 1, side: THREE.DoubleSide });
+  const walkMat = std(0xe2cba0, { roughness: 1, side: THREE.DoubleSide }), asphalt = std(0x808a98, { roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }), lineMat = std(0xf4f0e4, { roughness: 1, side: THREE.DoubleSide }), pathMat = std(0xeee5d0, { roughness: 1, side: THREE.DoubleSide });
   const sideOf = (pts, d) => pts.map((q, i) => { const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)], tx = b[0] - a[0], tz = b[1] - a[1], l = Math.hypot(tx, tz) || 1; return [q[0] - tz / l * d, q[1] + tx / l * d]; });
   const relax = (pts, passes) => { let q = pts; for (let k = 0; k < passes; k++) q = q.map((p, i) => (i === 0 || i === q.length - 1) ? p : [(q[i - 1][0] + 2 * p[0] + q[i + 1][0]) / 4, (q[i - 1][1] + 2 * p[1] + q[i + 1][1]) / 4]); return q; };
   const roadList = [];
@@ -774,8 +776,8 @@ export function open(opts) {
   for (const [jx, z0] of roadN.rb) {
     const hb = Math.max(groundH(jx, z0), .07), mk = (r0, r1, mat, lift) => { const m = new THREE.Mesh(new THREE.RingGeometry(r0, r1, 48, 1), mat); m.rotation.x = -PI / 2; m.userData.ribbon = true; const g = new THREE.Group(); g.add(m); W(put(g, jx, z0, 0, hb + lift, true)); return m; };
     const lift0 = -SEA;
-    mk(RB - .27, RB + .34, new THREE.MeshStandardMaterial({ color: 0xe6dcc4, roughness: 1, side: THREE.DoubleSide }), lift0 + .012);
-    mk(RB - .2, RB + .2, new THREE.MeshStandardMaterial({ color: 0x565b62, roughness: 1, side: THREE.DoubleSide }), lift0 + .03);
+    mk(RB - .27, RB + .34, new THREE.MeshStandardMaterial({ color: 0xe2cba0, roughness: 1, side: THREE.DoubleSide }), lift0 + .012);
+    mk(RB - .2, RB + .2, new THREE.MeshStandardMaterial({ color: 0x808a98, roughness: 1, side: THREE.DoubleSide }), lift0 + .03);
     const isl2 = new THREE.Mesh(new THREE.CylinderGeometry(RB - .3, RB - .27, .05, 28), std(0x7fb35a)); const ig = new THREE.Group(); ig.add(isl2);
     const tr = new THREE.Mesh(new THREE.CylinderGeometry(.015, .02, .16, 6), std(0x7a5a3c)); tr.position.y = .1; ig.add(tr); const cr = new THREE.Mesh(new THREE.IcosahedronGeometry(.11, 2), std(0x62ae4a)); cr.position.y = .24; ig.add(cr);
     W(put(ig, jx, z0, 0, hb + .04, true));
@@ -783,9 +785,34 @@ export function open(opts) {
   buildRoad(roadS);
   const linkRoads = [];
   const inlRoute = null;
-  const posts = [];
-  for (let i = 3; i < roadN.length - 3; i += 14) if (inletD(roadN[i][0], roadN[i][1]) > .6) posts.push([roadN[i][0], roadN[i][1] - .34]);
-  for (const [x, z] of posts) { const lp = new THREE.Group(); const pole = new THREE.Mesh(new THREE.CylinderGeometry(.012, .015, .34, 5), std(0x2b3036)); pole.position.y = .17; lp.add(pole); const lb = new THREE.Mesh(new THREE.SphereGeometry(.035, 8, 6), lampMat); lb.position.y = .36; lp.add(lb); W(put(lp, x, z, 0, 0)); }
+  // street lamps in the style of the reference: tall dark posts with a double-headed arm, one every little while along the coast roads,
+  // strung together with a sagging cable
+  const lampOf = (x, z, yaw) => {
+    const lp = new THREE.Group(), dk = std(0x2f3a45);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(.009, .015, .5, 6), dk); pole.position.y = .25; lp.add(pole);
+    const arm = box(.15, .012, .012, dk); arm.position.y = .505; lp.add(arm);
+    for (const sx of [-1, 1]) {
+      const hd = new THREE.Mesh(new THREE.CylinderGeometry(.018, .03, .016, 8), dk); hd.position.set(sx * .075, .512, 0); lp.add(hd);
+      const bulb = new THREE.Mesh(new THREE.IcosahedronGeometry(.014, 1), lampMat); bulb.position.set(sx * .075, .5, 0); lp.add(bulb);
+    }
+    return W(put(lp, x, z, yaw, 0));
+  };
+  const lampLine = (pts, step, off) => {
+    const made = [];
+    for (let i = 3; i < pts.length - 3; i += step) {
+      const a = pts[i - 1], b = pts[i + 1], dx = b[0] - a[0], dz = b[1] - a[1], dl = Math.hypot(dx, dz) || 1, nx = -dz / dl, nz = dx / dl;
+      let best = null; for (const sd of [-1, 1]) { const x = pts[i][0] + nx * off * sd, z = pts[i][1] + nz * off * sd, h = groundH(x, z); if (h > .06 && inletD(x, z) > .6 && (!best || h > best[2])) best = [x, z, h]; }
+      if (best) made.push(lampOf(best[0], best[1], Math.atan2(-dz, dx) + PI / 2));
+    }
+    const cm = std(0x2b3036);
+    for (let k = 1; k < made.length; k++) {
+      const A = made[k - 1].position, B = made[k].position; if (A.distanceTo(B) > 1.7) continue;
+      const a = A.clone().addScaledVector(A.clone().normalize(), .5), b = B.clone().addScaledVector(B.clone().normalize(), .5), mid = a.clone().add(b).multiplyScalar(.5);
+      mid.addScaledVector(mid.clone().normalize(), -.05);
+      for (const off2 of [-.022, .022]) { const sh = a.clone().sub(b).cross(a.clone().normalize()).normalize().multiplyScalar(off2); W(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([a.clone().add(sh), mid.clone().add(sh), b.clone().add(sh)]), 8, .0035, 4), cm)); }
+    }
+  };
+  lampLine(roadN, 9, .36); lampLine(roadS, 10, .36);
   // mountain roads: winding up Monte Louro and the hill above Outes, with a little chapel at the top of each
   const winding = (a, b, amp, turns) => {
     const dx = b[0] - a[0], dz = b[1] - a[1], len = Math.hypot(dx, dz), nx = -dz / len, nz = dx / len, n = Math.round(len / .2), pts = [];
@@ -1135,7 +1162,7 @@ export function open(opts) {
   const stPts = []; for (let k = 0; k <= 22; k++) stPts.push([stX + .28 * Math.sin(k * .38), stZ0 + k * .2]);
   W(ribbon(relax(stPts, 3), .34, std(0xcfc6b4, { roughness: 1, side: THREE.DoubleSide }), .012, false, undefined, true));
   W(ribbon(relax(stPts, 3), .5, std(0xe3dac4, { roughness: 1, side: THREE.DoubleSide }), .004, false, undefined, true));
-  { const PAST = [0xf6e6b4, 0xaed0dc, 0xb9d9c3, 0xf2c6a8, 0xf3d9a0, 0xa9c6d8], RF = [0xc9462e, 0xd0693a, 0x5f7f96, 0xc45a30, 0xdc7a48, 0xb04a36];
+  { const PAST = [0xdcb3b4, 0xe8c9b4, 0xf1e0c6, 0xcdb2bb, 0xe6bcab, 0xf0e1cd], RF = [0xd25a4a, 0xdc6a52, 0x6f8fa0, 0xc7503f, 0xe07a5c, 0xb84a40];
     for (let k = 0; k < 5; k++) for (const sd of [-1, 1]) {
       const z = stZ0 + .55 + k * .78 + (sd > 0 ? .3 : 0), px = stX + .28 * Math.sin((z - stZ0) / .2 * .38), x = px + sd * .62;
       const hs = house({ w: .42, d: .36, floors: k % 2 ? 2 : 1, wall: PAST[(k + (sd > 0 ? 2 : 0)) % PAST.length], roof: RF[(k * 2 + (sd > 0 ? 1 : 0)) % RF.length], gal: false, shut: [0x3d78a8, 0x4a9a74, 0xb4483a][(k + sd + 3) % 3], fr: k * 3 + (sd > 0 ? 1 : 0) });
@@ -1471,12 +1498,12 @@ export function open(opts) {
   const green = (base, v) => (c) => c.set(base).offsetHSL((rnd() - .5) * .03, (rnd() - .5) * .08, (rnd() - .5) * v);
   const pl = (fn, colFn) => { fn.color = colFn; return fn; };
   W(inst(trunkG, trunkM, oaks, pl((o) => o.translateY(.13 * o.scale.x))));
-  W(inst(oakG, std(0xffffff, { flatShading: false, roughness: .8, map: paintTexR(3) }), oaks, pl((o) => { o.translateY(.5 * o.scale.x); o.scale.y *= .9; }, gorse(0x6ec65a, .12, .22))));
+  W(inst(oakG, std(0xffffff, { flatShading: false, roughness: .8, map: paintTexR(3) }), oaks, pl((o) => { o.translateY(.5 * o.scale.x); o.scale.y *= .9; }, gorse(0x4a9a78, .12, .22))));
   W(inst(trunkG, trunkM, pines, pl((o) => o.translateY(.13 * o.scale.x))));
-  W(inst(pineG, std(0xffffff, { roughness: .8, map: paintTexR(3) }), pines, pl((o) => o.translateY(.5 * o.scale.x), green(0x4aa856, .1))));
-  W(inst(pine2G, std(0xffffff, { roughness: .8, map: paintTexR(3) }), pines, pl((o) => o.translateY(.98 * o.scale.x), green(0x5cb85c, .1))));
+  W(inst(pineG, std(0xffffff, { roughness: .8, map: paintTexR(3) }), pines, pl((o) => o.translateY(.5 * o.scale.x), green(0x3c8c6c, .1))));
+  W(inst(pine2G, std(0xffffff, { roughness: .8, map: paintTexR(3) }), pines, pl((o) => o.translateY(.98 * o.scale.x), green(0x4e9e7a, .1))));
   W(inst(eucT, std(0xcfc7b0), euc, pl((o) => o.translateY(.4 * o.scale.x))));
-  W(inst(eucG, std(0xffffff, { roughness: .8, map: paintTexR(3) }), euc, pl((o) => { o.translateY(.88 * o.scale.x); o.scale.y *= 1.5; }, gorse(0x92c466, .1, .12))));
+  W(inst(eucG, std(0xffffff, { roughness: .8, map: paintTexR(3) }), euc, pl((o) => { o.translateY(.88 * o.scale.x); o.scale.y *= 1.5; }, gorse(0x7fb48a, .1, .12))));
 
   // Monte Louro
   spot('Monte Louro', 'Monte', 'Across the water, Monte Louro rises over the mouth of the ría, with pines on its slopes and the sea on three sides.', hubAt(LOURO[0], LOURO[1], 1.9), .6);
@@ -1567,10 +1594,10 @@ export function open(opts) {
     fragmentShader: 'uniform float uA; uniform vec3 uC; varying float vA; void main(){ gl_FragColor = vec4(uC, uA * vA * .85); }' });
   const rain = new THREE.LineSegments(rainGeo, rainMat); rain.frustumCulled = false; rain.visible = false; world.add(rain);
   const cloudMats = []; for (const c of clouds) c.traverse((o) => { if (o.isMesh) cloudMats.push(o.material); });
-  const RAINBG = C(0x9fb1c0), RAINSKY = C(0xc6d3dc), CLD_DAY = C(0xffffff), CLD_RAIN = C(0x8d9aa8), SEA_RAIN = C(0x5d8fa0);
+  const RAINBG = C(0x9fb1c0), RAINSKY = C(0xc6d3dc), CLD_DAY = C(0xfff1dc), CLD_RAIN = C(0x8d9aa8), SEA_RAIN = C(0x5d8fa0);
 
   // ---- day / night
-  const SUN_ORANGE = C(0xff8f3c), HEMI_DUSK = C(0xffc08c), GROUND_DUSK = C(0xe8a0b4), CLD_DUSK = C(0xffb48a), DUSK_BG = C(0xf9a672), DAY = { bg: C(0xbfe0f6), hemi: 1.15, sun: 2.1, sunC: C(0xffdfb4), sky: C(0xfff0dc), sea: C(0x62d0ee) };
+  const SUN_ORANGE = C(0xff8f3c), HEMI_DUSK = C(0xffc08c), GROUND_DUSK = C(0xe8a0b4), CLD_DUSK = C(0xffb48a), DUSK_BG = C(0xf9a672), DAY = { bg: C(0xaed6f2), hemi: 1.15, sun: 2.1, sunC: C(0xffdfb4), sky: C(0xfff0dc), sea: C(0x62d0ee) };
   const NIGHT = { bg: C(0x0a1430), hemi: .5, sun: .6, sunC: C(0x8fb0ff), sky: C(0x6f8ad0), sea: C(0x1b3a63) };
   let manual = false, night = typeof opts.getDark === 'function' ? opts.getDark() : (opts.night ? 1 : 0), nightT = night; const night0 = night > .5 ? 1 : 0;
   const dnBtn = root.querySelector('.x-pl-dn'), hhEl = root.querySelector('.x-pl-hh'), mmEl = root.querySelector('.x-pl-mm'), ahEl = root.querySelector('.x-pl-ah'), amEl = root.querySelector('.x-pl-am');
