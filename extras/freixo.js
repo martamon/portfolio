@@ -467,7 +467,8 @@ function makeAudio(night0) {
   const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 520; bp.Q.value = .4;
   const sg = ctx.createGain(); sg.gain.value = .05;
   const lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = .11; lg.gain.value = .035; lfo.connect(lg); lg.connect(sg.gain);
-  ns.connect(bp); bp.connect(sg); sg.connect(out); ns.start(); lfo.start();
+  const seaMul = ctx.createGain(); seaMul.gain.value = 0;      // the sea is only heard when you come close to the open sea
+  ns.connect(bp); bp.connect(sg); sg.connect(seaMul); seaMul.connect(out); ns.start(); lfo.start();
   // rain: soft hiss (filtered noise) + a few tiny drops that plink in the reverb
   const rb = ctx.createBufferSource(); rb.buffer = nb; rb.loop = true; rb.playbackRate.value = .8;
   const rh = ctx.createBiquadFilter(); rh.type = 'highpass'; rh.frequency.value = 900; const rl = ctx.createBiquadFilter(); rl.type = 'lowpass'; rl.frequency.value = 5200;
@@ -502,12 +503,12 @@ function makeAudio(night0) {
   const ZR = {
     kids: [[.9, () => babble(2 + Math.floor(R_() * 3), 520, .03)], [.14, () => laugh(560)]],
     fiesta: [[.55, () => babble(3, 230, .022)], [.8, musicbox], [.15, () => babble(2, 560, .02)]],
-    beach: [[.25, () => swash(.035)], [.12, () => cool('gull', 5000) && gull()], [.22, () => babble(2, 600, .02)]],
-    harbour: [[.07, () => cool('eng', 6000) && engine()], [.05, () => cool('bell', 9000) && bellZ()], [.2, () => swash(.03)], [.07, () => cool('gull', 6000) && gull()]],
+    beach: [[.12, () => cool('gull', 5000) && gull()], [.22, () => babble(2, 600, .02)]],
+    harbour: [[.07, () => cool('eng', 6000) && engine()], [.05, () => cool('bell', 9000) && bellZ()], [.07, () => cool('gull', 6000) && gull()]],
     village: [[.06, () => cool('bell', 12000) && bellZ()], [.3, () => babble(2, 240, .02)], [.15, chirp]],
-    mountain: [[.16, () => cool('bleat', 3500) && bleat()], [.4, chirp], [.1, () => swash(.02)]],
+    mountain: [[.16, () => cool('bleat', 3500) && bleat()], [.4, chirp]],
     sea: [[.07, () => cool('whale', 9000) && whale()], [.3, () => swash(.04)], [.05, () => cool('gull', 7000) && gull()]],
-    ria: [[.25, () => swash(.03)], [.03, () => cool('eng', 9000) && engine()], [.06, () => cool('gull', 7000) && gull()]]
+    ria: [[.03, () => cool('eng', 9000) && engine()], [.06, () => cool('gull', 7000) && gull()]]
   };
   const zt = setInterval(() => { if (!alive || muted || Z.lvl < .05 || !Z.kind) return; for (const [rate, fn] of ZR[Z.kind] || []) if (R_() < rate * .17) fn(); }, 130);
   let mt = 0, pt = 0;
@@ -515,7 +516,7 @@ function makeAudio(night0) {
     start() { if (ctx.state === 'suspended') ctx.resume(); out.gain.cancelScheduledValues(ctx.currentTime); out.gain.setTargetAtTime(muted ? 0 : .9, ctx.currentTime, 1.6); pad(); pt = setInterval(pad, 8200); mt = setTimeout(melody, 1800); },
     mute(m) { muted = m; out.gain.setTargetAtTime(m ? 0 : .9, ctx.currentTime, .35); if (!m && ctx.state === 'suspended') ctx.resume(); },
     setRain(on) { rainOn = on; rg.gain.setTargetAtTime(on ? .075 : 0, ctx.currentTime, 1.4); rh.frequency.setTargetAtTime(on ? 1100 : 900, ctx.currentTime, 1); sg.gain.setTargetAtTime(on ? .028 : (night ? .07 : .05), ctx.currentTime, 2); if (on) drops(); else clearTimeout(dropT); },
-    zone(kind, lvl) { Z.kind = kind; Z.lvl = lvl; zOut.gain.setTargetAtTime(muted ? 0 : lvl * 2.6, ctx.currentTime, .6); },
+    zone(kind, lvl) { Z.kind = kind; Z.lvl = lvl; seaMul.gain.setTargetAtTime(kind === 'sea' && !muted ? Math.min(1, lvl * 1.3) : 0, ctx.currentTime, .9); zOut.gain.setTargetAtTime(muted ? 0 : lvl * 2.6, ctx.currentTime, .6); },
     setNight(n) { night = n; bp.frequency.setTargetAtTime(n ? 340 : 520, ctx.currentTime, 2); sg.gain.setTargetAtTime(n ? .07 : .05, ctx.currentTime, 2); },
     sfx(name) {
       if (muted || !alive) return;
