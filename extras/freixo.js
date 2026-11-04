@@ -552,6 +552,13 @@ function makeAudio(night0) {
       else if (name === 'mochiend') { [86, 79, 74, 67].forEach((m, k) => setTimeout(() => alive && note(m, .04 - k * .004, 2.4), k * 120)); }
       else if (name === 'pick') { note(84, .028, 1.2); setTimeout(() => note(91, .022, 1.4), 60); }
       else if (name === 'place') { note(67, .05, 2); setTimeout(() => note(74, .04, 2.2), 70); setTimeout(() => note(79, .03, 2.4), 150); }
+      else if (name === 'place_tree') { note(72, .045, 1.6); setTimeout(() => note(76, .035, 1.8), 90); setTimeout(() => note(79, .028, 2), 180); const t = ctx.currentTime, b = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = ctx.createGain(); b.buffer = nb; fl.type = 'bandpass'; fl.frequency.value = 3600; fl.Q.value = .8; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.02, t + .05); g.gain.exponentialRampToValueAtTime(.0005, t + .5); b.connect(fl); fl.connect(g); g.connect(tone); b.start(t, Math.random() * 2); b.stop(t + .6); }
+      else if (name === 'place_flowers') { [88, 91, 95, 100].forEach((m, k) => setTimeout(() => alive && note(m, .026 - k * .003, 1.2), k * 70)); }
+      else if (name === 'place_house') { [55, 59, 62].forEach((m, k) => setTimeout(() => alive && note(m, .05, 2.6), k * 85)); setTimeout(() => alive && note(74, .03, 2.4), 300); }
+      else if (name === 'place_horreo') { note(48, .06, .9); setTimeout(() => note(52, .05, .8), 110); setTimeout(() => note(60, .035, 1.4), 230); }
+      else if (name === 'place_sheep') { for (let k = 0; k < 2; k++) { const t = ctx.currentTime + k * .27, o = ctx.createOscillator(), lf = ctx.createOscillator(), lg = ctx.createGain(), g = ctx.createGain(); o.type = 'triangle'; o.frequency.setValueAtTime(430 - k * 40, t); o.frequency.linearRampToValueAtTime(330 - k * 30, t + .24); lf.frequency.value = 30; lg.gain.value = .014; lf.connect(lg); lg.connect(g.gain); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.032, t + .03); g.gain.exponentialRampToValueAtTime(.0006, t + .3); o.connect(g); g.connect(tone); o.start(t); lf.start(t); o.stop(t + .34); lf.stop(t + .34); } }
+      else if (name === 'place_lighthouse') { note(79, .05, 3.2); setTimeout(() => note(86, .035, 3.4), 120); setTimeout(() => note(91, .02, 3.6), 260); }
+      else if (name === 'place_boat') { api.sfx('splash'); setTimeout(() => { note(72, .04, 1.8); setTimeout(() => note(67, .035, 2), 110); }, 120); }
       else if (name === 'trash') { [79, 72, 65].forEach((m, k) => setTimeout(() => alive && note(m, .03, 1.4), k * 80)); }
       else if (name === 'nope') { note(62, .03, 1.2); }
       else if (name === 'learn') { [72, 76, 79, 83].forEach((m, k) => setTimeout(() => note(m, .04 - k * .004, 2.8), k * 105)); }
@@ -1676,7 +1683,7 @@ export function open(opts) {
 
   // ---- the island kit: little things to put on the island (a tree, flowers, a house, a granary, a sheep, a lighthouse, a boat).
   // Press a button to drop one in the middle of the view, or drag it onto the map and let go where you want it; grab any of them later
-  // to move it, and drop it on the buttons to take it away. They are kept between visits.
+  // to move it, and drop it on the buttons to take it away. Only the sheep and the boat move by themselves. Nothing is kept for the next visit.
   const placed = new THREE.Group(); world.add(placed);
   const KIT = [
     ['tree', 'Tree', '<circle cx="12" cy="9" r="6"/><path d="M12 15v6"/>', 0],
@@ -1748,7 +1755,8 @@ export function open(opts) {
     return null;
   }
   const okAt = (k, m) => m && (isSea(k) ? m[2] < SEA - .1 : m[2] > SEA + .07);
-  const kitSave = () => { try { localStorage.setItem('xplanet-kit', JSON.stringify(placed.children.map((o) => ({ k: o.userData.kit, x: +o.userData.x.toFixed(3), z: +o.userData.z.toFixed(3), y: +o.userData.yaw.toFixed(2) })))); } catch (e) {} };
+  const kitSave = () => {};                                        // nothing is kept: every visit starts with a bare island
+  try { localStorage.removeItem('xplanet-kit'); } catch (e) {}
   const anims = []; let animOn = false;
   function animTick(now) {
     for (let i = anims.length - 1; i >= 0; i--) { const a = anims[i], u = Math.min(1, (now - a.t0) / a.d); if (!a.step(u)) anims.splice(i, 1); else if (u >= 1) { a.end && a.end(); anims.splice(i, 1); } }
@@ -1756,7 +1764,7 @@ export function open(opts) {
   }
   const anim = (d, step, end) => { anims.push({ t0: performance.now(), d, step, end }); if (!animOn) { animOn = true; requestAnimationFrame(animTick); } };
   const elastic = (u) => u >= 1 ? 1 : 1 - Math.pow(1 - u, 3) * Math.cos(u * 9.4) ;
-  function standAt(o, x, z, lift) { o.userData.x = x; o.userData.z = z; put(o, x, z, o.userData.yaw, (isSea(o.userData.kit) ? .02 : -.01) + (lift || 0), isSea(o.userData.kit)); }
+  function standAt(o, x, z, lift) { o.userData.x = x; o.userData.z = z; o.userData.ax = x; o.userData.az = z; put(o, x, z, o.userData.yaw, (isSea(o.userData.kit) ? .02 : -.01) + (lift || 0), isSea(o.userData.kit)); }
   function make(k) { const o = BUILD[k](); o.userData.kit = k; o.userData.yaw = Math.random() * PI * 2; addOutline(o); o.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); return o; }
   function pop(o, delay) {                                         // it grows in with a little overshoot and a puff of shadow
     o.scale.setScalar(.001); const t0 = performance.now() + (delay || 0);
@@ -1771,7 +1779,7 @@ export function open(opts) {
   function spotNearCentre(k) {                                     // a free spot near the middle of the view
     const r = cv.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
     let best = null, bd = 1e9; const rad = Math.min(r.width, r.height) * .42;
-    for (let i = 0; i < 220; i++) { const a = Math.random() * PI * 2, rr = Math.sqrt(Math.random()) * rad, m = mapAt(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr); if (okAt(k, m) && rr < bd) { bd = rr; best = m; } }
+    for (let i = 0; i < 220; i++) { const a = Math.random() * PI * 2, rr = Math.sqrt(Math.random()) * rad, m = mapAt(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr); if (okAt(k, m) && rr < bd && !placed.children.some((q) => q.userData.x !== undefined && Math.hypot(q.userData.x - m[0], q.userData.z - m[1]) < .6)) { bd = rr; best = m; } }
     if (best) return best;
     return null;
   }
@@ -1805,13 +1813,38 @@ export function open(opts) {
     if (d.over && !d.isNew) {                                       // dropped on the buttons: it shrinks away
       if (audio) audio.sfx('trash'); anim(380, (u) => { o.scale.setScalar(Math.max(.001, 1 - u * u)); return true; }, () => { placed.remove(o); kitSave(); }); return;
     }
-    if (d.ok) { standAt(o, o.userData.x, o.userData.z); o.visible = true; settle(o); if (audio) audio.sfx('place'); kitSave(); return; }
+    if (d.ok) { standAt(o, o.userData.x, o.userData.z); o.visible = true; settle(o); if (audio) audio.sfx('place_' + d.k); kitSave(); return; }
     if (d.isNew) {
-      if (!d.moved) { const m = spotNearCentre(d.k); if (m) { standAt(o, m[0], m[1]); o.visible = true; pop(o); if (audio) audio.sfx('place'); kitSave(); return; } }
+      if (!d.moved) { const m = spotNearCentre(d.k); if (m) { standAt(o, m[0], m[1]); o.visible = true; pop(o); if (audio) audio.sfx('place_' + d.k); kitSave(); return; } }
       placed.remove(o); if (audio) audio.sfx('nope'); return;
     }
     if (d.from) { standAt(o, d.from[0], d.from[1]); settle(o); if (audio) audio.sfx('nope'); }
   }
+
+  // only the sheep and the boat have a life of their own: the sheep wander and graze near where they were put, the boat sails slowly about
+  let kitLast = performance.now();
+  function kitStep(now) {
+    if (!root.isConnected) return; requestAnimationFrame(kitStep);
+    const dt = Math.min(.05, (now - kitLast) / 1000); kitLast = now; if (document.hidden) return;
+    for (const o of placed.children) {
+      const u = o.userData, k = u.kit; if (k !== 'sheep' && k !== 'boat') continue;
+      if (!o.visible || (dragging && dragging.o === o) || u.x === undefined) continue;
+      const sea = k === 'boat', m = u.m || (u.m = { h: u.yaw, w: Math.random() * 2, sp: 0, ph: Math.random() * 9 }), t = now / 1000;
+      if (sea) { m.sp = .2; m.h += Math.sin(t * .35 + m.ph) * .16 * dt; }
+      else { m.w -= dt; if (m.w <= 0) { if (m.sp > 0) { m.sp = 0; m.w = 1.6 + Math.random() * 3.2; } else { m.sp = .13; m.w = 1.2 + Math.random() * 2.4; m.h += (Math.random() - .5) * 2.4; } } }
+      const far = Math.hypot(u.x - u.ax, u.z - u.az);
+      if (far > (sea ? 4 : 1.6)) { const back = Math.atan2(-(u.az - u.z), u.ax - u.x); let dh = ((back - m.h + PI * 3) % (PI * 2)) - PI; m.h += dh * Math.min(1, dt * 1.6); }   // drifts back towards where it was put
+      if (m.sp > 0) {
+        const nx = u.x + Math.cos(m.h) * m.sp * dt, nz = u.z - Math.sin(m.h) * m.sp * dt, gh = groundH(nx, nz);
+        if (sea ? gh < SEA - .16 : gh > SEA + .1) { u.x = nx; u.z = nz; } else { m.h += 1.9 + Math.random(); if (!sea) { m.sp = 0; m.w = .7; } }
+      }
+      const dh2 = ((m.h - u.yaw + PI * 3) % (PI * 2)) - PI; u.yaw += dh2 * Math.min(1, dt * 3);
+      const lift = sea ? Math.sin(t * 1.7 + m.ph) * .01 : (m.sp > 0 ? Math.abs(Math.sin(t * 9 + m.ph)) * .014 : 0);
+      put(o, u.x, u.z, u.yaw, (sea ? .02 : -.01) + lift, sea);
+      if (sea) o.rotateX(Math.sin(t * 1.3 + m.ph) * .05);
+    }
+  }
+  requestAnimationFrame(kitStep);
   kitUI.addEventListener('pointerdown', (e) => {
     const b = e.target.closest('.x-pl-bi'); if (!b || e.button) return; e.preventDefault();
     beginDrag(make(b.dataset.k), true, e);
@@ -1832,7 +1865,6 @@ export function open(opts) {
     const o = nearestItem(e.clientX, e.clientY); if (!o) return;
     e.stopImmediatePropagation(); e.preventDefault(); beginDrag(o, false, e);
   }, true);
-  try { const saved = JSON.parse(localStorage.getItem('xplanet-kit') || '[]'); saved.forEach((it, i) => { if (BUILD[it.k]) add(it.k, it.x, it.z, it.y, true, 400 + i * 90); }); } catch (e) {}
   const onKey = (e) => {
     if (e.key === 'Escape' && mStep >= 0) { mochiClose(); }
     else if (e.key === 'Escape') { if (!info.hidden) toggleInfo(false); else if (cur >= 0) hideCard(); else close(); }
