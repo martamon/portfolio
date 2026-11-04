@@ -509,13 +509,13 @@ function makeAudio(night0) {
     sea: [[.07, () => cool('whale', 9000) && whale()], [.3, () => swash(.04)], [.05, () => cool('gull', 7000) && gull()]],
     ria: [[.25, () => swash(.03)], [.03, () => cool('eng', 9000) && engine()], [.06, () => cool('gull', 7000) && gull()]]
   };
-  const zt = setInterval(() => { if (!alive || muted || Z.lvl < .05 || !Z.kind) return; for (const [rate, fn] of ZR[Z.kind] || []) if (R_() < rate * .13) fn(); }, 130);
+  const zt = setInterval(() => { if (!alive || muted || Z.lvl < .05 || !Z.kind) return; for (const [rate, fn] of ZR[Z.kind] || []) if (R_() < rate * .17) fn(); }, 130);
   let mt = 0, pt = 0;
   const api = {
     start() { if (ctx.state === 'suspended') ctx.resume(); out.gain.cancelScheduledValues(ctx.currentTime); out.gain.setTargetAtTime(muted ? 0 : .9, ctx.currentTime, 1.6); pad(); pt = setInterval(pad, 8200); mt = setTimeout(melody, 1800); },
     mute(m) { muted = m; out.gain.setTargetAtTime(m ? 0 : .9, ctx.currentTime, .35); if (!m && ctx.state === 'suspended') ctx.resume(); },
     setRain(on) { rainOn = on; rg.gain.setTargetAtTime(on ? .075 : 0, ctx.currentTime, 1.4); rh.frequency.setTargetAtTime(on ? 1100 : 900, ctx.currentTime, 1); sg.gain.setTargetAtTime(on ? .028 : (night ? .07 : .05), ctx.currentTime, 2); if (on) drops(); else clearTimeout(dropT); },
-    zone(kind, lvl) { Z.kind = kind; Z.lvl = lvl; zOut.gain.setTargetAtTime(muted ? 0 : lvl * 1.0, ctx.currentTime, .6); },
+    zone(kind, lvl) { Z.kind = kind; Z.lvl = lvl; zOut.gain.setTargetAtTime(muted ? 0 : lvl * 2.6, ctx.currentTime, .6); },
     setNight(n) { night = n; bp.frequency.setTargetAtTime(n ? 340 : 520, ctx.currentTime, 2); sg.gain.setTargetAtTime(n ? .07 : .05, ctx.currentTime, 2); },
     sfx(name) {
       if (muted || !alive) return;
@@ -1580,7 +1580,7 @@ export function open(opts) {
         let kind = 'sea';
         const far = Math.hypot(cx, cz) > 25 || cz < -22 || cz > 13;
         if (kickers.some((k) => { const [kx, kz] = k.loc(k.qx, k.qz); return at(kx, kz, 1.7); })) kind = 'kids';
-        else if (at(fiestaFx.x, fiestaFx.z, 2.3)) kind = 'fiesta';
+        else if (at(fiestaFx.x, fiestaFx.z, 3.1)) kind = 'fiesta';
         else if (COVES.some((c) => at(c[0], c[1], 2.2))) kind = 'beach';
         else if (!far && groundH(cx, cz) < -.03 && (at(pierX, shoreZ + 1.5, 3) || at(INLET[0][0], INLET[0][1], 2.4) || at(-13, shore(-13) + 1.5, 5) || at(INLET2[0][0], INLET2[0][1], 2.4))) kind = 'harbour';
         else if (HOMES.some((h) => at(h[0], h[1], 1.5))) kind = 'village';
