@@ -79,9 +79,9 @@ function groundRaw(x, z) {
   return h;
 }
 // the school yards and the little pitch sit on flat ground: the hill is levelled round them
-let FLAT = null;
+let FLAT = null; const flatList = () => FLAT;
 function groundH(x, z) {
-  if (!FLAT) { FLAT = []; for (const [fx, inl, r] of [[-.5, 5.05, 2.1], [13.0, 4.55, 2.1], [-7.6, 4.85, 1.3], [8.3, 1.4, 1.0]]) { const cz = shore(fx) - inl; FLAT.push([fx, cz, r * 1.25, groundRaw(fx, cz) - .14]); } }
+  if (!FLAT) { FLAT = []; for (const [fx, inl, r] of [[-.5, 5.05, 2.1], [15.6, 4.55, 2.1], [-7.6, 4.85, 1.3], [8.3, 1.4, 1.0]]) { const cz = shore(fx) - inl; FLAT.push([fx, cz, r * 1.25, groundRaw(fx, cz) - .14]); } }
   let h = groundRaw(x, z);
   for (const f of FLAT) { const d = Math.hypot(x - f[0], z - f[1]); if (d < f[2] * 1.9) h += (f[3] - h) * (1 - sstep(f[2] * .8, f[2] * 1.9, d)); }
   return h;
@@ -512,7 +512,7 @@ export function open(opts) {
   const mk = (floors, extra) => { const k = hc++; return Object.assign({ w: .44 + rnd() * .2, d: .4 + rnd() * .07, floors, wall: WALLS[k % WALLS.length], roof: ROOF[(k * 3 + 1) % ROOF.length], gal: floors > 1 && k % 2 === 0, shut: k % 4 === 0 ? SHUTC[(k >> 2) % 3] : 0, fr: k, turn: (rnd() - .5) * .14 }, extra || {}); };
   // village squares (x range, inland range): houses keep out of them
   let riverPts = []; const keptC = [];
-  const SQ = [[-1.9, .9, 3.4, 6.7], [11.7, 14.3, 3.0, 6.1], [-8.7, -6.6, 4.0, 5.7], [-13.95, -11.65, 1.8, 3.55], [-8.9, -7.4, 2.1, 3.4], [1.1, 2.5, 2.1, 3.4], [8.9, 10.4, 2.1, 3.4]];
+  const SQ = [[-1.9, .9, 3.4, 6.7], [14.3, 16.9, 3.0, 6.1], [-8.7, -6.6, 4.0, 5.7], [-13.95, -11.65, 1.8, 3.55], [-8.9, -7.4, 2.1, 3.4], [1.1, 2.5, 2.1, 3.4], [8.9, 10.4, 2.1, 3.4]];
   const inSq = (x, inl) => SQ.some((q) => x > q[0] && x < q[1] && inl > q[2] && inl < q[3]);
   const JX = [8.3], LINKX = [8.3];
   const roadClear = (x, inl) => LINKX.some((lx) => Math.abs(x - lx) < .65 && inl > .9 && inl < 7.9)  || JX.some((jx) => Math.abs(x - jx) < 1.05 && inl < 2.6 && inl > .5);
@@ -881,10 +881,10 @@ export function open(opts) {
     for (const [qx, qz] of [[-.5, -.4], [.5, -.4], [-.5, .4], [.5, .4]].slice(0, o.trees === undefined ? 2 : o.trees)) {
       const tr = new THREE.Group(), tk = new THREE.Mesh(new THREE.CylinderGeometry(.02, .028, .24, 6), std(0x7a5a3c)); tk.position.y = .12; tr.add(tk);
       const cr = new THREE.Mesh(new THREE.IcosahedronGeometry(.17, 1), std(0x62ae4a)); cr.position.y = .36; tr.add(cr);
-      const a = yaw, tx = px + (qx * w * .8) * Math.cos(a) - (qz * d * .8) * Math.sin(a), tz = pz - (qx * w * .8) * Math.sin(a) + (qz * d * .8) * Math.cos(a);
+      const a = yaw, tx = px + (qx * w * .8) * Math.cos(a) + (qz * d * .8) * Math.sin(a), tz = pz - (qx * w * .8) * Math.sin(a) + (qz * d * .8) * Math.cos(a);
       W(put(tr, tx, tz, 0, .03));
     }
-    for (const sx of [-1, 1]) { const bn = new THREE.Group(); bn.add(box(.2, .035, .06, std(0x8a6a44))); const bk = box(.2, .06, .012, std(0x8a6a44)); bk.position.set(0, .05, -.03); bn.add(bk); const a = yaw, tx = px + sx * w * .3 * Math.cos(a) - d * .38 * Math.sin(a), tz = pz - sx * w * .3 * Math.sin(a) + d * .38 * Math.cos(a); W(put(bn, tx, tz, yaw, .045)); }
+    for (const sx of [-1, 1]) { const bn = new THREE.Group(); bn.add(box(.2, .035, .06, std(0x8a6a44))); const bk = box(.2, .06, .012, std(0x8a6a44)); bk.position.set(0, .05, -.03); bn.add(bk); const a = yaw, tx = px + sx * w * .3 * Math.cos(a) + d * .38 * Math.sin(a), tz = pz - sx * w * .3 * Math.sin(a) + d * .38 * Math.cos(a); W(put(bn, tx, tz, yaw, .045)); }
     for (let k = 0; k < (o.terraces || 2); k++) { const tx = x + (k - ((o.terraces || 2) - 1) / 2) * w * .42; terrace(tx, inl - d * .33, [0xc9473a, 0x2f6fa8, 0xe9b94a][k % 3]); }
     for (let k = 0; k < (o.people || 6); k++) {
       const p = person(SHIRTS[(k * 3 + 2) % SHIRTS.length], { skin: SKINS[k % 4], hat: k % 4 === 0 ? 0xe9e2d2 : undefined }); W(p);
@@ -970,12 +970,12 @@ export function open(opts) {
     const stoneT = std(0xa7a08e), moss = std(0x7fae52), wallsM = [0xf6e6b4, 0xaed0dc, 0xf8efd9, 0xf2c6a8, 0xb9d9c3];
     let hi2 = 0;
     for (const [r, dz, n] of rows) for (let k = 0; k < n; k++) {
-      const x = base[0] + (k - (n - 1) / 2) * 1.0 + (r % 2) * .3, z = base[1] + dz * 1.0 - r * .0, gh = groundH(x, z);
+      const x = base[0] + (k - (n - 1) / 2) * 1.4 + (r % 2) * .35, z = base[1] + dz * 1.25 - r * .0, gh = groundH(x, z);
       if (inletD(x, z) < .7 || riverPts.some((q) => Math.hypot(q[0] - x, q[1] - z) < .5)) continue;
       const pl = new THREE.Group(); const sl = box(.85, .5, .7, stoneT); sl.position.y = .02; pl.add(sl); const mt = box(.88, .04, .74, moss); mt.position.y = .27; pl.add(mt);
-      const ya = -PI / 2 * 0 + .15 * (k - 1); W(put(pl, x, z, ya, -.02));
+      const ya = -PI / 2 * 0 + .15 * (k - 1);
       const hs = house({ w: .46, d: .38, floors: 1 + (hi2 % 2), wall: wallsM[hi2 % wallsM.length], roof: ROOF[hi2 % ROOF.length], gal: false, shut: [0x3d78a8, 0x4a9a74, 0xb4483a][hi2 % 3], fr: hi2, stone: false });
-      const hp = new THREE.Group(); hp.add(hs); hs.position.y = .3; hs.userData.fp = 0; hp.userData.fp = .55; hp.userData.pri = 2; W(put(hp, x, z, ya, -.02));
+      hs.position.y = .3; pl.add(hs); pl.userData.fp = .52; pl.userData.pri = 2; W(put(pl, x, z, ya, -.02));
       // steps climbing from this terrace to the next one
       for (let q = 0; q < 6; q++) { const stp = box(.22, .045, .09, std(0xcfc6b4)); const sg = new THREE.Group(); sg.add(stp); W(put(sg, x + .42 + (q * .02), z + .46 + q * .1, 0, .0)); }
       hi2++;
@@ -989,9 +989,9 @@ export function open(opts) {
   // the village keeps its clearing
   // ---- two schools with a football pitch where children play, and one tiny pitch
   function pitch(w, d, goals) {
-    const g = new THREE.Group(), grass = box(w, .05, d, std(0x7bbf55)); grass.position.y = .005; g.add(grass);
-    for (let k = 0; k < 5; k++) { const st = box(w / 5 - .004, .052, d - .02, std(k % 2 ? 0x73b84e : 0x84c75d)); st.position.set(-w / 2 + w / 10 + k * w / 5, .006, 0); g.add(st); }
-    const ln = std(0xf8f6ec);
+    const g = new THREE.Group(), grass = box(w, .05, d, std(0xc9a574)); grass.position.y = .005; g.add(grass);
+    for (let k = 0; k < 3; k++) { const st = box(w * .5, .052, d * .4, std(k % 2 ? 0xc29c6a : 0xd0ae80)); st.position.set((k - 1) * w * .22, .006, (k - 1) * d * .12); g.add(st); }
+    const ln = std(0xf4efe0);
     for (const [lw, ld, lx, lz] of [[w - .06, .014, 0, d / 2 - .035], [w - .06, .014, 0, -d / 2 + .035], [.014, d - .06, w / 2 - .035, 0], [.014, d - .06, -w / 2 + .035, 0], [.014, d - .06, 0, 0]]) { const l = box(lw, .054, ld, ln); l.position.set(lx, .008, lz); g.add(l); }
     const cc = new THREE.Mesh(new THREE.TorusGeometry(Math.min(w, d) * .13, .007, 5, 24), ln); cc.rotation.x = PI / 2; cc.position.y = .03; g.add(cc);
     if (goals) for (const sx of [-1, 1]) { const gl = new THREE.Group(), pm = std(0xffffff); for (const gz of [-.09, .09]) { const po = box(.012, .09, .012, pm); po.position.set(0, .075, gz); gl.add(po); } const cb = box(.012, .012, .2, pm); cb.position.set(0, .12, 0); gl.add(cb); const nt = box(.05, .09, .19, std(0xffffff, { transparent: true, opacity: .25 })); nt.position.set(sx * .03, .075, 0); gl.add(nt); gl.position.x = sx * (w / 2 - .02); g.add(gl); }
@@ -1015,11 +1015,11 @@ export function open(opts) {
   function schoolYard(x, inl, roofCol, wallCol, nKids) {
     const [px, pz] = onShore(x, inl), yaw = seaYaw(px), slab = new THREE.Group();
     const sl = box(2.5, .16, 2.7, std(0xe6dcc0)); sl.position.y = -.01; slab.add(sl); const bd = box(2.56, .15, 2.76, std(0xc9bfa8)); bd.position.y = -.015; slab.add(bd);
-    slab.userData.fp = 1.9; slab.userData.pri = 3; W(put(slab, px, pz, yaw, -.04));
-    const loc = (lx, lz) => [px + lx * Math.cos(yaw) - lz * Math.sin(yaw), pz - lx * Math.sin(yaw) + lz * Math.cos(yaw)];
+    slab.userData.fp = 2.0; slab.userData.pri = 3; W(put(slab, px, pz, yaw, -.04));
+    const loc = (lx, lz) => [px + lx * Math.cos(yaw) + lz * Math.sin(yaw), pz - lx * Math.sin(yaw) + lz * Math.cos(yaw)];
     const sc = school(roofCol, wallCol); const [sx, sz] = loc(0, -.95); W(put(sc, sx, sz, yaw, .03)); flags.push(sc.userData.flag);
-    const pt = pitch(1.7, 1.0, true); const [qx, qz] = loc(0, .5); W(put(pt, qx, qz, yaw, .1));
-    for (const lx of [-1.05, 1.05]) for (const lz of [.4, 1.15]) { const tr = new THREE.Group(), tk = new THREE.Mesh(new THREE.CylinderGeometry(.02, .028, .24, 6), std(0x7a5a3c)); tk.position.y = .12; tr.add(tk); const cr = new THREE.Mesh(new THREE.IcosahedronGeometry(.16, 2), std(0x62ae4a)); cr.position.y = .34; tr.add(cr); const [tx, tz] = loc(lx, lz); W(put(tr, tx, tz, 0, .03)); }
+    const pt = pitch(1.15, .7, true); const [qx, qz] = loc(0, .5); W(put(pt, qx, qz, yaw, .1));
+    for (const lx of [-1.0, 1.0]) for (const lz of [.5, 1.1]) { const tr = new THREE.Group(), tk = new THREE.Mesh(new THREE.CylinderGeometry(.02, .028, .24, 6), std(0x7a5a3c)); tk.position.y = .12; tr.add(tk); const cr = new THREE.Mesh(new THREE.IcosahedronGeometry(.16, 2), std(0x62ae4a)); cr.position.y = .34; tr.add(cr); const [tx, tz] = loc(lx, lz); W(put(tr, tx, tz, 0, .03)); }
     const ball = new THREE.Mesh(new THREE.SphereGeometry(.026, 10, 8), std(0xf6f1e4)); W(ball);
     const kids = []; for (let k = 0; k < nKids; k++) { const kd = person(SHIRTS[(k * 3 + (k % 2 ? 1 : 0)) % SHIRTS.length], { skin: SKINS[k % 4], pants: k % 2 ? 0x2f3f66 : 0x8a2f2f }); kd.scale.setScalar(.7); W(kd); kids.push({ kd, x: (rnd() - .5) * 1.4, z: (rnd() - .5) * .7, team: k % 2, ph: rnd() * 6 }); }
     kickers.push({ loc, qx: 0, qz: .5, ball, kids, bx: 0, bz: 0, vx: .3, vz: .2, ph: rnd() * 6 });
@@ -1027,10 +1027,10 @@ export function open(opts) {
     for (const [lx, c] of [[-.2, 1], [.15, 4]]) { const pp = person(SHIRTS[c], { skin: SKINS[c % 4] }); pp.scale.setScalar(.85); const [ax, az] = loc(lx, -.52); W(put(pp, ax, az, yaw + PI, .03)); }
   }
   schoolYard(-.5, 5.05, 0xc9462e, 0xf6e6b4, 8);
-  schoolYard(13.0, 4.55, 0x5f7f96, 0xf2c6a8, 8);
+  schoolYard(15.6, 4.55, 0x5f7f96, 0xf2c6a8, 8);
   { const [px, pz] = onShore(-7.6, 4.85), yaw = seaYaw(px), slab = new THREE.Group(); slab.add(box(1.5, .16, 1.1, std(0xe6dcc0))); slab.userData.fp = 1.0; slab.userData.pri = 3; W(put(slab, px, pz, yaw, -.05));
     const pt = pitch(1.2, .7, true); W(put(pt, px, pz, yaw, .1));
-    const loc = (lx, lz) => [px + lx * Math.cos(yaw) - lz * Math.sin(yaw), pz - lx * Math.sin(yaw) + lz * Math.cos(yaw)];
+    const loc = (lx, lz) => [px + lx * Math.cos(yaw) + lz * Math.sin(yaw), pz - lx * Math.sin(yaw) + lz * Math.cos(yaw)];
     const ball = new THREE.Mesh(new THREE.SphereGeometry(.026, 10, 8), std(0xf6f1e4)); W(ball);
     const kids = []; for (let k = 0; k < 4; k++) { const kd = person(SHIRTS[(k * 2 + 1) % SHIRTS.length], { skin: SKINS[k % 4], pants: 0x2f3f66 }); kd.scale.setScalar(.7); W(kd); kids.push({ kd, x: (rnd() - .5) * 1, z: (rnd() - .5) * .5, team: k % 2, ph: rnd() * 6 }); }
     kickers.push({ loc, qx: 0, qz: 0, ball, kids, bx: 0, bz: 0, vx: .3, vz: .2, ph: rnd() * 6, small: true }); }
@@ -1047,7 +1047,8 @@ export function open(opts) {
     if (x > 8.2 && x < 13.2 && z > shore(10.6) - 9.6 && z < shore(10.6) - 5.2) return true;
     if (Math.abs(x - 4.6) < 1.3 && z > shoreS(4.6) + .9 && z < shoreS(4.6) + 6.4) return true;
     for (const q of riverPts) if (Math.abs(q[0] - x) < .45 && Math.abs(q[1] - z) < .45) return true;
-    for (const c of keptC) if (Math.hypot(x - c[0], z - c[1]) < c[2] + .22) return true;      // the little island keeps its clearing for the house and the horses
+    for (const c of keptC) if (Math.hypot(x - c[0], z - c[1]) < c[2] + .22) return true;
+    for (const f of FLAT) if (Math.hypot(x - f[0], z - f[1]) < f[2] * .95) return true;      // the little island keeps its clearing for the house and the horses
     const s = shore(x);
     for (const rt of mtRoads) for (let q = 0; q < rt.pts.length; q += 2) if (Math.abs(rt.pts[q][0] - x) < .6 && Math.abs(rt.pts[q][1] - z) < .6) return true;
     if (x > -23 && x < 17 && z > s - 6.6 && z < s + .1) { for (const [a, b] of [[-17.4, -9.5], [-9.4, -2.8], [-1.2, 4.6], [7.4, 13.3]]) if (x > a && x < b && z > s - 5.8) return true; if (Math.abs(z - (s - 1.2)) < .45) return true; }
@@ -1074,10 +1075,10 @@ export function open(opts) {
   { const items = [], dd2 = new THREE.Vector3();
     for (const o of world.children) { const u = o.userData; if (!u || !(u.fp || u.fps)) continue; if (u.fp === 0) continue; dd2.copy(o.position).normalize(); const [x, z] = planeOf(dd2); items.push({ o, x, z, pri: u.pri || 1, circles: u.fps ? u.fps.map(([dx, r]) => [x + dx, z, r]) : [[x, z, u.fp]] }); }
     items.sort((a, b) => b.pri - a.pri || b.circles[0][2] - a.circles[0][2]);
-    const roads = [roadRaw, roadS, relax(stPts, 3)]; const nearRoad = (c, withStreet) => roads.some((pts, ri) => (ri < 2 || withStreet) && pts.some((q) => Math.hypot(q[0] - c[0], q[1] - c[1]) < c[2] + .3));
+    const roads = [roadRaw, roadS, relax(stPts, 3)]; const nearRoad = (c, withStreet) => roads.some((pts, ri) => (ri < 2 || withStreet) && pts.some((q) => Math.hypot(q[0] - c[0], q[1] - c[1]) < c[2] + .6));
     const kept = [];
     for (const it of items) {
-      const bad = it.circles.some((c) => kept.some((k) => k.circles.some((kc) => Math.hypot(c[0] - kc[0], c[1] - kc[1]) < c[2] + kc[2] - .02)) || (it.pri < 3 && nearRoad(c, it.pri < 2)));
+      const bad = it.circles.some((c) => kept.some((k) => k.circles.some((kc) => Math.hypot(c[0] - kc[0], c[1] - kc[1]) < c[2] + kc[2] + .3)) || (it.pri < 3 && nearRoad(c, it.pri < 2)) || (it.pri < 3 && kept.some((k) => k.pri === 3 && k.circles.some((kc) => Math.hypot(c[0] - kc[0], c[1] - kc[1]) < c[2] + kc[2] + .7))));
       if (bad) world.remove(it.o); else { kept.push(it); for (const c of it.circles) keptC.push(c); }
     } }
   const oaks = [], pines = [], euc = [];
@@ -1323,7 +1324,7 @@ export function open(opts) {
     for (const q of strollers) {
       if (q.still) { put(q.p, q.x + Math.cos(q.a) * q.rx * Math.cos(q.yaw), q.z - Math.cos(q.a) * q.rx * Math.sin(q.yaw), q.yaw + q.a, 0); continue; }
       q.a += q.sp * dt; const sg = Math.sign(q.sp), lx = Math.cos(q.a) * q.rx, lz = Math.sin(q.a) * q.rz, c = Math.cos(q.yaw), sn = Math.sin(q.yaw);
-      put(q.p, q.x + lx * c - lz * sn, q.z - lx * sn + lz * c, q.yaw + Math.atan2(-Math.cos(q.a) * q.rz * sg, -Math.sin(q.a) * q.rx * sg), Math.abs(Math.sin(t * 6 + q.a * 3)) * .006);
+      put(q.p, q.x + lx * c + lz * sn, q.z - lx * sn + lz * c, q.yaw + Math.atan2(-Math.cos(q.a) * q.rz * sg, -Math.sin(q.a) * q.rx * sg), Math.abs(Math.sin(t * 6 + q.a * 3)) * .006);
     }
     for (const q of pathers) {
       if (!q.still) { q.u += q.v * dt / Math.max(.5, q.r.total); if (q.u > 1 || q.u < 0) { q.u = Math.min(1, Math.max(0, q.u)); q.v = -q.v; q.off = -q.off; } }
@@ -1331,7 +1332,7 @@ export function open(opts) {
       put(q.p, x + sy * q.off, z + cy * q.off, yaw + (q.v < 0 ? PI : 0), (q.still ? 0 : Math.abs(Math.sin(t * 7 + q.u * 30)) * .008) + (q.lift || 0));
     }
     for (const k of kickers) {                                              // the ball drifts across the pitch, every child runs after it, and now and then it is kicked towards a goal
-      const hw = k.small ? .5 : .75, hd = k.small ? .27 : .4;
+      const hw = k.small ? .5 : .5, hd = k.small ? .27 : .27;
       k.bx = Math.sin(t * .6 + k.ph) * hw + Math.sin(t * 1.7 + k.ph) * .06; k.bz = Math.sin(t * .83 + k.ph * 2) * hd;
       const [bx, bz] = k.loc(k.qx + k.bx, k.qz + k.bz); put(k.ball, bx, bz, 0, .125 + Math.abs(Math.sin(t * 5 + k.ph)) * .04);
       for (const c of k.kids) {
