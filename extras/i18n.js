@@ -69,7 +69,9 @@ const ROWS = [
   ['Add to the island', 'Añadir a la isla', 'Engadir á illa'],
   ['Tree', 'Árbol', 'Árbore'], ['Flowers', 'Flores', 'Flores'], ['House', 'Casa', 'Casa'], ['Granary', 'Hórreo', 'Hórreo'],
   ['Sheep', 'Oveja', 'Ovella'], ['Lighthouse', 'Faro', 'Farol'], ['Boat', 'Barco', 'Barco'],
-  ['Scroll to dive', 'Haz scroll para sumergirte', 'Fai scroll para mergullarte'],
+  ['Drive with the arrow keys', 'Conduce con las flechas del teclado · E para leer', 'Conduce coas frechas do teclado · E para ler'],
+  ['Press E to read', 'Pulsa E para leer', 'Preme E para ler'],
+  ['Close', 'Cerrar', 'Pechar'],
   ['Back to the map', 'Volver al mapa', 'Volver ao mapa'],
   ['Under the sea', 'Bajo el mar', 'Baixo o mar'],
   ['Sound', 'Sonido', 'Son'],
@@ -103,26 +105,44 @@ export const MOCHI = [
     'Se te animas a probalo, fai clic no botón de comezar que aparecerá a continuación.']
 ];
 
-// the dive under the sea: heading and text of each stop
-export const TOUR = [
-  { k: ['01 · Ría de Muros e Noia', '01 · Ría de Muros e Noia', '01 · Ría de Muros e Noia'],
-    h: ['Known as “A Ría da Estrela”', 'Conocida como “A Ría da Estrela”', 'Coñecida como “A Ría da Estrela”'],
+// the drive along the ría: what each glowing orb tells
+export const INFO = [
+  { h: ['Known as “A Ría da Estrela”', 'Conocida como “A Ría da Estrela”', 'Coñecida como “A Ría da Estrela”'],
     p: ['Its geographic shape and the union of its five historic municipalities (Muros, Outes, Noia, Lousame and Porto do Son) give it this very characteristic name.',
       'Su forma geográfica y la unión de sus cinco municipios históricos (Muros, Outes, Noia, Lousame y Porto do Son) hacen que reciba este nombre tan característico.',
       'A súa forma xeográfica e a unión dos seus cinco concellos históricos (Muros, Outes, Noia, Lousame e Porto do Son) fan que reciba este nome tan característico.'] },
-  { k: ['02 · 1905', '02 · 1905', '02 · 1905'],
-    h: ['Wreck of the Cardenal Cisneros', 'Naufragio del Cardenal Cisneros', 'Naufraxio do Cardenal Cisneros'],
+  { h: ['O Freixo', 'O Freixo', 'O Freixo'],
+    p: ['A small port of Outes, with its stone quay where the boats rest. Many of the stories of this ría begin on a pier like this one.',
+      'Un pequeño puerto de Outes, con su muelle de piedra donde descansan las barcas. Muchas de las historias de esta ría empiezan en un muelle como este.',
+      'Un pequeno porto de Outes, co seu peirao de pedra onde descansan as barcas. Moitas das historias desta ría comezan nun peirao coma este.'] },
+  { h: ['Esteiro', 'Esteiro', 'Esteiro'],
+    p: ['A village of shellfish gatherers: at low tide the women walk out onto the sand to collect cockles and clams by hand.',
+      'Una aldea de mariscadoras: con la marea baja salen a la arena a recoger berberechos y almejas a mano.',
+      'Unha aldea de mariscadoras: coa marea baixa saen á area a recoller berberechos e ameixas a man.'] },
+  { h: ['Outes and the Tambre', 'Outes y el Tambre', 'Outes e o Tambre'],
+    p: ['The medieval bridge of Nafonso crosses the river Tambre in Outes. The same river flows into the ría near Noia.',
+      'El puente medieval de Nafonso cruza el río Tambre en Outes. Ese mismo río desemboca en la ría, cerca de Noia.',
+      'A ponte medieval de Nafonso cruza o río Tambre en Outes. Ese mesmo río desemboca na ría, preto de Noia.'] },
+  { h: ['Muros', 'Muros', 'Muros'],
+    p: ['A seafaring town with granite arcades, narrow streets and a fishing port. Its old quarter looks straight out onto the water.',
+      'Una villa marinera con soportales de granito, calles estrechas y puerto pesquero. Su casco antiguo mira directamente al agua.',
+      'Unha vila mariñeira con soportais de granito, rúas estreitas e porto pesqueiro. O seu casco antigo mira directamente á auga.'] },
+  { h: ['Louro', 'Louro', 'Louro'],
+    p: ['Monte Louro rises over a lagoon and a long beach of dunes: one of the most beautiful landscapes of the ría.',
+      'El Monte Louro se alza sobre una laguna y una larga playa de dunas: uno de los paisajes más bonitos de la ría.',
+      'O Monte Louro érguese sobre unha lagoa e unha longa praia de dunas: unha das paisaxes máis bonitas da ría.'] },
+  { h: ['The hórreo', 'El hórreo', 'O hórreo'],
+    p: ['Hórreos are granaries raised on pillars to protect the grain from damp and rodents. You will find them of stone or wood all over Galicia.',
+      'Los hórreos son graneros elevados sobre pilares para proteger el grano de la humedad y de los roedores. Los hay de piedra y de madera por toda Galicia.',
+      'Os hórreos son graneiros elevados sobre pilares para protexer o gran da humidade e dos roedores. Hainos de pedra e de madeira por toda Galicia.'] },
+  { h: ['Where the river meets the sea', 'Donde el río encuentra el mar', 'Onde o río atopa o mar'],
+    p: ['Fresh water and salt water mix in the ría, and that is why it is so rich in shellfish: cockles, clams and razor clams.',
+      'El agua dulce y la salada se mezclan en la ría, y por eso es tan rica en marisco: berberechos, almejas y navajas.',
+      'A auga doce e a salgada mestúranse na ría, e por iso é tan rica en marisco: berberechos, ameixas e navallas.'] },
+  { h: ['Wreck of the Cardenal Cisneros', 'Naufragio del Cardenal Cisneros', 'Naufraxio do Cardenal Cisneros'],
     p: ['Off the coast of Monte Louro, the armoured cruiser of the Spanish Navy Cardenal Cisneros sank in 1905 after running aground on a shoal.',
       'Frente a las costas del Monte Louro se hundió en 1905 el crucero acorazado de la Armada española Cardenal Cisneros tras encallar en un bajo.',
-      'Fronte ás costas do Monte Louro afundiuse en 1905 o cruceiro encoirazado da Armada española Cardenal Cisneros tras encallar nun baixo.'] },
-  { k: ['03 · Neighbours of the seabed', '03 · Vecinos del fondo', '03 · Veciños do fondo'],
-    h: ['Life in the ría', 'La vida en la ría', 'A vida na ría'],
-    p: ['Sardines, bream, octopus, spider crabs, seahorses and bottlenose dolphins live in these waters. The Galician rías are a natural nursery of the sea.',
-      'Sardinas, doradas, pulpos, centollas, caballitos de mar y delfines mulares viven en estas aguas. Las rías gallegas son una guardería natural del mar.',
-      'Sardiñas, doradas, polbos, centolas, cabaliños de mar e golfiños moleiros viven nestas augas. As rías galegas son unha gardería natural do mar.'] },
-  { k: ['04', '04', '04'],
-    h: ['Thank you for diving with me', 'Gracias por bucear conmigo', 'Grazas por mergullarte comigo'],
-    p: ['Go back to the map whenever you like: there is still a lot to discover.', 'Vuelve al mapa cuando quieras: aún queda mucho por descubrir.', 'Volve ao mapa cando queiras: aínda queda moito por descubrir.'] }
+      'Fronte ás costas do Monte Louro afundiuse en 1905 o cruceiro encoirazado da Armada española Cardenal Cisneros tras encallar nun baixo.'] }
 ];
 let lang = 'en';
 try {
