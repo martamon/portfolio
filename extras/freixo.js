@@ -631,7 +631,7 @@ export function open(opts) {
   const SHUTC = [0x2f6fa8, 0x3b8f6a, 0xa23a30];
   const mk = (floors, extra) => { const k = hc++; return Object.assign({ w: .44 + rnd() * .2, d: .4 + rnd() * .07, floors, wall: WALLS[k % WALLS.length], roof: ROOF[(k * 3 + 1) % ROOF.length], gal: floors > 1 && k % 2 === 0, shut: k % 4 === 0 ? SHUTC[(k >> 2) % 3] : 0, fr: k, turn: (rnd() - .5) * .14 }, extra || {}); };
   // village squares (x range, inland range): houses keep out of them
-  let riverPts = []; const keptC = [], HOMES = [];
+  let riverPts = []; const keptC = [], HOMES = [], STAIRS = [];
   const SQ = [[-1.9, .9, 3.4, 6.7], [14.3, 16.9, 3.0, 6.1], [-8.7, -6.6, 4.0, 5.7], [-13.95, -11.65, 1.8, 3.55], [-8.9, -7.4, 2.1, 3.4], [1.1, 2.5, 2.1, 3.4], [8.9, 10.4, 2.1, 3.4]];
   const inSq = (x, inl) => SQ.some((q) => x > q[0] && x < q[1] && inl > q[2] && inl < q[3]);
   const JX = [8.3], LINKX = [8.3];
@@ -1130,6 +1130,8 @@ export function open(opts) {
       hs.position.y = .3; pl.add(hs); pl.userData.fp = .52; pl.userData.pri = 2; W(put(pl, x, z, ya, -.02));
       // steps climbing from this terrace to the next one
       for (let q = 0; q < 6; q++) { const stp = box(.22, .045, .09, std(0xcfc6b4)); const sg = new THREE.Group(); sg.add(stp); W(put(sg, x + .42 + (q * .02), z + .46 + q * .1, 0, .0)); }
+      { const hd = house({ w: .42, d: .36, floors: 1 + ((hi2 + 1) % 2), wall: wallsM[(hi2 + 2) % wallsM.length], roof: ROOF[(hi2 + 3) % ROOF.length], gal: false, shut: [0x3d78a8, 0x4a9a74, 0xb4483a][(hi2 + 1) % 3], fr: hi2 + 5, stone: hi2 % 2 === 0 });     // a house at the top of every flight of steps
+        if (hd.userData) hd.userData.pri = 2; W(put(hd, x + 1.1, z + .85, ya + .3, -.02)); STAIRS.push([x, z, ya]); }
       hi2++;
     }
     { const sp = []; for (let k = 0; k <= 12; k++) sp.push([base[0] - .3 + k * .05 + Math.sin(k * .6) * .12, base[1] + 1.0 - k * .22]); const sr = route(relax(sp, 2));
@@ -1264,12 +1266,13 @@ export function open(opts) {
       const PRC = [0xe0523f, 0xf2a43a, 0x8fcf60, 0x9a6cc0, 0xf2d24e, 0xe9774a][ci % 6], prod = [], nr = Math.max(2, Math.floor(rows / 2)), nc = Math.max(3, Math.floor(w / .1));
       for (let r2 = 0; r2 < nr; r2++) for (let k = 0; k < nc; k++) { const f = new THREE.Mesh(new THREE.SphereGeometry(.026, 8, 6), std(PRC)); f.position.set(-w / 2 + .09 + k * (w - .18) / Math.max(1, nc - 1), .075, -d / 2 + .1 + r2 * (d - .2) / Math.max(1, nr - 1)); f.scale.setScalar(.001); f.visible = false; g.add(f); prod.push(f); }
       g.userData.prod = prod; g.userData.fw = w; g.userData.fd = d;
-      g.userData.fp = Math.max(w, d) * .5 + .12; g.userData.pri = 0; g.userData.field = 1; g.userData.fx = x; g.userData.fz = z; g.userData.fang = ang; W(put(g, x, z, ang, .03 + lift)); return g;
+      g.userData.fp = Math.max(w, d) * .5 + (w < .45 ? .01 : .1); g.userData.pri = 0; g.userData.field = 1; g.userData.fx = x; g.userData.fz = z; g.userData.fang = ang; W(put(g, x, z, ang, .03 + lift)); return g;
     };
     // tiny fields on little stone terraces around the mountain village, and a few more houses there
-    { const vb = [10.6, shore(10.6) - 7.3], TF = [[-1.9, -1.4], [-2.6, -.2], [-1.6, 1.2], [1.6, 2.0], [2.8, .9], [3.0, -.6], [2.4, -2.0], [-.4, 2.3], [.6, -2.6], [-3.1, 1.5], [1.0, 3.1], [-2.2, 2.7]];
+    { const vb = [10.6, shore(10.6) - 7.3], TF = [[-1.9, -1.4], [-2.6, -.2], [-1.6, 1.2], [1.6, 2.0], [2.8, .9], [3.0, -.6], [2.4, -2.0], [-.4, 2.3], [.6, -2.6], [-3.1, 1.5], [1.0, 3.1], [-2.2, 2.7], [-3.4, -1.6], [3.6, 2.2], [-1.0, -3.0], [3.8, -1.4], [2.0, 3.6], [-3.6, 3.0], [-.6, 3.8], [1.6, -3.4]];
       TF.forEach(([dx, dz], i) => { const x = vb[0] + dx, z = vb[1] + dz; if (groundH(x, z) < .3 || inletD(x, z) < 1 || riverPts.some((q) => Math.hypot(q[0] - x, q[1] - z) < .6)) return;
         const gf = field(x, z, seaYaw(x) + (i % 2 ? .2 : -.15), .34 + (i % 3) * .04, .26 + (i % 2) * .03, 30 + i, 0), ter = box(.5, .14, .4, std(0xaaa08c)); ter.position.y = -.06; ter.scale.set(gf.userData.fw / .34 * .8, 1, gf.userData.fd / .26 * .9); gf.add(ter); });
+      STAIRS.forEach(([sx, sz, sy], i) => { const x = sx - .35, z = sz + 1.0; if (groundH(x, z) < .3 || inletD(x, z) < 1) return; const gf = field(x, z, sy + .4, .3 + (i % 2) * .05, .24, 40 + i, 0), ter = box(.5, .14, .4, std(0xaaa08c)); ter.position.y = -.06; ter.scale.set(gf.userData.fw / .34 * .8, 1, gf.userData.fd / .26 * .9); gf.add(ter); });
       for (let k = 0; k < 16; k++) { const a = k * 2.4, rr = 1.9 + (k % 4) * .6; hh(vb[0] + Math.cos(a) * rr * 1.1, 7.3 + Math.sin(a) * rr - 0, 1 + (hc % 2), { stone: k % 2 === 0 }); } }
     let fi = 0;
     for (const [fx, inl] of [[-16.2, 5.6], [-12.4, 6.6], [-7.2, 6.0], [-3.8, 6.5], [-.2, 5.9], [3.4, 6.3], [8.6, 6.4], [12.2, 6.2], [16.3, 6.0], [-10.6, 4.9], [5.4, 5.0], [-1.9, 7.4], [-14.2, 5.2], [-5.4, 7.2], [1.4, 7.0], [10.2, 7.0], [14.2, 5.6], [-18.4, 6.4], [18.0, 5.2]]) {
@@ -1406,15 +1409,16 @@ export function open(opts) {
     list.forEach((t, i) => { put(hold, t[0], t[1], rnd() * 6.28, -.02); o.position.copy(hold.position); o.quaternion.copy(hold.quaternion); o.scale.setScalar(t[2]); place(o, t); o.updateMatrix(); m.setMatrixAt(i, o.matrix); m.setColorAt(i, place.color ? place.color(c, t) : c.set(0xffffff)); });
     m.count = list.length; m.castShadow = true; m.receiveShadow = true; return m;
   };
+  const gorse = (base, v, p) => (c) => { if (rnd() < p) return c.set(0xf5d83a).offsetHSL((rnd() - .5) * .03, 0, (rnd() - .5) * .08); return c.set(base).offsetHSL((rnd() - .5) * .03, (rnd() - .5) * .08, (rnd() - .5) * v); };   // some bushes flower yellow, like the Galician toxos
   const green = (base, v) => (c) => c.set(base).offsetHSL((rnd() - .5) * .03, (rnd() - .5) * .08, (rnd() - .5) * v);
   const pl = (fn, colFn) => { fn.color = colFn; return fn; };
   W(inst(trunkG, trunkM, oaks, pl((o) => o.translateY(.13 * o.scale.x))));
-  W(inst(oakG, std(0xffffff, { flatShading: false, roughness: .8, map: paintTexR(3) }), oaks, pl((o) => { o.translateY(.5 * o.scale.x); o.scale.y *= .9; }, green(0x6ec65a, .12))));
+  W(inst(oakG, std(0xffffff, { flatShading: false, roughness: .8, map: paintTexR(3) }), oaks, pl((o) => { o.translateY(.5 * o.scale.x); o.scale.y *= .9; }, gorse(0x6ec65a, .12, .22))));
   W(inst(trunkG, trunkM, pines, pl((o) => o.translateY(.13 * o.scale.x))));
   W(inst(pineG, std(0xffffff, { roughness: .8, map: paintTexR(3) }), pines, pl((o) => o.translateY(.5 * o.scale.x), green(0x4aa856, .1))));
   W(inst(pine2G, std(0xffffff, { roughness: .8, map: paintTexR(3) }), pines, pl((o) => o.translateY(.98 * o.scale.x), green(0x5cb85c, .1))));
   W(inst(eucT, std(0xcfc7b0), euc, pl((o) => o.translateY(.4 * o.scale.x))));
-  W(inst(eucG, std(0xffffff, { roughness: .8, map: paintTexR(3) }), euc, pl((o) => { o.translateY(.88 * o.scale.x); o.scale.y *= 1.5; }, green(0x92c466, .1))));
+  W(inst(eucG, std(0xffffff, { roughness: .8, map: paintTexR(3) }), euc, pl((o) => { o.translateY(.88 * o.scale.x); o.scale.y *= 1.5; }, gorse(0x92c466, .1, .12))));
 
   // Monte Louro
   spot('Monte Louro', 'Monte', 'Across the water, Monte Louro rises over the mouth of the ría, with pines on its slopes and the sea on three sides.', hubAt(LOURO[0], LOURO[1], 1.9), .6);
@@ -1435,7 +1439,7 @@ export function open(opts) {
     const tail = new THREE.Mesh(new THREE.SphereGeometry(kind === 'fox' ? .05 : .026, 8, 6), std(kind === 'fox' ? 0xd9733a : 0xffffff)); if (kind === 'fox') tail.scale.set(2.6, .9, .9); tail.position.set(-.17 * (kind === 'fox' ? 1.35 : 1), kind === 'deer' ? .28 : .16, 0); g.add(tail);
     const leg = (x, z) => { const l = new THREE.Mesh(new THREE.CylinderGeometry(.012, .01, kind === 'deer' ? .26 : kind === 'rabbit' ? .05 : .12, 5), dk); l.position.set(x, kind === 'deer' ? .13 : kind === 'rabbit' ? .03 : .06, z); g.add(l); return l; };
     const legs = [leg(.09, .05), leg(.09, -.05), leg(-.09, .05), leg(-.09, -.05)];
-    g.scale.setScalar(s2 * 1.15);
+    g.scale.setScalar(s2 * .78);
     return { g, head, legs };
   }
   // they live up on the mountains only: high ground, well away from every building, field, road, river and beach
