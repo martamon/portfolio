@@ -467,7 +467,8 @@ function makeAudio(night0) {
   const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 520; bp.Q.value = .4;
   const sg = ctx.createGain(); sg.gain.value = .05;
   const lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = .11; lg.gain.value = .035; lfo.connect(lg); lg.connect(sg.gain);
-  ns.connect(bp); bp.connect(sg); sg.connect(out); ns.start(); lfo.start();
+  const seaMul = ctx.createGain(); seaMul.gain.value = 0;      // the sea is only heard when you come close to the open sea
+  ns.connect(bp); bp.connect(sg); sg.connect(seaMul); seaMul.connect(out); ns.start(); lfo.start();
   // rain: soft hiss (filtered noise) + a few tiny drops that plink in the reverb
   const rb = ctx.createBufferSource(); rb.buffer = nb; rb.loop = true; rb.playbackRate.value = .8;
   const rh = ctx.createBiquadFilter(); rh.type = 'highpass'; rh.frequency.value = 900; const rl = ctx.createBiquadFilter(); rl.type = 'lowpass'; rl.frequency.value = 5200;
@@ -502,12 +503,12 @@ function makeAudio(night0) {
   const ZR = {
     kids: [[.9, () => babble(2 + Math.floor(R_() * 3), 520, .03)], [.14, () => laugh(560)]],
     fiesta: [[.55, () => babble(3, 230, .022)], [.8, musicbox], [.15, () => babble(2, 560, .02)]],
-    beach: [[.25, () => swash(.035)], [.12, () => cool('gull', 5000) && gull()], [.22, () => babble(2, 600, .02)]],
-    harbour: [[.07, () => cool('eng', 6000) && engine()], [.05, () => cool('bell', 9000) && bellZ()], [.2, () => swash(.03)], [.07, () => cool('gull', 6000) && gull()]],
+    beach: [[.12, () => cool('gull', 5000) && gull()], [.22, () => babble(2, 600, .02)]],
+    harbour: [[.07, () => cool('eng', 6000) && engine()], [.05, () => cool('bell', 9000) && bellZ()], [.07, () => cool('gull', 6000) && gull()]],
     village: [[.06, () => cool('bell', 12000) && bellZ()], [.3, () => babble(2, 240, .02)], [.15, chirp]],
-    mountain: [[.16, () => cool('bleat', 3500) && bleat()], [.4, chirp], [.1, () => swash(.02)]],
+    mountain: [[.16, () => cool('bleat', 3500) && bleat()], [.4, chirp]],
     sea: [[.07, () => cool('whale', 9000) && whale()], [.3, () => swash(.04)], [.05, () => cool('gull', 7000) && gull()]],
-    ria: [[.25, () => swash(.03)], [.03, () => cool('eng', 9000) && engine()], [.06, () => cool('gull', 7000) && gull()]]
+    ria: [[.03, () => cool('eng', 9000) && engine()], [.06, () => cool('gull', 7000) && gull()]]
   };
   const zt = setInterval(() => { if (!alive || muted || Z.lvl < .05 || !Z.kind) return; for (const [rate, fn] of ZR[Z.kind] || []) if (R_() < rate * .17) fn(); }, 130);
   let mt = 0, pt = 0;
@@ -515,14 +516,18 @@ function makeAudio(night0) {
     start() { if (ctx.state === 'suspended') ctx.resume(); out.gain.cancelScheduledValues(ctx.currentTime); out.gain.setTargetAtTime(muted ? 0 : .9, ctx.currentTime, 1.6); pad(); pt = setInterval(pad, 8200); mt = setTimeout(melody, 1800); },
     mute(m) { muted = m; out.gain.setTargetAtTime(m ? 0 : .9, ctx.currentTime, .35); if (!m && ctx.state === 'suspended') ctx.resume(); },
     setRain(on) { rainOn = on; rg.gain.setTargetAtTime(on ? .075 : 0, ctx.currentTime, 1.4); rh.frequency.setTargetAtTime(on ? 1100 : 900, ctx.currentTime, 1); sg.gain.setTargetAtTime(on ? .028 : (night ? .07 : .05), ctx.currentTime, 2); if (on) drops(); else clearTimeout(dropT); },
-    zone(kind, lvl) { Z.kind = kind; Z.lvl = lvl; zOut.gain.setTargetAtTime(muted ? 0 : lvl * 2.6, ctx.currentTime, .6); },
+    zone(kind, lvl) { Z.kind = kind; Z.lvl = lvl; seaMul.gain.setTargetAtTime(kind === 'sea' && !muted ? Math.min(1, lvl * 1.3) : 0, ctx.currentTime, .9); zOut.gain.setTargetAtTime(muted ? 0 : lvl * 2.6, ctx.currentTime, .6); },
     setNight(n) { night = n; bp.frequency.setTargetAtTime(n ? 340 : 520, ctx.currentTime, 2); sg.gain.setTargetAtTime(n ? .07 : .05, ctx.currentTime, 2); },
     sfx(name) {
       if (muted || !alive) return;
       const now = performance.now(); if (last[name] && now - last[name] < (name === 'splash' ? 1500 : name === 'hover' ? 70 : 150)) return; last[name] = now;
       if (name === 'open') { note(72, .07, 2.4); setTimeout(() => note(76, .06, 2.4), 140); setTimeout(() => note(79, .06, 2.8), 290); }
       else if (name === 'close') { note(79, .05, 1.6); setTimeout(() => note(72, .05, 2.2), 150); }
-      else if (name === 'day') { note(79, .06, 2.2); setTimeout(() => note(84, .05, 2.6), 130); }
+      else if (name === 'day') {                                  // sunrise: a slow, soft harp-like rise, a shimmer of bells and a few little birds
+        [67, 72, 76, 79, 84, 88].forEach((m, k) => setTimeout(() => alive && note(m, .05 - k * .004, 3.2), k * 190));
+        setTimeout(() => { if (!alive || muted) return; const t = ctx.currentTime; for (let k = 0; k < 5; k++) { const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.value = NOTE(91 + [0, 2, 4, 7, 9][k]); g.gain.setValueAtTime(0, t + k * .12); g.gain.linearRampToValueAtTime(.012, t + k * .12 + .01); g.gain.exponentialRampToValueAtTime(.0004, t + k * .12 + 1.4); o.connect(g); g.connect(tone); o.start(t + k * .12); o.stop(t + k * .12 + 1.5); } }, 900);
+        for (let b = 0; b < 3; b++) setTimeout(() => { if (!alive || muted) return; const t = ctx.currentTime, f = 2900 + Math.random() * 700, o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * 1.3, t + .07); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.014, t + .01); g.gain.linearRampToValueAtTime(0, t + .1); o.connect(g); g.connect(tone); g.connect(rev); o.start(t); o.stop(t + .12); }, 1500 + b * 260 + Math.random() * 120);
+      }
       else if (name === 'night') { note(69, .07, 2.6); setTimeout(() => note(64, .06, 3), 160); }
       else if (name === 'tick') note(88, .03, .9);
       else if (name === 'boom') { const t = ctx.currentTime, b2 = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = ctx.createGain(); b2.buffer = nb; fl.type = 'lowpass'; fl.frequency.setValueAtTime(420, t + .5); fl.frequency.exponentialRampToValueAtTime(90, t + 1.6); g.gain.setValueAtTime(0, t); g.gain.setValueAtTime(0, t + .5); g.gain.linearRampToValueAtTime(.09, t + .53); g.gain.exponentialRampToValueAtTime(.0005, t + 1.8); b2.connect(fl); fl.connect(g); g.connect(tone); g.connect(rev); b2.start(t + .5, Math.random() * 2); b2.stop(t + 1.9); const w = ctx.createOscillator(), wg = ctx.createGain(); w.type = 'sine'; w.frequency.setValueAtTime(500, t); w.frequency.exponentialRampToValueAtTime(1400, t + .5); wg.gain.setValueAtTime(.012, t); wg.gain.linearRampToValueAtTime(0, t + .5); w.connect(wg); wg.connect(tone); w.start(t); w.stop(t + .55); for (let k = 0; k < 6; k++) setTimeout(() => alive && !muted && note(84 + Math.floor(Math.random() * 12), .012, .35), 650 + k * 90 + Math.random() * 120); }
