@@ -456,6 +456,7 @@ function makeAudio(night0) {
       else if (name === 'day') { note(79, .06, 2.2); setTimeout(() => note(84, .05, 2.6), 130); }
       else if (name === 'night') { note(69, .07, 2.6); setTimeout(() => note(64, .06, 3), 160); }
       else if (name === 'tick') note(88, .03, .9);
+      else if (name === 'boom') { const t = ctx.currentTime, b2 = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = ctx.createGain(); b2.buffer = nb; fl.type = 'lowpass'; fl.frequency.setValueAtTime(420, t + .5); fl.frequency.exponentialRampToValueAtTime(90, t + 1.6); g.gain.setValueAtTime(0, t); g.gain.setValueAtTime(0, t + .5); g.gain.linearRampToValueAtTime(.09, t + .53); g.gain.exponentialRampToValueAtTime(.0005, t + 1.8); b2.connect(fl); fl.connect(g); g.connect(tone); g.connect(rev); b2.start(t + .5, Math.random() * 2); b2.stop(t + 1.9); const w = ctx.createOscillator(), wg = ctx.createGain(); w.type = 'sine'; w.frequency.setValueAtTime(500, t); w.frequency.exponentialRampToValueAtTime(1400, t + .5); wg.gain.setValueAtTime(.012, t); wg.gain.linearRampToValueAtTime(0, t + .5); w.connect(wg); wg.connect(tone); w.start(t); w.stop(t + .55); for (let k = 0; k < 6; k++) setTimeout(() => alive && !muted && note(84 + Math.floor(Math.random() * 12), .012, .35), 650 + k * 90 + Math.random() * 120); }
       else if (name === 'rain') { note(76, .05, 2.6); setTimeout(() => note(71, .045, 2.8), 160); setTimeout(() => note(67, .04, 3), 330); }
       else if (name === 'sun') { note(79, .05, 2.2); setTimeout(() => note(84, .05, 2.6), 140); setTimeout(() => note(88, .04, 2.8), 280); }
       else if (name === 'hover' || name === 'press') {                       // a soft bubbly "pop": a quick upward glide with a little shimmer on top
@@ -846,7 +847,7 @@ export function open(opts) {
   whale(0, 0, 31, 31, .018, 1.2, .8); whale(0, 0, 33.5, 33.5, -.015, 3.9, .9); whale(0, 0, 36, 36, .012, 5.6, .75);
 
   // ---- people on the beaches: sunbathers, parasols, swimmers and walkers along the water
-  const swimmers = [], walkers = [], balls = [];
+  const swimmers = [], walkers = [], balls = [], fireworks = []; let fwNext = 0;
   function parasol(col) {
     const g = new THREE.Group();
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(.012, .012, .36, 5), std(0xeeeeee)); pole.position.y = .18; g.add(pole);
@@ -1157,7 +1158,8 @@ export function open(opts) {
   }
 
   // ---- a shopping street and a village fiesta (verbena) on the south shore: bar with terrace, supermarket, pulpería, the stage of an orchestra, stalls, string lights and a "saltamontes" (little roller-coaster)
-  const fiestaObj = [];
+  const fiestaLights = [];
+  const fiestaObj = [], fiestaFx = { x: 0, z: 0 };
   { const sx = 2.0, sz0 = shoreS(sx) + 1.45, sline = []; for (let k = 0; k <= 19; k++) sline.push([sx + .12 * Math.sin(k * .5), sz0 + .75 + k * .2]);
     const sr = relax(sline, 3);
     W(ribbon(sr, .42, std(0xcfc6b4, { roughness: 1, side: THREE.DoubleSide }), .012, false, undefined, true)); W(ribbon(sr, .6, std(0xe3dac4, { roughness: 1, side: THREE.DoubleSide }), .004, false, undefined, true));
@@ -1191,10 +1193,11 @@ export function open(opts) {
     { const g = new THREE.Group(), bs = box(.9, .1, .5, std(0x8a6a44)); bs.position.y = .05; g.add(bs); for (const sx of [-.42, .42]) { const po = box(.03, .34, .03, std(0x6b4a2a)); po.position.set(sx, .27, .22); g.add(po); const po2 = po.clone(); po2.position.z = -.22; g.add(po2); }
       const rf = box(1.0, .035, .62, std(0xc9462e)); rf.position.y = .45; g.add(rf); const bn = box(.7, .08, .01, std(0xfff8ea)); bn.position.set(0, .4, .3); g.add(bn); const back = box(.9, .3, .02, std(0x5b3a2a)); back.position.set(0, .25, -.24); g.add(back);
       for (let k = 0; k < 5; k++) { const m = person(SHIRTS[(k * 2 + 3) % SHIRTS.length], { skin: SKINS[k % 4], pants: 0x1f2937, role: 'band' }); m.scale.setScalar(.75); m.position.set(-.32 + k * .16, .1, .02); g.add(m); const ins = box(.03, .03, .05, std([0xd9a441, 0x8a5a3a, 0xc0c0c0][k % 3])); ins.position.set(-.32 + k * .16, .14, .06); g.add(ins); fiestaObj.push(m); }
-      g.userData.fp = .5; g.userData.pri = 4; W(put(g, fx - .75, fz - .6, PI / 2, .0)); }
+      g.userData.fp = .5; g.userData.pri = 4; const stl = new THREE.PointLight(0xffb86b, 0, 3.2, 1.6); stl.position.set(0, .5, .1); g.add(stl); fiestaLights.push([stl, 1.6]); for (let k = 0; k < 6; k++) { const sb = new THREE.Mesh(new THREE.SphereGeometry(.018, 6, 5), lampMat); sb.position.set(-.4 + k * .16, .42, .3); g.add(sb); } W(put(g, fx - .75, fz - .6, PI / 2, .0)); }
     // stalls (churros, pulpo, tombola) with striped awnings and a crowd that dances and strolls
     for (const [dx, dz, c, ry] of [[.1, -.95, 0xc9462e, 0], [.8, -.95, 0x2f6fa8, 0], [1.05, .1, 0xe9b94a, -PI / 2], [1.05, .8, 0x3b8f6a, -PI / 2]]) { const g = new THREE.Group(), bd = box(.34, .16, .22, std(0xfff8ea)); bd.position.y = .08; g.add(bd); const aw = box(.4, .02, .16, std(c)); aw.position.set(0, .26, .1); aw.rotation.x = .25; g.add(aw); for (let k = 0; k < 4; k++) { const st = box(.05, .021, .16, std(0xfff8ea)); st.position.set(-.15 + k * .1, .261, .1); st.rotation.x = .25; g.add(st); } for (const sx of [-.18, .18]) { const po = box(.015, .2, .015, std(0x6b4a2a)); po.position.set(sx, .13, .17); g.add(po); } g.userData.fp = .22; g.userData.pri = 4; W(put(g, fx + dx, fz + dz, ry, 0)); }
-    const crowd = []; for (let k = 0; k < 14; k++) { const pp = person(SHIRTS[(k * 3 + 2) % SHIRTS.length], { skin: SKINS[k % 4], role: 'town' }); pp.scale.setScalar(.85); W(pp); crowd.push({ p: pp, a: k * .9, cx: fx - .1 + (k % 5 - 2) * .14, cz: fz + .1 + (Math.floor(k / 5) - 1) * .22, dance: k % 2 }); }
+    const crowd = []; for (let k = 0; k < 26; k++) { const pp = person(SHIRTS[(k * 3 + 2) % SHIRTS.length], { skin: SKINS[k % 4], role: 'fest' }); pp.scale.setScalar(.85); W(pp); crowd.push({ p: pp, a: k * .9, cx: fx - .1 + (k % 6 - 2.5) * .15, cz: fz + .1 + (Math.floor(k / 6) - 1.5) * .2, dance: k % 2, night: k >= 14, s0: .85 }); }
+    fiestaFx.x = fx; fiestaFx.z = fz;
     window.__crowd = crowd;
     // the saltamontes: a small ring roller-coaster with a train of three cars
     { const cx = fx + .25, cz = fz - .0, N = 20, pts = [];
@@ -1204,6 +1207,8 @@ export function open(opts) {
       const cars = []; for (let k = 0; k < 3; k++) { const g = new THREE.Group(), cb = box(.11, .045, .07, std([0xf2c14a, 0x2f6fa8, 0x3b9a6a][k])); cb.position.y = .03; g.add(cb); const pp = person(SHIRTS[(k * 2) % SHIRTS.length], { skin: SKINS[k], role: 'kid' }); pp.scale.setScalar(.45); pp.position.y = .05; g.add(pp); W(g); cars.push(g); }
       const lap = (cx2, cz2) => 0;
       const sp = new THREE.Mesh(new THREE.CylinderGeometry(.04, .05, .02, 10), std(0xfff8ea)); const gg = new THREE.Group(); gg.add(sp); gg.userData.fp = .3; gg.userData.pri = 4; W(put(gg, cx, cz, 0, -.04));
+      for (let k = 0; k < N; k += 2) { const bl = new THREE.Mesh(new THREE.SphereGeometry(.016, 6, 5), lampMat); bl.position.copy(pts[k]).addScaledVector(pts[k].clone().normalize(), .03); W(bl); }
+      const rl = new THREE.PointLight(0xff7aa8, 0, 2.6, 1.6); const rg = new THREE.Object3D(); rg.add(rl); W(put(rg, cx, cz, 0, .5)); fiestaLights.push([rl, 1.3]);
       fiestaObj.push({ curve, cars }); }
     // flags between lamp posts and a little lamp for the stage
     for (const [dx, dz] of [[-1.1, -1.0], [1.1, -1.0], [-1.1, 1.0], [1.1, 1.0]]) { const lp = new THREE.Group(); const pole = new THREE.Mesh(new THREE.CylinderGeometry(.01, .013, .4, 5), std(0x2b3036)); pole.position.y = .2; lp.add(pole); const lb = new THREE.Mesh(new THREE.SphereGeometry(.03, 8, 6), lampMat); lb.position.y = .42; lp.add(lb); W(put(lp, fx + dx, fz + dz, 0, 0)); }
@@ -1224,8 +1229,17 @@ export function open(opts) {
     const kh = house({ w: .38, d: .3, floors: 1, wall: 0xf6f1e4, roof: ROOF[0], gal: false, shut: 0x2f6fa8, fr: 2, door: 0x2f6fa8 }); kh.position.set(.5, -.0, .12); kh.scale.setScalar(.85); g.add(kh);
     beamPivot.position.y = 1.4; const bm = new THREE.Mesh(new THREE.ConeGeometry(.12, 1.3, 12, 1, true), new THREE.MeshBasicMaterial({ color: 0xffe9a8, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending })); bm.rotation.z = -PI / 2; bm.position.x = .7; beamPivot.add(bm); g.add(beamPivot); beamPivot.userData.m = bm;
     const sl = new THREE.PointLight(0xffd36b, 0, 5, 1.8); sl.position.y = 1.4; g.add(sl); g.userData.sl = sl;
-    g.scale.setScalar(.8); g.userData.fp = .75; g.userData.pri = 4;
-    const cx = -2.3, cz = shore(cx) - .1; W(put(g, cx, cz, seaYaw(cx), -.03)); fiestaObj.push({ lh2: g });
+    g.scale.setScalar(.9); g.userData.fp = 0; g.userData.pri = 0;
+    // it stands at the far end of a short stone causeway that runs out into the open sea from the western cape (like the road out to Fisterra's light)
+    let x0 = -4; while (x0 > -40 && isl(0, x0, ISL[0].cz) < 1) x0 -= .05;
+    const zc = ISL[0].cz, LEN = 4.4, stone2 = std(0xb4ad9a), cap2 = std(0xd0cabb);
+    for (let k = 0; k * .42 < LEN; k++) { const x = x0 + .5 - k * .42, q = new THREE.Group(); q.userData.stoneBlock = 1; const b1 = box(.46, .4, .5, stone2); b1.position.y = .0; q.add(b1); const c1 = box(.5, .05, .54, cap2); c1.position.y = .22; q.add(c1);
+      for (const sz of [-1, 1]) { const wl = box(.46, .09, .05, stone2); wl.position.set(0, .29, sz * .22); q.add(wl); }
+      W(put(q, x, zc, 0, .03, true)); }
+    for (let k = 0; k < 9; k++) { const rk = new THREE.Mesh(new THREE.IcosahedronGeometry(.12 + rnd() * .12, 2), std(0x8d897d, { flatShading: false })); rk.scale.y = .7; W(put(rk, x0 - LEN * .15 - rnd() * LEN * .5, zc + (rnd() - .5) * 1.2 + (k % 2 ? .4 : -.4), rnd() * 6, -.05, true)); }
+    const lx = x0 + .5 - LEN, base = new THREE.Mesh(new THREE.CylinderGeometry(.5, .56, .3, 16), stone2); const bg = new THREE.Group(); bg.add(base); bg.userData.stoneBlock = 1; W(put(bg, lx, zc, 0, .04, true));
+    g.remove(g.children[0]); g.remove(g.children.find((c) => c.scale && Math.abs(c.scale.x - .85) < .01));
+    W(put(g, lx, zc, PI / 2, .13, true)); fiestaObj.push({ lh2: g });
   }
 
   // ---- tidy up: no building may overlap another one or stand on a road; the most important ones (churches, schools, squares, arcades) stay
@@ -1568,7 +1582,17 @@ export function open(opts) {
     }
     for (const fl of flags) fl.rotation.y = Math.sin(t * 3 + fl.position.x * 5) * .35;
     { const fo = fiestaObj; for (const m of fo) { if (m.lh2) { beamPivot.rotation.y = t * .8; beamPivot.userData.m.material.opacity = .32 * nightT + rainT * .1; m.lh2.userData.sl.intensity = 1.8 * nightT; m.lh2.userData.lan.material.emissiveIntensity = .5 + 2.2 * nightT; continue; } if (m.curve) { m.cars.forEach((g, k) => { const u = ((t * .05 + .96 - k * .045) % 1 + 1) % 1, p = m.curve.getPointAt(u), q = m.curve.getPointAt((u + .01) % 1); g.position.copy(p); _m.lookAt(q, p, p.clone().normalize()); g.quaternion.setFromRotationMatrix(_m); }); } else m.rotation.z = Math.sin(t * 6 + m.position.x * 40) * .08; } }
-    if (window.__crowd) for (const c of window.__crowd) { const a = t * (c.dance ? 1.1 : .35) + c.a; put(c.p, c.cx + Math.cos(a) * (c.dance ? .05 : .18), c.cz + Math.sin(a) * (c.dance ? .05 : .12), a + PI / 2, Math.abs(Math.sin(t * (c.dance ? 5 : 7) + c.a)) * (c.dance ? .018 : .006)); }
+    if (window.__crowd) for (const c of window.__crowd) { if (c.night) { const v = Math.max(.001, nightT); c.p.scale.setScalar(c.s0 * v); c.p.visible = nightT > .03; if (!c.p.visible) continue; } const a = t * (c.dance ? 1.1 : .35) + c.a; put(c.p, c.cx + Math.cos(a) * (c.dance ? .05 : .18), c.cz + Math.sin(a) * (c.dance ? .05 : .12), a + PI / 2, Math.abs(Math.sin(t * (c.dance ? 5 : 7) + c.a)) * (c.dance ? .018 : .006)); }
+    for (const l of fiestaLights) l[0].intensity = l[1] * nightT * (1 - rainT * .4);
+    { // fireworks: now and then, at night, a soft burst rises over the fiesta, opens into a sphere of sparks and fades
+      if (nightT > .8 && now > fwNext) { fwNext = now + 3500 + Math.random() * 7000; const pos = new Float32Array(70 * 3), col = new Float32Array(70 * 3), base = new THREE.Color().setHSL(Math.random(), .85, .62), geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+        const dirs = []; for (let k = 0; k < 70; k++) { const v = new THREE.Vector3(Math.random() - .5, Math.random() - .5, Math.random() - .5).normalize().multiplyScalar(.5 + Math.random() * .5); dirs.push(v); const c2 = k % 5 === 0 ? new THREE.Color(0xfff2c0) : base; col.set([c2.r, c2.g, c2.b], k * 3); }
+        const pts = new THREE.Points(geo, new THREE.PointsMaterial({ size: .09, vertexColors: true, transparent: true, opacity: 1, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true })); pts.frustumCulled = false;
+        const origin = dirFrom(fiestaFx.x + (Math.random() - .5) * 1.6, fiestaFx.z + (Math.random() - .5) * 1.4, new THREE.Vector3()).multiplyScalar(R + 1.9 + Math.random() * .7); world.add(pts); fireworks.push({ pts, dirs, origin, t0: t, up: origin.clone().normalize() }); if (audio) audio.sfx('boom'); }
+      for (let i = fireworks.length - 1; i >= 0; i--) { const f = fireworks[i], u = t - f.t0; if (u > 3.2) { world.remove(f.pts); f.pts.geometry.dispose(); fireworks.splice(i, 1); continue; }
+        const a = f.pts.geometry.attributes.position.array, rise = Math.min(1, u / .5), e = Math.max(0, u - .5), r = 1 - Math.exp(-e * 2.2);
+        for (let k = 0; k < f.dirs.length; k++) { const d = f.dirs[k]; if (u < .5) { a[k * 3] = f.origin.x - f.up.x * (1 - rise) * .9; a[k * 3 + 1] = f.origin.y - f.up.y * (1 - rise) * .9; a[k * 3 + 2] = f.origin.z - f.up.z * (1 - rise) * .9; } else { a[k * 3] = f.origin.x + d.x * r * .9 - f.up.x * e * e * .09; a[k * 3 + 1] = f.origin.y + d.y * r * .9 - f.up.y * e * e * .09; a[k * 3 + 2] = f.origin.z + d.z * r * .9 - f.up.z * e * e * .09; } }
+        f.pts.geometry.attributes.position.needsUpdate = true; f.pts.material.opacity = u < .5 ? .9 : Math.max(0, 1 - e / 2.6); } }
     for (const bl of balls) { const c = Math.cos(t * 2.6 + bl.ph), h = .07 + .24 * Math.abs(Math.sin(t * 2.6 + bl.ph)); put(bl.m, bl.x, bl.z + c * .3 * bl.sg, 0, h); }
     for (const s of swimmers) {
       const a = t * s.sp + s.ph, x = s.x + Math.sin(a) * s.rx;
@@ -1580,7 +1604,7 @@ export function open(opts) {
     }
     // people react to the weather: when it rains or night falls they run to the nearest house, then wait at its door (some go in); when it clears they run back to what they were doing
     for (const g of ALLP) {
-      const u = g.userData, role = u.role; if (role === 'fish' || role === 'bike') continue;
+      const u = g.userData, role = u.role; if (role === 'fish' || role === 'bike' || role === 'fest') continue;
       if (u.s0 === undefined) { u.s0 = g.scale.x; u.v = 1; u.mode = 0; u.lastX = null; const pp = planeOf(_d.copy(g.position).normalize()); u.p0 = pp; }
       if (u.umb) u.umb.visible = rainT > .5 && u.mode !== 3;
       const h = (u.idx * 37 % 100) / 100;
