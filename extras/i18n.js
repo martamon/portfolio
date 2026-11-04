@@ -66,6 +66,9 @@ const ROWS = [
     'Soidades de Onte. /sɔjˈðaðɛs ðɛ ˈɔnte/ En Galicia, la nostalgia del ayer es la expresión de momentos vividos que nunca fueron capturados. Un poema visual que revive mis recuerdos de infancia, captados a través de los ojos de una niña pequeña. Un viaje al pasado hecho realidad.',
     'Soidades de Onte. /sɔjˈðaðɛs ðɛ ˈɔnte/ En Galicia, a nostalxia do onte é a expresión de momentos vividos que nunca foron capturados. Un poema visual que revive as miñas lembranzas de infancia, captadas a través dos ollos dunha nena pequena. Unha viaxe ao pasado feita realidade.'],
   // the map, Mochi and the little creature
+  ['Add to the island', 'Añadir a la isla', 'Engadir á illa'],
+  ['Tree', 'Árbol', 'Árbore'], ['Flowers', 'Flores', 'Flores'], ['House', 'Casa', 'Casa'], ['Granary', 'Hórreo', 'Hórreo'],
+  ['Sheep', 'Oveja', 'Ovella'], ['Lighthouse', 'Faro', 'Farol'], ['Boat', 'Barco', 'Barco'],
   ['Learn more', 'Saber más', 'Saber máis'],
   ['Start the tour', 'Comenzar la visita', 'Comezar a visita'],
   ['CLICK 3 TIMES · CLICK 3 TIMES · CLICK 3 TIMES ·', 'HAZ CLIC 3 VECES · HAZ CLIC 3 VECES · HAZ CLIC 3 VECES ·', 'FAI CLIC 3 VECES · FAI CLIC 3 VECES · FAI CLIC 3 VECES ·'],

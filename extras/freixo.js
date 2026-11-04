@@ -3,7 +3,7 @@
 // fishermen on anchored boats, cars, boats under sail, birds and clouds that keep moving. Opened from the Contact page (three clicks on the creature).
 // open({ night, onClose }) shows it on top of the page and returns { close }.
 import * as THREE from './three.module.min.js';
-import { mochiText, MOCHI } from './i18n.js?v=4';
+import { mochiText, MOCHI, tr } from './i18n.js?v=5';
 const mochiLen = MOCHI.length;
 
 const R = 12, PI = Math.PI, SEA = -.06;    // SEA: the water level, a little below the shore line, so waves and tides never reach the roads and houses                // radius of the planet
@@ -550,6 +550,10 @@ function makeAudio(night0) {
       else if (name === 'mochitalk') { const t = ctx.currentTime, f = 520 + Math.random() * 380, o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * (1.1 + Math.random() * .25), t + .06); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.022, t + .008); g.gain.exponentialRampToValueAtTime(.0005, t + .11); o.connect(g); g.connect(tone); o.start(t); o.stop(t + .13); }
       else if (name === 'mochinext') { [74, 79, 83, 91].forEach((m, k) => setTimeout(() => alive && note(m, .042 - k * .004, 2.2), k * 95)); setTimeout(() => { if (!alive || muted) return; const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(600, t); o.frequency.exponentialRampToValueAtTime(1800, t + .22); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.026, t + .02); g.gain.exponentialRampToValueAtTime(.0005, t + .4); o.connect(g); g.connect(tone); g.connect(rev); o.start(t); o.stop(t + .45); }, 60); }
       else if (name === 'mochiend') { [86, 79, 74, 67].forEach((m, k) => setTimeout(() => alive && note(m, .04 - k * .004, 2.4), k * 120)); }
+      else if (name === 'pick') { note(84, .028, 1.2); setTimeout(() => note(91, .022, 1.4), 60); }
+      else if (name === 'place') { note(67, .05, 2); setTimeout(() => note(74, .04, 2.2), 70); setTimeout(() => note(79, .03, 2.4), 150); }
+      else if (name === 'trash') { [79, 72, 65].forEach((m, k) => setTimeout(() => alive && note(m, .03, 1.4), k * 80)); }
+      else if (name === 'nope') { note(62, .03, 1.2); }
       else if (name === 'learn') { [72, 76, 79, 83].forEach((m, k) => setTimeout(() => note(m, .04 - k * .004, 2.8), k * 105)); }
       else if (name === 'learnoff') { [83, 79, 74].forEach((m, k) => setTimeout(() => note(m, .03, 1.8), k * 95)); }
       else if (name === 'rain') { note(76, .05, 2.6); setTimeout(() => note(71, .045, 2.8), 160); setTimeout(() => note(67, .04, 3), 330); }
@@ -1669,6 +1673,166 @@ export function open(opts) {
   cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
   cv.addEventListener('wheel', (e) => { e.preventDefault(); distT = Math.min(baseDist * 1.7, Math.max(14.3, distT * Math.exp(e.deltaY * .0016))); lastInput = performance.now(); focus = null; }, { passive: false });
   cv.addEventListener('click', () => { if (moved < 6 && cur >= 0) hideCard(); });
+
+  // ---- the island kit: little things to put on the island (a tree, flowers, a house, a granary, a sheep, a lighthouse, a boat).
+  // Press a button to drop one in the middle of the view, or drag it onto the map and let go where you want it; grab any of them later
+  // to move it, and drop it on the buttons to take it away. They are kept between visits.
+  const placed = new THREE.Group(); world.add(placed);
+  const KIT = [
+    ['tree', 'Tree', '<circle cx="12" cy="9" r="6"/><path d="M12 15v6"/>', 0],
+    ['flowers', 'Flowers', '<circle cx="12" cy="8" r="3"/><path d="M12 11v10M12 17c-3 0-4-2-5-3M12 15c3 0 4-2 5-3"/>', 0],
+    ['house', 'House', '<path d="M4 11l8-7 8 7M6 10v10h12V10M10 20v-5h4v5"/>', 0],
+    ['horreo', 'Granary', '<path d="M3 9l9-5 9 5M5 9v6h14V9M7 15v5M17 15v5M10 9v6M14 9v6"/>', 0],
+    ['sheep', 'Sheep', '<path d="M6 14a4 4 0 0 1 1-7 4 4 0 0 1 8 0 4 4 0 0 1 3 7z"/><path d="M8 14v5M15 14v5M18 11l3 1"/>', 0],
+    ['lighthouse', 'Lighthouse', '<path d="M9 21l1.5-14h3L15 21zM9 4h6M10.5 7V4M13.5 7V4M3 9l5 1M21 9l-5 1"/>', 0],
+    ['boat', 'Boat', '<path d="M3 15h18l-3 5H6zM12 15V4l6 9"/>', 1]
+  ];
+  const LANDW = [0xf7f1e4, 0xf3d9c4, 0xdbe8f0, 0xe9dcc2, 0xf1d6d9];
+  const BUILD = {
+    tree() {
+      const g = new THREE.Group(), tk = new THREE.Mesh(new THREE.CylinderGeometry(.02, .03, .28, 7), std(0x7a5a3c)); tk.position.y = .14; g.add(tk);
+      const gc = [0x62ae4a, 0x7cc25a, 0x58a07a][Math.floor(Math.random() * 3)];
+      const a = new THREE.Mesh(new THREE.IcosahedronGeometry(.19, 2), std(gc)); a.position.y = .4; g.add(a);
+      const b = new THREE.Mesh(new THREE.IcosahedronGeometry(.12, 2), std(gc)); b.position.set(.1, .52, .03); g.add(b); return g;
+    },
+    flowers() {
+      const g = new THREE.Group(), cols = [0xf4a3b8, 0xffd86b, 0xffffff, 0xc9a7f2, 0xff9d7a];
+      for (let k = 0; k < 8; k++) { const a = k * 2.4, r = .02 + .07 * Math.sqrt(k / 8) * 1.6, st = new THREE.Mesh(new THREE.CylinderGeometry(.004, .004, .1 + (k % 3) * .02, 4), std(0x5a9a48)); st.position.set(Math.cos(a) * r, .05, Math.sin(a) * r); g.add(st);
+        const bl = new THREE.Mesh(new THREE.IcosahedronGeometry(.032, 1), std(cols[k % cols.length])); bl.position.set(st.position.x, .11 + (k % 3) * .02, st.position.z); g.add(bl); }
+      const gr = new THREE.Mesh(new THREE.IcosahedronGeometry(.12, 1), std(0x74b058)); gr.scale.set(1, .25, 1); gr.position.y = .015; g.add(gr); return g;
+    },
+    house() { return house({ w: .42, d: .36, floors: 1 + Math.floor(Math.random() * 2), wall: LANDW[Math.floor(Math.random() * LANDW.length)], roof: ROOF[Math.floor(Math.random() * ROOF.length)], gal: false, shut: 0x2f6fa8, fr: 2, door: 0x2f6fa8 }); },
+    horreo() { const g = horreo(); g.scale.setScalar(.7); const o = new THREE.Group(); o.add(g); return o; },
+    sheep() {
+      const g = new THREE.Group(), wool = std(0xf6f2ea), dk = std(0x4a4038), body = new THREE.Mesh(new THREE.IcosahedronGeometry(.1, 2), wool); body.scale.set(1.25, .95, .95); body.position.y = .17; g.add(body);
+      for (const [x, y, z] of [[.06, .24, .05], [-.06, .25, -.04], [0, .27, .0]]) { const t = new THREE.Mesh(new THREE.IcosahedronGeometry(.055, 1), wool); t.position.set(x, y, z); g.add(t); }
+      const hd = new THREE.Mesh(new THREE.IcosahedronGeometry(.052, 2), dk); hd.scale.set(1.1, 1, .9); hd.position.set(.14, .2, 0); g.add(hd);
+      for (const sz of [-1, 1]) { const e = new THREE.Mesh(new THREE.IcosahedronGeometry(.02, 1), dk); e.position.set(.12, .26, sz * .045); e.scale.set(1, .5, 1.4); g.add(e); }
+      for (const [x, z] of [[.07, .045], [.07, -.045], [-.07, .045], [-.07, -.045]]) { const l = new THREE.Mesh(new THREE.CylinderGeometry(.012, .012, .1, 5), dk); l.position.set(x, .05, z); g.add(l); }
+      return g;
+    },
+    lighthouse() {
+      const g = new THREE.Group(), wh = std(0xf7f1e4), rd = std(0xc9473a);
+      for (let k = 0; k < 4; k++) { const seg = new THREE.Mesh(new THREE.CylinderGeometry(.085 - k * .012, .097 - k * .012, .16, 12), k % 2 ? rd : wh); seg.position.y = .08 + k * .16; g.add(seg); }
+      const gal = new THREE.Mesh(new THREE.CylinderGeometry(.1, .08, .03, 12), std(0x4a4540)); gal.position.y = .66; g.add(gal);
+      const lamp = new THREE.Mesh(new THREE.IcosahedronGeometry(.055, 1), lampMat); lamp.position.y = .72; g.add(lamp);
+      const roof = new THREE.Mesh(new THREE.ConeGeometry(.08, .1, 12), rd); roof.position.y = .83; g.add(roof); return g;
+    },
+    boat() {
+      const g = new THREE.Group(), col = [0xc9473a, 0x2f6fa8, 0xe9b94a][Math.floor(Math.random() * 3)];
+      const hull = box(.5, .09, .2, std(col)); hull.position.y = .05; g.add(hull);
+      const bow = new THREE.Mesh(new THREE.ConeGeometry(.1, .16, 4), std(col)); bow.rotation.z = -PI / 2; bow.rotation.y = PI / 4; bow.position.set(.32, .05, 0); bow.scale.set(1, 1, .8); g.add(bow);
+      const cab = box(.16, .1, .13, std(0xf7f1e4)); cab.position.set(-.06, .15, 0); g.add(cab);
+      const mast = new THREE.Mesh(new THREE.CylinderGeometry(.008, .008, .34, 5), std(0x7a5a3c)); mast.position.set(.1, .26, 0); g.add(mast);
+      const sail = box(.012, .24, .17, std(0xfff8ea)); sail.position.set(.1, .27, .0); sail.rotation.y = 0; g.add(sail); return g;
+    }
+  };
+  const kitUI = document.createElement('div'); kitUI.className = 'x-pl-build'; kitUI.setAttribute('role', 'toolbar'); kitUI.setAttribute('aria-label', tr('Add to the island'));
+  for (const [id, label, svg] of KIT) { const b = document.createElement('button'); b.type = 'button'; b.className = 'x-pl-bi'; b.dataset.k = id; b.title = tr(label); b.setAttribute('aria-label', tr(label)); b.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + svg + '</svg>'; kitUI.appendChild(b); }
+  root.appendChild(kitUI);
+  const isSea = (k) => k === 'boat';
+  const rc = new THREE.Raycaster(), ndc = new THREE.Vector2(), _o = new THREE.Vector3(), _v = new THREE.Vector3(), _qi = new THREE.Quaternion();
+  // where on the map a point of the screen is (a few passes, so that mountains are hit at their own height)
+  function mapAt(cx, cy) {
+    const r = cv.getBoundingClientRect(); ndc.set((cx - r.left) / r.width * 2 - 1, -((cy - r.top) / r.height * 2 - 1)); rc.setFromCamera(ndc, camera);
+    world.updateMatrixWorld(); _qi.copy(world.quaternion).invert();
+    const o = _o.copy(rc.ray.origin).sub(world.position).applyQuaternion(_qi), d = rc.ray.direction.clone().applyQuaternion(_qi); let res = null;
+    for (const r0 of [R + 1.6, R]) {                                // first guess a little above the sea (land), then the sea itself
+      let rad = r0, ok = true;
+      for (let i = 0; i < 4; i++) {
+        const b = o.dot(d), c = o.lengthSq() - rad * rad, ds = b * b - c; if (ds < 0) { ok = false; break; }
+        _v.copy(o).addScaledVector(d, -b - Math.sqrt(ds)).normalize(); const [x, z] = planeOf(_v), h = groundH(x, z); res = [x, z, h]; rad = R + Math.max(h, SEA);
+      }
+      if (ok) return res;
+    }
+    return null;
+  }
+  const okAt = (k, m) => m && (isSea(k) ? m[2] < SEA - .1 : m[2] > SEA + .07);
+  const kitSave = () => { try { localStorage.setItem('xplanet-kit', JSON.stringify(placed.children.map((o) => ({ k: o.userData.kit, x: +o.userData.x.toFixed(3), z: +o.userData.z.toFixed(3), y: +o.userData.yaw.toFixed(2) })))); } catch (e) {} };
+  const anims = []; let animOn = false;
+  function animTick(now) {
+    for (let i = anims.length - 1; i >= 0; i--) { const a = anims[i], u = Math.min(1, (now - a.t0) / a.d); if (!a.step(u)) anims.splice(i, 1); else if (u >= 1) { a.end && a.end(); anims.splice(i, 1); } }
+    if (anims.length) requestAnimationFrame(animTick); else animOn = false;
+  }
+  const anim = (d, step, end) => { anims.push({ t0: performance.now(), d, step, end }); if (!animOn) { animOn = true; requestAnimationFrame(animTick); } };
+  const elastic = (u) => u >= 1 ? 1 : 1 - Math.pow(1 - u, 3) * Math.cos(u * 9.4) ;
+  function standAt(o, x, z, lift) { o.userData.x = x; o.userData.z = z; put(o, x, z, o.userData.yaw, (isSea(o.userData.kit) ? .02 : -.01) + (lift || 0), isSea(o.userData.kit)); }
+  function make(k) { const o = BUILD[k](); o.userData.kit = k; o.userData.yaw = Math.random() * PI * 2; addOutline(o); o.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); return o; }
+  function pop(o, delay) {                                         // it grows in with a little overshoot and a puff of shadow
+    o.scale.setScalar(.001); const t0 = performance.now() + (delay || 0);
+    anim(700 + (delay || 0), (u) => { const t = Math.max(0, (performance.now() - t0) / 700); o.scale.setScalar(Math.max(.001, elastic(Math.min(1, t)))); return true; }, () => o.scale.setScalar(1));
+  }
+  function settle(o) {                                             // dropped: a small squash
+    const x = o.userData.x, z = o.userData.z; anim(520, (u) => { const k = Math.sin(u * PI * 2.2) * (1 - u) * .16; o.scale.set(1 + k, 1 - k * 1.3, 1 + k); return true; }, () => o.scale.setScalar(1));
+  }
+  function add(k, x, z, yaw, withPop, delay) {
+    const o = make(k); if (yaw !== undefined) o.userData.yaw = yaw; standAt(o, x, z); placed.add(o); if (withPop) pop(o, delay); return o;
+  }
+  function spotNearCentre(k) {                                     // a free spot near the middle of the view
+    const r = cv.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    let best = null, bd = 1e9; const rad = Math.min(r.width, r.height) * .42;
+    for (let i = 0; i < 220; i++) { const a = Math.random() * PI * 2, rr = Math.sqrt(Math.random()) * rad, m = mapAt(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr); if (okAt(k, m) && rr < bd) { bd = rr; best = m; } }
+    if (best) return best;
+    return null;
+  }
+  // drag: from a button (a new thing) or from the island (a thing that is already there)
+  let dragging = null;
+  function beginDrag(o, isNew, e) {
+    const from = o.userData.x !== undefined ? [o.userData.x, o.userData.z] : null, k = o.userData.kit;
+    dragging = { o, isNew, from, k, id: e.pointerId, over: false, moved: false, sx: e.clientX, sy: e.clientY };
+    if (isNew) { o.visible = false; placed.add(o); }
+    if (audio) audio.sfx('pick');
+    root.classList.add('x-kitdrag'); cv.style.cursor = 'grabbing';
+    addEventListener('pointermove', dragMove); addEventListener('pointerup', dragEnd); addEventListener('pointercancel', dragEnd);
+    dragMove(e);
+  }
+  function overKit(e) { const r = kitUI.getBoundingClientRect(); return e.clientX >= r.left - 6 && e.clientX <= r.right + 6 && e.clientY >= r.top - 6 && e.clientY <= r.bottom + 6; }
+  function dragMove(e) {
+    const d = dragging; if (!d || e.pointerId !== d.id) return;
+    if (Math.hypot(e.clientX - d.sx, e.clientY - d.sy) > 5) d.moved = true;
+    d.over = overKit(e); kitUI.classList.toggle('x-del', d.over && !d.isNew);
+    const m = d.over ? null : mapAt(e.clientX, e.clientY); d.ok = okAt(d.k, m);
+    if (d.ok) { const o = d.o, ox = o.userData.x, oz = o.userData.z; o.visible = true; o.userData.x = m[0]; o.userData.z = m[1]; put(o, m[0], m[1], o.userData.yaw, (isSea(d.k) ? .02 : -.01) + .16, isSea(d.k)); }
+    else if (d.isNew) d.o.visible = false;
+    cv.style.cursor = d.ok || d.over ? 'grabbing' : 'not-allowed';
+  }
+  function dragEnd(e) {
+    const d = dragging; if (!d || e.pointerId !== d.id) return;
+    removeEventListener('pointermove', dragMove); removeEventListener('pointerup', dragEnd); removeEventListener('pointercancel', dragEnd);
+    dragging = null; root.classList.remove('x-kitdrag'); kitUI.classList.remove('x-del'); cv.style.cursor = '';
+    const o = d.o;
+    if (e.type === 'pointercancel') { if (d.isNew) placed.remove(o); else if (d.from) { standAt(o, d.from[0], d.from[1]); } return; }
+    if (d.over && !d.isNew) {                                       // dropped on the buttons: it shrinks away
+      if (audio) audio.sfx('trash'); anim(380, (u) => { o.scale.setScalar(Math.max(.001, 1 - u * u)); return true; }, () => { placed.remove(o); kitSave(); }); return;
+    }
+    if (d.ok) { standAt(o, o.userData.x, o.userData.z); o.visible = true; settle(o); if (audio) audio.sfx('place'); kitSave(); return; }
+    if (d.isNew) {
+      if (!d.moved) { const m = spotNearCentre(d.k); if (m) { standAt(o, m[0], m[1]); o.visible = true; pop(o); if (audio) audio.sfx('place'); kitSave(); return; } }
+      placed.remove(o); if (audio) audio.sfx('nope'); return;
+    }
+    if (d.from) { standAt(o, d.from[0], d.from[1]); settle(o); if (audio) audio.sfx('nope'); }
+  }
+  kitUI.addEventListener('pointerdown', (e) => {
+    const b = e.target.closest('.x-pl-bi'); if (!b || e.button) return; e.preventDefault();
+    beginDrag(make(b.dataset.k), true, e);
+  });
+  // the thing nearest to the pointer (within a finger's reach) on the side of the planet that faces us
+  function nearestItem(cx, cy) {
+    const r = cv.getBoundingClientRect(); let best = null, bd = 30; world.updateMatrixWorld(); camera.updateMatrixWorld();
+    for (const o of placed.children) {
+      if (!o.visible) continue; _v.setFromMatrixPosition(o.matrixWorld); const nrm = _v.clone().normalize(); if (nrm.dot(_o.copy(camera.position).normalize()) < .05) continue;
+      _v.y += .12; _v.project(camera); const sx = r.left + (_v.x + 1) / 2 * r.width, sy = r.top + (1 - _v.y) / 2 * r.height, dd = Math.hypot(sx - cx, sy - cy);
+      if (dd < bd) { bd = dd; best = o; }
+    }
+    return best;
+  }
+  // grabbing something that is already on the island (before the planet itself would turn)
+  cv.addEventListener('pointerdown', (e) => {
+    if (dragging || e.button || !placed.children.length) return;
+    const o = nearestItem(e.clientX, e.clientY); if (!o) return;
+    e.stopImmediatePropagation(); e.preventDefault(); beginDrag(o, false, e);
+  }, true);
+  try { const saved = JSON.parse(localStorage.getItem('xplanet-kit') || '[]'); saved.forEach((it, i) => { if (BUILD[it.k]) add(it.k, it.x, it.z, it.y, true, 400 + i * 90); }); } catch (e) {}
   const onKey = (e) => {
     if (e.key === 'Escape' && mStep >= 0) { mochiClose(); }
     else if (e.key === 'Escape') { if (!info.hidden) toggleInfo(false); else if (cur >= 0) hideCard(); else close(); }
@@ -2000,6 +2164,14 @@ function injectCss() {
     '.x-pl.x-mochi .x-pl-more{opacity:0;pointer-events:none}',
     '.x-pl-more.x-open{opacity:0;pointer-events:none}',
     '.x-pl.x-night .x-pl-more{background:rgba(20,34,66,.6);color:#cbe3ff}',
+    '.x-pl-build{position:absolute;left:14px;top:50%;transform:translateY(-50%);z-index:24;display:flex;flex-direction:column;gap:9px;padding:10px 8px;border-radius:28px;background:rgba(255,252,246,.5);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 8px 28px rgba(60,50,60,.14);max-height:calc(100% - 190px);overflow:auto;scrollbar-width:none;touch-action:none;transition:opacity .5s ease,background .3s ease,box-shadow .3s ease,outline-color .3s}',
+    '.x-pl-build::-webkit-scrollbar{display:none}',
+    '.x-pl-bi{flex:none;width:44px;height:44px;border:0;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.88);color:#4a3340;cursor:grab;touch-action:none;-webkit-tap-highlight-color:transparent;transition:transform .35s cubic-bezier(.3,1.5,.5,1),background .25s,box-shadow .25s}',
+    '.x-pl-bi:hover{transform:translateY(-2px) scale(1.08);box-shadow:0 6px 16px rgba(60,50,60,.22)}.x-pl-bi:active{cursor:grabbing;transform:scale(.94)}',
+    '.x-pl-build.x-del{background:rgba(255,214,214,.7);box-shadow:0 0 0 3px rgba(224,120,120,.55),0 8px 28px rgba(60,50,60,.14)}',
+    '.x-pl.x-mochi .x-pl-build{opacity:0;pointer-events:none}',
+    '.x-pl.x-night .x-pl-build{background:rgba(20,30,60,.45)}.x-pl.x-night .x-pl-bi{background:rgba(32,46,86,.85);color:#e4eeff}',
+    '@media(max-width:600px){.x-pl-build{left:8px;gap:7px;padding:8px 6px}.x-pl-bi{width:40px;height:40px}}',
     '.x-pl-info{position:absolute;left:50%;bottom:max(16px,env(safe-area-inset-bottom));width:min(430px,calc(100% - 28px));max-height:min(62vh,520px);overflow:auto;padding:20px 22px 16px;border-radius:22px;background:rgba(255,253,248,.88);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:0 10px 36px rgba(20,50,80,.2);color:#12304a;opacity:0;transform:translate(-50%,16px);transition:opacity .45s ease,transform .6s cubic-bezier(.22,.8,.24,1);-webkit-user-select:text;user-select:text}',
     '.x-pl-info.x-on{opacity:1;transform:translate(-50%,0)}.x-pl-info[hidden]{display:none}',
     '.x-pl.x-night .x-pl-info{background:rgba(16,28,56,.88);color:#cbe3ff}',
