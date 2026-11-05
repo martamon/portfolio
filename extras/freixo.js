@@ -1202,7 +1202,7 @@ export function open(opts) {
     const [px, pz] = onShore(x, inl), yaw = seaYaw(px), slab = new THREE.Group();
     const sl = box(w, .16, d, std(0xe3d9c2)); sl.position.y = -.01; slab.add(sl);
     const bd = box(w + .06, .15, d + .06, std(0xc9bfa8)); bd.position.y = -.015; slab.add(bd);
-    slab.userData.fp = Math.max(w, d) * .62; slab.userData.pri = 3; W(put(slab, px, pz, yaw, -.04));
+    slab.userData.fp = Math.max(w, d) * .62; slab.userData.pri = 3; slab.userData.sqW = w; W(put(slab, px, pz, yaw, -.04));
     for (const [qx, qz] of [[-.5, -.4], [.5, -.4], [-.5, .4], [.5, .4]].slice(0, o.trees === undefined ? 2 : o.trees)) {
       const tr = new THREE.Group(), tk = new THREE.Mesh(new THREE.CylinderGeometry(.02, .028, .24, 6), std(0x7a5a3c)); tk.position.y = .12; tr.add(tk);
       const cr = new THREE.Mesh(new THREE.IcosahedronGeometry(.17, 1), std(0x3f9576, { flatShading: true })); cr.position.y = .36; tr.add(cr);
@@ -1210,14 +1210,23 @@ export function open(opts) {
       W(put(tr, tx, tz, 0, .03));
     }
     for (const sx of [-1, 1]) { const bn = new THREE.Group(); bn.add(box(.2, .035, .06, std(0x8a6a44))); const bk = box(.2, .06, .012, std(0x8a6a44)); bk.position.set(0, .05, -.03); bn.add(bk); const a = yaw, tx = px + sx * w * .3 * Math.cos(a) + d * .38 * Math.sin(a), tz = pz - sx * w * .3 * Math.sin(a) + d * .38 * Math.cos(a); W(put(bn, tx, tz, yaw, .045)); }
-    for (let k = 0; k < (o.terraces || 2); k++) { const tx = x + (k - ((o.terraces || 2) - 1) / 2) * w * .42; terrace(tx, inl - d * .33, [0xc9473a, 0x2f6fa8, 0xe9b94a][k % 3]); }
+    if (o.tables) {   // a café terrace: round tables with four chairs and a parasol, in two rows
+      const cols = [0xc9473a, 0x2f6fa8, 0xe9b94a, 0x3b9a6a, 0xe277a0, 0x4fb3a8], nT = o.tables, rows = 2, per = Math.ceil(nT / rows);
+      for (let k = 0; k < nT; k++) { const r = Math.floor(k / per), c = k % per, lx = (c - (per - 1) / 2) * w * .36, lz = (r - .5) * d * .44;
+        const a = yaw, tx = px + lx * Math.cos(a) + lz * Math.sin(a), tz = pz - lx * Math.sin(a) + lz * Math.cos(a), g = new THREE.Group();
+        const top = new THREE.Mesh(new THREE.CylinderGeometry(.1, .1, .016, 14), std(0xf4efe4)); top.position.y = .13; g.add(top); const leg = new THREE.Mesh(new THREE.CylinderGeometry(.014, .02, .13, 6), std(0x8a6a44)); leg.position.y = .065; g.add(leg);
+        for (let q = 0; q < 4; q++) { const ca = q * PI / 2 + .4, ch = new THREE.Group(); ch.position.set(Math.cos(ca) * .17, 0, Math.sin(ca) * .17); ch.rotation.y = -ca + PI / 2; const st = box(.07, .012, .07, std(0x6b4a2a)); st.position.y = .07; ch.add(st); const bk = box(.07, .07, .012, std(0x6b4a2a)); bk.position.set(0, .11, -.03); ch.add(bk); for (const [lx2, lz2] of [[-.028, -.028], [.028, -.028], [-.028, .028], [.028, .028]]) { const l = box(.01, .07, .01, std(0x6b4a2a)); l.position.set(lx2, .035, lz2); ch.add(l); } g.add(ch); }
+        const cup = new THREE.Mesh(new THREE.CylinderGeometry(.012, .01, .02, 8), std(0xfff8ea)); cup.position.set(.04, .15, 0); g.add(cup);
+        if (k % 2 === 0) { const pa = parasol(cols[k % cols.length]); pa.scale.setScalar(.5); pa.position.x = -.02; g.add(pa); }
+        g.scale.setScalar(1.45); g.userData.fp = 0; W(put(g, tx, tz, k * 1.3, .01)); }
+    } else for (let k = 0; k < (o.terraces || 2); k++) { const tx = x + (k - ((o.terraces || 2) - 1) / 2) * w * .42; terrace(tx, inl - d * .33, [0xc9473a, 0x2f6fa8, 0xe9b94a][k % 3]); }
     for (let k = 0; k < (o.people || 6); k++) {
       const p = person(SHIRTS[(k * 3 + 2) % SHIRTS.length], { skin: SKINS[k % 4], hat: k % 4 === 0 ? 0xe9e2d2 : undefined }); W(p);
       strollers.push({ p, x: px, z: pz, yaw, rx: w * (.2 + rnd() * .22), rz: d * (.18 + rnd() * .2), a: rnd() * 6.28, sp: (.18 + rnd() * .16) * (k % 2 ? 1 : -1), still: k % 3 === 0 });
     }
     return slab;
   }
-  { const sqM = square(-12.8, 2.65, 2.0, 1.5, { trees: 4, terraces: 3, people: 12 });
+  { const sqM = square(-12.8, 2.65, 2.0, 1.5, { trees: 2, tables: 6, people: 14 });
   }
   // ---- the shipyard (astillero) on the outskirts, by the sea: a big shed, a slipway with rails, a boat on stocks, a gantry crane and a hull being built
   { let sx = 0, sz = 0, found = false, flip = false;
