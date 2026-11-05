@@ -140,29 +140,13 @@
     '[data-xtc]{color:color-mix(in srgb,color-mix(in srgb,var(--xo) calc((1 - var(--xtd)) * 100%),var(--xd) calc(var(--xtd) * 100%)) calc((1 - var(--xtt)) * 100%),var(--xl) calc(var(--xtt) * 100%))!important}',
     // the dial, as in the original: "LOCAL TIME" over the hours and minutes (a blinking dot between them) and a round dial with a ring inside
     '.x-dial{position:fixed;top:12px;right:150px;z-index:12;display:flex;align-items:center;gap:22px;color:#fff;mix-blend-mode:difference;font:500 14px/1.25 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.025em;text-transform:uppercase;user-select:none;-webkit-user-select:none}',
-    '.x-dial-txt{display:flex;flex-direction:column;white-space:nowrap}',
-    '.x-dial-label{cursor:default}',
-    '.x-dial.x-trav .x-dial-label{cursor:pointer}',
-    '.x-dial-time b{font-weight:500}',
-    '.x-dial-time i{font-style:normal;display:inline-block;width:2.2em;text-align:center;animation:x-blink 1s step-end infinite}',
     '@keyframes x-blink{50%{opacity:0}}',
-    // the dial: a moon in phases. A thin circle filled according to the hour: full by day, waning through dusk to a thin sliver at night,
-    // waxing again at dawn; drag it round to travel in time
-    '.x-dial-ring{position:relative;width:52px;height:52px;box-sizing:border-box;border-radius:50%;cursor:grab;touch-action:none;flex:none}',
-    '.x-dial-ring:active{cursor:grabbing}',
-    '.x-dial-face{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}',
-    '.x-dial-face .x-rim{fill:none;stroke:currentColor;stroke-width:1.5;stroke-linejoin:round}',
-    '.x-dial-face .x-lit{fill:currentColor}',
+    '.x-dial{top:auto!important;right:auto!important;left:14px;bottom:46px;gap:6px;font-size:11px;opacity:.72}',
+    '.x-dial-time{display:inline-flex;align-items:center;font-variant-numeric:tabular-nums;letter-spacing:.06em}.x-dial-time b{font-weight:500}.x-dial-time i{font-style:normal;margin:0 .12em;animation:x-blink 1s step-end infinite}.x-dial-an{flex:none;overflow:visible}',
+    '@media(prefers-reduced-motion:reduce){.x-dial-time i{animation:none}}',
     // a slow, small swell so it invites a click; still while hovered or dragged
     // every now and then (not all the time) it swells and dims softly, like a slow blink, to invite a click
-    '.x-dial-ring{animation:x-blink 8s ease-in-out 3s infinite}',
     '@keyframes x-blink{0%,72%,100%{transform:scale(1);opacity:1}82%{transform:scale(1.09);opacity:.55}92%{transform:scale(1.02);opacity:.9}}',
-    '.x-dial-ring:hover,.x-dial-ring.x-drag{animation-play-state:paused}',
-    '@media(prefers-reduced-motion:reduce){.x-dial-ring{animation:none}}',
-    '.x-dial-ring{cursor:pointer!important}',
-    '.x-dial-ring.x-drag{cursor:ew-resize!important}',
-    '.x-dial-ring:hover .x-rim{stroke-width:2.2}',
-    '@media(max-width:480px){.x-dial{gap:10px;font-size:10.5px;top:23px}.x-dial-ring{width:34px;height:34px}}',
     // view toggle
     // the view toggle is the first row of the image column (not floating), so it can never cover the text or the images
     '.x-toggle{display:flex;justify-content:flex-end;align-items:center;align-self:center;gap:4px;width:100%;height:32px;padding:0;box-sizing:border-box;flex:none}',
@@ -1004,7 +988,7 @@
     if (planet) return;
     planet = { loading: true };
     jfHint(0);
-    import('/extras/freixo.js?v=190').then(function (m) {
+    import('/extras/freixo.js?v=193').then(function (m) {
       planet = m.open({ getDark: function () { return darkness(theme.hour); }, getHour: function () { return theme.hour; }, onClose: function () { planet = null; } });
     }).catch(function () { planet = null; });
   }
@@ -1352,11 +1336,10 @@
   // from the light blue (noon, top of the dial) to a dark blue with light type (midnight, bottom), through dusk and dawn
   var HOUR_R = [[0, 44], [4, 44], [5, 96], [6, 133], [7, 165], [8, 206], [9, 248], [16, 248], [17, 206], [18, 165], [19, 124], [20, 83], [21, 44], [24, 44]];
   var DAY_HOUR = 12;   // the dial's top
-  // Like the original, the dial shows the visitor's own time and the page takes the colours of that hour; dragging the
-  // dial "time travels" (kept for the visit in sessionStorage) and the \u2715 brings it back to the real time.
+  // The dial shows the visitor's own time (with the same little clock as the planet) and the page takes the colours of that hour.
   function localHour() { var n = new Date(); return n.getHours() + n.getMinutes() / 60 + n.getSeconds() / 3600; }
   var theme = { hour: localHour(), travel: false, raf: 0 };
-  try { var savedHour = parseFloat(sessionStorage.getItem('xt-travel')); if (isFinite(savedHour)) { theme.hour = ((savedHour % 24) + 24) % 24; theme.travel = true; } } catch (e) {}
+  try { sessionStorage.removeItem('xt-travel'); } catch (e) {}
   function darkness(h) {
     var i = 0;
     while (i < HOUR_R.length - 2 && HOUR_R[i + 1][0] <= h) i++;
@@ -1373,85 +1356,12 @@
     if (tt > 0.5) { if (!document.documentElement.hasAttribute('data-xdark')) document.documentElement.setAttribute('data-xdark', ''); } else document.documentElement.removeAttribute('data-xdark');
     var d = document.querySelector('.x-dial');
     if (d) {
-      // lit part of the moon: all of it by day, a sliver (12%) in the night; the shadow comes in from the right in the evening (the sliver left on the left) and
-      // goes the other way in the morning
-      var lit = 1 - 0.88 * darkness(theme.hour), side = theme.hour >= 12 ? -1 : 1;
-      theme.moonDx = side * (1 - lit) * 2 * 25.5; moonDraw();
       var tot = Math.floor(theme.hour * 60 + 0.01), hh = Math.floor(tot / 60) % 24, mm = tot % 60;
       d.querySelector('.x-h').textContent = (hh < 10 ? '0' : '') + hh;
       d.querySelector('.x-m').textContent = (mm < 10 ? '0' : '') + mm;
-      var lab = theme.travel ? 'Time travel \u2715' : 'Local time', lEl = d.querySelector('.x-dial-label');
-      if (lEl.textContent !== lab) lEl.textContent = lab;
-      d.classList.toggle('x-trav', theme.travel);
+      d.querySelector('.x-ah').setAttribute('transform', 'rotate(' + ((hh % 12 + mm / 60) * 30).toFixed(1) + ' 12 12)');
+      d.querySelector('.x-am').setAttribute('transform', 'rotate(' + (mm * 6) + ' 12 12)');
     }
-  }
-  // the lit part of the moon: the lens where a disc of radius r and the same disc moved by cx overlap (no clipping, so no seam)
-  function moonPath(r, cx) {
-    if (Math.abs(cx) < 0.05) return 'M' + -r + ',0A' + r + ',' + r + ' 0 1 0 ' + r + ',0A' + r + ',' + r + ' 0 1 0 ' + -r + ',0Z';
-    if (Math.abs(cx) >= 2 * r - 0.05) return '';
-    var f = cx > 0 ? -1 : 1, c = Math.abs(cx) * -1, h = c / 2, y = Math.sqrt(r * r - h * h);
-    var p = function (x, yy) { return (x * f).toFixed(2) + ',' + yy.toFixed(2); };
-    var sw = f > 0 ? 0 : 1;
-    return 'M' + p(h, -y) + 'A' + r + ',' + r + ' 0 ' + (h > 0 ? 1 : 0) + ' ' + sw + ' ' + p(h, y) + 'A' + r + ',' + r + ' 0 ' + (h < c ? 1 : 0) + ' ' + sw + ' ' + p(h, -y) + 'Z';
-  }
-  // jump to day or night (a tap on the moon), the moon turning on its way
-  function tweenTravel(to) {
-    cancelAnimationFrame(theme.raf);
-    var from = theme.hour, delta = ((to - from + 36) % 24) - 12, t0 = performance.now();
-    var step = function (now) {
-      var p = Math.min(1, (now - t0) / 3000), e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
-      setHour(from + delta * e, true);
-      theme.raf = p < 1 ? requestAnimationFrame(step) : 0;
-    };
-    theme.raf = requestAnimationFrame(step);
-  }
-  // the moon is not a perfect circle: a soft pebble shape whose outline keeps changing slowly (a few low waves round its edge, each
-  // drifting at its own pace). The lit part is the same shape moved sideways, clipped to the shape.
-  var MW = [[2, 0.045, 0.31, 0.4], [3, 0.035, -0.23, 2.1], [5, 0.018, 0.47, 4.3]];
-  function blob(R, t, dx) {
-    var n = 48, d = '', i, k;
-    for (i = 0; i <= n; i++) {
-      var a = i / n * Math.PI * 2, r = R;
-      for (k = 0; k < MW.length; k++) r += R * MW[k][1] * Math.sin(MW[k][0] * a + MW[k][2] * t + MW[k][3]);
-      d += (i ? 'L' : 'M') + (Math.sin(a) * r + dx).toFixed(2) + ',' + (-Math.cos(a) * r).toFixed(2);
-    }
-    return d + 'Z';
-  }
-  var moonT = 0, moonRaf = 0;
-  function moonDraw() {
-    var d = document.querySelector('.x-dial');
-    if (!d) return;
-    var t = moonT, rim = d.querySelector('.x-rim'), cl = d.querySelector('.x-clip'), lit = d.querySelector('.x-lit');
-    if (!rim) return;
-    rim.setAttribute('d', blob(24.25, t, 0));
-    cl.setAttribute('d', blob(25, t, 0));        // to the outer edge of the outline, so the fill meets it without a seam
-    var dx = theme.moonDx || 0;
-    lit.setAttribute('d', Math.abs(dx) >= 50 ? '' : blob(25.5, t, dx));
-  }
-  function moonTick(now) {
-    moonRaf = requestAnimationFrame(moonTick);
-    if (document.hidden) return;
-    moonT = now / 1000 * (matchMedia('(prefers-reduced-motion:reduce)').matches ? 0 : 1);
-    moonDraw();
-  }
-  function setHour(h, travel) {
-    theme.hour = ((h % 24) + 24) % 24;
-    if (travel) { theme.travel = true; try { sessionStorage.setItem('xt-travel', String(theme.hour)); } catch (e) {} }
-    paintTheme();
-  }
-  // back to the real time, turning the dial the short way round
-  function tweenHour(to) {
-    cancelAnimationFrame(theme.raf);
-    var from = theme.hour, delta = ((to - from + 36) % 24) - 12, t0 = performance.now();
-    var step = function (now) {
-      var p = Math.min(1, (now - t0) / 700), e = 1 - Math.pow(1 - p, 3);
-      if (p < 1) { setHour(from + delta * e, false); theme.raf = requestAnimationFrame(step); return; }
-      theme.raf = 0;
-      theme.travel = false;
-      try { sessionStorage.removeItem('xt-travel'); } catch (err) {}
-      setHour(localHour(), false);
-    };
-    theme.raf = requestAnimationFrame(step);
   }
   setInterval(function () { if (!theme.travel && !theme.raf) { theme.hour = localHour(); paintTheme(); } }, 15000);
   function ensureDial() {
@@ -1459,50 +1369,9 @@
     if (!d) {
       d = document.createElement('div');
       d.className = 'x-dial';
-      d.innerHTML = '<div class="x-dial-txt"><span class="x-dial-label"></span><span class="x-dial-time"><b class="x-h"></b><i>.</i><b class="x-m"></b></span></div><div class="x-dial-ring" role="slider" aria-label="Time of day: tap to switch day and night, drag sideways to change the hour" aria-valuemin="0" aria-valuemax="24" tabindex="0"><svg class="x-dial-face" viewBox="-26 -26 52 52" aria-hidden="true"><defs><clipPath id="x-moonclip"><path class="x-clip"/></clipPath></defs><g clip-path="url(#x-moonclip)"><path class="x-lit"/></g><path class="x-rim"/></svg></div>';
-      var ring = d.querySelector('.x-dial-ring');
-      // a tap on the moon switches day <-> night; dragging it left or right winds the time back or on (about 7 px an hour);
-      // the mouse wheel and the arrow keys do the same, Enter or Space switches
-      var drag = null;
-      ring.addEventListener('pointerdown', function (e) {
-        e.preventDefault(); try { ring.setPointerCapture(e.pointerId); } catch (err) {}
-        drag = { x: e.clientX, h: theme.hour, moved: false };
-      });
-      ring.addEventListener('pointermove', function (e) {
-        if (!drag) return;
-        var dx = e.clientX - drag.x;
-        if (!drag.moved && Math.abs(dx) < 4) return;
-        if (!drag.moved) { drag.moved = true; cancelAnimationFrame(theme.raf); theme.raf = 0; ring.classList.add('x-drag'); }
-        setHour(drag.h + dx / 7, true);
-      });
-      var end = function (e) {
-        if (!drag) return;
-        var tap = !drag.moved && e.type === 'pointerup';
-        drag = null; ring.classList.remove('x-drag');
-        try { ring.releasePointerCapture(e.pointerId); } catch (err) {}
-        if (tap) tweenTravel(darkness(theme.hour) < 0.5 ? 22 : 12);
-      };
-      ring.addEventListener('pointerup', end); ring.addEventListener('pointercancel', end);
-      ring.addEventListener('wheel', function (e) {
-        e.preventDefault(); cancelAnimationFrame(theme.raf); theme.raf = 0;
-        setHour(theme.hour + (e.deltaY || e.deltaX) / 60, true);
-      }, { passive: false });
-      ring.addEventListener('keydown', function (e) {
-        var k = e.key === 'ArrowRight' || e.key === 'ArrowUp' ? 0.5 : e.key === 'ArrowLeft' || e.key === 'ArrowDown' ? -0.5 : 0;
-        if (k) { e.preventDefault(); setHour(theme.hour + k, true); }
-        else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tweenTravel(darkness(theme.hour) < 0.5 ? 22 : 12); }
-      });
-      var reset = function (e) { e.preventDefault(); tweenHour(localHour()); };
-      d.querySelector('.x-dial-txt').addEventListener('click', function (e) { if (theme.travel) reset(e); });
+      d.innerHTML = '<span class="x-dial-time" role="timer"><b class="x-h"></b><i>:</i><b class="x-m"></b></span><svg class="x-dial-an" viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.5"/><line class="x-ah" x1="12" y1="12" x2="12" y2="7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line class="x-am" x1="12" y1="12" x2="12" y2="4.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';
       document.body.appendChild(d);
       paintTheme();
-      if (!moonRaf) moonRaf = requestAnimationFrame(moonTick);
-    }
-    // sit just left of the menu links
-    var link = document.querySelector('a[data-xn]');
-    if (link) {
-      var l = link.getBoundingClientRect().left;
-      if (l > 0) d.style.right = Math.round(innerWidth - l + 18) + 'px';
     }
   }
   paintTheme();
