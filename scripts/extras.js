@@ -992,7 +992,7 @@
     if (planet) return;
     planet = { loading: true };
     jfHint(0);
-    import('/extras/freixo.js?v=200').then(function (m) {
+    import('/extras/freixo.js?v=201').then(function (m) {
       planet = m.open({ getDark: function () { return darkness(theme.hour); }, getHour: function () { return theme.hour; }, onClose: function () { planet = null; } });
     }).catch(function () { planet = null; });
   }
@@ -1507,7 +1507,7 @@
     if (innerWidth <= 809 && hero.offsetHeight) {
       var W = innerWidth, H = innerHeight, frame = W * 9 / 16, top = hero.offsetTop, height = hero.offsetHeight;
       /* narrow screens, the same picture as on a wide one: a big head behind the text, which turns negative / positive over it */
-      var Hw = Math.min(W * 0.9, 560), Ht = Hw / 0.79, sc = Math.max(1, Math.min(4.2, Ht / (0.92 * frame))), xc = W * 0.56, yc = Math.min(H * 0.58, H - 44 - Ht / 2);
+      var Hw = Math.min(W * 0.9, 560), Ht = Hw / 0.79, sc = Math.max(1, Math.min(4.2, Ht / (0.92 * frame))), xc = W * 0.5, yc = Math.min(H * 0.6, H - 44 - Ht / 2);
       var originY = top + 0.47 * height, centre = top + height / 2, ty = (yc - originY) / sc - (centre - originY), tx = (xc - W / 2) / sc;
       document.documentElement.style.removeProperty('--xcw');
       var st = document.documentElement.style;
