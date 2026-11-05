@@ -3,7 +3,7 @@
 // into the sea, where the world turns turquoise and the car keeps rolling along the seabed, past fish and an old wreck. Glowing orbs hold
 // information about the ría; press E (or tap the button) next to one to read it.
 import * as THREE from './three.module.min.js';
-import { INFO, FACTS, getLang, tr } from './i18n.js?v=17';
+import { INFO, FACTS, getLang, tr } from './i18n.js?v=19';
 import { stall, KINDS } from './mercadillo.js?v=1';
 
 const PI = Math.PI, LI = ['en', 'es', 'gl'];
@@ -200,13 +200,39 @@ function buildBike() {
     mk(new THREE.CylinderGeometry(.78, .78, .06, 16), 0xe9cf8a, [.36, 1.93, 0]); const dome = mk(new THREE.SphereGeometry(.44, 12, 6, 0, PI * 2, 0, PI / 2), 0xe9cf8a, [.36, 1.93, 0]); dome.scale.y = .8; mk(new THREE.CylinderGeometry(.46, .46, .1, 14), 0xf08a9a, [.36, 2.0, 0]); }
   const hoodG = new THREE.Group(); hoodG.visible = false; rider.add(hoodG);
   { const hd = new THREE.Mesh(new THREE.SphereGeometry(.58, 14, 10, 0, PI * 2, 0, PI * .66), std(0xf4c64a)); hd.position.set(.28, 1.6, 0); hd.scale.set(1.0, 1.02, 1.08); hd.castShadow = true; hoodG.add(hd); const pk = new THREE.Mesh(new THREE.ConeGeometry(.3, .5, 8), std(0xf4c64a)); pk.rotation.z = -PI / 2; pk.position.set(.78, 1.86, 0); hoodG.add(pk); const tie = new THREE.Mesh(new THREE.TorusGeometry(.5, .03, 6, 16), std(0xfff3dc)); tie.rotation.x = PI / 2; tie.position.set(.34, 1.25, 0); hoodG.add(tie); }
+  // ---- the wardrobe: cosy outfits for the rider (a hat, a knit or cardigan, a scarf, a skirt or dungarees); the button of the ride cycles through them
+  const wad = new THREE.Group(); rider.add(wad);
+  const wm = (geo, col, p, rot, sc) => { const o = new THREE.Mesh(geo, std(col)); o.position.set(p[0], p[1], p[2]); if (rot) o.rotation.set(rot[0], rot[1], rot[2]); if (sc) o.scale.set(sc[0], sc[1], sc[2]); o.castShadow = true; return o; };
+  const hats = [hatG];
+  { const mk = () => { const h = new THREE.Group(); h.visible = false; rider.add(h); hats.push(h); return h; }, SP = (r, a, b) => new THREE.SphereGeometry(r, 14, 10, 0, PI * 2, a || 0, b || PI);
+    const beanie = mk(); beanie.userData.cols = []; { const dome = wm(SP(.52, 0, PI * .56), 0xf3ead6, [.34, 1.7, 0]); const band = wm(new THREE.TorusGeometry(.47, .1, 8, 18).rotateX(PI / 2), 0xe9dcc2, [.34, 1.72, 0]); const pom = wm(new THREE.IcosahedronGeometry(.17, 1), 0xe9a0b4, [.3, 2.27, 0]); beanie.add(dome, band, pom); beanie.userData.cols = [dome, band, pom]; }
+    const beret = mk(); { const b = wm(new THREE.SphereGeometry(.55, 14, 8), 0x8a4f5a, [.3, 1.95, .06], [0, 0, -.18], [1.1, .42, 1.1]); const stalk = wm(new THREE.CylinderGeometry(.04, .05, .12, 6), 0x6b3a44, [.28, 2.15, .06]); beret.add(b, stalk); }
+    const bucket = mk(); { const crown = wm(new THREE.CylinderGeometry(.42, .5, .46, 14), 0xfff0cc, [.36, 1.98, 0]); const brim = wm(new THREE.CylinderGeometry(.74, .74, .05, 16), 0xfff0cc, [.38, 1.78, 0], [0, 0, .06]); const rib = wm(new THREE.CylinderGeometry(.505, .505, .09, 14), 0xe9a0b4, [.36, 1.84, 0]); bucket.add(crown, brim, rib); }
+    const kerch = mk(); { const band = wm(new THREE.TorusGeometry(.47, .07, 8, 18).rotateX(PI / 2), 0xe9573a, [.34, 1.8, 0], [.1, 0, -.12]); const k1 = wm(new THREE.ConeGeometry(.15, .28, 6), 0xe9573a, [-.18, 1.93, .14], [0, 0, 1.5]); const k2 = wm(new THREE.ConeGeometry(.15, .28, 6), 0xe9573a, [-.18, 1.93, -.14], [0, 0, 1.5]); kerch.add(band, k1, k2); } }
+  const scarf = wm(new THREE.TorusGeometry(.31, .1, 8, 18).rotateX(PI / 2), 0xc9674f, [.27, 1.1, 0], [0, 0, -.25]); scarf.visible = false; wad.add(scarf);
+  const tail = wm(new THREE.CylinderGeometry(.08, .1, .5, 8), 0xc9674f, [-.02, .92, .27], [0, 0, .25]); tail.visible = false; wad.add(tail);
+  const skirt = wm(new THREE.CylinderGeometry(.3, .66, .62, 16, 1, true), 0xf2c14a, [.06, .12, 0], [0, 0, -.1], [1, 1, .95]); skirt.material.side = THREE.DoubleSide; skirt.visible = false; wad.add(skirt);
+  const bib = wm(new THREE.BoxGeometry(.3, .5, .6), 0x5fae8a, [.3, .78, 0], [0, 0, -.25]); bib.visible = false; wad.add(bib);
+  const FITS = [
+    { n: ['Straw hat & coral jumper', 'Sombrero de paja y jersey coral', 'Sombreiro de palla e xersei coral'], torso: shirtC, sleeve: null, legs: 0x4f6b8c, shoe: 0xf08a76, hat: 0 },
+    { n: ['Cream beanie & cable-knit scarf', 'Gorro crema y bufanda de punto', 'Gorro crema e bufanda de punto'], torso: 0xf0e2c8, sleeve: 0xf0e2c8, legs: 0x8a6a4c, shoe: 0x6b4a2e, hat: 1, scarf: 0xc9674f },
+    { n: ['Lavender cardigan & beret', 'Cárdigan lavanda y boina', 'Cárdigan lavanda e boina'], torso: 0xc9b4e8, sleeve: 0xc9b4e8, legs: 0x6a7aa0, shoe: 0xf6efe0, hat: 2 },
+    { n: ['Sunflower dress', 'Vestido girasol', 'Vestido xirasol'], torso: 0xf2c14a, sleeve: null, legs: 0xf6efe0, shoe: 0xc9674f, hat: 3, skirt: 0xf2c14a },
+    { n: ['Green dungarees & bucket hat', 'Peto verde y gorro de pescador', 'Peto verde e gorro de pescador'], torso: 0xf6efe0, sleeve: 0xf6efe0, legs: 0x5fae8a, shoe: 0xf2c14a, hat: 3, bib: 0x5fae8a },
+    { n: ['Galician check skirt & kerchief', 'Falda de cuadros y pañuelo gallego', 'Saia de cadros e pano galego'], torso: 0x3f6f98, sleeve: 0x3f6f98, legs: 0xf6efe0, shoe: 0x6b4a2e, hat: 4, skirt: 0xc0453a, scarf: 0xf6efe0 },
+  ];
+  let fit = 0;
   const arms = []; for (const sz of [-1, 1]) { const a = new THREE.Mesh(new THREE.CylinderGeometry(.09, .08, 1, 6), std(skin)); a.userData.skin = true; a.castShadow = true; rider.add(a); arms.push([a, sz]); }
   const legs = []; for (const sz of [-1, 1]) { const l = new THREE.Mesh(new THREE.CylinderGeometry(.13, .1, 1, 6), std(0x4f6b8c)); l.castShadow = true; rider.add(l); const f = new THREE.Mesh(new THREE.IcosahedronGeometry(.14, 1), std(0xf08a76)); f.scale.set(1.6, .8, 1); rider.add(f); legs.push([l, f, sz]); }
   const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _up = new THREE.Vector3(0, 1, 0);
   const seg = (o, a, b) => { _b.copy(b).sub(a); const L = _b.length(); o.position.copy(a).addScaledVector(_b, .5); o.scale.set(1, L, 1); o.quaternion.setFromUnitVectors(_up, _b.normalize()); };
   let ang = 0;
   let wet = false;
-  g.userData.setRain = (on) => { if (on === wet) return; wet = on; hatG.visible = !on; hoodG.visible = on; torso.material = std(on ? 0xf4c64a : shirtC); for (const [a] of arms) a.material = std(on ? 0xf4c64a : skin); };
+  const dress = () => { const f = FITS[fit]; hats.forEach((h, i) => { h.visible = !wet && i === f.hat; }); hoodG.visible = wet; torso.material = std(wet ? 0xf4c64a : f.torso); for (const [a] of arms) a.material = std(wet ? 0xf4c64a : (f.sleeve || skin));
+    legs.forEach(([l, ft]) => { l.material = std(f.legs); ft.material = std(f.shoe); }); scarf.visible = !!f.scarf && !wet; tail.visible = scarf.visible && fit === 1; if (f.scarf) { scarf.material = std(f.scarf); tail.material = std(f.scarf); }
+    skirt.visible = !!f.skirt; if (f.skirt) { skirt.material = std(f.skirt); skirt.material.side = THREE.DoubleSide; } bib.visible = !!f.bib && !wet; if (f.bib) bib.material = std(f.bib); };
+  g.userData.setRain = (on) => { if (on === wet) return; wet = on; dress(); };
+  g.userData.setOutfit = (i) => { fit = ((i % FITS.length) + FITS.length) % FITS.length; dress(); return FITS[fit].n; }; g.userData.fits = FITS.length;
   g.userData.anim = (v, dt, steer) => {
     curtain.rotation.z = Math.min(.3, Math.abs(v) * .028) + Math.sin(ang * 2) * .02; locks.forEach((l, k) => { l.rotation.z = Math.min(.35, Math.abs(v) * .03) + Math.sin(ang * 2 + k) * .03; });
     fw.rotation.z -= v * dt / .56; bw.rotation.z -= v * dt / .56; fork.rotation.y = steer * .5; ang -= v * dt * .9;
@@ -437,7 +463,7 @@ export function open(opts) {
   const lang = Math.max(0, LI.indexOf(getLang())), touch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
   const root = document.createElement('div'); root.className = 'x-dr';
   root.innerHTML = '<canvas class="x-dr-cv"></canvas><div class="x-dr-uw"></div>' +
-    '<div class="x-dr-top"><div class="x-dr-t"><b>Ría de Muros e Noia</b><span class="x-dr-sub"></span></div><div class="x-dr-btns"><button type="button" class="x-dr-rn" aria-label="' + tr('Rain') + '"></button><button type="button" class="x-dr-dn" aria-label="' + tr('Day / night') + '"></button><button type="button" class="x-dr-mu" aria-label="' + tr('Sound') + '"></button><button type="button" class="x-dr-x" aria-label="' + tr('Back to the map') + '"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button></div></div>' +
+    '<div class="x-dr-top"><div class="x-dr-t"><b>Ría de Muros e Noia</b><span class="x-dr-sub"></span></div><div class="x-dr-btns"><button type="button" class="x-dr-fit" aria-label="' + tr('Change clothes') + '"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7.5a2 2 0 1 0-2-2"/><path d="M12 7.5v2.2l8 5.3a1.4 1.4 0 0 1-.8 2.5H4.8A1.4 1.4 0 0 1 4 15z"/></svg></button><button type="button" class="x-dr-rn" aria-label="' + tr('Rain') + '"></button><button type="button" class="x-dr-dn" aria-label="' + tr('Day / night') + '"></button><button type="button" class="x-dr-mu" aria-label="' + tr('Sound') + '"></button><button type="button" class="x-dr-x" aria-label="' + tr('Back to the map') + '"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button></div></div>' +
     '<button type="button" class="x-dr-out"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg><span>' + tr('Leave the house') + '</span></button><button type="button" class="x-dr-tour"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.2"/></svg><span>' + tr('Take me on a guided tour') + '</span></button>' +
     '<button type="button" class="x-dr-ta x-dr-tp" aria-label="' + tr('Previous stop') + '"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><button type="button" class="x-dr-ta x-dr-tn" aria-label="' + tr('Next stop') + '"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button><div class="x-dr-fade"></div>' +
     '<div class="x-dr-count"><i class="x-dr-arrow"></i><span></span></div><div class="x-dr-help">' + tr('Ride with the arrow keys') + '</div>' +
@@ -463,6 +489,7 @@ export function open(opts) {
     '.x-dr-out{position:absolute;left:18px;top:68px;display:none;align-items:center;gap:6px;padding:8px 14px 8px 10px;border:0;border-radius:16px;background:#e36d57;color:#fff;font:500 11px/1 "IBM Plex Mono",ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;z-index:2}.x-dr.x-casa .x-dr-out{display:flex}.x-dr.x-casa .x-dr-pad,.x-dr.x-casa .x-dr-tour,.x-dr.x-casa .x-dr-count,.x-dr.x-casa .x-dr-ta,.x-dr.x-casa .x-dr-prompt,.x-dr.x-casa .x-dr-help,.x-dr.x-casa .x-dr-rn,.x-dr.x-casa .x-dr-dn,.x-dr.x-casa .x-dr-card{display:none}.x-dr.x-casa:after{background:radial-gradient(ellipse at 50% 46%,rgba(0,0,0,0) 60%,rgba(70,40,20,.25) 100%)}',
     '.x-dr-wel{position:absolute;left:50%;bottom:44px;transform:translate(-50%,16px);width:min(520px,calc(100% - 32px));padding:20px 26px 18px;border-radius:28px;background:rgba(255,248,238,.93);box-shadow:0 14px 44px rgba(90,50,40,.25);text-align:center;opacity:0;pointer-events:none;z-index:3;transition:opacity .9s ease,transform 1.1s cubic-bezier(.22,.8,.24,1)}.x-dr-wel.x-on{opacity:1;transform:translate(-50%,0);pointer-events:auto;cursor:pointer}.x-dr-wel b{display:block;font:700 21px/1.3 "Switzer",system-ui,sans-serif;color:#7a4a3a;margin-bottom:4px}.x-dr-wel span{font:500 16px/1.4 "Switzer",system-ui,sans-serif;color:#9a6a58}',
     '.x-dr-fact{position:absolute;left:50%;top:40%;transform:translate(-50%,-100%) scale(.92);width:min(300px,calc(100% - 28px));padding:13px 16px 14px;border-radius:20px;background:rgba(255,253,248,.96);color:#4a3340;font:500 14px/1.45 "Switzer",system-ui,sans-serif;box-shadow:0 10px 30px rgba(60,70,80,.25);opacity:0;pointer-events:none;z-index:4;text-align:left;transition:opacity .35s ease,transform .45s cubic-bezier(.3,1.4,.5,1)}.x-dr-fact:after{content:"";position:absolute;left:50%;bottom:-7px;margin-left:-8px;width:16px;height:16px;background:inherit;transform:rotate(45deg);border-radius:3px}.x-dr-fact.x-on{opacity:1;transform:translate(-50%,-100%) scale(1);pointer-events:auto}.x-dr.x-casa .x-dr-fact{display:none}',
+    '.x-dr-fitl{position:absolute;right:18px;top:70px;max-width:min(260px,calc(100% - 36px));padding:8px 14px;border-radius:16px;background:rgba(255,252,246,.94);color:#4a3340;font:500 13px/1.3 "Switzer",system-ui,sans-serif;text-align:right;box-shadow:0 8px 22px rgba(60,70,80,.2);opacity:0;transform:translateY(-6px);pointer-events:none;transition:opacity .35s ease,transform .45s cubic-bezier(.3,1.4,.5,1);z-index:3}.x-dr-fitl.x-on{opacity:1;transform:none}.x-dr.x-casa .x-dr-fitl,.x-dr.x-casa .x-dr-fit{display:none}',
     '.x-dr-ta{position:absolute;top:50%;margin-top:-23px;width:46px;height:46px;border:0;border-radius:50%;background:rgba(255,252,246,.88);color:#4a3340;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 18px rgba(74,51,64,.2);opacity:0;pointer-events:none;transition:opacity .4s,transform .3s cubic-bezier(.3,1.5,.5,1)}.x-dr-tp{left:14px}.x-dr-tn{right:14px}.x-dr.x-tour .x-dr-ta{opacity:1;pointer-events:auto}.x-dr-ta:hover{transform:scale(1.1)}',
     '.x-dr-fade{position:absolute;inset:0;background:#fff6ea;opacity:0;pointer-events:none;transition:opacity .45s ease}.x-dr.x-fade .x-dr-fade{opacity:1}.x-dr.x-tour .x-dr-pad,.x-dr.x-tour .x-dr-help{opacity:0;pointer-events:none}',
     '.x-dr.x-touch .x-dr-help{display:none}',
@@ -851,6 +878,11 @@ export function open(opts) {
   const leaveCasa = () => { const w0 = root.querySelector('.x-dr-wel'); if (w0) w0.classList.remove('x-on'); if (!inCasa) return; if (snd) snd.cozy(false); root.classList.add('x-fade'); setTimeout(() => { inCasa = false; root.classList.remove('x-casa', 'x-fade'); nearName = ''; }, 450); };
   exitBtn.addEventListener('click', leaveCasa);
 
+  // ---- the wardrobe button: a different cosy outfit for the rider each time (kept for next visit)
+  { const fb = root.querySelector('.x-dr-fit'), fl = document.createElement('div'); fl.className = 'x-dr-fitl'; root.appendChild(fl); let idx = 0, ft = 0; try { idx = parseInt(localStorage.getItem('xr-fit') || '0', 10) || 0; } catch (e) {}
+    const apply = (i, say) => { const n = car.userData.setOutfit(i); idx = ((i % car.userData.fits) + car.userData.fits) % car.userData.fits; if (boatG.userData.b2) boatG.userData.b2.userData.setOutfit(idx); try { localStorage.setItem('xr-fit', String(idx)); } catch (e) {} if (say) { fl.textContent = n[lang]; fl.classList.add('x-on'); clearTimeout(ft); ft = setTimeout(() => fl.classList.remove('x-on'), 2200); } };
+    fb.addEventListener('click', () => { apply(idx + 1, true); if (snd) { snd.chime(); } });
+    car.userData.setOutfit(idx); if (boatG.userData.b2) boatG.userData.b2.userData.setOutfit(idx); }
   // ---- guided tour: the bike pedals by itself along the road to each point of interest; the arrows jump between them
   const tour = { on: false, i: 0, phase: 'wait', route: [], ghost: 0, stuck: 0, lx: 0, lz: 0 };
   const tBtn = root.querySelector('.x-dr-tour'), tLab = tBtn.querySelector('span');
@@ -912,7 +944,7 @@ export function open(opts) {
     root.addEventListener('pointerup', (e) => { if (!dn2 || inCasa || cardOn) return; const mv = Math.hypot(e.clientX - dn2[0], e.clientY - dn2[1]); dn2 = null; if (mv > 7 || e.target.closest('button,.x-dr-card,.x-dr-pad,.x-dr-fact')) return;
       ndF.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); rcF.setFromCamera(ndF, camera); const live = PEOPLE.filter((q) => { for (let o = q; o; o = o.parent) if (!o.visible) return false; return true; });
       const hit = rcF.intersectObjects(live, true)[0]; if (!hit) return; let g = hit.object; while (g && !g.userData.person) g = g.parent; if (!g) return;
-      g.userData.fi = g.userData.fi === undefined ? (nextF++ * 5 + 3) % FACTS.length : (g.userData.fi + 1 + Math.floor(Math.random() * 3)) % FACTS.length;   /* her own order, never the one she just said */
+      g.userData.fi = g.userData.fi === undefined ? (nextF++ * 5 + 3) % 12 : (g.userData.fi + 1 + Math.floor(Math.random() * 2)) % FACTS.length;   /* her own order, never the one she just said */
       factEl.textContent = FACTS[g.userData.fi][lang]; factEl.classList.add('x-on'); factP = g; factT = 9; g.userData.pop = 1; if (snd) snd.talk(factEl.textContent.length, PEOPLE.indexOf(g)); });
     factEl.addEventListener('click', () => { factT = 0; });
     root.__factTick = (dt) => { if (!factP) return; factT -= dt; if (factT <= 0 || inCasa) { factEl.classList.remove('x-on'); factP = null; return; }
