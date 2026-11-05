@@ -627,13 +627,16 @@ export function open(opts) {
   // ---- traffic: two little cars and a bus that stops at every bus shelter and takes on the people who wait there
   const traffic = [];
   { const mk = (L, W2, Hh, col, bus) => { const g = new THREE.Group(), add = (geo, c, x, y, z, ex) => { const o = new THREE.Mesh(geo, std(c, ex)); o.position.set(x, y, z); o.castShadow = true; g.add(o); return o; };
-      add(rbox(W2, Hh * .62, L, .35), col, 0, Hh * .31 + .35, 0); add(rbox(W2 * .94, Hh * .3, bus ? L * .94 : L * .5, .3), 0x34414f, 0, Hh * .62 + .45, bus ? 0 : -L * .06);
+      add(rbox(W2, Hh * .62, L, .35), col, 0, Hh * .31 + .35, 0); add(rbox(W2 * .94, Hh * .3, bus ? L * .94 : L * .5, .3), 0x34414f, 0, Hh * .62 + .45, bus ? 0 : -L * .06, bus ? { transparent: true, opacity: .32, roughness: .2 } : undefined);
       if (!bus) add(rbox(W2 * .86, .16, L * .46, .1), col, 0, Hh + .38, -L * .06);
       else { add(rbox(W2 * 1.01, .22, L * .98, .08), 0xf6f1e4, 0, Hh * .5, 0); add(rbox(W2 * .9, .2, L * .8, .08), col, 0, Hh + .46, 0); }
       for (const sx of [-1, 1]) for (const sz of bus ? [-.34, .34] : [-.3, .3]) { const w = add(new THREE.CylinderGeometry(.42, .42, .3, 14), 0x23262b, sx * (W2 / 2 - .02), .42, sz * L); w.rotation.z = PI / 2; add(new THREE.CylinderGeometry(.2, .2, .32, 8), 0xe6e2d6, sx * (W2 / 2 - .02), .42, sz * L).rotation.z = PI / 2; }
       for (const sx of [-1, 1]) { const hl = add(new THREE.SphereGeometry(.17, 8, 6), 0xfff0b8, sx * W2 * .32, Hh * .3 + .4, L / 2); hl.material = new THREE.MeshStandardMaterial({ color: 0xfff0b8, emissive: 0xffe9a0, emissiveIntensity: .5 }); add(new THREE.SphereGeometry(.14, 8, 6), 0xe0584a, sx * W2 * .32, Hh * .3 + .4, -L / 2); }
       g.userData.L = L; return g; };
-    const mkBus = () => { const g = mk(8.4, 2.7, 2.9, 0xe9873a, true); g.scale.setScalar(.82); return g; };
+    const mkBus = () => { const g = mk(8.4, 2.7, 2.9, 0xe9873a, true); g.scale.setScalar(.82);
+      const seats = new THREE.Group(); g.add(seats); g.userData.pax = [];
+      for (let i = 0; i < 8; i++) { const pp = person([0xe36d57, 0x4f8fc0, 0xf2c14a, 0x5fae8a, 0xc9a0e8, 0xf0907a][i % 6], [0xf0c9a0, 0xe3b185, 0xf5d6b5][i % 3]); pp.scale.setScalar(.46); pp.position.set((i % 2 ? .55 : -.55), 1.3, -3.2 + Math.floor(i / 2) * 1.9); pp.rotation.y = PI / 2; seats.add(pp); pp.visible = i < 3; g.userData.pax.push(pp); }
+      return g; };
     const vs = [{ g: mkBus(), lane: 1.5, dir: -1, bus: true, z: 70, sp: 5.2 }, { g: mk(4.1, 1.9, 1.5, 0x3f8f9e, false), lane: -1.5, dir: 1, z: -60, sp: 6.5 }, { g: mk(4.1, 1.9, 1.5, 0xc9473a, false), lane: -1.5, dir: 1, z: 20, sp: 6.5 }];
     for (const v of vs) { v.g.scale.multiplyScalar(.82); scene.add(v.g); v.wait = 0; v.next = 0; traffic.push(v); }
     // the people waiting at the shelters (they board the bus, and a new one turns up a little later)
@@ -646,7 +649,7 @@ export function open(opts) {
         const x = ROADX(v.z) + v.lane, x2 = ROADX(v.z + v.dir * 2); const hd = Math.atan2(x2 - ROADX(v.z), v.dir * 2); g.position.set(x, H(x, v.z) + .02, v.z); g.rotation.y = hd; }
       const bus = traffic[0];
       for (const w of waiters) {
-        if (w.st === 'board') { w.t += dt; const dx = (ROADX(bus.z) + 1.5 + 1.8) - w.x, dz = bus.z - w.z, d = Math.hypot(dx, dz); const sp = 2.2 * dt; if (d > .4) { w.x += dx / d * sp; w.z += dz / d * sp; w.p.rotation.y = Math.atan2(dx, dz) - PI / 2; w.p.position.set(w.x, H(w.x, w.z) + .08 + Math.abs(Math.sin(w.t * 7)) * .1, w.z); } else { w.st = 'gone'; w.t = 0; w.p.visible = false; } }
+        if (w.st === 'board') { w.t += dt; const dx = (ROADX(bus.z) + 1.5 + 1.8) - w.x, dz = bus.z - w.z, d = Math.hypot(dx, dz); const sp = 2.2 * dt; if (d > .4) { w.x += dx / d * sp; w.z += dz / d * sp; w.p.rotation.y = Math.atan2(dx, dz) - PI / 2; w.p.position.set(w.x, H(w.x, w.z) + .08 + Math.abs(Math.sin(w.t * 7)) * .1, w.z); } else { w.st = 'gone'; w.t = 0; w.p.visible = false; const px = bus.g.userData.pax.find((q) => !q.visible); if (px) px.visible = true; else { const q = bus.g.userData.pax[Math.floor(Math.random() * 8)]; q.visible = false; } } }
         else if (w.st === 'gone') { w.t += dt; if (w.t > 22) { w.st = 'wait'; w.x = w.bx - .1; w.z = w.bz + .1; w.p.position.set(w.x, H(w.x, w.z) + .08, w.z); w.p.rotation.y = PI / 2; w.p.visible = true; } }
       }
     }; }
