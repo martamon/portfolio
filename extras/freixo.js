@@ -101,7 +101,7 @@ function put(obj, x, z, yaw, lift, sea) {
     const fp = obj.userData && obj.userData.fp;
     if (fp) { let lo = gh; for (let k = 0; k < 6; k++) { const a = k * PI / 3 + .4, hh = groundH(x + Math.cos(a) * fp * .6, z + Math.sin(a) * fp * .6); gh = Math.max(gh, hh); lo = Math.min(lo, hh); } drop = gh - lo; }       // stand on the highest point under the footprint
     if (lift < 0) lift = 0;                                                                                                                                  // and never sink into the grass
-    if (obj.userData && obj.userData.skirt && fp && !obj.userData.skirted) { obj.userData.skirted = true; const sk = new THREE.Mesh(new THREE.CylinderGeometry(fp * .6, fp * .66, drop + .16, 14), std(0xb9b2a2)); sk.position.y = -(drop + .16) / 2 + .015; obj.add(sk); }       // a stone base that reaches the ground on the low side
+    if (false && obj.userData && obj.userData.skirt && fp && !obj.userData.skirted) { obj.userData.skirted = true; const sk = new THREE.Mesh(new THREE.CylinderGeometry(fp * .6, fp * .66, drop + .16, 14), std(0xb9b2a2)); sk.position.y = -(drop + .16) / 2 + .015; obj.add(sk); }       // a stone base that reaches the ground on the low side
   }
   dirFrom(x, z, _d); dirFrom(x + .05, z, _e); _e.sub(_d); _e.addScaledVector(_d, -_e.dot(_d)).normalize();
   _f.crossVectors(_e, _d);
@@ -1790,7 +1790,7 @@ export function open(opts) {
     if (tourOn) return; tourOn = true; tourMuted = !!(audio && audio.muted);
     mochi.classList.remove('x-ctaon'); mochi.classList.add('x-load'); root.classList.add('x-tour'); if (audio) { audio.sfx('mochinext'); setTimeout(() => audio && audio.mute(true), 500); }
     const t0 = performance.now();
-    import('./conducir.js?v=35').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
+    import('./conducir.js?v=36').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
       .then((m) => { const ab = m.open({ onClose: endTour, getDark: () => nightT }); if (!ab) throw new Error('no webgl'); setTimeout(mochiClose, 700); })
       .catch(() => { endTour(); mochiClose(); });
   };
