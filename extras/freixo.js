@@ -1382,8 +1382,8 @@ export function open(opts) {
   }
   schoolYard(-.5, 5.05, 0xc9462e, 0xf6e6b4, 8);
   schoolYard(15.4, 5.6, 0x5f7f96, 0xf2c6a8, 8);
-  { const [px, pz] = onShore(-7.6, 4.85), yaw = seaYaw(px), slab = new THREE.Group(); const sb = box(1.5, .24, 1.1, std(0xe6dcc0)); sb.position.y = -.1; slab.add(sb); slab.userData.fp = 1.0; slab.userData.pri = 3; W(put(slab, px, pz, yaw, -.05));
-    const pt = pitch(1.2, .7, true); W(put(pt, px, pz, yaw, .1));
+  { const [px, pz] = onShore(-7.6, 6.2), yaw = seaYaw(px), slab = new THREE.Group(); const sb = box(1.5, .24, 1.1, std(0xe6dcc0)); sb.position.y = -.1; slab.add(sb); slab.userData.fp = 1.0; slab.userData.pri = 3; W(put(slab, px, pz, yaw, -.05));
+    const pt = pitch(1.2, .7, true); pt.userData.pri = 3; W(put(pt, px, pz, yaw, .1));
     const loc = (lx, lz) => [px + lx * Math.cos(yaw) + lz * Math.sin(yaw), pz - lx * Math.sin(yaw) + lz * Math.cos(yaw)];
     const ball = new THREE.Mesh(new THREE.SphereGeometry(.026, 10, 8), std(0xf6f1e4)); W(ball);
     const kids = []; for (let k = 0; k < 4; k++) { const kd = person(SHIRTS[(k * 2 + 1) % SHIRTS.length], { skin: SKINS[k % 4], pants: 0x2f3f66, role: 'kid' }); kd.scale.setScalar(.7); W(kd); kids.push({ kd, x: (rnd() - .5) * 1, z: (rnd() - .5) * .5, team: k % 2, ph: rnd() * 6 }); }
@@ -1597,18 +1597,24 @@ export function open(opts) {
       const bad = it.circles.some((c) => kept.some((k) => k.circles.some((kc) => Math.hypot(c[0] - kc[0], c[1] - kc[1]) < c[2] + kc[2] + (it.pri >= 4 && k.pri >= 4 ? -.05 : .3))) || (it.pri < 3 && nearRoad(c, it.pri < 2)) || (it.pri < 3 && kept.some((k) => k.pri === 3 && k.circles.some((kc) => Math.hypot(c[0] - kc[0], c[1] - kc[1]) < c[2] + kc[2] + .7))));
       if (bad) world.remove(it.o); else { addOutline(it.o); if (it.home) HOMES.push([it.x, it.z, it.circles[0][2]]); kept.push(it); for (const c of it.circles) keptC.push(c); }
     } }
-  // ---- a small, discreet wooden boardwalk along the sand of the south coast (placed after the tidy pass, so it skips whatever stands in the way)
-  { const slopeS = (x) => (shoreS(x + .25) - shoreS(x - .25)) / .5, hold = new THREE.Object3D(), planks = [], posts = [];
+  // ---- a pretty wooden boardwalk along the sand of the north coast, away from the villages' quays (placed after the tidy pass, so it skips whatever stands in the way)
+  { const slopeN = (x) => (shore(x + .25) - shore(x - .25)) / .5, hold = new THREE.Object3D(), planks = [];
     const blocks = []; { const dq = new THREE.Vector3(); for (const o of world.children) if (o.userData && o.userData.stoneBlock) { dq.copy(o.position).normalize(); blocks.push(planeOf(dq)); } }
-    const free = (x, z) => groundH(x, z) > SEA + .045 && !blocks.some((q) => Math.hypot(q[0] - x, q[1] - z) < .5) && !keptC.some((c) => Math.hypot(c[0] - x, c[1] - z) < c[2] + .08) && ![roadRaw, roadS].some((pts) => pts.some((q) => Math.hypot(q[0] - x, q[1] - z) < .42));
-    for (let x = -9.5; x < 8.5; x += .06) { const z = shoreS(x) + .34; if (!free(x, z) || !free(x, z - .1) || !free(x, z + .1)) continue; planks.push([x, z, Math.atan2(-slopeS(x), 1)]); }
-    const place = (list, geo, mat, lift, dz) => { const m = new THREE.InstancedMesh(geo, mat, Math.max(1, list.length)), o = new THREE.Object3D(); list.forEach((t, i) => { const lx = t[0], lz = t[1] + (dz || 0); put(hold, lx, lz, t[2], lift); o.position.copy(hold.position); o.quaternion.copy(hold.quaternion); o.updateMatrix(); m.setMatrixAt(i, o.matrix); }); m.count = list.length; m.castShadow = false; m.receiveShadow = true; return m; };
+    const free = (x, z) => groundH(x, z) > SEA + .05 && !blocks.some((q) => Math.hypot(q[0] - x, q[1] - z) < .55) && !keptC.some((c) => Math.hypot(c[0] - x, c[1] - z) < c[2] + .1) && ![roadRaw, roadS].some((pts) => pts.some((q) => Math.hypot(q[0] - x, q[1] - z) < .45));
+    for (let x = -7.2; x < 12.5; x += .055) { const z = shore(x) - .42; if (!free(x, z) || !free(x, z - .12) || !free(x, z + .13)) continue; planks.push([x, z, Math.atan2(-slopeN(x), 1), planks.length]); }
+    const place = (list, geo, mat, lift, dz, col) => { const m = new THREE.InstancedMesh(geo, mat, Math.max(1, list.length)), o = new THREE.Object3D(), c = new THREE.Color(); list.forEach((t, i) => { put(hold, t[0], t[1] + (dz || 0), t[2], lift); o.position.copy(hold.position); o.quaternion.copy(hold.quaternion); o.updateMatrix(); m.setMatrixAt(i, o.matrix); if (col) m.setColorAt(i, c.set(col[(t[3] + (i % 2)) % col.length])); }); m.count = list.length; m.castShadow = false; m.receiveShadow = true; return m; };
     if (planks.length > 8) {
-      world.add(place(planks, new THREE.BoxGeometry(.05, .012, .2), std(0xb98d5a), .012));
-      world.add(place(planks.filter((_, i) => i % 3 === 0), new THREE.BoxGeometry(.04, .012, .02), std(0x8a6a44), .012, -.12));
-      for (let i = 0; i < planks.length; i += 8) posts.push(planks[i]);
-      const pg = new THREE.CylinderGeometry(.009, .011, .07, 5); pg.translate(0, .035, 0);
-      world.add(place(posts, pg, std(0x8a6a44), .01, -.12)); world.add(place(posts, pg, std(0x8a6a44), .01, .12));
+      world.add(place(planks, new THREE.BoxGeometry(.05, .014, .22), std(0xffffff), .014, 0, [0xc9a06a, 0xb98d5a, 0xd2ad78, 0xbe9462]));
+      world.add(place(planks.filter((_, i) => i % 4 === 0), new THREE.BoxGeometry(.05, .014, .02), std(0x8a6a44), .014, -.115));
+      const posts = planks.filter((_, i) => i % 9 === 0), pg = new THREE.CylinderGeometry(.01, .012, .1, 6); pg.translate(0, .05, 0);
+      world.add(place(posts, pg, std(0xfaf2e2), .012, .12));
+      world.add(place(posts, new THREE.SphereGeometry(.016, 8, 6).translate(0, .105, 0), std(0xfaf2e2), .012, .12));
+      const rails = planks.filter((_, i) => i % 9 === 4), rg = new THREE.BoxGeometry(.5, .008, .008); rg.translate(0, .075, 0);
+      for (let i = 0; i + 1 < posts.length; i++) { const a2 = posts[i], b2 = posts[i + 1]; if (Math.hypot(a2[0] - b2[0], a2[1] - b2[1]) > .6) continue; const r = new THREE.Mesh(new THREE.BoxGeometry(Math.hypot(a2[0] - b2[0], a2[1] - b2[1]), .008, .008), std(0xe9dcc0)); put(r, (a2[0] + b2[0]) / 2, (a2[1] + b2[1]) / 2 + .12, Math.atan2(-slopeN(a2[0]), 1), .085); world.add(r); }
+      const bench = () => { const g = new THREE.Group(); const seat = box(.2, .02, .06, std(0x8a6a44)); seat.position.y = .045; g.add(seat); const bk = box(.2, .05, .012, std(0x8a6a44)); bk.position.set(0, .085, -.03); g.add(bk); for (const sx of [-.08, .08]) { const l = box(.02, .045, .05, std(0x6b4a2a)); l.position.set(sx, .022, 0); g.add(l); } return g; };
+      const lamp = () => { const g = new THREE.Group(), pole = new THREE.Mesh(new THREE.CylinderGeometry(.006, .009, .22, 5), std(0x2b3036)); pole.position.y = .11; g.add(pole); const bu = new THREE.Mesh(new THREE.SphereGeometry(.022, 8, 6), new THREE.MeshStandardMaterial({ color: 0xfff3c4, emissive: 0xffd36b, emissiveIntensity: .7 })); bu.position.y = .235; g.add(bu); return g; };
+      for (let i = 20; i < planks.length - 10; i += 46) { const t = planks[i]; const bn = bench(); put(bn, t[0], t[1] - .02, t[2] + PI, .028); world.add(bn); }
+      for (let i = 42; i < planks.length - 10; i += 46) { const t = planks[i]; const lp = lamp(); put(lp, t[0], t[1] + .12, t[2], .012); world.add(lp); }
     } }
   { const solids = [], dd3 = new THREE.Vector3();
     for (const o of world.children) if (o.userData && o.userData.stoneBlock) { dd3.copy(o.position).normalize(); const [x, z] = planeOf(dd3); solids.push([x, z]); }
