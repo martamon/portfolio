@@ -142,6 +142,8 @@
     '.x-dial{position:fixed;top:12px;right:150px;z-index:12;display:flex;align-items:center;gap:22px;color:#fff;mix-blend-mode:difference;font:500 14px/1.25 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.025em;text-transform:uppercase;user-select:none;-webkit-user-select:none}',
     '@keyframes x-blink{50%{opacity:0}}',
     '.x-dial{top:auto!important;right:auto!important;left:14px;bottom:46px;gap:6px;font-size:11px;opacity:.72}',
+    '.x-dn{position:fixed;left:14px;bottom:72px;z-index:12;width:40px;height:40px;border-radius:50%;border:0;padding:0;display:grid;place-items:center;cursor:pointer;color:#1f1f1f;background:rgba(255,255,255,.7);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 2px 10px rgba(20,50,80,.12);transition:background .5s ease,color .5s ease,transform .4s cubic-bezier(.2,.8,.2,1)}.x-dn:hover{transform:scale(1.06)}.x-dn:focus-visible{outline:2px solid currentColor;outline-offset:2px}',
+    'html[data-xdark] .x-dn{background:rgba(20,34,66,.65);color:rgb(203,237,255)}',
     '.x-dial-time{display:inline-flex;align-items:center;font-variant-numeric:tabular-nums;letter-spacing:.06em}.x-dial-time b{font-weight:500}.x-dial-time i{font-style:normal;margin:0 .12em;animation:x-blink 1s step-end infinite}.x-dial-an{flex:none;overflow:visible}',
     '@media(prefers-reduced-motion:reduce){.x-dial-time i{animation:none}}',
     // a slow, small swell so it invites a click; still while hovered or dragged
@@ -988,7 +990,7 @@
     if (planet) return;
     planet = { loading: true };
     jfHint(0);
-    import('/extras/freixo.js?v=193').then(function (m) {
+    import('/extras/freixo.js?v=195').then(function (m) {
       planet = m.open({ getDark: function () { return darkness(theme.hour); }, getHour: function () { return theme.hour; }, onClose: function () { planet = null; } });
     }).catch(function () { planet = null; });
   }
@@ -1356,15 +1358,41 @@
     if (tt > 0.5) { if (!document.documentElement.hasAttribute('data-xdark')) document.documentElement.setAttribute('data-xdark', ''); } else document.documentElement.removeAttribute('data-xdark');
     var d = document.querySelector('.x-dial');
     if (d) {
-      var tot = Math.floor(theme.hour * 60 + 0.01), hh = Math.floor(tot / 60) % 24, mm = tot % 60;
+      var tot = Math.floor(localHour() * 60 + 0.01), hh = Math.floor(tot / 60) % 24, mm = tot % 60;   /* the clock always shows the real time */
       d.querySelector('.x-h').textContent = (hh < 10 ? '0' : '') + hh;
       d.querySelector('.x-m').textContent = (mm < 10 ? '0' : '') + mm;
       d.querySelector('.x-ah').setAttribute('transform', 'rotate(' + ((hh % 12 + mm / 60) * 30).toFixed(1) + ' 12 12)');
       d.querySelector('.x-am').setAttribute('transform', 'rotate(' + (mm * 6) + ' 12 12)');
+      paintDn();
     }
   }
   setInterval(function () { if (!theme.travel && !theme.raf) { theme.hour = localHour(); paintTheme(); } }, 15000);
+  // the day / night button, as on the planet: the page is in the tone of the real hour until you pick the other one (and back)
+  var DN_MOON = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>';
+  var DN_SUN = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/></svg>';
+  function paintDn() { var b = document.querySelector('.x-dn'); if (!b) return; var night = darkness(theme.hour) > 0.5; b.innerHTML = night ? DN_SUN : DN_MOON; b.setAttribute('aria-label', night ? 'Light mode' : 'Dark mode'); }
+  function goHour(to, auto) {
+    cancelAnimationFrame(theme.raf);
+    var from = theme.hour, delta = ((to - from + 36) % 24) - 12, t0 = performance.now();
+    var step = function (now) {
+      var p = Math.min(1, (now - t0) / 900), e = 1 - Math.pow(1 - p, 3);
+      theme.hour = ((from + delta * e) % 24 + 24) % 24; paintTheme();
+      if (p < 1) { theme.raf = requestAnimationFrame(step); return; }
+      theme.raf = 0; theme.travel = !auto; theme.hour = auto ? localHour() : to; paintTheme();
+      try { if (auto) sessionStorage.removeItem('xt-mode'); else sessionStorage.setItem('xt-mode', String(to)); } catch (e2) {}
+    };
+    theme.raf = requestAnimationFrame(step);
+  }
+  function toggleDn() {
+    var wantDark = darkness(theme.hour) < 0.5, realDark = darkness(localHour()) > 0.5;
+    if (wantDark === realDark) goHour(localHour(), true); else goHour(wantDark ? 22 : 12, false);
+  }
   function ensureDial() {
+    if (!document.querySelector('.x-dn')) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'x-dn'; b.addEventListener('click', toggleDn); document.body.appendChild(b);
+      try { var sm = parseFloat(sessionStorage.getItem('xt-mode')); if (isFinite(sm)) { theme.hour = sm; theme.travel = true; paintTheme(); } } catch (e) {}
+      paintDn();
+    }
     var d = document.querySelector('.x-dial');
     if (!d) {
       d = document.createElement('div');
