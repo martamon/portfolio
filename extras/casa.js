@@ -79,18 +79,33 @@ export function buildCasa(THREE, D) {
   const seatG = new THREE.Group(); chair.add(seatG);
   add(seatG, rbox(1.0, .12, .95, .04), 0xb27e4a, 0, .68, 0); add(seatG, rbox(1.0, 1.15, .1, .04), 0xb27e4a, 0, 1.28, -.45); for (let i = 0; i < 5; i++) add(seatG, RB(.06, 1.0, .06), darkWood, -.36 + i * .18, 1.3, -.4);
   for (const sx of [-1, 1]) { add(seatG, RB(.08, .08, .8), darkWood, sx * .52, 1.0, .05); add(seatG, CY(.04, .04, .35, 6), darkWood, sx * .52, .84, .38); const rk = add(seatG, new THREE.TorusGeometry(1.3, .045, 6, 24, PI * .42), darkWood, sx * .46, -.35, 0); rk.rotation.set(0, PI / 2, PI / 2 + PI * .29); add(seatG, CY(.04, .04, .65, 5), darkWood, sx * .46, .35, -.15); }
+  // the grandmother, rebuilt: a soft body with a real lap, neck, shoulders, upper arms and forearms joined at the elbows, hands on the needles, and legs that hang from the chair
   const gran = new THREE.Group(); gran.position.set(0, .75, .02); seatG.add(gran);
-  const dress = add(gran, new THREE.SphereGeometry(.42, 14, 10), 0x5a6a8a, 0, .38, 0); dress.scale.set(1, 1.25, .9);
-  add(gran, CY(.42, .5, .5, 14), 0x5a6a8a, 0, .1, .1);
-  const apron = add(gran, CY(.3, .38, .46, 12, 1, false, -.9, 1.8), 0xfaf4e8, 0, .12, .28); apron.rotation.y = PI / 2 - .15;
-  const shawl = add(gran, new THREE.SphereGeometry(.4, 12, 8, 0, PI * 2, 0, PI * .55), 0xb98a78, 0, .72, 0); shawl.scale.set(1.05, .9, 1);
-  add(gran, new THREE.SphereGeometry(.23, 12, 10), 0xf2c9a2, 0, 1.12, .05); for (const sx of [-1, 1]) { add(gran, new THREE.SphereGeometry(.035, 6, 5), 0x2b2530, sx * .08, 1.14, .26); add(gran, new THREE.SphereGeometry(.045, 6, 5), 0xf0a0a0, sx * .13, 1.07, .24).scale.set(1, .6, .5); const lens = add(gran, new THREE.TorusGeometry(.065, .01, 5, 12), 0x3a3a3f, sx * .08, 1.14, .275); lens.castShadow = false; }
-  add(gran, CY(.012, .012, .16, 4), 0x3a3a3f, 0, 1.14, .28).rotation.z = PI / 2;
-  const hair = add(gran, new THREE.SphereGeometry(.245, 12, 8, 0, PI * 2, 0, PI * .55), 0xe3e3e8, 0, 1.15, -.01); hair.rotation.x = -.25; add(gran, new THREE.SphereGeometry(.11, 8, 6), 0xe3e3e8, 0, 1.3, -.17);
-  const needles = new THREE.Group(); needles.position.set(0, .62, .5); gran.add(needles); for (const sx of [-1, 1]) { const nd = add(needles, CY(.01, .01, .55, 4), 0xcfcfd4, sx * .1, 0, 0); nd.rotation.z = sx * .7; }
-  add(needles, RB(.4, .26, .06), 0xe9577a, 0, -.12, .02);
-  const arms = []; for (const sx of [-1, 1]) { const a = add(gran, CY(.075, .065, .62, 7), 0x5a6a8a, sx * .36, .72, .26); a.rotation.set(1.0, 0, sx * -.25); arms.push(a); add(gran, new THREE.SphereGeometry(.07, 6, 5), 0xf2c9a2, sx * .2, .64, .5); }
-  for (const sx of [-1, 1]) add(gran, new THREE.SphereGeometry(.12, 8, 6), 0xc9a0a0, sx * .2, -.18, .55).scale.set(.9, .55, 1.4);
+  const DR = 0x4f5f86, SK = 0xe8b894, HAIR = 0xe9e6e1;
+  const skirt = add(gran, CY(.3, .5, .6, 20), DR, 0, .26, .02); skirt.scale.set(1, 1, .95);
+  for (const sx of [-1, 1]) { const th = add(gran, CY(.13, .12, .52, 12), DR, sx * .14, .16, .27); th.rotation.x = PI / 2 - .05; add(gran, new THREE.SphereGeometry(.125, 12, 10), DR, sx * .14, .15, .52); const sh = add(gran, CY(.095, .08, .6, 10), 0xe9c5a8, sx * .14, -.17, .54); add(gran, new THREE.SphereGeometry(.1, 10, 8), 0x3a2f2c, sx * .14, -.5, .6).scale.set(.95, .6, 1.5); }
+  const torso = new THREE.Group(); torso.position.set(0, .6, 0); gran.add(torso);
+  const body = add(torso, new THREE.SphereGeometry(.3, 18, 14), DR, 0, 0, 0); body.scale.set(1.05, 1.22, .8);
+  const apron = add(torso, new THREE.SphereGeometry(.31, 16, 10, 0, PI * 2, PI * .35, PI * .5), 0xfaf4e8, 0, -.08, .02); apron.scale.set(1.0, 1.0, .88); apron.rotation.x = .12;
+  const shawl = add(torso, new THREE.SphereGeometry(.34, 18, 10, 0, PI * 2, 0, PI * .42), 0xc9735a, 0, .12, -.02); shawl.scale.set(1.08, .9, .85);
+  const neck = add(gran, CY(.07, .08, .14, 10), SK, 0, .94, .03);
+  const head = new THREE.Group(); head.position.set(0, 1.13, .04); gran.add(head);
+  const hd = add(head, new THREE.SphereGeometry(.2, 20, 16), SK, 0, 0, 0); hd.scale.set(1, 1.1, 1);
+  add(head, new THREE.SphereGeometry(.035, 8, 6), 0xdca486, 0, -.02, .2);                                                   // the nose
+  for (const sx of [-1, 1]) { add(head, new THREE.SphereGeometry(.026, 8, 6), 0x2b2530, sx * .075, .03, .185); add(head, new THREE.SphereGeometry(.04, 8, 6), 0xf0a0a0, sx * .125, -.05, .15).scale.set(1, .6, .5); add(head, new THREE.SphereGeometry(.035, 8, 6), SK, sx * .2, -.02, 0).scale.set(.5, 1, .8); const lens = add(head, new THREE.TorusGeometry(.058, .01, 6, 16), 0x3a3a3f, sx * .075, .03, .195); lens.castShadow = false; }
+  add(head, CY(.01, .01, .1, 5), 0x3a3a3f, 0, .03, .2).rotation.z = PI / 2;
+  const hair = add(head, new THREE.SphereGeometry(.215, 18, 12, 0, PI * 2, 0, PI * .52), HAIR, 0, .02, -.02); hair.rotation.x = -.35; add(head, new THREE.SphereGeometry(.09, 12, 10), HAIR, 0, .2, -.13);
+  add(head, new THREE.SphereGeometry(.02, 8, 6), 0xdca486, 0, -.12, .185).scale.set(2.4, .5, .6);                           // a small smile
+  const arms = [];
+  for (const sx of [-1, 1]) {
+    const sh = new THREE.Group(); sh.position.set(sx * .3, .84, 0); gran.add(sh); add(sh, new THREE.SphereGeometry(.09, 10, 8), DR, 0, 0, 0);
+    const up = new THREE.Group(); sh.add(up); add(up, CY(.075, .065, .36, 10), DR, 0, -.18, 0);
+    const el = new THREE.Group(); el.position.set(0, -.36, 0); up.add(el); add(el, new THREE.SphereGeometry(.07, 10, 8), DR, 0, 0, 0); add(el, CY(.062, .052, .34, 10), DR, 0, -.17, 0);
+    const hand = add(el, new THREE.SphereGeometry(.06, 10, 8), SK, 0, -.37, 0); hand.scale.set(1, 1.1, .85);
+    up.rotation.set(-.4, 0, -sx * .12); el.rotation.set(-1.1, 0, sx * .18); arms.push({ up, el, sx });
+  }
+  const needles = new THREE.Group(); needles.position.set(0, .5, .48); gran.add(needles); for (const sx of [-1, 1]) { const nd = add(needles, CY(.01, .01, .5, 6), 0xcfcfd4, sx * .08, .02, 0); nd.rotation.set(.5, 0, sx * .75); }
+  add(needles, RB(.36, .24, .1), 0xd9383a, 0, -.12, .02);
   const ball = add(scene, new THREE.SphereGeometry(.17, 12, 10), 0xe9577a, 2.55, .2, 1.55); ball.castShadow = true; const thread = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(2.55, .3, 1.55), new THREE.Vector3(2.8, .3, 1.35), new THREE.Vector3(3.1, .55, 1.15), new THREE.Vector3(3.3, 1.0, 1.1)]), 14, .007, 4), std(0xe9577a)); scene.add(thread);
   const side = new THREE.Group(); side.position.set(5.3, 0, 1.0); scene.add(side); add(side, CY(.42, .42, .06, 14), darkWood, 0, .85, 0); add(side, CY(.06, .1, .85, 6), darkWood, 0, .42, 0); add(side, CY(.14, .17, .14, 8), 0xf6efe0, 0, .95, 0);
   const lampShade = add(side, CY(.2, .3, .38, 10, 1, true), new THREE.MeshStandardMaterial({ color: 0xffe3b0, emissive: 0xffd08a, emissiveIntensity: .9, side: THREE.DoubleSide }), 0, 1.25, 0); const lampL = new THREE.PointLight(0xffd9a0, 1.5, 8); lampL.position.set(5.3, 2.2, 1.0); scene.add(lampL);
@@ -180,7 +195,8 @@ export function buildCasa(THREE, D) {
     flames.forEach((f, i) => { const k = 1 + Math.sin(t * 9 + i * 1.7) * .16 + Math.sin(t * 15 + i) * .08; f.scale.set(1 / Math.sqrt(k), k, 1 / Math.sqrt(k)); f.position.y = .95 + (k - 1) * .3; f.rotation.z = Math.sin(t * 5 + i) * .07; });
     fire.intensity = 3.0 + Math.sin(t * 11) * .5 + Math.sin(t * 23) * .3; crane.rotation.y = Math.sin(t * .7) * .03; pot.position.y = -.28 + Math.sin(t * 1.3) * .006;
     smoke.forEach((m) => { const u = (t * .16 + m.userData.ph) % 1; m.position.set(Math.sin(u * 6 + m.userData.ph * 9) * .12, 3.2 + u * 1.6, -.1); m.scale.setScalar(.6 + u * 1.4); m.material.opacity = (1 - u) * .22 * Math.min(1, u * 6); });
-    seatG.rotation.z = Math.sin(t * 1.15) * .035; gran.rotation.z = Math.sin(t * 1.15 + .4) * -.012; arms[0].rotation.x = 1.0 + Math.sin(t * 3.2) * .06; arms[1].rotation.x = 1.0 + Math.sin(t * 3.2 + 2) * .06; needles.rotation.y = Math.sin(t * 3.2) * .08; needles.rotation.x = Math.sin(t * 3.2 + 1) * .05;
+    seatG.rotation.z = Math.sin(t * 1.15) * .03; gran.rotation.z = Math.sin(t * 1.15 + .4) * -.01; torso.scale.y = 1 + Math.sin(t * 1.4) * .012;
+    { const k = t * 3.0, look = Math.max(0, Math.sin(t * .35)) ** 3; arms.forEach((a, i) => { const ph = k + i * 2.2; a.up.rotation.x = -.4 + Math.sin(ph) * .05; a.el.rotation.x = -1.1 + Math.sin(ph + .6) * .1; a.el.rotation.z = a.sx * .18 + Math.sin(ph * .5) * .03; }); needles.rotation.y = Math.sin(k) * .06; needles.rotation.x = Math.sin(k + 1) * .035; head.rotation.x = .16 - look * .2 + Math.sin(t * .8) * .02; head.rotation.y = look * .22 * Math.sin(t * .7); head.position.y = 1.13 + look * .01; }
     const wh = white.userData, bh = brown.userData; wh.head.rotation.z = Math.sin(t * .6) * .06; bh.head.rotation.z = Math.sin(t * 1.3) * .08;
     for (const c of [wanderW, wanderB]) { const g = c.g, u = g.userData, wp = c.pts[c.i], dx = wp[0] - g.position.x, dz = wp[1] - g.position.z, d = Math.hypot(dx, dz);
       if (c.rest > 0) { c.rest -= dt; u.tail.rotation.z = Math.sin(t * 2 + c.ph) * .25; u.tail.rotation.y = Math.sin(t * 1.1 + c.ph) * .3; g.position.y = .02; g.scale.y = c.sc * (1 + Math.sin(t * 1.8 + c.ph) * .015); }
