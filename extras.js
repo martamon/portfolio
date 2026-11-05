@@ -992,7 +992,7 @@
     if (planet) return;
     planet = { loading: true };
     jfHint(0);
-    import('/extras/freixo.js?v=199').then(function (m) {
+    import('/extras/freixo.js?v=200').then(function (m) {
       planet = m.open({ getDark: function () { return darkness(theme.hour); }, getHour: function () { return theme.hour; }, onClose: function () { planet = null; } });
     }).catch(function () { planet = null; });
   }
@@ -1506,10 +1506,10 @@
     if (!hero || !vids.length) return;
     if (innerWidth <= 809 && hero.offsetHeight) {
       var W = innerWidth, H = innerHeight, frame = W * 9 / 16, top = hero.offsetTop, height = hero.offsetHeight;
-      /* narrow screens: the head sits at the top, to the right of the text, which gets the rest of the width */
-      var Hw = Math.max(W * 0.42, Math.min(W * 0.46, 330)), Ht = Hw / 0.79, sc = Math.max(1, Math.min(4.2, Ht / (0.92 * frame))), xc = W - Hw / 2 - 10, yc = 64 + Ht / 2;
+      /* narrow screens, the same picture as on a wide one: a big head behind the text, which turns negative / positive over it */
+      var Hw = Math.min(W * 0.9, 560), Ht = Hw / 0.79, sc = Math.max(1, Math.min(4.2, Ht / (0.92 * frame))), xc = W * 0.56, yc = Math.min(H * 0.58, H - 44 - Ht / 2);
       var originY = top + 0.47 * height, centre = top + height / 2, ty = (yc - originY) / sc - (centre - originY), tx = (xc - W / 2) / sc;
-      var cap = document.querySelector('[data-framer-name="Caption"]'); if (cap) document.documentElement.style.setProperty('--xcw', Math.round(W - Hw - 30) + 'px');
+      document.documentElement.style.removeProperty('--xcw');
       var st = document.documentElement.style;
       st.setProperty('--xhs', sc.toFixed(3)); st.setProperty('--xhy', ty.toFixed(1) + 'px'); st.setProperty('--xhx', tx.toFixed(1) + 'px');
     }
