@@ -576,10 +576,53 @@ export function open(opts) {
   // ---- Casa Martamon: a lit house by the road; walk up to it and go in
   const casa = { x: 0, z: 0, ok: false, glow: null, mat: null };
   { const cands = []; for (let z = -90; z <= 92; z += 2) cands.push(z); cands.sort((a, b) => Math.abs(a + 2) - Math.abs(b + 2));
-    const hs = houseMesh(8.4, 6.2, 2, 0xf3e4ca, 0xe36d57, false); casa.mat = WINM.clone(); casa.mat.emissiveIntensity = 1.3; hs.traverse((o) => { if (o.isMesh && o.material === WINM) o.material = casa.mat; });
+    const casaMesh = () => {
+      const g = new THREE.Group(), w = 8.8, d = 6.0, fh = 2.6, bh = fh * 2;
+      const add = (geo, col, x, y, z, extra) => { const o = new THREE.Mesh(geo, typeof col === 'number' ? std(col, extra) : col); o.position.set(x, y, z); o.castShadow = true; o.receiveShadow = true; g.add(o); return o; };
+      const glow = new THREE.MeshStandardMaterial({ color: 0xfff0b8, emissive: 0xffc24a, emissiveIntensity: 1.6, roughness: .5 }), TEAL = 0x3f8f9e, CREAM = 0xf7dc9c, STONE = 0xcfc4ae, WHITE = 0xfdf6e6;
+      add(rbox(w, bh, d, .2), CREAM, 0, bh / 2, 0); add(rbox(w + .3, .5, d + .3, .1), STONE, 0, .25, 0);
+      const rh = 3.1, sh = new THREE.Shape(); sh.moveTo(-d / 2 - .6, 0); sh.lineTo(0, rh); sh.lineTo(d / 2 + .6, 0); sh.closePath();
+      const rg = new THREE.ExtrudeGeometry(sh, { depth: w + 1.2, bevelEnabled: false }); rg.translate(0, 0, -(w + 1.2) / 2); rg.rotateY(PI / 2); add(rg, TEAL, 0, bh - .05, 0);
+      add(rbox(.9, 2.2, .9, .1), STONE, 1.8, bh + 1.8, -1.2);
+      for (const sx of [-1, 1]) { const oc = add(new THREE.CylinderGeometry(.5, .5, .12, 16), glow, sx * (w / 2 + .66), bh + 1.0, 0); oc.rotation.z = PI / 2; oc.castShadow = false; }
+      // the glazed gallery (galería) of the first floor, on two stone columns, with a little teal roof
+      const gz = d / 2 + .75; add(new THREE.BoxGeometry(5.6, 2.0, .12), glow, 0, fh + 1.3, gz + .5).castShadow = false;
+      for (let i = 0; i <= 6; i++) add(new THREE.BoxGeometry(.1, 2.2, .16), WHITE, -2.7 + i * .9, fh + 1.3, gz + .52);
+      add(new THREE.BoxGeometry(5.8, .14, .2), WHITE, 0, fh + .24, gz + .52); add(new THREE.BoxGeometry(5.8, .14, .2), WHITE, 0, fh + 2.38, gz + .52); add(new THREE.BoxGeometry(5.8, .12, .2), WHITE, 0, fh + 1.3, gz + .52);
+      for (const sx of [-1, 1]) add(new THREE.BoxGeometry(.12, 2.0, 1.2), glow, sx * 2.8, fh + 1.3, gz - .1).castShadow = false;
+      add(new THREE.BoxGeometry(6.0, .16, 1.5), WHITE, 0, fh + .1, gz - .1); const gr = add(new THREE.BoxGeometry(6.2, .14, 1.9), TEAL, 0, fh + 2.55, gz - .05); gr.rotation.x = .12;
+      for (const sx of [-1, 1]) { add(new THREE.CylinderGeometry(.2, .24, fh, 10), STONE, sx * 2.8, fh / 2, gz + .45); const lan = add(new THREE.IcosahedronGeometry(.2, 1), glow, sx * 2.8, 2.15, gz + .75); lan.castShadow = false; add(new THREE.CylinderGeometry(.01, .01, .35, 3), 0x2b2b30, sx * 2.8, 2.45, gz + .75); }
+      // front door under the gallery, with a glowing fanlight, and the steps
+      add(rbox(1.1, 1.9, .2, .06), 0x8a3a2a, 0, .95, d / 2 + .08); const fan = add(new THREE.CylinderGeometry(.55, .55, .1, 14, 1, false, 0, PI), glow, 0, 1.9, d / 2 + .1); fan.rotation.x = PI / 2; fan.rotation.z = PI / 2; fan.castShadow = false;
+      for (let i = 0; i < 3; i++) add(rbox(2.2 - i * .2, .16, .5, .03), STONE, 0, .08 + i * .0, d / 2 + .95 + i * .32);
+      for (const sx of [-2.9, -1.9, 1.9, 2.9]) { const wn = add(new THREE.BoxGeometry(.9, 1.3, .12), glow, sx * (Math.abs(sx) > 2.5 ? 1.35 : 1.0), 1.5, d / 2 + .04); wn.castShadow = false; add(new THREE.BoxGeometry(1.1, .12, .22), WHITE, sx * (Math.abs(sx) > 2.5 ? 1.35 : 1.0), .78, d / 2 + .1); }
+      // the round stone tower with a conical roof and glowing slits: a different silhouette from every other house
+      { const tx = -w / 2 + .2, tz = -d / 2 + .2; add(new THREE.CylinderGeometry(1.5, 1.6, bh + 2.4, 12), STONE, tx, (bh + 2.4) / 2, tz); add(new THREE.ConeGeometry(2.0, 2.6, 12), TEAL, tx, bh + 2.4 + 1.3, tz); add(new THREE.SphereGeometry(.18, 8, 6), 0xf2c14a, tx, bh + 2.4 + 2.7, tz);
+        for (let k = 0; k < 3; k++) { const sl = add(new THREE.BoxGeometry(.24, .9, .12), glow, tx + 1.2, 1.6 + k * 1.9, tz + 1.0 - k * .1); sl.rotation.y = .7; sl.castShadow = false; } }
+      // a string of warm bulbs along the eaves
+      for (let i = 0; i <= 12; i++) { const bu = add(new THREE.IcosahedronGeometry(.1, 1), glow, -w / 2 + .6 + i * (w - 1.2) / 12, bh - .15 - Math.sin(i / 12 * PI) * .0, d / 2 + .34); bu.castShadow = false; }
+      // the pool of warm light on the ground in front of the door
+      { const c = document.createElement('canvas'); c.width = c.height = 128; const x2 = c.getContext('2d'), gr2 = x2.createRadialGradient(64, 64, 0, 64, 64, 62); gr2.addColorStop(0, 'rgba(255,210,120,.95)'); gr2.addColorStop(.5, 'rgba(255,190,100,.35)'); gr2.addColorStop(1, 'rgba(255,180,90,0)'); x2.fillStyle = gr2; x2.fillRect(0, 0, 128, 128);
+        const pool = new THREE.Mesh(new THREE.PlaneGeometry(10, 7.5), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 })); pool.rotation.x = -PI / 2; pool.position.set(0, .16, d / 2 + 2.6); g.add(pool); }
+      // the wire-haired dachshund (teckel de pelo duro) asleep on a cushion by the door
+      { const dg = new THREE.Group(); dg.position.set(1.7, .02, d / 2 + 1.7); dg.rotation.y = -.35; g.add(dg);
+        const fur = 0x8f5c36, dark = 0x5e3b22, bed = new THREE.Mesh(new THREE.CylinderGeometry(.85, .9, .14, 16), std(0x5a95c4)); bed.position.y = .07; bed.receiveShadow = true; dg.add(bed);
+        const br = new THREE.Group(); br.position.y = .14; dg.add(br);
+        const part = (geo, col, x, y, z, sx2, sy2, sz2) => { const o = new THREE.Mesh(geo, std(col, { flatShading: true })); o.position.set(x, y, z); o.scale.set(sx2 || 1, sy2 || 1, sz2 || 1); o.castShadow = true; br.add(o); return o; };
+        part(new THREE.IcosahedronGeometry(.22, 1), fur, -.3, .2, 0, 1.5, .85, 1); part(new THREE.IcosahedronGeometry(.2, 1), fur, .12, .19, 0, 1.4, .85, .95); part(new THREE.IcosahedronGeometry(.17, 1), fur, -.62, .17, .05, 1.1, .8, .9);          // the long body
+        part(new THREE.IcosahedronGeometry(.18, 1), fur, .5, .13, .1, 1.1, .8, 1); part(new THREE.CylinderGeometry(.06, .08, .34, 6), dark, .78, .1, .1, 1, 1, 1).rotation.z = PI / 2 + .1;                                                      // head and long snout, resting low
+        part(new THREE.SphereGeometry(.045, 6, 5), 0x2a1d16, .96, .1, .1); for (const sz of [-1, 1]) { part(new THREE.IcosahedronGeometry(.12, 1), dark, .5, .08, .1 + sz * .17, .7, 1.5, .5); part(new THREE.BoxGeometry(.07, .012, .02), 0x2a1d16, .66, .17, .1 + sz * .07); }   // floppy ears, closed eyes
+        for (let k = 0; k < 5; k++) part(new THREE.ConeGeometry(.025, .08, 4), dark, .86 + (k % 2) * .02, .02 + (k % 3) * .015, .1 + (k - 2) * .035, 1, 1, 1).rotation.x = PI;                                                                          // the wiry beard
+        for (let k = 0; k < 16; k++) { const sp = part(new THREE.ConeGeometry(.03, .1, 4), k % 3 ? fur : dark, -.78 + k * .085, .33 - Math.abs(k - 8) * .006, ((k * 37) % 7 - 3) * .03, 1, 1, 1); sp.rotation.set(((k * 53) % 5 - 2) * .25, 0, ((k * 29) % 5 - 2) * .2); }   // the harsh, bristly coat
+        for (const sz of [-1, 1]) { part(new THREE.IcosahedronGeometry(.07, 1), dark, .55, .05, .1 + sz * .09, 1.6, .7, 1); part(new THREE.IcosahedronGeometry(.08, 1), fur, -.35, .06, sz * .2, 1.4, .7, 1); }
+        const tail = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(-.8, .2, .05), new THREE.Vector3(-1.05, .26, .22), new THREE.Vector3(-.95, .2, .42), new THREE.Vector3(-.7, .12, .45)]), 12, .035, 5), std(fur, { flatShading: true })); br.add(tail);
+        const zs = []; for (let k = 0; k < 3; k++) { const c = document.createElement('canvas'); c.width = c.height = 64; const x3 = c.getContext('2d'); x3.fillStyle = '#fff6e4'; x3.font = '700 54px "Switzer",system-ui,sans-serif'; x3.textAlign = 'center'; x3.textBaseline = 'middle'; x3.fillText('z', 32, 36); x3.strokeStyle = 'rgba(80,60,40,.55)'; x3.lineWidth = 3; x3.strokeText('z', 32, 36); const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false, fog: false })); sp.scale.set(.4, .4, 1); dg.add(sp); zs.push(sp); }
+        g.userData.update = (t) => { br.scale.set(1, 1 + Math.sin(t * 1.6) * .05, 1 + Math.sin(t * 1.6) * .03); zs.forEach((sp, k) => { const u = ((t * .25 + k / 3) % 1); sp.position.set(.95 + u * .35, .45 + u * 1.0, .1); sp.material.opacity = Math.sin(u * PI) * .9; sp.scale.setScalar(.25 + u * .3); }); }; }
+      g.userData.r = 8.6; g.userData.hx = w / 2 + .9; g.userData.hz = d / 2 + .4; g.userData.porch = d / 2 + 1.6; return g; };
+    const hs = casaMesh(); casa.obj = hs;
     for (const [z, off] of cands.flatMap((z) => [[z, 12], [z, 15], [z, 9.5], [z, 18], [z, 21]])) { const x = ROADX(z) - off; if (H(x, z) < .5 || solid(x, z, 4.8) || plazas.some((pl) => Math.hypot(pl[0] - x, pl[1] - z) < pl[2] + 6) || lanes.some((l) => l.some((q) => Math.hypot(q[0] - x, q[1] - z) < 6.5)) || viol(hs.userData, x, z, PI / 2)[0] > 0) continue;
       addTo(hs, x, z, PI / 2, hs.userData.r); casa.x = x + hs.userData.porch + 1.6; casa.z = z; casa.ok = true; casa.hx = x; casa.hy = H(x, z); break; }
-    if (casa.ok) { const gl = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexL, color: 0xffc766, transparent: true, opacity: .5, depthWrite: false, blending: THREE.AdditiveBlending, fog: false })); gl.scale.set(15, 11, 1); gl.position.set(casa.hx + 3, casa.hy + 3.4, casa.z); scene.add(gl); casa.glow = gl;
+    if (casa.ok) { const gl = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexL, color: 0xffc766, transparent: true, opacity: .6, depthWrite: false, blending: THREE.AdditiveBlending, fog: false })); gl.scale.set(22, 15, 1); gl.position.set(casa.hx + 3, casa.hy + 3.4, casa.z); scene.add(gl); casa.glow = gl;
       const lamp = new THREE.Mesh(new THREE.IcosahedronGeometry(.22, 1), new THREE.MeshStandardMaterial({ color: 0xfff3c4, emissive: 0xffd36b, emissiveIntensity: 1.6 })); lamp.position.set(casa.x - 1.6, casa.hy + 2.6, casa.z + 1.2); scene.add(lamp); } }
   // ---- trees, bushes, hydrangeas
   const lowpoly = (g, a) => { const ps = g.attributes.position; for (let q = 0; q < ps.count; q++) { const x = ps.getX(q), y = ps.getY(q), z = ps.getZ(q), k = 1 + (hash(x * 37.1 + y * 11.3, z * 53.7 + y * 5.1) - .5) * a; ps.setXYZ(q, x * k, y * k, z * k); } g.computeVertexNormals(); return g; };
@@ -842,6 +885,7 @@ export function open(opts) {
     for (const o of orbs) { const u = o.userData; o.position.y = u.base + Math.sin(t * 1.6 + u.id) * .3; u.body.rotation.y = Math.sin(t * .5 + u.id) * .25; u.body.rotation.z = Math.sin(t * .8 + u.id) * .03; u.ring.scale.setScalar(1 + Math.sin(t * 2 + u.id) * .12); u.ball.material.emissiveIntensity = u.done ? .15 : .9 + Math.sin(t * 3 + u.id) * .3; u.ring.material.opacity = u.done ? .25 : .8; u.beam.visible = !u.done; const dx = o.position.x - S.x, dz = o.position.z - S.z, d = Math.hypot(dx, dz); if (d < bd && Math.abs(o.position.y - S.y) < 7) { bd = d; best = o; } if (!u.done && d < td) { td = d; tgt = o; } }
     nearOrb = best; nearCasa = casa.ok && !inCasa && Math.hypot(S.x - casa.x, S.z - casa.z) < 6.5; if (nearCasa && !best) { if (prompt.dataset.m !== 'c') { prompt.dataset.m = 'c'; prompt.textContent = 'Casa Martamon · ' + tr('Enter'); } } else if (prompt.dataset.m === 'c') { prompt.dataset.m = ''; prompt.textContent = touch ? tr('Tap to read') : tr('Press E to read'); }
     root.classList.toggle('x-near', (!!best || nearCasa) && !cardOn && !tour.on && !inCasa);
+    if (casa.obj && casa.obj.userData.update) casa.obj.userData.update(t);
     if (casa.glow) { casa.glow.material.opacity = .32 + nightT * .55 + Math.sin(t * 1.7) * .03; }
     if (tgt) { const b = Math.atan2(tgt.position.x - S.x, tgt.position.z - S.z); arrow.style.transform = 'rotate(' + ((S.cyaw - b) * 180 / PI).toFixed(1) + 'deg)'; arrow.style.opacity = 1; } else arrow.style.opacity = .2;
     let vn = '', vd = 40; VILLAGES.forEach(([n, z0]) => { const d = Math.hypot(S.x - (ROADX(z0) - 9), S.z - z0); if (d < vd) { vd = d; vn = n; } }); if (vn !== nearName) { nearName = vn; subEl.textContent = vn; }
