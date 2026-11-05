@@ -686,7 +686,7 @@ export function open(opts) {
   const exitBtn = root.querySelector('.x-dr-out');
   const enterCasa = () => { if (inCasa || !casa.ok) return; inCasa = true; root.classList.add('x-fade');
     const done = () => { if (snd) snd.cozy(true); root.classList.add('x-casa'); subEl.textContent = 'Casa Martamon'; root.classList.remove('x-near', 'x-fade'); };
-    import('./casa.js?v=3').then((m) => { if (closed) return; if (!casaR) casaR = m.buildCasa(THREE, { std, rbox, PI }); setTimeout(done, 450); }).catch(() => { inCasa = false; root.classList.remove('x-fade'); }); };
+    import('./casa.js?v=5').then((m) => { if (closed) return; if (!casaR) casaR = m.buildCasa(THREE, { std, rbox, PI }); setTimeout(done, 450); }).catch(() => { inCasa = false; root.classList.remove('x-fade'); }); };
   const leaveCasa = () => { if (!inCasa) return; if (snd) snd.cozy(false); root.classList.add('x-fade'); setTimeout(() => { inCasa = false; root.classList.remove('x-casa', 'x-fade'); nearName = ''; }, 450); };
   exitBtn.addEventListener('click', leaveCasa);
 
