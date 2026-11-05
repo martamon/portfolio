@@ -1597,6 +1597,19 @@ export function open(opts) {
       const bad = it.circles.some((c) => kept.some((k) => k.circles.some((kc) => Math.hypot(c[0] - kc[0], c[1] - kc[1]) < c[2] + kc[2] + (it.pri >= 4 && k.pri >= 4 ? -.05 : .3))) || (it.pri < 3 && nearRoad(c, it.pri < 2)) || (it.pri < 3 && kept.some((k) => k.pri === 3 && k.circles.some((kc) => Math.hypot(c[0] - kc[0], c[1] - kc[1]) < c[2] + kc[2] + .7))));
       if (bad) world.remove(it.o); else { addOutline(it.o); if (it.home) HOMES.push([it.x, it.z, it.circles[0][2]]); kept.push(it); for (const c of it.circles) keptC.push(c); }
     } }
+  // ---- a small, discreet wooden boardwalk along the sand of the south coast (placed after the tidy pass, so it skips whatever stands in the way)
+  { const slopeS = (x) => (shoreS(x + .25) - shoreS(x - .25)) / .5, hold = new THREE.Object3D(), planks = [], posts = [];
+    const blocks = []; { const dq = new THREE.Vector3(); for (const o of world.children) if (o.userData && o.userData.stoneBlock) { dq.copy(o.position).normalize(); blocks.push(planeOf(dq)); } }
+    const free = (x, z) => groundH(x, z) > SEA + .045 && !blocks.some((q) => Math.hypot(q[0] - x, q[1] - z) < .5) && !keptC.some((c) => Math.hypot(c[0] - x, c[1] - z) < c[2] + .08) && ![roadRaw, roadS].some((pts) => pts.some((q) => Math.hypot(q[0] - x, q[1] - z) < .42));
+    for (let x = -9.5; x < 8.5; x += .06) { const z = shoreS(x) + .34; if (!free(x, z) || !free(x, z - .1) || !free(x, z + .1)) continue; planks.push([x, z, Math.atan2(-slopeS(x), 1)]); }
+    const place = (list, geo, mat, lift, dz) => { const m = new THREE.InstancedMesh(geo, mat, Math.max(1, list.length)), o = new THREE.Object3D(); list.forEach((t, i) => { const lx = t[0], lz = t[1] + (dz || 0); put(hold, lx, lz, t[2], lift); o.position.copy(hold.position); o.quaternion.copy(hold.quaternion); o.updateMatrix(); m.setMatrixAt(i, o.matrix); }); m.count = list.length; m.castShadow = false; m.receiveShadow = true; return m; };
+    if (planks.length > 8) {
+      world.add(place(planks, new THREE.BoxGeometry(.05, .012, .2), std(0xb98d5a), .012));
+      world.add(place(planks.filter((_, i) => i % 3 === 0), new THREE.BoxGeometry(.04, .012, .02), std(0x8a6a44), .012, -.12));
+      for (let i = 0; i < planks.length; i += 8) posts.push(planks[i]);
+      const pg = new THREE.CylinderGeometry(.009, .011, .07, 5); pg.translate(0, .035, 0);
+      world.add(place(posts, pg, std(0x8a6a44), .01, -.12)); world.add(place(posts, pg, std(0x8a6a44), .01, .12));
+    } }
   { const solids = [], dd3 = new THREE.Vector3();
     for (const o of world.children) if (o.userData && o.userData.stoneBlock) { dd3.copy(o.position).normalize(); const [x, z] = planeOf(dd3); solids.push([x, z]); }
     for (let i = boats.length - 1; i >= 0; i--) { const b = boats[i]; dd3.copy(b.w.position).normalize(); const [x, z] = planeOf(dd3); if (solids.some((q) => Math.hypot(q[0] - x, q[1] - z) < (b.calm ? .9 : .5))) { world.remove(b.w); boats.splice(i, 1); } } }
