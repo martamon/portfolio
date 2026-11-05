@@ -3,7 +3,7 @@
 // fishermen on anchored boats, cars, boats under sail, birds and clouds that keep moving. Opened from the Contact page (three clicks on the creature).
 // open({ night, onClose }) shows it on top of the page and returns { close }.
 import * as THREE from './three.module.min.js';
-import { mochiText, MOCHI, tr } from './i18n.js?v=19';
+import { mochiText, MOCHI, tr } from './i18n.js?v=20';
 import { stall, KINDS } from './mercadillo.js?v=1';
 const mochiLen = MOCHI.length;
 
@@ -1845,7 +1845,7 @@ export function open(opts) {
     if (tourOn) return; tourOn = true; tourMuted = !!(audio && audio.muted);
     mochi.classList.remove('x-ctaon'); mochi.classList.add('x-load'); root.classList.add('x-tour'); if (audio) { audio.sfx('mochinext'); setTimeout(() => audio && audio.mute(true), 500); }
     const t0 = performance.now();
-    import('./conducir.js?v=63').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
+    import('./conducir.js?v=66').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
       .then((m) => { const ab = m.open({ onClose: endTour, getDark: () => nightT }); if (!ab) throw new Error('no webgl'); setTimeout(mochiClose, 700); })
       .catch(() => { endTour(); mochiClose(); });
   };
@@ -2375,7 +2375,8 @@ function injectCss() {
   if (cssDone) return; cssDone = true;
   const s = document.createElement('style');
   s.textContent = [
-    '.x-pl{position:fixed;inset:0;z-index:90;background:#bfe0f6;opacity:0;transition:opacity .9s cubic-bezier(.4,0,.2,1);color:#4a3340;font:500 13px/1.45 "Switzer","Switzer Placeholder",system-ui,sans-serif;overscroll-behavior:contain;-webkit-user-select:none;user-select:none}',
+    "@font-face{font-family:'XNunito';font-style:normal;font-weight:500 800;font-display:swap;src:url(/extras/fonts/nunito-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}@font-face{font-family:'XNunito';font-style:normal;font-weight:500 800;font-display:swap;src:url(/extras/fonts/nunito-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}",
+    '.x-pl{position:fixed;inset:0;z-index:90;background:#bfe0f6;opacity:0;transition:opacity .9s cubic-bezier(.4,0,.2,1);color:#4a3340;font:500 13px/1.45 "XNunito","Nunito",system-ui,sans-serif;overscroll-behavior:contain;-webkit-user-select:none;user-select:none}',
     '.x-pl.x-in{opacity:1}',
     '.x-pl.x-night{color:#cbe3ff;background:#0a1430}',
     '.x-pl-cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}',
@@ -2385,7 +2386,7 @@ function injectCss() {
     '.x-pl-ts-b{bottom:0;height:calc(var(--tsh,22%) + 4%);-webkit-mask-image:linear-gradient(to top,#000,rgba(0,0,0,0));mask-image:linear-gradient(to top,#000,rgba(0,0,0,0))}',
     '.x-pl-top{z-index:30;position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:flex-start;padding:max(16px,env(safe-area-inset-top)) 18px 0;pointer-events:none}',
     '.x-pl-t{display:flex;flex-direction:column;gap:2px}',
-    '.x-pl-t b{font:600 19px/1.15 "Switzer","Switzer Placeholder",system-ui,sans-serif;letter-spacing:-.01em}',
+    '.x-pl-t b{font:600 19px/1.15 "XNunito","Nunito",system-ui,sans-serif;letter-spacing:-.01em}',
     '.x-pl-t span{opacity:.7;font-size:12px}',
     '.x-pl-clock{display:flex;align-items:baseline;gap:6px;margin-top:6px;opacity:.85!important;font:500 12px/1.2 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace!important;letter-spacing:.06em;text-transform:uppercase}',
     '.x-pl-clock em{font-style:normal;opacity:.7}.x-pl-clock b{font:500 12px/1.2 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace!important;letter-spacing:.06em}.x-pl-clock i{font-style:normal;display:inline-block;width:.5em;text-align:center;animation:x-pl-blink 1s step-end infinite}',
@@ -2402,8 +2403,8 @@ function injectCss() {
     '.x-pl-pin{position:absolute;left:0;top:0;margin:0;padding:0;border:0;background:none;display:flex;align-items:center;transition:opacity .4s ease;will-change:transform;white-space:nowrap}',
     '.x-pl-pin i{flex:none;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;background:#b9623f;color:#fff;font:600 11px/26px "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;font-style:normal;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.25);transition:transform .4s cubic-bezier(.22,.8,.24,1)}',
     '.x-pl-pin span{display:none;margin:-13px 0 0 8px;align-items:baseline;gap:8px;padding-right:2px}',
-    '.x-pl-pin b{font:600 14px/26px "Switzer","Switzer Placeholder",system-ui,sans-serif;color:#1a2a33}',
-    '.x-pl-pin em{font:400 14px/26px "Switzer","Switzer Placeholder",system-ui,sans-serif;font-style:normal;color:#7a7f83}',
+    '.x-pl-pin b{font:600 14px/26px "XNunito","Nunito",system-ui,sans-serif;color:#1a2a33}',
+    '.x-pl-pin em{font:400 14px/26px "XNunito","Nunito",system-ui,sans-serif;font-style:normal;color:#7a7f83}',
     '.x-pl-pin.x-lab,.x-pl-pin:hover,.x-pl-pin.x-on{background:#fffdf8;border-radius:999px;margin-left:-13px;padding:0 14px 0 0;box-shadow:0 4px 16px rgba(20,50,80,.2);animation:x-pl-pop .5s cubic-bezier(.22,.8,.24,1)}',
     '.x-pl-pin.x-lab span,.x-pl-pin:hover span,.x-pl-pin.x-on span{display:flex}',
     '.x-pl-pin.x-lab i,.x-pl-pin:hover i,.x-pl-pin.x-on i{margin:0 0 0 0}',
@@ -2417,14 +2418,14 @@ function injectCss() {
     '.x-pl-card[hidden]{display:none}',
     '@keyframes x-pl-up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}',
     '.x-pl-n{font:500 11px "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.12em;opacity:.65;text-transform:uppercase}',
-    '.x-pl-card h2{margin:4px 0 6px;font:600 20px/1.2 "Switzer","Switzer Placeholder",system-ui,sans-serif;letter-spacing:-.01em}',
-    '.x-pl-card p{margin:0 0 12px;font:400 14px/1.5 "Switzer","Switzer Placeholder",system-ui,sans-serif}',
+    '.x-pl-card h2{margin:4px 0 6px;font:600 20px/1.2 "XNunito","Nunito",system-ui,sans-serif;letter-spacing:-.01em}',
+    '.x-pl-card p{margin:0 0 12px;font:400 14px/1.5 "XNunito","Nunito",system-ui,sans-serif}',
     '.x-pl-nav{display:flex;gap:8px;align-items:center}',
-    '.x-pl-nav button{border:0;border-radius:999px;padding:8px 14px;background:rgba(18,48,74,.1);font:500 12px "Switzer","Switzer Placeholder",system-ui,sans-serif;transition:background .4s ease}',
+    '.x-pl-nav button{border:0;border-radius:999px;padding:8px 14px;background:rgba(18,48,74,.1);font:500 12px "XNunito","Nunito",system-ui,sans-serif;transition:background .4s ease}',
     '.x-pl.x-night .x-pl-nav button{background:rgba(203,227,255,.14)}',
     '.x-pl-nav button:hover{background:rgba(18,48,74,.2)}',
     '.x-pl-nav .x-pl-cx{margin-left:auto;width:34px;height:34px;padding:0;display:grid;place-items:center;font-size:13px}',
-    '.x-pl-more{position:absolute;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);border:0;border-radius:999px;padding:9px 20px 10px;background:rgba(255,253,248,.72);color:#2c4a5a;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 2px 14px rgba(20,50,80,.12);font:500 13px/1 "Switzer","Switzer Placeholder",system-ui,sans-serif;letter-spacing:.02em;transition:background .5s ease,transform .6s cubic-bezier(.22,.8,.24,1),box-shadow .6s ease}',
+    '.x-pl-more{position:absolute;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);border:0;border-radius:999px;padding:9px 20px 10px;background:rgba(255,253,248,.72);color:#2c4a5a;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 2px 14px rgba(20,50,80,.12);font:500 13px/1 "XNunito","Nunito",system-ui,sans-serif;letter-spacing:.02em;transition:background .5s ease,transform .6s cubic-bezier(.22,.8,.24,1),box-shadow .6s ease}',
     '.x-pl-ms{will-change:transform}',
     '.x-pl-ms.x-hop{animation:x-ms-hop .9s cubic-bezier(.3,1.5,.5,1)}',
     '@keyframes x-ms-hop{0%{transform:none}22%{transform:translateY(8px) scale(1.1,.86)}52%{transform:translateY(-26px) scale(.93,1.1) rotate(-3deg)}76%{transform:translateY(2px) scale(1.05,.95) rotate(1.5deg)}100%{transform:none}}',
@@ -2464,7 +2465,7 @@ function injectCss() {
     '.x-pl-mochi.x-load .x-pl-mq{margin-bottom:0;animation:x-mo-load 1.7s ease-in-out infinite}@keyframes x-mo-load{0%,100%{transform:translateY(-18px)}50%{transform:translateY(18px)}}',
     '.x-pl.x-night .x-pl-cta{background:rgba(24,34,64,.95);color:#e4eeff}',
     '.x-pl.x-night .x-pl-bub{background:rgba(24,34,64,.92);color:#e4eeff}',
-    '.x-pl-bub p{margin:0;min-height:3em;font:500 17px/1.5 "Switzer","Switzer Placeholder",system-ui,sans-serif}',
+    '.x-pl-bub p{margin:0;min-height:3em;font:500 17px/1.5 "XNunito","Nunito",system-ui,sans-serif}',
     '.x-pl-go{position:absolute;right:16px;bottom:6px;opacity:0;font-size:14px;animation:x-mo-nudge 1.3s ease-in-out infinite}.x-pl-mochi.x-done .x-pl-go{opacity:.5}',
     '@keyframes x-mo-nudge{50%{transform:translateY(4px)}}',
     '.x-pl.x-mochi .x-pl-more{opacity:0;pointer-events:none}',
@@ -2481,10 +2482,10 @@ function injectCss() {
     '.x-pl-info{position:absolute;left:50%;bottom:max(16px,env(safe-area-inset-bottom));width:min(430px,calc(100% - 28px));max-height:min(62vh,520px);overflow:auto;padding:20px 22px 16px;border-radius:22px;background:rgba(255,253,248,.88);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:0 10px 36px rgba(20,50,80,.2);color:#12304a;opacity:0;transform:translate(-50%,16px);transition:opacity .45s ease,transform .6s cubic-bezier(.22,.8,.24,1);-webkit-user-select:text;user-select:text}',
     '.x-pl-info.x-on{opacity:1;transform:translate(-50%,0)}.x-pl-info[hidden]{display:none}',
     '.x-pl.x-night .x-pl-info{background:rgba(16,28,56,.88);color:#cbe3ff}',
-    '.x-pl-info h2{margin:0 28px 2px 0;font:600 21px/1.2 "Switzer","Switzer Placeholder",system-ui,sans-serif;letter-spacing:-.01em}',
-    '.x-pl-info p{margin:8px 0;font:400 14px/1.5 "Switzer","Switzer Placeholder",system-ui,sans-serif}',
+    '.x-pl-info h2{margin:0 28px 2px 0;font:600 21px/1.2 "XNunito","Nunito",system-ui,sans-serif;letter-spacing:-.01em}',
+    '.x-pl-info p{margin:8px 0;font:400 14px/1.5 "XNunito","Nunito",system-ui,sans-serif}',
     '.x-pl-info .x-pl-sub{margin:0 0 8px;opacity:.65;font-size:12.5px}',
-    '.x-pl-info ul{margin:8px 0;padding:0;list-style:none}.x-pl-info li{margin:7px 0;padding-left:16px;position:relative;font:400 13.5px/1.45 "Switzer","Switzer Placeholder",system-ui,sans-serif}',
+    '.x-pl-info ul{margin:8px 0;padding:0;list-style:none}.x-pl-info li{margin:7px 0;padding-left:16px;position:relative;font:400 13.5px/1.45 "XNunito","Nunito",system-ui,sans-serif}',
     '.x-pl-info li:before{content:"";position:absolute;left:2px;top:.55em;width:6px;height:6px;border-radius:50%;background:#b9623f}',
     '.x-pl-info .x-pl-tip{margin:12px 0 0;opacity:.6;font:500 10.5px/1.5 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.06em;text-transform:uppercase}',
     '.x-pl-ix{position:absolute;right:12px;top:12px;width:32px;height:32px;border:0;border-radius:50%;display:grid;place-items:center;padding:0;background:rgba(18,48,74,.1)}',
