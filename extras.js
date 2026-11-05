@@ -144,7 +144,7 @@
     /* the text blends (negative on the light page, positive on the dark head) with what is behind it inside the video layer, so that layer carries the page colour */
     'html[data-xp="about"] [data-framer-name="Hero Video"]{background:color-mix(in srgb,rgb(181,197,217) calc((1 - var(--xt)) * 100%),rgb(41,60,89) calc(var(--xt) * 100%))}',
     '.x-dial{top:auto!important;right:auto!important;left:14px;bottom:46px;gap:6px;font-size:11px;opacity:.72}',
-    '.x-dn{position:fixed;top:12px;right:14px;z-index:12;width:36px;height:36px;border-radius:50%;border:0;padding:0;display:grid;place-items:center;cursor:pointer;color:#1f1f1f;background:rgba(255,255,255,.7);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 2px 10px rgba(20,50,80,.12);transition:background .5s ease,color .5s ease,transform .4s cubic-bezier(.2,.8,.2,1)}.x-dn:hover{transform:scale(1.06)}.x-dn:focus-visible{outline:2px solid currentColor;outline-offset:2px}',
+    '.x-dn svg{width:15px;height:15px}.x-dn{position:fixed;left:122px;bottom:11px;z-index:12;width:28px;height:28px;border-radius:50%;border:0;padding:0;display:grid;place-items:center;cursor:pointer;color:#1f1f1f;background:rgba(255,255,255,.7);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 2px 10px rgba(20,50,80,.12);transition:background .5s ease,color .5s ease,transform .4s cubic-bezier(.2,.8,.2,1)}.x-dn:hover{transform:scale(1.06)}.x-dn:focus-visible{outline:2px solid currentColor;outline-offset:2px}',
     'html[data-xdark] .x-dn{background:rgba(20,34,66,.65);color:rgb(203,237,255)}',
     '.x-dial-time{display:inline-flex;align-items:center;font-variant-numeric:tabular-nums;letter-spacing:.06em}.x-dial-time b{font-weight:500}.x-dial-time i{font-style:normal;margin:0 .12em;animation:x-blink 1s step-end infinite}.x-dial-an{flex:none;overflow:visible}',
     '@media(prefers-reduced-motion:reduce){.x-dial-time i{animation:none}}',
@@ -992,7 +992,7 @@
     if (planet) return;
     planet = { loading: true };
     jfHint(0);
-    import('/extras/freixo.js?v=198').then(function (m) {
+    import('/extras/freixo.js?v=199').then(function (m) {
       planet = m.open({ getDark: function () { return darkness(theme.hour); }, getHour: function () { return theme.hour; }, onClose: function () { planet = null; } });
     }).catch(function () { planet = null; });
   }
@@ -1373,14 +1373,6 @@
   var DN_MOON = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>';
   var DN_SUN = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/></svg>';
   function paintDn() { var b = document.querySelector('.x-dn'); if (!b) return; var night = darkness(theme.hour) > 0.5; b.innerHTML = night ? DN_SUN : DN_MOON; b.setAttribute('aria-label', night ? 'Light mode' : 'Dark mode'); }
-  // top right, level with the menu and just left of it; where the menu sits at the foot of the screen, in the top corner
-  function placeDn() {
-    var b = document.querySelector('.x-dn'); if (!b) return;
-    var link = document.querySelector('a[data-xn]'), r = link && link.getBoundingClientRect();
-    if (r && r.left > 0 && r.top < 120 && r.height) { b.style.right = Math.round(innerWidth - r.left + 16) + 'px'; b.style.top = Math.round(r.top + r.height / 2 - 18) + 'px'; }
-    else { b.style.right = '14px'; b.style.top = (innerWidth <= 480 ? 18 : 12) + 'px'; }
-  }
-  addEventListener('resize', function () { placeDn(); });
   function goHour(to, auto) {
     cancelAnimationFrame(theme.raf);
     var from = theme.hour, delta = ((to - from + 36) % 24) - 12, t0 = performance.now();
@@ -1398,7 +1390,6 @@
     if (wantDark === realDark) goHour(localHour(), true); else goHour(wantDark ? 22 : 12, false);
   }
   function ensureDial() {
-    placeDn();
     if (!document.querySelector('.x-dn')) {
       var b = document.createElement('button'); b.type = 'button'; b.className = 'x-dn'; b.addEventListener('click', toggleDn); document.body.appendChild(b);
       try { var sm = parseFloat(sessionStorage.getItem('xt-mode')); if (isFinite(sm)) { theme.hour = sm; theme.travel = true; paintTheme(); } } catch (e) {}
