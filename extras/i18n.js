@@ -266,25 +266,240 @@ function start() {
 if (document.body) start(); else addEventListener('DOMContentLoaded', start);
 window.xLang = { get: getLang, set, tr };
 
-// what the people of the ride tell you about Martamon, whom they all know (mostly the About page, plus a few projects)
-export const FACTS = [
-  ["Did you know Martamon has been working on projects for companies like Google?", "¿Sabías que Martamon ha estado trabajando en proyectos para empresas como Google?", "¿Sabías que Martamon estivo traballando en proxectos para empresas como Google?"],
-  ["Did you know Martamon works at WPP Production, in Madrid? It's part of the huge advertising group WPP!", "¿Sabías que Martamon trabaja en WPP Production, en Madrid? ¡Es parte del enorme grupo publicitario WPP!", "¿Sabías que Martamon traballa en WPP Production, en Madrid? ¡É parte do enorme grupo publicitario WPP!"],
-  ["They say Martamon has worked on things for Coca-Cola and Toyota. Our Marta, among the big ones!", "Dicen que Martamon ha trabajado en cosas para Coca-Cola y Toyota. ¡Nuestra Marta, entre los grandes!", "Din que Martamon traballou en cousas para Coca-Cola e Toyota. ¡A nosa Marta, entre os grandes!"],
-  ["And did you hear? She's also done projects for Iberdrola and Schweppes.", "¿Y te enteraste? También ha hecho proyectos para Iberdrola y Schweppes.", "¿E enteícheste? Tamén fixo proxectos para Iberdrola e Schweppes."],
-  ["Procter & Gamble and Colgate-Palmolive too! Martamon doesn't stop, I tell you.", "¡Y Procter & Gamble y Colgate-Palmolive también! Martamon no para, te lo digo yo.", "¡E Procter & Gamble e Colgate-Palmolive tamén! Martamon non para, dígocho eu."],
-  ["Do you know what Martamon does? She's a photographer, a retoucher and she creates images with AI!", "¿Sabes a qué se dedica Martamon? ¡Es fotógrafa, retocadora y creadora de imágenes con IA!", "¿Sabes a que se dedica Martamon? ¡É fotógrafa, retocadora e creadora de imaxes con IA!"],
-  ["Martamon specialises in photography and digital retouching. She has an eye for it since she was little!", "Martamon está especializada en fotografía y retoque digital. ¡Ojo tiene desde pequeña!", "Martamon está especializada en fotografía e retoque dixital. ¡Ollo ten dende pequena!"],
-  ["Now she's fully focused on the Artificial Intelligence department. Can you believe it?", "Ahora está totalmente centrada en el departamento de Inteligencia Artificial. ¿Te lo puedes creer?", "Agora está totalmente centrada no departamento de Intelixencia Artificial. ¿Podes crelo?"],
-  ["At the AI department she develops projects that generate and animate images. Magic, if you ask me!", "En el departamento de IA desarrolla proyectos que generan y animan imágenes. ¡Pura magia, si me preguntas!", "No departamento de IA desenvolve proxectos que xeran e animan imaxes. ¡Pura maxia, se me preguntas!"],
-  ["Did you know she also does graphic design? Web design, for example. She even made this very website!", "¿Sabías que también hace diseño gráfico? Diseño web, por ejemplo. ¡Hasta hizo esta misma web!", "¿Sabías que tamén fai deseño gráfico? Deseño web, por exemplo. ¡Ata fixo esta mesma web!"],
-  ["She handles the whole Adobe suite at an advanced level. Photoshop, Illustrator... all of it!", "Maneja toda la suite de Adobe a nivel avanzado. ¡Photoshop, Illustrator... todo!", "Manexa toda a suite de Adobe a nivel avanzado. ¡Photoshop, Illustrator... todo!"],
-  ["Martamon also creates corporate identities, did you know? Logos and brands for businesses.", "Martamon también crea identidades corporativas, ¿sabías? Logos y marcas para negocios.", "Martamon tamén crea identidades corporativas, ¿sabías? Logos e marcas para negocios."],
-  ["And product design! She does a bit of everything, that girl.", "¡Y diseño de producto! Hace un poco de todo, esa chica.", "¡E deseño de produto! Fai un pouco de todo, esa rapaza."],
-  ["Her work for Lexus Singapore was product images in 10K quality, made for WPP. Singapore, imagine!", "Lo de Lexus Singapur fueron imágenes de producto en calidad 10K, hechas para WPP. ¡Singapur, imagínate!", "O de Lexus Singapur foron imaxes de produto en calidade 10K, feitas para WPP. ¡Singapur, imaxínate!"],
-  ["This year she's making images and videos for Schweppes, in 10K quality too. You'll see it on TV!", "Este año hace imágenes y vídeos para Schweppes, también en calidad 10K. ¡Ya lo verás en la tele!", "Este ano fai imaxes e vídeos para Schweppes, tamén en calidade 10K. ¡Xa o verás na tele!"],
-  ["She retouched cosmetics for Soap & Glory, the Boots brand. Have you seen the adverts?", "Retocó cosmética para Soap & Glory, la marca de Boots. ¿Has visto los anuncios?", "Retocou cosmética para Soap & Glory, a marca de Boots. ¿Viches os anuncios?"],
-  ["Her final degree project was AYE AYE: editorial design and photography about discrimination through clothes.", "Su trabajo de fin de grado fue AYE AYE: diseño editorial y fotografía sobre la discriminación a través de la ropa.", "O seu traballo de fin de grao foi AYE AYE: deseño editorial e fotografía sobre a discriminación a través da roupa."],
-  ["Do you know the Pedra Pas bar? Martamon made its brand identity. Her grandfather, a sailor, used to go there!", "¿Conoces el bar Pedra Pas? Martamon hizo su identidad de marca. ¡Su abuelo, que era marinero, iba allí!", "¿Coñeces o bar Pedra Pas? Martamon fixo a súa identidade de marca. ¡O seu avó, que era mariñeiro, ía alí!"],
-  ["Martamon made a visual poem, Soidades de Onte, with her childhood memories and AI images. Very Galician!", "Martamon hizo un poema visual, Soidades de Onte, con sus recuerdos de infancia e imágenes con IA. ¡Muy gallego!", "Martamon fixo un poema visual, Soidades de Onte, cos seus recordos de infancia e imaxes con IA. ¡Moi galego!"],
+// the neighbours of the ride who know Martamon (the ones with dots above their heads): each has their own way of talking; every tap gives an opening line and then something about her (taken from this website)
+export const TALKERS = [
+[
+[
+[
+"Oh, do you know Martamon? She's a sweetheart, that girl!",
+"Ay, ¿conoces a Martamon? ¡Es un sol, esa rapaza!",
+"Ai, ¿coñeces a Martamon? ¡É un sol, esa rapaza!"
+],
+[
+"She works at WPP Production, in Madrid, in a huge advertising group! And I saw her learn to ride a bike...",
+"Trabaja en WPP Production, en Madrid, ¡en un grupo publicitario enorme! Y yo que la vi aprender a andar en bici...",
+"Traballa en WPP Production, en Madrid, ¡nun grupo publicitario enorme! E eu que a vin aprender a andar en bici..."
+]
+],
+[
+[
+"Look at that... have you seen Martamon's work?",
+"Mírala, mírala... ¿has visto lo de Martamon?",
+"Mírala, mírala... ¿viches o de Martamon?"
+],
+[
+"She made «Soidades de Onte», a visual poem of her childhood memories. It moved me to tears!",
+"Hizo «Soidades de Onte», un poema visual con sus recuerdos de cuando era niña. ¡Me emocioné toda!",
+"Fixo «Soidades de Onte», un poema visual cos seus recordos de cando era nena. ¡Emocioneime toda!"
+]
+]
+],
+[
+[
+[
+"Hey, you. Do you know Martamon? A sailor's granddaughter, as they say.",
+"Eh, tú. ¿Conoces a Martamon? Nieta de marinero, como quien dice.",
+"Eh, ti. ¿Coñeces a Martamon? Neta de mariñeiro, como quen di."
+],
+[
+"She made the brand for the Pedra Pas bar, where her grandfather played. That's honouring the family.",
+"Le hizo la marca al bar Pedra Pas, donde jugaba su abuelo. Eso es honrar a la familia.",
+"Fíxolle a marca ao bar Pedra Pas, onde xogaba o seu avó. Iso é honrar á familia."
+]
+],
+[
+[
+"Listen, you'll like this: Martamon...",
+"Escucha, que esto te interesa: Martamon...",
+"Escoita, que isto che interesa: Martamon..."
+],
+[
+"...has worked on projects for Google and Iberdrola. And she started watching boats like me, almost.",
+"...ha trabajado en proyectos para Google e Iberdrola. Y empezó mirando barcos como yo, casi.",
+"...traballou en proxectos para Google e Iberdrola. E comezou mirando barcos coma min, case."
+]
+]
+],
+[
+[
+[
+"Hey, hey!! Do you know Martamon?! She's awesome!!",
+"¡¡Oye, oye!! ¿¡Conoces a Martamon!? ¡¡Es genial!!",
+"¡¡Oe, oe!! ¿¡Coñeces a Martamon!? ¡¡É xenial!!"
+],
+[
+"She makes images with artificial intelligence and animates them! Like magic, for real!",
+"¡Hace imágenes con inteligencia artificial y las anima! ¡Como magia, de verdad!",
+"¡Fai imaxes con intelixencia artificial e anímaas! ¡Coma maxia, de verdade!"
+]
+],
+[
+[
+"Me again! You know what else Martamon does?",
+"¡Otra vez yo! ¿Sabes qué más hace Martamon?",
+"¡Outra vez eu! ¿Sabes que máis fai Martamon?"
+],
+[
+"She's a photographer and a retoucher! And she knows all of that Adobe thing!",
+"¡Es fotógrafa y retocadora! ¡Y se sabe todo el Adobe ese!",
+"¡É fotógrafa e retocadora! ¡E sábese todo o Adobe ese!"
+]
+]
+],
+[
+[
+[
+"Good morning, dear. Does Martamon ring a bell? She drops by now and then.",
+"Buenos días, cariño. ¿Te suena Martamon? Pasa por aquí de vez en cuando.",
+"Bos días, cariño. ¿Cústache Martamon? Pasa por aquí de cando en vez."
+],
+[
+"She designs websites, even this very website you're looking at! I wouldn't know how.",
+"Ella diseña páginas web, ¡hasta esta misma web que estás viendo! Yo no sé cómo se hace eso.",
+"Ela deseña páxinas web, ¡ata esta mesma web que estás vendo! Eu non sei como se fai iso."
+]
+],
+[
+[
+"Come in, don't be shy... Do you know Martamon?",
+"Pasa, pasa, no te cortes... ¿Conoces a Martamon?",
+"Pasa, pasa, non te cortes... ¿Coñeces a Martamon?"
+],
+[
+"She retouched cosmetics for Soap & Glory, the Boots brand. I buy it, and she's in there!",
+"Retocó cosmética para Soap & Glory, la marca de Boots. Yo lo compro, ¡y sale ella!",
+"Retocou cosmética para Soap & Glory, a marca de Boots. Eu cómproo, ¡e sae ela!"
+]
+]
+],
+[
+[
+[
+"Dude, have you heard of Martamon? She's literally a legend.",
+"Tío, ¿has oído hablar de Martamon? Es literalmente una crack.",
+"Tío, ¿escoitaches falar de Martamon? É literalmente unha crack."
+],
+[
+"She's worked for Coca-Cola and Toyota. Coca-Cola, no less! I'm freaking out.",
+"Ha currado para Coca-Cola y Toyota. Coca-Cola, ¡nada menos! Yo flipo.",
+"Traballou para Coca-Cola e Toyota. Coca-Cola, ¡nada menos! Eu flipo."
+]
+],
+[
+[
+"Okay, okay, one more: Martamon, you know?",
+"Ok, ok, una más: Martamon, ¿sabes?",
+"Vale, vale, unha máis: Martamon, ¿sabes?"
+],
+[
+"This year she makes images and videos for Schweppes in 10K quality. 10K quality, wild!",
+"Este año hace imágenes y vídeos para Schweppes en calidad 10K. Calidad 10K, ¡qué bestia!",
+"Este ano fai imaxes e vídeos para Schweppes en calidade 10K. Calidade 10K, ¡que bestia!"
+]
+]
+],
+[
+[
+[
+"Psst... come here. Do you know Martamon? But don't tell anyone...",
+"Psst... ven, ven. ¿Conoces a Martamon? Pero que no se entere nadie...",
+"Psst... ven, ven. ¿Coñeces a Martamon? Pero que non se decate ninguén..."
+],
+[
+"She did the product images for Lexus Singapore, for WPP. Singapore! Quite something.",
+"Hizo las imágenes de producto de Lexus Singapur, para WPP. ¡Singapur! Se dice pronto.",
+"Fixo as imaxes de produto de Lexus Singapur, para WPP. ¡Singapur! Dise axiña."
+]
+],
+[
+[
+"And now another one, but you didn't hear it from me...",
+"Y ahora te cuento otra, pero tú no has oído nada...",
+"E agora cóntoche outra, pero ti non oíches nada..."
+],
+[
+"Procter & Gamble and Colgate-Palmolive have called her too. And she's so calm about it!",
+"Procter & Gamble y Colgate-Palmolive también la han llamado. ¡Y ella tan tranquila!",
+"Procter & Gamble e Colgate-Palmolive tamén a chamaron. ¡E ela tan tranquila!"
+]
+]
+],
+[
+[
+[
+"May I ask: do you know Martamon? An admirable career.",
+"Permítame una pregunta: ¿conoce usted a Martamon? Una trayectoria admirable.",
+"Permítame unha pregunta: ¿coñece vostede a Martamon? Unha traxectoria admirable."
+],
+[
+"Her final degree project, AYE AYE, was editorial design and photography on discrimination through clothing.",
+"Su trabajo de fin de grado, AYE AYE, fue diseño editorial y fotografía sobre la discriminación a través de la ropa.",
+"O seu traballo de fin de grao, AYE AYE, foi deseño editorial e fotografía sobre a discriminación a través da roupa."
+]
+],
+[
+[
+"Let me tell you something more about Martamon, if I may.",
+"Le diré algo más sobre Martamon, si me lo permite.",
+"Direille algo máis sobre Martamon, se mo permite."
+],
+[
+"Besides web design she handles the Adobe suite at an advanced level and creates corporate identities and product design.",
+"Además del diseño web maneja el paquete Adobe a nivel avanzado y crea identidades corporativas y diseño de producto.",
+"Ademais do deseño web manexa o paquete Adobe a nivel avanzado e crea identidades corporativas e deseño de produto."
+]
+]
+],
+[
+[
+[
+"What a lovely day, isn't it? ...Do you know Martamon? Always with her camera in hand.",
+"Qué día tan bueno, ¿verdad? ...¿Conoces a Martamon? Siempre con la cámara en la mano.",
+"Que día tan bo, ¿verdade? ...¿Coñeces a Martamon? Sempre coa cámara na man."
+],
+[
+"She went to China with a WeRoad group. She says she wrote it in her school notebook and did it at 24.",
+"Se fue a China con un grupo de WeRoad. Dice que lo apuntó en su cuaderno del cole y lo cumplió a los 24.",
+"Foi á China cun grupo de WeRoad. Di que o apuntou no seu caderno do cole e cumpriuno aos 24."
+]
+],
+[
+[
+"Easy, easy, there's no rush... Martamon also travelled to Greece.",
+"Tranquilo, tranquilo, no hay prisa... Martamon también viajó a Grecia.",
+"Tranquilo, tranquilo, non hai présa... Martamon tamén viaxou a Grecia."
+],
+[
+"Travel photography, just that. She clearly loves seeing the world through a camera.",
+"Fotografía de viaje, tal cual. Se ve que le gusta mirar el mundo a través de una cámara.",
+"Fotografía de viaxe, tal cal. Vese que lle gusta mirar o mundo a través dunha cámara."
+]
+]
+],
+[
+[
+[
+"Hey! What's up? Do you know Martamon? She's my favourite photographer!",
+"¡Ey! ¿Qué pasa? ¿Conoces a Martamon? ¡Es mi fotógrafa favorita!",
+"¡Ei! ¿Que pasa? ¿Coñeces a Martamon? ¡É a miña fotógrafa favorita!"
+],
+[
+"She once did a beach shoot at 2 a.m. with a flashlight, freezing. Result: brutal.",
+"Una vez hizo una sesión en la playa a las 2 de la mañana con una linterna, muerta de frío. Resultado: brutal.",
+"Unha vez fixo unha sesión na praia ás 2 da mañá cunha lanterna, morta de frío. Resultado: brutal."
+]
+],
+[
+[
+"Dropping another one: Martamon, shall I tell you?",
+"Dropeo otra: Martamon, ¿te lo cuento?",
+"Dropeo outra: Martamon, ¿cho conto?"
+],
+[
+"With her camera and not much else, she made something spectacular. That's her: no improvising!",
+"Con su cámara y poco más, hizo un trabajo que quedó espectacular. Así es ella: ¡nada de improvisar!",
+"Coa súa cámara e pouco máis, fixo un traballo que quedou espectacular. Así é ela: ¡nada de improvisar!"
+]
+]
+]
 ];
