@@ -1790,7 +1790,7 @@ export function open(opts) {
     if (tourOn) return; tourOn = true; tourMuted = !!(audio && audio.muted);
     mochi.classList.remove('x-ctaon'); mochi.classList.add('x-load'); root.classList.add('x-tour'); if (audio) { audio.sfx('mochinext'); setTimeout(() => audio && audio.mute(true), 500); }
     const t0 = performance.now();
-    import('./conducir.js?v=36').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
+    import('./conducir.js?v=37').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
       .then((m) => { const ab = m.open({ onClose: endTour, getDark: () => nightT }); if (!ab) throw new Error('no webgl'); setTimeout(mochiClose, 700); })
       .catch(() => { endTour(); mochiClose(); });
   };

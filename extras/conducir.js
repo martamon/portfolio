@@ -507,13 +507,13 @@ export function open(opts) {
       for (let u = 0; u <= LEN && ok; u += 3) for (let v = -6; v <= 6 && ok; v += 3) { const x = x0 - u, zz = z + v; if (H(x, zz) < .55 || solid(x, zz, 2.2) || [2, 3].some((vi) => Math.hypot(ROADX(VILLAGES[vi][1]) - 21 - x, VILLAGES[vi][1] + 1 - zz) < (vi === 3 ? 16 : 13)) || VILLAGES.some(([, z0]) => Math.hypot(ROADX(z0 - 2) - 16 - x, z0 - 14 - zz) < 6) || lanes.some((l) => l.some((q) => Math.hypot(q[0] - x, q[1] - zz) < 6))) ok = false; }
       if (ok) { site = [x0, z]; break; } }
     if (site) { const [x0, z] = site, y0 = H(x0 - LEN / 2, z);
-      ribbon([[x0 + 4, z], [x0 - LEN, z]], 7.2, 0xd8cdb6, .06, 3, sandTex()); ribbon([[x0 + 4, z], [x0 - LEN, z]], 6.2, 0xcfc3aa, .08, 4, sandTex());
+      const sp = []; for (let u = 0; u <= LEN + 4; u += 1.5) sp.push([x0 + 4 - u, z]); ribbon(sp, 7.2, 0xd8cdb6, .06, 3, sandTex()); ribbon(sp, 6.2, 0xcfc3aa, .08, 4, sandTex());
       const awn = [0xe36d57, 0x4f8fc0, 0xf2c14a, 0x5fae8a, 0xe9a0c0, 0xa88bd8, 0xf09a3a, 0x6fc3b8];
       for (let k = 0; k < N; k++) for (let sd = 0; sd < 2; sd++) { const kind = KINDS[(k * 2 + sd + (sd ? 3 : 0)) % 8], sx = x0 - 4.5 - k * STP, sz = z + (sd ? -3.7 : 3.7), st = stall(THREE, std, kind, awn[(k * 2 + sd) % 8], !LOW); st.scale.setScalar(.95);
         st.userData.hx = 1.6; st.userData.hz = 1.0; st.userData.r = 2; addTo(st, sx, sz, sd ? 0 : PI, 2.1);
         const vd = person([0xf4e6d0, 0xe9a0c0, 0x7aa6d8, 0xf2c14a][(k + sd) % 4], [0xf0c9a0, 0xe3b185, 0xf5d6b5, 0xc58c5e][(k + sd * 2) % 4]); vd.position.set(sx, H(sx, sz + (sd ? -2.1 : 2.1)) + .08, sz + (sd ? -2.1 : 2.1)); vd.rotation.y = (sd ? 0 : PI) - PI / 2 + (sd ? 0 : 0); scene.add(vd); }
       const shirts = [0xe36d57, 0x4f8fc0, 0xc9a0e8, 0x5fae8a, 0xf0907a, 0x7aa6d8], skins = [0xf0c9a0, 0xe3b185, 0xf5d6b5, 0xc58c5e];
-      for (let i = 0; i < 6; i++) { const w2 = person(shirts[i], skins[i % 4], [0xe36d57, 0x5fae8a, 0xf2c14a][i % 3]); scene.add(w2); const a = x0 - 3 - (i % 3) * 4, b2 = x0 - LEN + 3 + (i % 3) * 2; walkers.push({ p: w2, pts: [[a, z + (i % 2 ? .9 : -.9)], [(a + b2) / 2, z + (i % 2 ? -.6 : .6)], [b2, z + (i % 2 ? .9 : -.9)]], d: i * 4.5, sp: .45 + (i % 3) * .12, dir: i % 2 ? 1 : -1, lift: .08 }); }
+      for (let i = 0; i < 6; i++) { const w2 = person(shirts[i], skins[i % 4], [0xe36d57, 0x5fae8a, 0xf2c14a][i % 3]); scene.add(w2); const a = x0 - 3 - (i % 3) * 4, b2 = x0 - LEN + 3 + (i % 3) * 2; walkers.push({ p: w2, pts: [[a, z + (i % 2 ? .9 : -.9)], [(a + b2) / 2, z + (i % 2 ? -.6 : .6)], [b2, z + (i % 2 ? .9 : -.9)]], d: i * 4.5, sp: .45 + (i % 3) * .12, dir: i % 2 ? 1 : -1, lift: .14 }); }
       reserved.push([x0 - LEN - 2, x0 + 5, z - 6.5, z + 6.5]); mkt = { x: x0 - LEN / 2, z }; } }
   VILLAGES.forEach(([name, z0], vi) => {
     const rx = ROADX(z0), cnt = vi === 3 ? 8 : 5; let made = 0;
