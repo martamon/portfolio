@@ -1368,8 +1368,8 @@ export function open(opts) {
   const flags = [];
   function schoolYard(x, inl, roofCol, wallCol, nKids) {
     const [px, pz] = onShore(x, inl), yaw = seaYaw(px), slab = new THREE.Group();
-    const sl = box(2.5, .8, 2.7, std(0xe6dcc0)); sl.position.y = -.34; slab.add(sl); const bd = box(2.56, .78, 2.76, std(0xc9bfa8)); bd.position.y = -.35; slab.add(bd);
-    slab.userData.fp = 2.0; slab.userData.pri = 3; W(put(slab, px, pz, yaw, -.04));
+    const sl = box(2.5, .24, 2.7, std(0xe6dcc0)); sl.position.y = -.1; slab.add(sl);
+    slab.userData.fp = 2.0; slab.userData.pri = 3; slab.userData.sch = 1; W(put(slab, px, pz, yaw, -.04));
     const loc = (lx, lz) => [px + lx * Math.cos(yaw) + lz * Math.sin(yaw), pz - lx * Math.sin(yaw) + lz * Math.cos(yaw)];
     const sc = school(roofCol, wallCol); const [sx, sz] = loc(0, -.95); W(put(sc, sx, sz, yaw, .03)); flags.push(sc.userData.flag);
     const pt = pitch(1.15, .7, true); const [qx, qz] = loc(0, .5); W(put(pt, qx, qz, yaw, .1));
@@ -1382,7 +1382,7 @@ export function open(opts) {
   }
   schoolYard(-.5, 5.05, 0xc9462e, 0xf6e6b4, 8);
   schoolYard(15.6, 4.55, 0x5f7f96, 0xf2c6a8, 8);
-  { const [px, pz] = onShore(-7.6, 4.85), yaw = seaYaw(px), slab = new THREE.Group(); const sb = box(1.5, .8, 1.1, std(0xe6dcc0)); sb.position.y = -.34; slab.add(sb); slab.userData.fp = 1.0; slab.userData.pri = 3; W(put(slab, px, pz, yaw, -.05));
+  { const [px, pz] = onShore(-7.6, 4.85), yaw = seaYaw(px), slab = new THREE.Group(); const sb = box(1.5, .24, 1.1, std(0xe6dcc0)); sb.position.y = -.1; slab.add(sb); slab.userData.fp = 1.0; slab.userData.pri = 3; W(put(slab, px, pz, yaw, -.05));
     const pt = pitch(1.2, .7, true); W(put(pt, px, pz, yaw, .1));
     const loc = (lx, lz) => [px + lx * Math.cos(yaw) + lz * Math.sin(yaw), pz - lx * Math.sin(yaw) + lz * Math.cos(yaw)];
     const ball = new THREE.Mesh(new THREE.SphereGeometry(.026, 10, 8), std(0xf6f1e4)); W(ball);
