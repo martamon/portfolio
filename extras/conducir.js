@@ -492,7 +492,7 @@ export function open(opts) {
     if (false && u0.hx && top - low < .5) { const cs = new THREE.Mesh(new THREE.PlaneGeometry(u0.hx * 3.1, u0.hz * 3.1), new THREE.MeshBasicMaterial({ map: contactTex(), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 })); cs.rotation.x = -PI / 2; cs.position.y = .07; o.add(cs); }
     o.position.set(x, top, z); o.rotation.y = yaw; scene.add(o); if (o.userData.porch) shelters.push([x + Math.sin(yaw) * o.userData.porch, z + Math.cos(yaw) * o.userData.porch]); if (r) { const u = o.userData; colliders.push(u.hx ? [x, z, r, u.hx, u.hz, yaw] : [x, z, r]); } return o; };
   const infoSpots = [], reserved = [], solid = (x, z, rr) => colliders.some((c) => Math.hypot(c[0] - x, c[1] - z) < c[2] + rr) || reserved.some((r) => x > r[0] - rr && x < r[1] + rr && z > r[2] - rr && z < r[3] + rr), laneNear = (x, z, d) => lanes.some((pts) => pts.some((q) => Math.hypot(q[0] - x, q[1] - z) < d)) || Math.abs(x - ROADX(z)) < d + 2.6;
-  const plazas = [], walkers = []; let mkt = null;
+  const plazas = [], walkers = [], stops = []; let mkt = null;
   { const lbl = lang === 0 ? 'SUPERMARKET' : 'SUPERMERCADO', sz0 = 50, sx0 = ROADX(sz0) - 16, sm = supermercado(lbl); addTo(sm, sx0, sz0, PI / 2, sm.userData.r);
     const lot = new THREE.Mesh(new THREE.BoxGeometry(11, .1, 22), std(0x9aa3b0)); lot.position.set(sx0 + 9.4, H(ROADX(sz0) - 7, sz0) + .05, sz0); scene.add(lot); lot.receiveShadow = true;
     shelters.push([sx0 + 5.6, sz0 - 3], [sx0 + 5.6, sz0 + 3]);
@@ -529,7 +529,7 @@ export function open(opts) {
     }
     // the square of stone: paving, a fountain or a cruceiro, benches, pruned trees
     if (vi === 3 || vi === 2) { const pr = vi === 3 ? 10 : 7, pcx = rx - 21, pcz = z0 + 1; plazas.push([pcx, pcz, pr]); }
-    { const bs = busStop(); let bz = z0 + 9; for (const dz of [0, -6, 6, -12, 12, 17]) { const zz = z0 + 9 + dz; if (viol(bs.userData, ROADX(zz) + 6.4, zz, -PI / 2)[0] <= 0) { bz = zz; break; } } const bx = ROADX(bz) + 6.4; addTo(bs, bx, bz, -PI / 2, 2.6); shelters.push([bx - .2, bz - .9], [bx - .2, bz + .9]); }
+    { const bs = busStop(); let bz = z0 + 9; for (const dz of [0, -6, 6, -12, 12, 17]) { const zz = z0 + 9 + dz; if (viol(bs.userData, ROADX(zz) + 6.4, zz, -PI / 2)[0] <= 0) { bz = zz; break; } } const bx = ROADX(bz) + 6.4; stops.push([bx, bz]); addTo(bs, bx, bz, -PI / 2, 2.6); shelters.push([bx - .2, bz - .9], [bx - .2, bz + .9]); }
     const sc = ROADX(z0 - 2) - 16, cr = cruceiro(); addTo(cr, sc, z0 - 14, 0, 2.3);
     for (let k = 0; k < 1; k++) { const hx = rx - 19 - rng() * 7, hzz = z0 - 12 + k * 12 + (rng() - .5) * 4; if (H(hx, hzz) < .4 || solid(hx, hzz, 7) || lanes.some((pts) => pts.some((q) => Math.hypot(q[0] - hx, q[1] - hzz) < 6.5))) continue; const hr = horreo(); const yaw = rng() * PI * 2; addTo(hr, hx, hzz, yaw, hr.userData.r); if (vi === 1 && !infoSpots.length) infoSpots.push(['horreo', hx + Math.cos(yaw) * 0 + 6.5, hzz]); }
     if (vi === 3 || vi === 2) { const ch = church(); const cx = rx - 21, cz = z0 + (vi === 3 ? -21 : 17); if (!solid(cx, cz, 9)) addTo(ch, cx, cz, PI / 2, 8); }
@@ -624,6 +624,32 @@ export function open(opts) {
       addTo(hs, x, z, PI / 2, hs.userData.r); casa.x = x + hs.userData.porch + 1.6; casa.z = z; casa.ok = true; casa.hx = x; casa.hy = H(x, z); break; }
     if (casa.ok) { const gl = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexL, color: 0xffc766, transparent: true, opacity: .6, depthWrite: false, blending: THREE.AdditiveBlending, fog: false })); gl.scale.set(22, 15, 1); gl.position.set(casa.hx + 3, casa.hy + 3.4, casa.z); scene.add(gl); casa.glow = gl;
       const lamp = new THREE.Mesh(new THREE.IcosahedronGeometry(.22, 1), new THREE.MeshStandardMaterial({ color: 0xfff3c4, emissive: 0xffd36b, emissiveIntensity: 1.6 })); lamp.position.set(casa.x - 1.6, casa.hy + 2.6, casa.z + 1.2); scene.add(lamp); } }
+  // ---- traffic: two little cars and a bus that stops at every bus shelter and takes on the people who wait there
+  const traffic = [];
+  { const mk = (L, W2, Hh, col, bus) => { const g = new THREE.Group(), add = (geo, c, x, y, z, ex) => { const o = new THREE.Mesh(geo, std(c, ex)); o.position.set(x, y, z); o.castShadow = true; g.add(o); return o; };
+      add(rbox(W2, Hh * .62, L, .35), col, 0, Hh * .31 + .35, 0); add(rbox(W2 * .94, Hh * .3, bus ? L * .94 : L * .5, .3), 0x34414f, 0, Hh * .62 + .45, bus ? 0 : -L * .06);
+      if (!bus) add(rbox(W2 * .86, .16, L * .46, .1), col, 0, Hh + .38, -L * .06);
+      else { add(rbox(W2 * 1.01, .22, L * .98, .08), 0xf6f1e4, 0, Hh * .5, 0); add(rbox(W2 * .9, .2, L * .8, .08), col, 0, Hh + .46, 0); }
+      for (const sx of [-1, 1]) for (const sz of bus ? [-.34, .34] : [-.3, .3]) { const w = add(new THREE.CylinderGeometry(.42, .42, .3, 14), 0x23262b, sx * (W2 / 2 - .02), .42, sz * L); w.rotation.z = PI / 2; add(new THREE.CylinderGeometry(.2, .2, .32, 8), 0xe6e2d6, sx * (W2 / 2 - .02), .42, sz * L).rotation.z = PI / 2; }
+      for (const sx of [-1, 1]) { const hl = add(new THREE.SphereGeometry(.17, 8, 6), 0xfff0b8, sx * W2 * .32, Hh * .3 + .4, L / 2); hl.material = new THREE.MeshStandardMaterial({ color: 0xfff0b8, emissive: 0xffe9a0, emissiveIntensity: .5 }); add(new THREE.SphereGeometry(.14, 8, 6), 0xe0584a, sx * W2 * .32, Hh * .3 + .4, -L / 2); }
+      g.userData.L = L; return g; };
+    const mkBus = () => { const g = mk(8.4, 2.7, 2.9, 0xe9873a, true); g.scale.setScalar(.82); return g; };
+    const vs = [{ g: mkBus(), lane: 1.5, dir: -1, bus: true, z: 70, sp: 5.2 }, { g: mk(4.1, 1.9, 1.5, 0x3f8f9e, false), lane: -1.5, dir: 1, z: -60, sp: 6.5 }, { g: mk(4.1, 1.9, 1.5, 0xc9473a, false), lane: -1.5, dir: 1, z: 20, sp: 6.5 }];
+    for (const v of vs) { v.g.scale.multiplyScalar(.82); scene.add(v.g); v.wait = 0; v.next = 0; traffic.push(v); }
+    // the people waiting at the shelters (they board the bus, and a new one turns up a little later)
+    const waiters = stops.map(([bx, bz], i) => { const w = person([0x4f8fc0, 0xe9a0c0, 0xf2c14a, 0x5fae8a, 0xc9a0e8][i % 5], [0xf0c9a0, 0xe3b185, 0xf5d6b5][i % 3], [0xe36d57, 0x5fae8a][i % 2]); w.scale.setScalar(.88); w.position.set(bx - .1, H(bx, bz) + .08, bz + .1); w.rotation.y = PI / 2 + 0; scene.add(w); return { p: w, bx, bz, st: 'wait', t: 0, x: bx - .1, z: bz + .1 }; });
+    traffic.update = (dt) => {
+      for (const v of traffic) { const g = v.g;
+        if (v.wait > 0) { v.wait -= dt; } else { let stopAt = null; if (v.bus) for (const w of waiters) if (w.st === 'wait' && (w.bz - v.z) * v.dir > -.5 && (w.bz - v.z) * v.dir < 6) { stopAt = w; break; }
+          if (stopAt) { const d = stopAt.bz - v.z; if (Math.abs(d) < .5) { v.wait = 4.5; stopAt.st = 'board'; stopAt.t = 0; } else v.z += Math.sign(d) * Math.min(Math.abs(d), v.sp * .5 * dt); } else v.z += v.dir * v.sp * dt; }
+        if (v.z < -96) v.z = 96; if (v.z > 96) v.z = -96;
+        const x = ROADX(v.z) + v.lane, x2 = ROADX(v.z + v.dir * 2); const hd = Math.atan2(x2 - ROADX(v.z), v.dir * 2); g.position.set(x, H(x, v.z) + .02, v.z); g.rotation.y = hd; }
+      const bus = traffic[0];
+      for (const w of waiters) {
+        if (w.st === 'board') { w.t += dt; const dx = (ROADX(bus.z) + 1.5 + 1.8) - w.x, dz = bus.z - w.z, d = Math.hypot(dx, dz); const sp = 2.2 * dt; if (d > .4) { w.x += dx / d * sp; w.z += dz / d * sp; w.p.rotation.y = Math.atan2(dx, dz) - PI / 2; w.p.position.set(w.x, H(w.x, w.z) + .08 + Math.abs(Math.sin(w.t * 7)) * .1, w.z); } else { w.st = 'gone'; w.t = 0; w.p.visible = false; } }
+        else if (w.st === 'gone') { w.t += dt; if (w.t > 22) { w.st = 'wait'; w.x = w.bx - .1; w.z = w.bz + .1; w.p.position.set(w.x, H(w.x, w.z) + .08, w.z); w.p.rotation.y = PI / 2; w.p.visible = true; } }
+      }
+    }; }
   // ---- trees, bushes, hydrangeas
   const lowpoly = (g, a) => { const ps = g.attributes.position; for (let q = 0; q < ps.count; q++) { const x = ps.getX(q), y = ps.getY(q), z = ps.getZ(q), k = 1 + (hash(x * 37.1 + y * 11.3, z * 53.7 + y * 5.1) - .5) * a; ps.setXYZ(q, x * k, y * k, z * k); } g.computeVertexNormals(); return g; };
   const crownG = lowpoly(new THREE.IcosahedronGeometry(1, 1), .34), trunkG = new THREE.CylinderGeometry(.18, .3, 1, 6); trunkG.translate(0, .5, 0);
@@ -882,6 +908,7 @@ export function open(opts) {
       const um = w.p.userData.um; if (um) um.visible = raining && w.mode !== 'stay';
     }
     { rainL.material.opacity = rainT * .55 * (1 - uwMix); rainL.visible = rainT > .03 && uwMix < .6; if (rainL.visible) { rainL.position.set(camera.position.x, Math.max(camera.position.y - 5, H(camera.position.x, camera.position.z)), camera.position.z); const a = rainG.attributes.position; for (let i = 0; i < NR; i++) { let y = a.getY(i * 2) - dt * 20; if (y < -1) y += 23; a.setY(i * 2, y); a.setY(i * 2 + 1, y - 1.1); } a.needsUpdate = true; } for (const c of clouds) c.children.forEach((m2) => m2.material.color.lerp(rainT > .3 ? CLOUD_GREY : CLOUD_WARM, dt * .8)); }
+    if (traffic.update) traffic.update(dt);
     for (const f of fishers) { const u = f.userData; u.rod.rotation.z = Math.sin(t * .6 + u.ph) * .03; u.bob.position.y = Math.sin(t * 1.6 + u.ph) * .06 - (Math.sin(t * .35 + u.ph) > .95 ? .25 : 0); if (u.um || f.userData.um) f.userData.um.visible = rainT > .45; }
     // the orbs
     let best = null, bd = 6.5, tgt = null, td = 1e9;
@@ -905,5 +932,5 @@ export function open(opts) {
     opts.onClose && opts.onClose();
   }
   root.querySelector('.x-dr-x').addEventListener('click', close);
-  return { close, state: S, dbg: { colliders, lanes, mkt, casa } };
+  return { close, state: S, dbg: { colliders, lanes, mkt, casa, traffic } };
 }
