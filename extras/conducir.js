@@ -368,6 +368,12 @@ function makeSound() {
   const bubble = (v) => { const t = ctx.currentTime, f = 380 + Math.random() * 700, o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * 1.8, t + .11); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + .008); g.gain.exponentialRampToValueAtTime(.0004, t + .15); o.connect(g); g.connect(bus); o.start(t); o.stop(t + .2); };
   const gull = () => { const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(1500, t); o.frequency.exponentialRampToValueAtTime(2100, t + .12); o.frequency.exponentialRampToValueAtTime(1400, t + .38); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.012, t + .05); g.gain.exponentialRampToValueAtTime(.0004, t + .45); o.connect(g); g.connect(bus); o.start(t); o.stop(t + .5); };
   const rn = ctx.createBufferSource(); rn.buffer = nb; rn.loop = true; rn.playbackRate.value = 1.6; const rf = ctx.createBiquadFilter(); rf.type = 'highpass'; rf.frequency.value = 1600; const rg = ctx.createGain(); rg.gain.value = 0; rn.connect(rf); rf.connect(rg); rg.connect(out); rn.start();
+  const boatG2 = ctx.createGain(); boatG2.gain.value = 0; boatG2.connect(out); boatG2.connect(rev);
+  let boatOn = false, boatV = 0; const putt = () => { if (!alive || !boatOn) return; if (!muted) { const t = ctx.currentTime, v = Math.min(1, boatV / 8), o = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain(), f = ctx.createBiquadFilter(); o.type = 'sawtooth'; o2.type = 'sine'; const fr = 62 + v * 26; o.frequency.setValueAtTime(fr * 1.5, t); o.frequency.exponentialRampToValueAtTime(fr, t + .09); o2.frequency.setValueAtTime(fr * .5, t); f.type = 'lowpass'; f.frequency.value = 300 + v * 260; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.22 + v * .12, t + .008); g.gain.exponentialRampToValueAtTime(.0008, t + .13 + (1 - v) * .06); o.connect(f); o2.connect(f); f.connect(g); g.connect(boatG2); o.start(t); o2.start(t); o.stop(t + .25); o2.stop(t + .25);
+      const b2 = ctx.createBufferSource(), bf = ctx.createBiquadFilter(), bg = ctx.createGain(); b2.buffer = nb; bf.type = 'lowpass'; bf.frequency.value = 500 + v * 700; bg.gain.setValueAtTime(.05 + v * .06, t); bg.gain.exponentialRampToValueAtTime(.001, t + .09); b2.connect(bf); bf.connect(bg); bg.connect(boatG2); b2.start(t, Math.random() * 3, .12); }
+    timers.push(setTimeout(putt, 260 - Math.min(1, boatV / 8) * 150 + Math.random() * 12)); };
+  const horn = () => { if (muted) return; const t = ctx.currentTime; for (const [fr, d] of [[196, 0], [147, .32]]) { const o = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain(), f = ctx.createBiquadFilter(); o.type = 'sawtooth'; o2.type = 'square'; o.frequency.value = fr; o2.frequency.value = fr * 1.005; f.type = 'lowpass'; f.frequency.value = 600; g.gain.setValueAtTime(0, t + d); g.gain.linearRampToValueAtTime(.09, t + d + .05); g.gain.setValueAtTime(.09, t + d + .35); g.gain.exponentialRampToValueAtTime(.001, t + d + .9); o.connect(f); o2.connect(f); f.connect(g); g.connect(out); g.connect(rev); o.start(t + d); o2.start(t + d); o.stop(t + d + 1); o2.stop(t + d + 1); } [88, 91, 95].forEach((m, k) => note(m, .03, 1.8, t + .9 + k * .14)); };
+  const lap = ctx.createBufferSource(); lap.buffer = nb; lap.loop = true; lap.playbackRate.value = .55; const lapF = ctx.createBiquadFilter(); lapF.type = 'bandpass'; lapF.frequency.value = 420; lapF.Q.value = .6; const lapG = ctx.createGain(); lapG.gain.value = 0; lap.connect(lapF); lapF.connect(lapG); lapG.connect(out); lap.start();
   let alive = true, muted = false, under = false, cozyOn = false; const cg = ctx.createGain(); cg.gain.value = 0; cg.connect(out); cg.connect(rev);
   { const hs = ctx.createBufferSource(); hs.buffer = nb; hs.loop = true; hs.playbackRate.value = .7; const hf = ctx.createBiquadFilter(); hf.type = 'lowpass'; hf.frequency.value = 380; const hg = ctx.createGain(); hg.gain.value = .5; hs.connect(hf); hf.connect(hg); hg.connect(cg); hs.start(); }
   const crack = () => { const t = ctx.currentTime, b2 = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain(); b2.buffer = nb; b2.playbackRate.value = .8 + Math.random() * 1.6; f.type = 'bandpass'; f.frequency.value = 1400 + Math.random() * 3600; f.Q.value = 1.4; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.05 + Math.random() * .1, t + .004); g.gain.exponentialRampToValueAtTime(.0008, t + .03 + Math.random() * .08); b2.connect(f); f.connect(g); g.connect(cg); b2.start(t, Math.random() * 3, .2); };
@@ -390,6 +396,8 @@ function makeSound() {
       rog.gain.setTargetAtTime(cozyOn ? 0 : Math.min(.035, Math.abs(speed) * .0032), ctx.currentTime, .2); rof.frequency.setTargetAtTime(380 + Math.abs(speed) * 38, ctx.currentTime, .2); if (!muted && !under && !cozyOn && Math.abs(speed) > 1.2 && ctx.currentTime > tickAt) { tick(.012 + Math.min(.012, Math.abs(speed) * .001)); tickAt = ctx.currentTime + Math.max(.14, .55 - Math.abs(speed) * .035); }
       sg.gain.setTargetAtTime(cozyOn ? 0 : under ? .05 : nearSea * .09 * (.6 + .4 * Math.sin(ctx.currentTime * .7)), ctx.currentTime, .6);
     },
+    boat(on) { if (on === boatOn) return; boatOn = on; boatG2.gain.setTargetAtTime(on ? 1.0 : 0, ctx.currentTime, .3); lapG.gain.setTargetAtTime(on ? .09 : 0, ctx.currentTime, .6); if (on) { horn(); setTimeout(putt, 700); } },
+    boatSpeed(v) { boatV = v; lapG.gain.setTargetAtTime(boatOn ? .06 + Math.min(.12, v * .015) : 0, ctx.currentTime, .4); },
     cozy(on) { if (on === cozyOn) return; cozyOn = on; cg.gain.setTargetAtTime(on ? 1.1 : 0, ctx.currentTime, .6); lp.frequency.setTargetAtTime(on ? 3000 : (under ? 520 : 18000), ctx.currentTime, .4); if (on) { cozyLoop(); simmer(); clockLoop(); } },
     gull() { if (!muted && !under && !cozyOn) { gull(); setTimeout(() => !muted && !under && !cozyOn && gull(), 330); } },
     atmos(n, r) { nightS = n; rainS = r; },
@@ -733,10 +741,26 @@ export function open(opts) {
   const dotTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 30); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.4, 'rgba(255,255,255,.5)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
   const bub = (() => { const g = new THREE.BufferGeometry(), n = 140, a = new Float32Array(n * 3); for (let i = 0; i < n; i++) { a[i * 3] = (rng() - .5) * 26; a[i * 3 + 1] = rng() * 10; a[i * 3 + 2] = (rng() - .5) * 26; } g.setAttribute('position', new THREE.BufferAttribute(a, 3)); const p = new THREE.Points(g, new THREE.PointsMaterial({ size: .5, map: dotTex, transparent: true, opacity: .6, depthWrite: false, blending: THREE.AdditiveBlending, color: 0xffffff })); p.frustumCulled = false; p.visible = false; return p; })(); scene.add(bub);
   const ripples = [];
+  // ---- the little Galician fishing boat the bike turns into at sea
+  const boatG = new THREE.Group(); boatG.visible = false; scene.add(boatG); boatG.scale.setScalar(1.25);
+  { const add = (geo, col, x, y, z, ex) => { const o = new THREE.Mesh(geo, std(col, ex)); o.position.set(x, y, z); o.castShadow = true; boatG.add(o); return o; };
+    const sh = new THREE.Shape(); sh.moveTo(-1.55, .62); sh.lineTo(-1.45, .05); sh.lineTo(-.9, -.22); sh.lineTo(.9, -.22); sh.lineTo(1.85, .5); sh.lineTo(1.95, .78); sh.lineTo(1.0, .66); sh.lineTo(-1.55, .62);
+    const hg = new THREE.ExtrudeGeometry(sh, { depth: 1.15, bevelEnabled: true, bevelSize: .12, bevelThickness: .12, bevelSegments: 3 }); hg.translate(0, 0, -.575); const hull = new THREE.Mesh(hg, std(0x2f6fa8)); hull.castShadow = true; boatG.add(hull);
+    const band = new THREE.Mesh(hg, std(0xf6f1e4)); band.scale.set(1.005, .22, 1.02); band.position.set(0, .5, 0); boatG.add(band);
+    add(rbox(3.0, .08, 1.0, .03), 0xc9a46a, -.1, .5, 0);                                                                   // the planked deck
+    add(rbox(.85, .8, .85, .12), 0xf6f1e4, -.95, .95, 0); add(rbox(1.0, .12, 1.0, .05), 0xc9473a, -.95, 1.4, 0);        // the little wheelhouse and its red roof
+    for (const sz of [-1, 1]) add(rbox(.04, .3, .3, .02), 0x34414f, -.95, 1.05, sz * .44); add(rbox(.3, .3, .04, .02), 0x34414f, -.5, 1.05, 0);
+    add(new THREE.CylinderGeometry(.04, .05, 2.0, 8), 0x8a6a44, .75, 1.5, 0);                                            // the mast, with a flag and a lantern
+    const fl = add(rbox(.5, .3, .02, .02), 0xc9473a, 1.0, 2.35, 0); add(new THREE.IcosahedronGeometry(.1, 1), 0xfff0b8, .75, 1.7, .12, { emissive: 0xffd36b, emissiveIntensity: .9 }); boatG.userData.flag = fl;
+    for (let k = 0; k < 3; k++) add(rbox(.5, .22, .38, .05), [0xe9873a, 0x4f8fc0, 0xe9873a][k], .3 + (k % 2) * .5, .66, (k - 1) * .36);       // fish boxes
+    add(new THREE.TorusGeometry(.2, .06, 8, 14), 0xe9573a, 1.35, .75, .3).rotation.x = PI / 2.5;                         // a lifebuoy
+    const fr = new THREE.Mesh(new THREE.CylinderGeometry(.018, .018, 2.0, 5), std(0x6b4a2e)); fr.position.set(1.6, 1.4, -.35); fr.rotation.z = -.9; boatG.add(fr);
+    const fisher = person(0xf2c14a, 0xf0c9a0); fisher.scale.setScalar(.6); fisher.position.set(-.1, .5, .12); boatG.add(fisher); boatG.userData.fisher = fisher; }
+
 
   // ---- the car
   const car = buildBike(), carW = new THREE.Group(); carW.add(car); carW.scale.setScalar(.62); scene.add(carW);
-  const S = { x: ROADX(-90), z: -90, yaw: 0, v: 0, steer: 0, y: 0, pitch: 0, roll: 0, cyaw: 0, uw: false };
+  const S = { boat: false, x: ROADX(-90), z: -90, yaw: 0, v: 0, steer: 0, y: 0, pitch: 0, roll: 0, cyaw: 0, uw: false };
   S.y = H(S.x, S.z); carW.position.set(S.x, S.y, S.z);
   // ---- the orbs of information
   const orbs = []; const IDX = { welcome: 0, freixo: 1, esteiro: 2, outes: 3, muros: 4, louro: 5, horreo: 6, tambre: 7, wreck: 8 };
@@ -749,7 +773,7 @@ export function open(opts) {
     else { body = toxo(); mat = body.userData.mat; }
     const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexL, color: isW ? 0xff9ac8 : 0xffe04a, transparent: true, opacity: .55, depthWrite: false, blending: THREE.AdditiveBlending, fog: false })); glow.scale.set(isW ? 7 : 6, isW ? 7 : 6, 1);
     const ring = new THREE.Group(); ring.add(glow); ring.material = glow.material; const beam = new THREE.Mesh(new THREE.CylinderGeometry(.3, .6, 9, 10, 1, true), beamMat);
-    const sea0 = isW ? H(x, z) + 1.6 : H(x, z) + .5; g.add(body, ring); beam.position.y = 4.5; g.add(beam); g.position.set(x, sea0, z);
+    const sea0 = isW ? 1.1 : H(x, z) + .5; g.add(body, ring); beam.position.y = 4.5; g.add(beam); g.position.set(x, sea0, z);
     g.userData = { id: IDX[k], base: sea0, ball: { material: mat || { emissiveIntensity: 1 } }, ring, beam, done: false, body }; scene.add(g); orbs.push(g); });
   const dots = root.querySelector('.x-dr-count span'), arrow = root.querySelector('.x-dr-arrow'), prompt = root.querySelector('.x-dr-prompt'), card = root.querySelector('.x-dr-card');
   let seen = 0, cardOn = false, nearOrb = null, nearCasa = false, inCasa = false, casaR = null; const paintCount = () => { dots.textContent = '★ ' + seen + ' / ' + orbs.length; }; paintCount();
@@ -840,7 +864,7 @@ export function open(opts) {
     }
     const throttle = cardOn || inCasa ? 0 : (tour.on ? aT : K.up - K.down), steerIn = cardOn || inCasa ? 0 : (tour.on ? aS : K.left - K.right);
     if (throttle > 0) S.v += (S.v < 0 ? 14 : 5.5) * dt; else if (throttle < 0) S.v -= (S.v > 0 ? 14 : 6) * dt; else S.v -= Math.sign(S.v) * Math.min(Math.abs(S.v), 6 * dt);
-    const vmax = S.uw ? 6.5 : 11; S.v = clamp(S.v, -3.5, vmax);
+    const vmax = S.boat ? 8 : 11; S.v = clamp(S.v, -3.5, vmax);
     S.steer += (steerIn - S.steer) * Math.min(1, dt * 5); S.yaw += S.steer * 1.55 * Math.min(1, Math.abs(S.v) / 2.8) / (1 + Math.abs(S.v) * .05) * Math.sign(S.v || 1) * dt;
     S.x += Math.sin(S.yaw) * S.v * dt; S.z += Math.cos(S.yaw) * S.v * dt;
     for (const c of colliders) {
@@ -854,14 +878,17 @@ export function open(opts) {
       const d = Math.hypot(dx, dz), r = c[2] + CR; if (d < r && d > 1e-4) { S.x = c[0] + dx / d * r; S.z = c[1] + dz / d * r; S.v *= .97; }
     }
     S.x = clamp(S.x, -97, 108); S.z = clamp(S.z, -96, 96);
-    let gy = H(S.x, S.z); { const by = bridgeY(S.x, S.z); if (by > -5 && S.y > by - 1.5) gy = Math.max(gy, by); } for (const pr of piers) if (S.x > pr.x0 && S.x < pr.x1 && Math.abs(S.z - pr.z) < PIERW / 2 - .1) gy = Math.max(gy, pr.y); S.y += (gy - S.y) * Math.min(1, dt * 14);
+    let gy = H(S.x, S.z); { const by = bridgeY(S.x, S.z); if (by > -5 && S.y > by - 1.5) gy = Math.max(gy, by); } for (const pr of piers) if (S.x > pr.x0 && S.x < pr.x1 && Math.abs(S.z - pr.z) < PIERW / 2 - .1) gy = Math.max(gy, pr.y); if (gy < -.45 && !(S.y > gy + 4)) { if (!S.boat) { S.boat = true; if (snd) { snd.splash(); snd.boat(true); } ripples.push({ x: S.x, z: S.z, t: 0 }); } } else if (gy > -.15 && S.boat) { S.boat = false; if (snd) { snd.splash(); snd.boat(false); } ripples.push({ x: S.x, z: S.z, t: 0 }); }
+    if (S.boat) gy = Math.sin(t * 1.3) * .04 + Math.sin(t * .7 + 1) * .03; S.y += (gy - S.y) * Math.min(1, dt * (S.boat ? 4 : 14));
     const fx = Math.sin(S.yaw), fz = Math.cos(S.yaw), rxx = fz, rzz = -fx;                                    // forward and left
     const hF = H(S.x + fx * 1.7, S.z + fz * 1.7), hB = H(S.x - fx * 1.7, S.z - fz * 1.7), hL = H(S.x + rxx * 1.1, S.z + rzz * 1.1), hR = H(S.x - rxx * 1.1, S.z - rzz * 1.1);
-    S.pitch += (Math.atan2(hF - hB, 3.4) - S.pitch) * Math.min(1, dt * 8); S.roll += (Math.atan2(hL - hR, 2.2) - S.roll) * Math.min(1, dt * 8);
+    S.pitch += ((S.boat ? Math.sin(t * 1.1) * .03 - S.v * .004 : Math.atan2(hF - hB, 3.4)) - S.pitch) * Math.min(1, dt * 8); S.roll += ((S.boat ? Math.sin(t * 1.6) * .05 - S.steer * S.v * .01 : Math.atan2(hL - hR, 2.2)) - S.roll) * Math.min(1, dt * 8);
     carW.position.set(S.x, S.y + Math.sin(t * 9) * Math.min(.03, Math.abs(S.v) * .003), S.z); carW.rotation.set(0, 0, 0); carW.rotation.y = S.yaw - PI / 2; car.rotation.set(0, 0, -S.pitch * .9); car.rotation.x = S.roll * .8; car.rotation.z += -Math.sin(S.steer) * 0 ;
+    car.visible = !S.boat; boatG.visible = S.boat;
+    if (S.boat) { boatG.position.set(S.x, S.y + .12, S.z); boatG.rotation.set(S.roll * .6, 0, S.pitch * .8); boatG.rotation.order = 'YXZ'; boatG.rotation.y = S.yaw - PI / 2; boatG.userData.flag.rotation.y = Math.sin(t * 6) * .25; boatG.userData.fisher.visible = true; if (Math.abs(S.v) > 1.5 && (t * 3.2 | 0) !== ((t - dt) * 3.2 | 0)) ripples.push({ x: S.x - Math.sin(S.yaw) * 1.6, z: S.z - Math.cos(S.yaw) * 1.6, t: 0 }); }
     car.userData.setRain(rainT > .45); car.userData.anim(S.v, dt, S.steer); car.rotation.x = S.roll * .8 - S.steer * Math.min(1, Math.abs(S.v) / 7) * .32;
     // water: in and out
-    const uwNow = S.y < -.6; if (uwNow !== S.uw) { S.uw = uwNow; if (snd) snd.splash(); ripples.push({ x: S.x, z: S.z, t: 0 }); }
+    
     uwMix += ((camera.position.y < -.15 ? 1 : 0) - uwMix) * Math.min(1, dt * 5);
     root.classList.toggle('x-uw', camera.position.y < -.15);
     // camera
@@ -924,7 +951,7 @@ export function open(opts) {
     if (tgt) { const b = Math.atan2(tgt.position.x - S.x, tgt.position.z - S.z); arrow.style.transform = 'rotate(' + ((S.cyaw - b) * 180 / PI).toFixed(1) + 'deg)'; arrow.style.opacity = 1; } else arrow.style.opacity = .2;
     let vn = '', vd = 40; VILLAGES.forEach(([n, z0]) => { const d = Math.hypot(S.x - (ROADX(z0) - 9), S.z - z0); if (d < vd) { vd = d; vn = n; } }); if (vn !== nearName) { nearName = vn; subEl.textContent = vn; }
     if (snd) { snd.atmos(nightT, rainT); }
-    if (snd) snd.update(S.v, sstep(26, 4, COAST(S.z) - S.x) * (S.uw ? 0 : 1), S.uw);
+    if (snd) { snd.update(S.boat ? 0 : S.v, sstep(26, 4, COAST(S.z) - S.x) * (S.boat ? 1.4 : 1), false); snd.boatSpeed(S.boat ? Math.abs(S.v) : 0); }
     if (inCasa && casaR && root.classList.contains('x-casa')) { casaR.update(dt, t, { w: innerWidth, h: innerHeight }); renderer.render(casaR.scene, casaR.camera); } else renderer.render(scene, camera);
   };
   raf = requestAnimationFrame(frame);
