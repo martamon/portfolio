@@ -86,6 +86,7 @@
     // about: soft edges for the hair video
     // about: no photo tiles over the hero (Framer's "Tile" blocks), only the head video and the text
     'html[data-xp="about"] [data-framer-name="Tile"]{display:none!important}',
+    'html[data-xp="about"] [data-framer-name="Hero Video"] video{will-change:transform;backface-visibility:hidden;-webkit-backface-visibility:hidden;contain:paint}',
     'html[data-xp="about"] video{-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 9%,#000 78%,transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 9%,#000 78%,transparent 100%)}',
     '[data-xh]{display:none!important}',
     // menu and project captions in the typeface, colour and hover animation of paul-michel.framer.website
@@ -1003,7 +1004,7 @@
     if (planet) return;
     planet = { loading: true };
     jfHint(0);
-    import('/extras/freixo.js?v=188').then(function (m) {
+    import('/extras/freixo.js?v=189').then(function (m) {
       planet = m.open({ getDark: function () { return darkness(theme.hour); }, getHour: function () { return theme.hour; }, onClose: function () { planet = null; } });
     }).catch(function () { planet = null; });
   }
@@ -1616,7 +1617,7 @@
     for (i = 0; i < vids.length; i++) {
       v = vids[i];
       if (!v.__xk) {
-        v.__xk = 1; v.muted = true; v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', ''); v.preload = 'auto';
+        v.__xk = 1; v.disablePictureInPicture = true; v.disableRemotePlayback = true; v.muted = true; v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', ''); v.preload = 'auto';
       }
       if (v.paused && getComputedStyle(v).visibility !== 'hidden' && document.visibilityState === 'visible') { var pr = v.play(); if (pr && pr.catch) pr.catch(function () {}); }
     }
