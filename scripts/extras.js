@@ -1004,7 +1004,7 @@
     if (planet) return;
     planet = { loading: true };
     jfHint(0);
-    import('/extras/freixo.js?v=189').then(function (m) {
+    import('/extras/freixo.js?v=190').then(function (m) {
       planet = m.open({ getDark: function () { return darkness(theme.hour); }, getHour: function () { return theme.hour; }, onClose: function () { planet = null; } });
     }).catch(function () { planet = null; });
   }
@@ -1607,7 +1607,8 @@
     if (!hero || !vids.length) return;
     if (innerWidth <= 809 && hero.offsetHeight) {
       var W = innerWidth, H = innerHeight, frame = W * 9 / 16, top = hero.offsetTop, height = hero.offsetHeight;
-      var Ht = Math.min(1.3 * W, 0.66 * height), sc = Math.max(1, Math.min(2.7, Ht / (0.92 * frame)));
+      var cap = document.querySelector('[data-framer-name="Caption"]'), capB = cap && cap.getBoundingClientRect().width ? cap.getBoundingClientRect().bottom + (window.scrollY || 0) : 0;   /* the head must start below the text, never behind it */
+      var Ht = Math.min(1.3 * W, 0.66 * height); if (capB) Ht = Math.max(Math.min(Ht, 0.5 * W), Math.min(Ht, H - 22 - (capB + 18))); var sc = Math.max(1, Math.min(2.7, Ht / (0.92 * frame)));
       var yc = H - 22 - Ht / 2, originY = top + 0.47 * height, centre = top + height / 2;
       var ty = (yc - originY) / sc - (centre - originY);
       var st = document.documentElement.style;
