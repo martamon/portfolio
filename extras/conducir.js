@@ -891,7 +891,7 @@ export function open(opts) {
   const exitBtn = root.querySelector('.x-dr-out');
   const enterCasa = () => { if (inCasa || !casa.ok) return; inCasa = true; root.classList.add('x-fade');
     const done = () => { welcome(); if (snd) snd.cozy(true); root.classList.add('x-casa'); subEl.textContent = 'Casa Martamon'; root.classList.remove('x-near', 'x-fade'); };
-    import('./casa.js?v=13').then((m) => { if (closed) return; if (!casaR) casaR = m.buildCasa(THREE, { std, rbox, PI }); setTimeout(done, 450); }).catch(() => { inCasa = false; root.classList.remove('x-fade'); }); };
+    import('./casa.js?v=14').then((m) => { if (closed) return; if (!casaR) casaR = m.buildCasa(THREE, { std, rbox, PI }); setTimeout(done, 450); }).catch(() => { inCasa = false; root.classList.remove('x-fade'); }); };
   const welcome = () => { let w = root.querySelector('.x-dr-wel'); if (!w) { w = document.createElement('div'); w.className = 'x-dr-wel'; root.appendChild(w); w.addEventListener('click', () => w.classList.remove('x-on')); } w.innerHTML = '<b>' + ['Welcome to my grandmother\u2019s house.', 'Bienvenidos a la casa de mi abuela.', 'Benvidos á casa da miña avoa.'][lang] + '</b><span>' + ['I hope you like it.', 'Espero que os guste.', 'Espero que vos guste.'][lang] + '</span>'; w.classList.remove('x-on'); void w.offsetWidth; w.classList.add('x-on'); clearTimeout(w._t); w._t = setTimeout(() => w.classList.remove('x-on'), 7500); };
   const leaveCasa = () => { const w0 = root.querySelector('.x-dr-wel'); if (w0) w0.classList.remove('x-on'); if (!inCasa) return; if (snd) snd.cozy(false); root.classList.add('x-fade'); setTimeout(() => { inCasa = false; root.classList.remove('x-casa', 'x-fade'); nearName = ''; }, 450); };
   exitBtn.addEventListener('click', leaveCasa);
