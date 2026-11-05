@@ -3,7 +3,7 @@
 // fishermen on anchored boats, cars, boats under sail, birds and clouds that keep moving. Opened from the Contact page (three clicks on the creature).
 // open({ night, onClose }) shows it on top of the page and returns { close }.
 import * as THREE from './three.module.min.js';
-import { mochiText, MOCHI, tr } from './i18n.js?v=13';
+import { mochiText, MOCHI, tr } from './i18n.js?v=14';
 import { stall, KINDS } from './mercadillo.js?v=1';
 const mochiLen = MOCHI.length;
 
@@ -944,12 +944,12 @@ export function open(opts) {
   function car(color, bus) {
     // a chubby little toy car: rounded body and cabin, big dark windows, round headlights, tail lights and fat wheels
     const g = new THREE.Group(), L = bus ? .5 : .3, body = std(color), hl = std(0xfff0b8, { emissive: 0xffe9a0, emissiveIntensity: .35 }), tl = std(0xe0584a);
-    const bd = box(L, bus ? .13 : .085, bus ? .18 : .16, body); bd.position.y = bus ? .1 : .075; g.add(bd);
+    const bd = box(L, bus ? .17 : .085, bus ? .18 : .16, body); bd.position.y = bus ? .12 : .075; g.add(bd);
     if (!bus) {
       const ca = box(.17, .075, .14, body); ca.position.set(-.03, .15, 0); g.add(ca);
       const ws = box(.178, .05, .146, winMat); ws.position.set(-.03, .152, 0); g.add(ws);                       // the dark windows run right round the cabin
       const roof = box(.18, .016, .146, body); roof.position.set(-.03, .192, 0); g.add(roof);
-    } else { const ws = box(L * .9, .05, .184, winMat); ws.position.set(0, .125, 0); g.add(ws); }
+    } else { const ws = box(L * .9, .05, .184, winMat); ws.position.set(0, .15, 0); g.add(ws); const st = box(L * .96, .014, .186, std(0xf6f1e4)); st.position.set(0, .09, 0); g.add(st); }
     for (const sz of [-1, 1]) {
       const h = new THREE.Mesh(new THREE.IcosahedronGeometry(.02, 1), hl); h.scale.set(.6, 1, 1); h.position.set(L / 2 - .004, .08, sz * .055); g.add(h);
       const t = new THREE.Mesh(new THREE.IcosahedronGeometry(.016, 1), tl); t.scale.set(.6, 1, 1); t.position.set(-L / 2 + .004, .08, sz * .055); g.add(t);
@@ -964,7 +964,7 @@ export function open(opts) {
   // every lane carries its cars at one speed and evenly spaced, so a car never catches up with the one in front
   const addCars = (ri, dir, n, speed, colors, bus, ping) => {
     for (let k = 0; k < n; k++) {
-      const m = car(colors[k % colors.length], bus && k === 0), w = new THREE.Group(); m.scale.setScalar(.64); w.add(m); W(w);
+      const m = car(colors[k % colors.length], bus === 'all' || (bus && k === 0)), w = new THREE.Group(); m.scale.setScalar(.64); w.add(m); W(w);
       cars.push({ w, r: routes[ri], u: (k + (dir > 0 ? .1 : .6)) / n, v: speed * dir, off: dir > 0 ? .095 : -.095, ping: !!ping });
     }
   };
@@ -983,7 +983,8 @@ export function open(opts) {
   addBikes(0, 1, 3, .2, .165); addBikes(0, -1, 2, .19, .165); addBikes(1, 1, 1, .18, .165); addBikes(1, -1, 1, .17, .165);
   addCars(0, 1, 5, .5, [0xc23b2e, 0xf2efe6, 0x2f6fa8, 0xe9b94a, 0x3b8f6a]);
   addCars(0, -1, 4, .5, [0xd0744a, 0xf2efe6, 0x3a3f47, 0xc23b2e], true);
-  addCars(1, 1, 2, .45, [0x2f6fa8, 0xe9b94a]);
+  addCars(0, 1, 2, .42, [0xe9873a, 0x3f8f9e], 'all');
+  addCars(1, 1, 2, .45, [0x2f6fa8, 0xe9b94a]); addCars(1, -1, 1, .4, [0xe9873a], 'all');
   addCars(1, -1, 2, .45, [0xc23b2e, 0xf2efe6]);
   
 
@@ -1609,7 +1610,7 @@ export function open(opts) {
     const okSpot = (x, z) => groundH(x, z) > SEA + .08 && !keptC.some((c) => Math.hypot(c[0] - x, c[1] - z) < c[2] + .12) && ![roadRaw, roadS].every((pts) => true) ;
     let k = 0;
     for (const [pts, xs, south] of [[roadN, [-14.6, -6.0, 3.2, 9.8], false], [roadS, [-6.4, 1.6], true]]) for (const x0 of xs) {
-      const q = at(pts, x0), sl = (shore(q[0] + .25) - shore(q[0] - .25)) / .5, yaw = south ? PI + Math.atan2(-sl, 1) : Math.atan2(-sl, 1), off = south ? .2 : -.2, x = q[0], z = q[1] + off;
+      const q = at(pts, x0), sl = (shore(q[0] + .25) - shore(q[0] - .25)) / .5, yaw = south ? PI + Math.atan2(-sl, 1) : Math.atan2(-sl, 1), off = south ? .5 : -.5, x = q[0], z = q[1] + off;
       if (!(groundH(x, z) > SEA + .08) || keptC.some((c) => Math.hypot(c[0] - x, c[1] - z) < c[2] + .1)) continue;
       const sh = shelter([0x3f8f9e, 0xe9873a, 0x5fae8a, 0xc9473a][k++ % 4]); sh.userData.bus = 1; W(put(sh, x, z, yaw, .012));
       const p2 = person(SHIRTS[(k * 3) % SHIRTS.length], { skin: SKINS[k % 4] }); p2.scale.setScalar(.8); W(put(p2, x, z + (south ? .02 : -.02), yaw + PI, .014)); }
@@ -1789,7 +1790,7 @@ export function open(opts) {
     if (tourOn) return; tourOn = true; tourMuted = !!(audio && audio.muted);
     mochi.classList.remove('x-ctaon'); mochi.classList.add('x-load'); root.classList.add('x-tour'); if (audio) { audio.sfx('mochinext'); setTimeout(() => audio && audio.mute(true), 500); }
     const t0 = performance.now();
-    import('./conducir.js?v=34').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
+    import('./conducir.js?v=35').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
       .then((m) => { const ab = m.open({ onClose: endTour, getDark: () => nightT }); if (!ab) throw new Error('no webgl'); setTimeout(mochiClose, 700); })
       .catch(() => { endTour(); mochiClose(); });
   };
