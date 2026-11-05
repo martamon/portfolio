@@ -4,7 +4,7 @@
 // information about the ría; press E (or tap the button) next to one to read it.
 import * as THREE from './three.module.min.js';
 import { INFO, getLang, tr } from './i18n.js?v=13';
-import { stall, bunting, KINDS } from './mercadillo.js?v=1';
+import { stall, KINDS } from './mercadillo.js?v=1';
 
 const PI = Math.PI, LI = ['en', 'es', 'gl'];
 // phones and weak devices get a lighter version: fewer pixels, no velvet sheen, cheaper shadows and fewer objects
@@ -504,7 +504,6 @@ export function open(opts) {
       for (let k = 0; k < N; k++) for (let sd = 0; sd < 2; sd++) { const kind = KINDS[(k * 2 + sd + (sd ? 3 : 0)) % 8], sx = x0 - 4.5 - k * STP, sz = z + (sd ? -3.7 : 3.7), st = stall(THREE, std, kind, awn[(k * 2 + sd) % 8], !LOW); st.scale.setScalar(.95);
         st.userData.hx = 1.6; st.userData.hz = 1.0; st.userData.r = 2; addTo(st, sx, sz, sd ? 0 : PI, 2.1);
         const vd = person([0xf4e6d0, 0xe9a0c0, 0x7aa6d8, 0xf2c14a][(k + sd) % 4], [0xf0c9a0, 0xe3b185, 0xf5d6b5, 0xc58c5e][(k + sd * 2) % 4]); vd.position.set(sx, H(sx, sz + (sd ? -2.1 : 2.1)) + .08, sz + (sd ? -2.1 : 2.1)); vd.rotation.y = (sd ? 0 : PI) - PI / 2 + (sd ? 0 : 0); scene.add(vd); }
-      for (let k = 0; k < N; k++) { const bn = bunting(THREE, std, 7.4, 9, awn); bn.rotation.y = PI / 2; const bx = x0 - 7.3 - k * STP; bn.position.set(bx, H(bx, z) + 5.1, z); scene.add(bn); }
       const shirts = [0xe36d57, 0x4f8fc0, 0xc9a0e8, 0x5fae8a, 0xf0907a, 0x7aa6d8], skins = [0xf0c9a0, 0xe3b185, 0xf5d6b5, 0xc58c5e];
       for (let i = 0; i < 6; i++) { const w2 = person(shirts[i], skins[i % 4], [0xe36d57, 0x5fae8a, 0xf2c14a][i % 3]); scene.add(w2); const a = x0 - 3 - (i % 3) * 4, b2 = x0 - LEN + 3 + (i % 3) * 2; walkers.push({ p: w2, pts: [[a, z + (i % 2 ? .9 : -.9)], [(a + b2) / 2, z + (i % 2 ? -.6 : .6)], [b2, z + (i % 2 ? .9 : -.9)]], d: i * 4.5, sp: .45 + (i % 3) * .12, dir: i % 2 ? 1 : -1, lift: .08 }); }
       reserved.push([x0 - LEN - 2, x0 + 5, z - 6.5, z + 6.5]); mkt = { x: x0 - LEN / 2, z }; } }
@@ -652,7 +651,7 @@ export function open(opts) {
   const ripples = [];
 
   // ---- the car
-  const car = buildBike(), carW = new THREE.Group(); carW.add(car); scene.add(carW);
+  const car = buildBike(), carW = new THREE.Group(); carW.add(car); carW.scale.setScalar(.62); scene.add(carW);
   const S = { x: ROADX(-90), z: -90, yaw: 0, v: 0, steer: 0, y: 0, pitch: 0, roll: 0, cyaw: 0, uw: false };
   S.y = H(S.x, S.z); carW.position.set(S.x, S.y, S.z);
   // ---- the orbs of information
@@ -762,7 +761,7 @@ export function open(opts) {
     S.x += Math.sin(S.yaw) * S.v * dt; S.z += Math.cos(S.yaw) * S.v * dt;
     for (const c of colliders) {
       if (tour.ghost > 0) break;
-      const dx = S.x - c[0], dz = S.z - c[1], CR = .85;
+      const dx = S.x - c[0], dz = S.z - c[1], CR = .55;
       if (c.length >= 6) { if (c[6] !== undefined && S.y < c[6]) continue;                                                               // a building: an oriented box, the car is pushed out of it
         if (dx * dx + dz * dz > (c[2] + 3) * (c[2] + 3)) continue; const ca = Math.cos(c[5]), sa = Math.sin(c[5]), lx = dx * ca - dz * sa, lz = dx * sa + dz * ca, qx = clamp(lx, -c[3], c[3]), qz = clamp(lz, -c[4], c[4]), ex = lx - qx, ez = lz - qz, ed = Math.hypot(ex, ez);
         let ox, oz; if (ed > 1e-4) { if (ed >= CR) continue; ox = ex / ed * (CR - ed); oz = ez / ed * (CR - ed); } else { const px = c[3] - Math.abs(lx), pz = c[4] - Math.abs(lz); if (px < pz) { ox = Math.sign(lx || 1) * (px + CR); oz = 0; } else { oz = Math.sign(lz || 1) * (pz + CR); ox = 0; } }
@@ -783,9 +782,9 @@ export function open(opts) {
     root.classList.toggle('x-uw', camera.position.y < -.15);
     // camera
     let dy = S.yaw - S.cyaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); S.cyaw += dy * Math.min(1, dt * 3.2);
-    const cd = (9.2 + Math.min(2.5, Math.abs(S.v) * .2)) * zoomK, cp = _v.set(S.x - Math.sin(S.cyaw + orb.yaw) * cd * (1 - orb.pitch * .25), 0, S.z - Math.cos(S.cyaw + orb.yaw) * cd * (1 - orb.pitch * .25)); cp.y = Math.max(S.y, 0) + 4.3 * (.6 + .4 * zoomK) + (zoomK > 1 ? (zoomK - 1) * 3 : 0) + (S.uw ? -S.y * .35 : 0);
+    const cd = (6.6 + Math.min(1.8, Math.abs(S.v) * .15)) * zoomK, cp = _v.set(S.x - Math.sin(S.cyaw + orb.yaw) * cd * (1 - orb.pitch * .25), 0, S.z - Math.cos(S.cyaw + orb.yaw) * cd * (1 - orb.pitch * .25)); cp.y = Math.max(S.y, 0) + 3.1 * (.6 + .4 * zoomK) + (zoomK > 1 ? (zoomK - 1) * 3 : 0) + (S.uw ? -S.y * .35 : 0);
     cp.y += orb.pitch * cd * .55; if (!orb.hold) { orb.idle += dt; if (orb.idle > .5) { const k = Math.min(1, dt * 2.2); orb.yaw *= 1 - k; orb.pitch *= 1 - k; } }
-    camera.position.lerp(cp, Math.min(1, dt * 6)); camera.position.y = Math.max(camera.position.y, H(camera.position.x, camera.position.z) + 1.2);
+    camera.position.lerp(cp, Math.min(1, dt * 6)); camera.position.y = Math.max(camera.position.y, H(camera.position.x, camera.position.z) + .9);
     camera.lookAt(S.x + Math.sin(S.yaw) * 3, S.y + 1.7, S.z + Math.cos(S.yaw) * 3);
     // atmosphere
     nightT += (nightGoal - nightT) * Math.min(1, dt * .7); const nz = nightT; rainT += (rainGoal - rainT) * Math.min(1, dt * .8);
