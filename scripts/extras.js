@@ -141,6 +141,10 @@
     // the dial, as in the original: "LOCAL TIME" over the hours and minutes (a blinking dot between them) and a round dial with a ring inside
     '.x-dial{position:fixed;top:12px;right:150px;z-index:12;display:flex;align-items:center;gap:22px;color:#fff;mix-blend-mode:difference;font:500 14px/1.25 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.025em;text-transform:uppercase;user-select:none;-webkit-user-select:none}',
     '@keyframes x-blink{50%{opacity:0}}',
+    /* the head cut out of its background (transparent clips): no halo, no page-coloured veil, only the foot of the frame fades */
+    'html[data-xalpha] .x-vfade{display:none!important}',
+    'html[data-xp="about"][data-xalpha] [data-framer-name="Hero Video"] video{-webkit-mask-image:linear-gradient(to bottom,#000 0,#000 80%,transparent 100%)!important;mask-image:linear-gradient(to bottom,#000 0,#000 80%,transparent 100%)!important}',
+    '@media(max-width:809px){html[data-xp="about"][data-xalpha] [data-framer-name="Hero Video"] video{-webkit-mask-image:linear-gradient(to bottom,transparent calc(50% - 28.125vw),#000 calc(50% - 22.5vw),#000 calc(50% + 17vw),transparent calc(50% + 28.125vw))!important;mask-image:linear-gradient(to bottom,transparent calc(50% - 28.125vw),#000 calc(50% - 22.5vw),#000 calc(50% + 17vw),transparent calc(50% + 28.125vw))!important}}',
     /* the text blends (negative on the light page, positive on the dark head) with what is behind it inside the video layer, so that layer carries the page colour */
     'html[data-xp="about"] [data-framer-name="Hero Video"]{background:color-mix(in srgb,rgb(181,197,217) calc((1 - var(--xt)) * 100%),rgb(41,60,89) calc(var(--xt) * 100%))}',
     '.x-dial{top:auto!important;right:auto!important;left:14px;bottom:46px;gap:6px;font-size:11px;opacity:.72}',
@@ -992,7 +996,7 @@
     if (planet) return;
     planet = { loading: true };
     jfHint(0);
-    import('/extras/freixo.js?v=201').then(function (m) {
+    import('/extras/freixo.js?v=202').then(function (m) {
       planet = m.open({ getDark: function () { return darkness(theme.hour); }, getHour: function () { return theme.hour; }, onClose: function () { planet = null; } });
     }).catch(function () { planet = null; });
   }
@@ -1498,6 +1502,9 @@
 
   // About on phones / narrow windows: size and place the head from the screen itself, so it neither crowds the top nor leaves a gap
   // under it at any shape: its height is the smaller of 1.16 x the width and 58% of the screen, and its foot sits 22 px above the bottom
+  // the head clips come with a transparent copy (the sky cut away): used wherever the browser shows WebM transparency (not Safari / iOS)
+  var HEAD_IDS = ['jPmsdRIE0vlfbsluwT59xxxwp7k', '2jNDbcQEsXgQm7SBTNGCPwcAL8', '2N6eSRRMavPTSQcVgQoxcLF0vmg', 'VbzyX92zHKlr5jcCuyQzl6sgXA'];
+  var HEAD_ALPHA = (function () { try { var ua = navigator.userAgent; return /Chrome|Chromium|Firefox|Edg/.test(ua) && !/iPhone|iPad|iPod|CriOS|FxiOS|EdgiOS/.test(ua) && !!document.createElement('video').canPlayType('video/webm; codecs="vp9"'); } catch (e) { return false; } })();
   function aboutHead() {
     var vids = [], i, v, hero = null, heroes = document.querySelectorAll('[data-framer-name="Hero Video"]');
     for (i = 0; i < heroes.length; i++) if (heroes[i].getBoundingClientRect().width > 0) { hero = heroes[i]; break; }
@@ -1516,6 +1523,7 @@
     // the footage must keep playing: browsers on phones are strict about it (and reloading used to leave the head blank)
     for (i = 0; i < vids.length; i++) {
       v = vids[i];
+      if (HEAD_ALPHA) { var hm = /assets\/([A-Za-z0-9_-]+)\.mp4/.exec(v.getAttribute('src') || ''); if (hm && HEAD_IDS.indexOf(hm[1]) > -1) { v.setAttribute('src', '/extras/head/' + hm[1] + '.webm?v=1'); v.__xk = 0; setAttr(document.documentElement, 'data-xalpha', ''); } }
       if (!v.__xk) {
         v.__xk = 1; v.disablePictureInPicture = true; v.disableRemotePlayback = true; v.muted = true; v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', ''); v.preload = 'auto';
       }
