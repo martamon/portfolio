@@ -82,6 +82,18 @@ function jelly(col) {
   const ten = []; for (let i = 0; i < 7; i++) { const t = new THREE.Mesh(new THREE.CylinderGeometry(.012, .006, 1, 4), new THREE.MeshStandardMaterial({ color: PASTEL(col), transparent: true, opacity: .7 })); const a = i / 7 * PI * 2; t.userData.a = a; t.position.set(Math.cos(a) * .34, -.5, Math.sin(a) * .34); g.add(t); ten.push(t); }
   g.userData.bell = bell; g.userData.ten = ten; g.userData.rim = rim; return g;
 }
+// a beach buoy (boya de playa): a round red-and-white float on a little chain, with a glowing lantern on top
+function buoy() {
+  const g = new THREE.Group(), glow = new THREE.MeshStandardMaterial({ color: 0xfff3c4, emissive: 0xffc34a, emissiveIntensity: 1.2, roughness: .5 });
+  const add = (geo, col, x, y, z, ex) => { const o = new THREE.Mesh(geo, col && col.isMaterial ? col : std(col, ex)); o.position.set(x, y, z); o.castShadow = true; g.add(o); return o; };
+  const R = .95; add(new THREE.SphereGeometry(R, 20, 14), 0xf6f1e4, 0, 0, 0);
+  for (let k = 0; k < 4; k++) { const st = add(new THREE.SphereGeometry(R * 1.012, 20, 14, k * PI / 2, PI / 4, 0, PI), 0xe0584a, 0, 0, 0); st.scale.set(1, 1, 1); }
+  add(new THREE.TorusGeometry(R * .98, .06, 8, 28), 0x2f6fa8, 0, 0, 0).rotation.x = PI / 2;
+  add(new THREE.CylinderGeometry(.14, .2, .5, 10), 0x3a3f47, 0, R + .1, 0); add(new THREE.CylinderGeometry(.34, .34, .06, 14), 0xe0584a, 0, R + .38, 0);
+  const lamp = add(new THREE.SphereGeometry(.3, 12, 10), glow, 0, R + .72, 0); lamp.castShadow = false; add(new THREE.ConeGeometry(.36, .26, 10), 0x3a3f47, 0, R + 1.05, 0);
+  add(new THREE.TorusGeometry(.16, .045, 6, 12), 0x8a8f96, 0, -R - .1, 0).rotation.x = PI / 2; for (let k = 0; k < 3; k++) add(new THREE.TorusGeometry(.09, .03, 5, 8), 0x8a8f96, 0, -R - .35 - k * .2, 0).rotation.y = k * PI / 2;
+  g.userData.mat = glow; return g;
+}
 function octopus() {
   const g = new THREE.Group(), col = 0xe9937e, head = mesh(new THREE.SphereGeometry(.42, 12, 10), col); head.scale.set(1, 1.15, 1); head.position.y = .55; g.add(head);
   const arms = [];
@@ -790,11 +802,11 @@ export function open(opts) {
   const orbMat = new THREE.MeshStandardMaterial({ color: 0xfff6dc, emissive: 0xffd98a, emissiveIntensity: .9, roughness: .3 }), beamMat = new THREE.MeshBasicMaterial({ color: 0xffe3a0, transparent: true, opacity: .07, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false });
   Object.keys(IDX).forEach((k) => {
     const [x, z] = place[k], g = new THREE.Group(), isW = k === 'wreck'; let body, mat;
-    if (isW) { body = octopus(); body.scale.setScalar(1.6); body.traverse((o) => { if (o.isMesh && !o.userData.ol) { o.material = o.material.clone(); o.material.emissive = new THREE.Color(0xff8fb0); o.material.emissiveIntensity = 1.1; mat = mat || o.material; } }); }
+    if (isW) { body = buoy(); mat = body.userData.mat; }
     else { body = toxo(); mat = body.userData.mat; }
-    const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexL, color: isW ? 0xff9ac8 : 0xffe04a, transparent: true, opacity: .55, depthWrite: false, blending: THREE.AdditiveBlending, fog: false })); glow.scale.set(isW ? 7 : 6, isW ? 7 : 6, 1);
+    const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexL, color: isW ? 0xffd27a : 0xffe04a, transparent: true, opacity: .55, depthWrite: false, blending: THREE.AdditiveBlending, fog: false })); glow.scale.set(isW ? 7 : 6, isW ? 7 : 6, 1);
     const ring = new THREE.Group(); ring.add(glow); ring.material = glow.material; const beam = new THREE.Mesh(new THREE.CylinderGeometry(.3, .6, 9, 10, 1, true), beamMat);
-    const sea0 = isW ? 1.1 : H(x, z) + .5; g.add(body, ring); beam.position.y = 4.5; g.add(beam); g.position.set(x, sea0, z);
+    const sea0 = isW ? .75 : H(x, z) + .5; g.add(body, ring); beam.position.y = 4.5; g.add(beam); g.position.set(x, sea0, z);
     g.userData = { id: IDX[k], base: sea0, ball: { material: mat || { emissiveIntensity: 1 } }, ring, beam, done: false, body }; scene.add(g); orbs.push(g); });
   const dots = root.querySelector('.x-dr-count span'), arrow = root.querySelector('.x-dr-arrow'), prompt = root.querySelector('.x-dr-prompt'), card = root.querySelector('.x-dr-card');
   let seen = 0, cardOn = false, nearOrb = null, nearCasa = false, inCasa = false, casaR = null; const paintCount = () => { dots.textContent = '★ ' + seen + ' / ' + orbs.length; }; paintCount();
