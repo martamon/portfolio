@@ -771,6 +771,20 @@ export function open(opts) {
   // the quay and the seafarers’ quarter of Muros
   // a real harbour wall: one continuous quay of coursed granite (a wall face down into the water, a paved top, a coping stone along the edge), with bollards and mooring rings
   const quayTex = (() => { const c = document.createElement('canvas'); c.width = 256; c.height = 64; const g = c.getContext('2d'); g.fillStyle = '#b4ad9b'; g.fillRect(0, 0, 256, 64); let y = 0; while (y < 64) { const rh = 14 + hash2(y, 3) * 6; let x = -hash2(y, 7) * 30; while (x < 256) { const sw = 34 + hash2(x, y) * 36, v = 168 + hash2(y, x) * 34; g.fillStyle = `rgb(${v},${v - 4},${v - 16})`; g.fillRect(x + 1.2, y + 1.2, sw - 2.4, rh - 2.4); x += sw; } y += rh; } const t = new THREE.CanvasTexture(g.canvas || c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; return t; })();
+  // a continuous stone wall along any path of the map (piers, causeways, breakwaters): a coursed face down into the water, a paved top, a coping edge, optional low parapets
+  function wallPath(pts, half, o) {
+    o = o || {}; const topH = o.topH || .17, lo = -.12, pa = o.parapet || 0, cp = .02;
+    const prof = pa ? [[-half, 0, 0], [-half, topH + pa, 0], [-half + .05, topH + pa, 2], [-half + .05, topH, 0], [half - .05, topH, 1], [half - .05, topH + pa, 0], [half, topH + pa, 2], [half, lo, 0]] : [[-half, 0, 0], [-half, topH, 0], [half - .05, topH, 1], [half - .05, topH + cp, 2], [half, topH + cp, 2], [half, lo, 0]];
+    const pos = [[], [], []], uv = [[], [], []], N = pts.length, ring = [];
+    for (let i = 0; i < N; i++) { const a = pts[Math.max(0, i - 1)], b = pts[Math.min(N - 1, i + 1)], tx = b[0] - a[0], tz = b[1] - a[1], l = Math.hypot(tx, tz) || 1, nx = -tz / l, nz = tx / l; ring.push(prof.map(([d, h]) => dirFrom(pts[i][0] + nx * d, pts[i][1] + nz * d, new THREE.Vector3()).multiplyScalar(R + SEA + h))); }
+    let run = 0; for (let i = 0; i < N - 1; i++) { const seg = Math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]), u0 = run * 1.4, u1 = (run + seg) * 1.4; run += seg;
+      for (let j = 0; j < prof.length - 1; j++) { const g = prof[j][2], A = ring[i][j], B = ring[i][j + 1], C = ring[i + 1][j + 1], D = ring[i + 1][j], v0 = prof[j][1] * 3, v1 = prof[j + 1][1] * 3; pos[g].push(A.x, A.y, A.z, B.x, B.y, B.z, C.x, C.y, C.z, A.x, A.y, A.z, C.x, C.y, C.z, D.x, D.y, D.z); uv[g].push(u0, v0, u0, v1, u1, v1, u0, v0, u1, v1, u1, v0); } }
+    const mats = [new THREE.MeshStandardMaterial({ map: quayTex, color: 0xffffff, roughness: 1, side: THREE.DoubleSide }), new THREE.MeshStandardMaterial({ color: 0xd9d2c1, roughness: 1, side: THREE.DoubleSide }), new THREE.MeshStandardMaterial({ color: 0xc8c1af, roughness: 1, side: THREE.DoubleSide })];
+    for (let g = 0; g < 3; g++) { if (!pos[g].length) continue; const bg = new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.Float32BufferAttribute(pos[g], 3)); bg.setAttribute('uv', new THREE.Float32BufferAttribute(uv[g], 2)); bg.computeVertexNormals(); const m = new THREE.Mesh(bg, mats[g]); m.castShadow = true; m.receiveShadow = true; W(m); }
+    // end caps so the wall is closed where it stops
+    for (const e of [0, N - 1]) { const r = ring[e], cap = []; for (let j = 1; j < prof.length - 1; j++) { cap.push(r[0].x, r[0].y, r[0].z, r[j].x, r[j].y, r[j].z, r[j + 1].x, r[j + 1].y, r[j + 1].z); } const bg = new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.Float32BufferAttribute(cap, 3)); bg.computeVertexNormals(); const m = new THREE.Mesh(bg, mats[0]); W(m); }
+    for (let i = 0; i < N; i += 3) { const mk = new THREE.Group(); mk.userData.stoneBlock = 1; W(put(mk, pts[i][0], pts[i][1], 0, .02, true)); }
+  }
   function quay(x0, x1, zf, sea, half) {
     const zr = zf; zf = (x) => { let a = 0; for (let k = -6; k <= 6; k++) a += zr(x + k * .08); return a / 13; };   /* the shoreline is stepped: the wall follows its smoothed line */
     half = half || .27; const topH = .17, wallLo = -.12, step = .06, N = Math.max(2, Math.ceil(Math.abs(x1 - x0) / step)), P = [], dir = x1 > x0 ? 1 : -1;
@@ -828,11 +842,8 @@ export function open(opts) {
   // ---- the pier of O Freixo with its light, and a breakwater
   const pier = new THREE.Group(); W(pier);
   const pierX = 1.5, shoreZ = shore(pierX), PIER_LEN = 4.6;
-  for (let s = 0; s * .5 < PIER_LEN; s++) {
-    const z = shoreZ - .6 + s * .5, p = new THREE.Group(); p.userData.stoneBlock = 1; p.add(box(.4, .6, .6, std(0xb2ac9c))); const top = box(.46, .08, .6, std(0xd0cabb)); top.position.y = .34; p.add(top);
-    pier.add(put(p, pierX, z, 0, .02, true));
-    if (s % 2 === 1) { const bol = new THREE.Mesh(new THREE.CylinderGeometry(.045, .06, .12, 6), std(0x2b3036)); bol.position.y = .44; const pb = new THREE.Group(); pb.add(bol); pier.add(put(pb, pierX + .15, z, 0, .02, true)); }
-  }
+  { const pp = []; for (let z = shoreZ - .6; z <= shoreZ - .6 + PIER_LEN + .05; z += .12) pp.push([pierX, z]); wallPath(pp, .24, { topH: .17 });
+    for (let s = 1; s * .5 < PIER_LEN; s += 2) { const z = shoreZ - .6 + s * .5; for (const sx of [-1, 1]) { const bol = new THREE.Mesh(new THREE.CylinderGeometry(.03, .04, .07, 8), std(0x2b3036)); bol.position.y = .035; const pb = new THREE.Group(); pb.add(bol); pier.add(put(pb, pierX + sx * .17, z, 0, .02 + .17, true)); } } }
   const endZ = shoreZ - .6 + (Math.ceil(PIER_LEN / .5) - 1) * .5;
   const lh = new THREE.Group();
   const lbase = new THREE.Mesh(new THREE.CylinderGeometry(.14, .2, .7, 10), std(0xf3f1ea)); lbase.position.y = .35; lh.add(lbase);
@@ -841,7 +852,7 @@ export function open(opts) {
   const lroof = new THREE.Mesh(new THREE.ConeGeometry(.19, .2, 10), std(0x2b3036)); lroof.position.y = .94; lh.add(lroof);
   pier.add(put(lh, pierX, endZ, 0, .34, true));
   const lamp = new THREE.PointLight(0xffd36b, 0, 6, 1.6); lamp.position.set(0, .78, 0); lh.add(lamp);
-  for (let s = 0; s < 8; s++) { const t = s / 7, x = 2.9 + t * 2.0, z = shore(x) + .25 + Math.sin(t * 1.5) * 1.0; const p = new THREE.Group(); const b = box(.5, .5, .6, std(0xb2ac9c)); b.rotation.y = .5 - t * .6; p.add(b); W(put(p, x, z, 0, .02, true)); }
+  { const bw = []; for (let t = 0; t <= 1.001; t += .04) { const x = 2.9 + t * 2.0; bw.push([x, shore(x) + .25 + Math.sin(t * 1.5) * 1.0]); } wallPath(bw, .27, { topH: .12 }); }
   spot('O Freixo pier', 'Muelle', 'The pier of O Freixo reaches out into the ría. The boats tie up along it and, at its end, a small light shows the way in at night.', lh, .5);
 
   // ---- the old stone bridge of Outes (Ponte Nafonso) and the river
@@ -1612,9 +1623,7 @@ export function open(opts) {
     // it stands at the far end of a short stone causeway that runs out into the open sea from the western cape (like the road out to Fisterra's light)
     let x0 = -4; while (x0 > -40 && isl(0, x0, ISL[0].cz) < 1) x0 -= .05;
     const zc = ISL[0].cz, LEN = 4.4, stone2 = std(0xb4ad9a), cap2 = std(0xd0cabb);
-    for (let k = 0; k * .42 < LEN; k++) { const x = x0 + .5 - k * .42, q = new THREE.Group(); q.userData.stoneBlock = 1; const b1 = box(.46, .4, .5, stone2); b1.position.y = .0; q.add(b1); const c1 = box(.5, .05, .54, cap2); c1.position.y = .22; q.add(c1);
-      for (const sz of [-1, 1]) { const wl = box(.46, .09, .05, stone2); wl.position.set(0, .29, sz * .22); q.add(wl); }
-      W(put(q, x, zc, 0, .03, true)); }
+    { const cw = []; for (let x = x0 + .5; x >= x0 + .5 - LEN; x -= .1) cw.push([x, zc]); wallPath(cw, .36, { topH: .14, parapet: .06 }); }
     for (let k = 0; k < 9; k++) { const rk = new THREE.Mesh(new THREE.IcosahedronGeometry(.12 + rnd() * .12, 2), std(0x8d897d, { flatShading: false })); rk.scale.y = .7; W(put(rk, x0 - LEN * .15 - rnd() * LEN * .5, zc + (rnd() - .5) * 1.2 + (k % 2 ? .4 : -.4), rnd() * 6, -.05, true)); }
     const lx = x0 + .5 - LEN, base = new THREE.Mesh(new THREE.CylinderGeometry(.5, .56, .3, 16), stone2); const bg = new THREE.Group(); bg.add(base); bg.userData.stoneBlock = 1; W(put(bg, lx, zc, 0, .04, true));
     g.remove(g.children[0]); g.remove(g.children.find((c) => c.scale && Math.abs(c.scale.x - .85) < .01));
