@@ -130,7 +130,7 @@
     '.x-vfade{position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;opacity:var(--xt);background:color-mix(in srgb,rgb(181,197,217) calc((1 - var(--xt)) * 100%),rgb(41,60,89) calc(var(--xt) * 100%));-webkit-mask-image:radial-gradient(ellipse 40% 70% at 50% 47%,transparent 0,transparent 50%,#000 100%);mask-image:radial-gradient(ellipse 40% 70% at 50% 47%,transparent 0,transparent 50%,#000 100%)}',
     // phones: the hero box is tall and narrow, and covering it blew the head up and cut it at the sides; show the whole frame,
     // a little enlarged, and fit the night fade to it
-    '@media(max-width:809px){html[data-xp="about"] [data-framer-name="Hero Video"] video{object-fit:contain!important;transform:scale(var(--xhs,2.25)) translate(0,var(--xhy,5px));transform-origin:50% 47%;-webkit-mask-image:linear-gradient(to bottom,transparent calc(50% - 28.125vw),#000 calc(50% - 22.5vw),#000 calc(50% + 22.5vw),transparent calc(50% + 28.125vw)),radial-gradient(ellipse 42.3vw 38.5vw at 50% 50%,#000 0,#000 66%,rgba(0,0,0,.5) 84%,transparent 100%)!important;mask-image:linear-gradient(to bottom,transparent calc(50% - 28.125vw),#000 calc(50% - 22.5vw),#000 calc(50% + 22.5vw),transparent calc(50% + 28.125vw)),radial-gradient(ellipse 42.3vw 38.5vw at 50% 50%,#000 0,#000 66%,rgba(0,0,0,.5) 84%,transparent 100%)!important;-webkit-mask-composite:source-in!important;mask-composite:intersect!important}html[data-xp="about"] .x-vfade{display:none!important}}',
+    '@media(max-width:809px){html[data-xp="about"] [data-framer-name="Hero Video"] video{object-fit:contain!important;transform:scale(var(--xhs,2.25)) translate(var(--xhx,0px),var(--xhy,5px));transform-origin:50% 47%;-webkit-mask-image:linear-gradient(to bottom,transparent calc(50% - 28.125vw),#000 calc(50% - 22.5vw),#000 calc(50% + 22.5vw),transparent calc(50% + 28.125vw)),radial-gradient(ellipse 42.3vw 38.5vw at 50% 50%,#000 0,#000 66%,rgba(0,0,0,.5) 84%,transparent 100%)!important;mask-image:linear-gradient(to bottom,transparent calc(50% - 28.125vw),#000 calc(50% - 22.5vw),#000 calc(50% + 22.5vw),transparent calc(50% + 28.125vw)),radial-gradient(ellipse 42.3vw 38.5vw at 50% 50%,#000 0,#000 66%,rgba(0,0,0,.5) 84%,transparent 100%)!important;-webkit-mask-composite:source-in!important;mask-composite:intersect!important}html[data-xp="about"] .x-vfade{display:none!important}}',
     // text that sits on that video is blended with it (exclusion): in the dark it is plain light type instead, or it would vanish
     'html[data-xdark] [data-xbl]{mix-blend-mode:normal!important}',
     'html[data-xdark][data-xp="about"] [data-xtc]{text-shadow:0 0 6px rgba(22,32,52,.8),0 0 18px rgba(22,32,52,.65)}',
@@ -141,8 +141,10 @@
     // the dial, as in the original: "LOCAL TIME" over the hours and minutes (a blinking dot between them) and a round dial with a ring inside
     '.x-dial{position:fixed;top:12px;right:150px;z-index:12;display:flex;align-items:center;gap:22px;color:#fff;mix-blend-mode:difference;font:500 14px/1.25 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.025em;text-transform:uppercase;user-select:none;-webkit-user-select:none}',
     '@keyframes x-blink{50%{opacity:0}}',
+    /* the text blends (negative on the light page, positive on the dark head) with what is behind it inside the video layer, so that layer carries the page colour */
+    'html[data-xp="about"] [data-framer-name="Hero Video"]{background:color-mix(in srgb,rgb(181,197,217) calc((1 - var(--xt)) * 100%),rgb(41,60,89) calc(var(--xt) * 100%))}',
     '.x-dial{top:auto!important;right:auto!important;left:14px;bottom:46px;gap:6px;font-size:11px;opacity:.72}',
-    '.x-dn{position:fixed;left:14px;bottom:72px;z-index:12;width:40px;height:40px;border-radius:50%;border:0;padding:0;display:grid;place-items:center;cursor:pointer;color:#1f1f1f;background:rgba(255,255,255,.7);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 2px 10px rgba(20,50,80,.12);transition:background .5s ease,color .5s ease,transform .4s cubic-bezier(.2,.8,.2,1)}.x-dn:hover{transform:scale(1.06)}.x-dn:focus-visible{outline:2px solid currentColor;outline-offset:2px}',
+    '.x-dn{position:fixed;top:12px;right:14px;z-index:12;width:36px;height:36px;border-radius:50%;border:0;padding:0;display:grid;place-items:center;cursor:pointer;color:#1f1f1f;background:rgba(255,255,255,.7);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 2px 10px rgba(20,50,80,.12);transition:background .5s ease,color .5s ease,transform .4s cubic-bezier(.2,.8,.2,1)}.x-dn:hover{transform:scale(1.06)}.x-dn:focus-visible{outline:2px solid currentColor;outline-offset:2px}',
     'html[data-xdark] .x-dn{background:rgba(20,34,66,.65);color:rgb(203,237,255)}',
     '.x-dial-time{display:inline-flex;align-items:center;font-variant-numeric:tabular-nums;letter-spacing:.06em}.x-dial-time b{font-weight:500}.x-dial-time i{font-style:normal;margin:0 .12em;animation:x-blink 1s step-end infinite}.x-dial-an{flex:none;overflow:visible}',
     '@media(prefers-reduced-motion:reduce){.x-dial-time i{animation:none}}',
@@ -274,7 +276,7 @@
     // About on phones: title and text sit over the turning head as negative/positive type (difference blend), white so it inverts against the head and the page
     '@media(max-width:809px){html[data-xp="about"] [data-framer-name="Caption"],html[data-xp="about"] [data-framer-name="Wordmark"]{mix-blend-mode:difference!important;isolation:auto!important}html[data-xp="about"] [data-framer-name="Caption"] *,html[data-xp="about"] [data-framer-name="Wordmark"] *{color:#fff!important;text-shadow:none!important}html[data-xp="about"] [data-framer-name="Hero Video"]{isolation:auto!important}html[data-xp="about"] [data-framer-name="Hero Video"]>div[class*="framer-"]:not([data-framer-name^="Video"]){mix-blend-mode:difference}}',
     // About on phones: the intro text a little wider (fewer, longer lines) so it is not a tall thin column
-    '@media(max-width:809px){html[data-xp="about"] [data-framer-name="Caption"]{width:min(62vw,250px)!important;max-width:none!important}html[data-xp="about"] [data-framer-name="Caption"] p{width:100%!important}}',
+    '@media(max-width:809px){html[data-xp="about"] [data-framer-name="Caption"]{width:var(--xcw,min(62vw,250px))!important;max-width:none!important}html[data-xp="about"] [data-framer-name="Caption"] p{width:100%!important}}',
     '[data-xs]{display:none!important}'
   ].join('\n');
   var style = document.createElement('style');
@@ -990,7 +992,7 @@
     if (planet) return;
     planet = { loading: true };
     jfHint(0);
-    import('/extras/freixo.js?v=195').then(function (m) {
+    import('/extras/freixo.js?v=198').then(function (m) {
       planet = m.open({ getDark: function () { return darkness(theme.hour); }, getHour: function () { return theme.hour; }, onClose: function () { planet = null; } });
     }).catch(function () { planet = null; });
   }
@@ -1371,6 +1373,14 @@
   var DN_MOON = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>';
   var DN_SUN = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/></svg>';
   function paintDn() { var b = document.querySelector('.x-dn'); if (!b) return; var night = darkness(theme.hour) > 0.5; b.innerHTML = night ? DN_SUN : DN_MOON; b.setAttribute('aria-label', night ? 'Light mode' : 'Dark mode'); }
+  // top right, level with the menu and just left of it; where the menu sits at the foot of the screen, in the top corner
+  function placeDn() {
+    var b = document.querySelector('.x-dn'); if (!b) return;
+    var link = document.querySelector('a[data-xn]'), r = link && link.getBoundingClientRect();
+    if (r && r.left > 0 && r.top < 120 && r.height) { b.style.right = Math.round(innerWidth - r.left + 16) + 'px'; b.style.top = Math.round(r.top + r.height / 2 - 18) + 'px'; }
+    else { b.style.right = '14px'; b.style.top = (innerWidth <= 480 ? 18 : 12) + 'px'; }
+  }
+  addEventListener('resize', function () { placeDn(); });
   function goHour(to, auto) {
     cancelAnimationFrame(theme.raf);
     var from = theme.hour, delta = ((to - from + 36) % 24) - 12, t0 = performance.now();
@@ -1388,6 +1398,7 @@
     if (wantDark === realDark) goHour(localHour(), true); else goHour(wantDark ? 22 : 12, false);
   }
   function ensureDial() {
+    placeDn();
     if (!document.querySelector('.x-dn')) {
       var b = document.createElement('button'); b.type = 'button'; b.className = 'x-dn'; b.addEventListener('click', toggleDn); document.body.appendChild(b);
       try { var sm = parseFloat(sessionStorage.getItem('xt-mode')); if (isFinite(sm)) { theme.hour = sm; theme.travel = true; paintTheme(); } } catch (e) {}
@@ -1504,12 +1515,12 @@
     if (!hero || !vids.length) return;
     if (innerWidth <= 809 && hero.offsetHeight) {
       var W = innerWidth, H = innerHeight, frame = W * 9 / 16, top = hero.offsetTop, height = hero.offsetHeight;
-      var cap = document.querySelector('[data-framer-name="Caption"]'), capB = cap && cap.getBoundingClientRect().width ? cap.getBoundingClientRect().bottom + (window.scrollY || 0) : 0;   /* the head must start below the text, never behind it */
-      var Ht = Math.min(1.3 * W, 0.66 * height); if (capB) Ht = Math.max(Math.min(Ht, 0.5 * W), Math.min(Ht, H - 22 - (capB + 18))); var sc = Math.max(1, Math.min(2.7, Ht / (0.92 * frame)));
-      var yc = H - 22 - Ht / 2, originY = top + 0.47 * height, centre = top + height / 2;
-      var ty = (yc - originY) / sc - (centre - originY);
+      /* narrow screens: the head sits at the top, to the right of the text, which gets the rest of the width */
+      var Hw = Math.max(W * 0.42, Math.min(W * 0.46, 330)), Ht = Hw / 0.79, sc = Math.max(1, Math.min(4.2, Ht / (0.92 * frame))), xc = W - Hw / 2 - 10, yc = 64 + Ht / 2;
+      var originY = top + 0.47 * height, centre = top + height / 2, ty = (yc - originY) / sc - (centre - originY), tx = (xc - W / 2) / sc;
+      var cap = document.querySelector('[data-framer-name="Caption"]'); if (cap) document.documentElement.style.setProperty('--xcw', Math.round(W - Hw - 30) + 'px');
       var st = document.documentElement.style;
-      st.setProperty('--xhs', sc.toFixed(3)); st.setProperty('--xhy', ty.toFixed(1) + 'px');
+      st.setProperty('--xhs', sc.toFixed(3)); st.setProperty('--xhy', ty.toFixed(1) + 'px'); st.setProperty('--xhx', tx.toFixed(1) + 'px');
     }
     // the footage must keep playing: browsers on phones are strict about it (and reloading used to leave the head blank)
     for (i = 0; i < vids.length; i++) {
