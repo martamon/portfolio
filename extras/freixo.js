@@ -1220,7 +1220,7 @@ export function open(opts) {
   }
   // ---- the shipyard (astillero) on the outskirts, by the sea: a big shed, a slipway with rails, a boat on stocks, a gantry crane and a hull being built
   { let sx = 0, sz = 0, found = false, flip = false;
-    for (const [cx, inl] of [[-5, .8], [-1, .8], [3, .8], [-9, .8], [7, .8], [-5, 1.2], [-1, 1.2], [3, 1.2]]) { const [qx, qz] = onShoreS(cx, inl); let ok = true; for (let a = 0; a < 8 && ok; a++) for (const rr of [.45, .9]) if (groundH(qx + Math.cos(a * .785) * rr, qz + Math.sin(a * .785) * rr + .35) < SEA + .05) ok = false; if (ok) { sx = qx; sz = qz; found = true; flip = true; break; } }
+    for (const [cx, inl] of [[-15, .8], [-13, .8], [11, .8], [9.5, .8], [-15, 1.2], [11, 1.2], [-11, .8], [7.5, .8]]) { const [qx, qz] = onShoreS(cx, inl); let ok = true; for (let a = 0; a < 8 && ok; a++) for (const rr of [.45, .9]) if (groundH(qx + Math.cos(a * .785) * rr, qz + Math.sin(a * .785) * rr + .35) < SEA + .05) ok = false; if (ok) { sx = qx; sz = qz; found = true; flip = true; break; } }
     if (found) { const g = new THREE.Group(), conc = std(0xcfc8b8), wood = std(0x9a6f45), dark = std(0x4a4640);
       const add = (o, x, y, z) => { o.position.set(x, y, z); g.add(o); return o; };
       add(box(.62, .03, 1.15, conc), 0, 0, .35);                                                     // the slipway
