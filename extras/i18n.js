@@ -75,7 +75,7 @@ const ROWS = [
   ['Next stop', 'Siguiente parada', 'Seguinte parada'],
   ['Leave the house', 'Salir de la casa', 'Saír da casa'],
   ['Enter', 'Entrar', 'Entrar'],
-  ['Ride with the arrow keys', 'Pedalea con las flechas del teclado · E para leer', 'Pedalea coas frechas do teclado · E para ler'],
+  ['Ride with the arrow keys', 'Mueve el ratón para girar · mantén pulsado para pedalear · E para leer', 'Move o rato para xirar · mantén premido para pedalear · E para ler'],
   ['Press E to read', 'Pulsa E para leer', 'Preme E para ler'],
   ['Tap to read', 'Toca para leer', 'Toca para ler'],
   ['Close', 'Cerrar', 'Pechar'],
