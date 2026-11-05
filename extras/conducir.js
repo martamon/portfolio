@@ -3,7 +3,7 @@
 // into the sea, where the world turns turquoise and the car keeps rolling along the seabed, past fish and an old wreck. Glowing orbs hold
 // information about the ría; press E (or tap the button) next to one to read it.
 import * as THREE from './three.module.min.js';
-import { INFO, getLang, tr } from './i18n.js?v=14';
+import { INFO, getLang, tr } from './i18n.js?v=15';
 import { stall, KINDS } from './mercadillo.js?v=1';
 
 const PI = Math.PI, LI = ['en', 'es', 'gl'];
@@ -809,12 +809,9 @@ export function open(opts) {
   addEventListener('keydown', onKey, true); addEventListener('keyup', onKey, true);
   root.querySelectorAll('.x-dr-pad button').forEach((b) => { const k = b.dataset.k, on = (e) => { K[k] = 1; b.classList.add('x-on'); root.classList.add('x-drove'); e.preventDefault(); }, off = () => { K[k] = 0; b.classList.remove('x-on'); }; b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('pointerleave', off); });
   // hold the mouse (or a finger) and drag to look round the bike; let go and the view glides back behind it
-  const mouse = { x: 0, on: false, down: false };
-  root.addEventListener('pointermove', (e) => { if (e.pointerType === 'mouse') { mouse.x = (e.clientX / innerWidth - .5) * 2; mouse.on = true; } });
   const orb = { yaw: 0, pitch: 0, hold: false, idle: 0, id: -1, x: 0, y: 0 };
-  root.addEventListener('pointerdown', (e) => { if (e.target.closest('button,.x-dr-card,.x-dr-pad') || e.button) return; if (e.pointerType === 'mouse') { mouse.down = true; mouse.on = true; return; } orb.hold = true; orb.id = e.pointerId; orb.x = e.clientX; orb.y = e.clientY; try { root.setPointerCapture(e.pointerId); } catch (er) {} });
+  root.addEventListener('pointerdown', (e) => { if (e.target.closest('button,.x-dr-card,.x-dr-pad') || e.button) return; orb.hold = true; orb.id = e.pointerId; orb.x = e.clientX; orb.y = e.clientY; try { root.setPointerCapture(e.pointerId); } catch (er) {} });
   root.addEventListener('pointermove', (e) => { if (!orb.hold || e.pointerId !== orb.id) return; if (inCasa && casaR) { casaR.view.az -= (e.clientX - orb.x) * .006; casaR.view.pol -= (e.clientY - orb.y) * .005; orb.x = e.clientX; orb.y = e.clientY; return; } orb.yaw -= (e.clientX - orb.x) * .008; orb.pitch = clamp(orb.pitch + (e.clientY - orb.y) * .004, -.15, 1.0); orb.x = e.clientX; orb.y = e.clientY; orb.idle = 0; });
-  const orbUp0 = () => { mouse.down = false; }; root.addEventListener('pointerup', orbUp0); root.addEventListener('pointerleave', orbUp0);
   const orbUp = (e) => { if (e.pointerId === orb.id) orb.hold = false; }; root.addEventListener('pointerup', orbUp); root.addEventListener('pointercancel', orbUp);
   let zoomK = 1; root.addEventListener('wheel', (e) => { e.preventDefault(); if (inCasa && casaR) { casaR.view.dist *= Math.exp(e.deltaY * (e.deltaMode ? .03 : .0012)); return; } zoomK = clamp(zoomK * Math.exp(e.deltaY * (e.deltaMode ? .03 : .0012)), .55, 3.4); }, { passive: false });
   const size = () => { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.fov = w / h < .8 ? 70 : 55; camera.updateProjectionMatrix(); }; size(); addEventListener('resize', size);
@@ -828,7 +825,7 @@ export function open(opts) {
     // driving: arcade physics
     let aT = 0, aS = 0;
     if (tour.on) {
-      if (K.up || K.down || K.left || K.right || mouse.down) tourStop();
+      if (K.up || K.down || K.left || K.right) tourStop();
       else if (tour.phase === 'ride') {
         const o = orbs[tour.i], w = tour.route[0] || [o.position.x, o.position.z], dx = w[0] - S.x, dz = w[1] - S.z, d = Math.hypot(dx, dz), last = tour.route.length <= 1;
         if (last && d < 5.2) tour.phase = 'arrive'; else if (!last && d < (tour.boost ? 5.5 : 3.4)) tour.route.shift();
@@ -837,7 +834,7 @@ export function open(opts) {
       } else if (tour.phase === 'arrive') { aT = S.v > .5 ? -1 : 0; if (S.v < .6) { tour.phase = 'read'; S.v = 0; openCard(orbs[tour.i]); } }
       tour.lx = S.x; tour.lz = S.z; if (tour.ghost > 0) tour.ghost -= dt;
     }
-    const throttle = cardOn || inCasa ? 0 : (tour.on ? aT : K.up - K.down + (mouse.down ? 1 : 0)), steerIn = cardOn || inCasa ? 0 : (tour.on ? aS : (K.left || K.right || !mouse.on || touch ? K.left - K.right : -Math.sign(mouse.x) * Math.min(1, Math.max(0, Math.abs(mouse.x) - .08) * 1.9)));
+    const throttle = cardOn || inCasa ? 0 : (tour.on ? aT : K.up - K.down), steerIn = cardOn || inCasa ? 0 : (tour.on ? aS : K.left - K.right);
     if (throttle > 0) S.v += (S.v < 0 ? 14 : 5.5) * dt; else if (throttle < 0) S.v -= (S.v > 0 ? 14 : 6) * dt; else S.v -= Math.sign(S.v) * Math.min(Math.abs(S.v), 6 * dt);
     const vmax = S.uw ? 6.5 : 11; S.v = clamp(S.v, -3.5, vmax);
     S.steer += (steerIn - S.steer) * Math.min(1, dt * 5); S.yaw += S.steer * 1.55 * Math.min(1, Math.abs(S.v) / 2.8) / (1 + Math.abs(S.v) * .05) * Math.sign(S.v || 1) * dt;
