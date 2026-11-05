@@ -204,7 +204,7 @@ function buildBike() {
     arms.forEach(([a, sz]) => { const sh = new THREE.Vector3(.3, 1.0, sz * .36), hand = new THREE.Vector3(1.13, .17, sz * .56); seg(a, sh, hand); });
     rider.rotation.z = Math.sin(ang * 2) * .02;
   };
-  g.userData.anim(0, 0, 0); return g;
+  g.userData.rider = rider; g.userData.legs = legs; g.userData.anim(0, 0, 0); return g;
 }
 // ---------------------------------------------------------------- buildings
 const WALLS = [0xd9aeb0, 0xe9cbb6, 0xf3e4ca, 0xcaa3a8, 0xe7c1b0, 0xf1ddc2, 0xd4b2b8, 0xc9c0b0];
@@ -439,6 +439,7 @@ export function open(opts) {
     '.x-dr-pad{position:absolute;left:0;right:0;bottom:22px;display:flex;justify-content:space-between;align-items:flex-end;padding:0 18px;pointer-events:none}.x-dr-pad>div{display:flex;gap:2px;padding:6px;border-radius:44px;background:linear-gradient(160deg,rgba(255,253,248,.78),rgba(255,236,224,.6));-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:0 10px 28px rgba(74,51,64,.2),inset 0 0 0 1px rgba(255,255,255,.75);pointer-events:auto}.x-dr-pad>div.x-v{flex-direction:column}.x-dr-pad button{width:62px;height:62px;border:0;border-radius:50%;background:transparent;color:#7a5a64;display:flex;align-items:center;justify-content:center;touch-action:none;-webkit-tap-highlight-color:transparent;transition:transform .18s cubic-bezier(.3,1.5,.5,1),background .2s,color .2s}.x-dr-pad button.x-go{color:#e36d57}.x-dr-pad button.x-on{background:linear-gradient(160deg,#ffb9a1,#e36d57);color:#fff;transform:scale(.92);box-shadow:0 4px 12px rgba(227,109,87,.45)}',
     '.x-dr-tour{position:absolute;left:18px;top:68px;display:flex;align-items:center;gap:6px;padding:7px 12px 7px 9px;border:0;border-radius:16px;background:rgba(255,252,246,.85);color:#4a3340;font:500 10px/1 "IBM Plex Mono",ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);transition:background .25s,color .25s,transform .3s cubic-bezier(.3,1.5,.5,1)}.x-dr-tour:hover{transform:scale(1.05)}.x-dr.x-tour .x-dr-tour{background:#e36d57;color:#fff}',
     '.x-dr-out{position:absolute;left:18px;top:68px;display:none;align-items:center;gap:6px;padding:8px 14px 8px 10px;border:0;border-radius:16px;background:#e36d57;color:#fff;font:500 11px/1 "IBM Plex Mono",ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;z-index:2}.x-dr.x-casa .x-dr-out{display:flex}.x-dr.x-casa .x-dr-pad,.x-dr.x-casa .x-dr-tour,.x-dr.x-casa .x-dr-count,.x-dr.x-casa .x-dr-ta,.x-dr.x-casa .x-dr-prompt,.x-dr.x-casa .x-dr-help,.x-dr.x-casa .x-dr-rn,.x-dr.x-casa .x-dr-dn,.x-dr.x-casa .x-dr-card{display:none}.x-dr.x-casa:after{background:radial-gradient(ellipse at 50% 46%,rgba(0,0,0,0) 60%,rgba(70,40,20,.25) 100%)}',
+    '.x-dr-wel{position:absolute;left:50%;bottom:44px;transform:translate(-50%,16px);width:min(520px,calc(100% - 32px));padding:20px 26px 18px;border-radius:28px;background:rgba(255,248,238,.93);box-shadow:0 14px 44px rgba(90,50,40,.25);text-align:center;opacity:0;pointer-events:none;z-index:3;transition:opacity .9s ease,transform 1.1s cubic-bezier(.22,.8,.24,1)}.x-dr-wel.x-on{opacity:1;transform:translate(-50%,0);pointer-events:auto;cursor:pointer}.x-dr-wel b{display:block;font:700 21px/1.3 "Switzer",system-ui,sans-serif;color:#7a4a3a;margin-bottom:4px}.x-dr-wel span{font:500 16px/1.4 "Switzer",system-ui,sans-serif;color:#9a6a58}',
     '.x-dr-ta{position:absolute;top:50%;margin-top:-23px;width:46px;height:46px;border:0;border-radius:50%;background:rgba(255,252,246,.88);color:#4a3340;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 18px rgba(74,51,64,.2);opacity:0;pointer-events:none;transition:opacity .4s,transform .3s cubic-bezier(.3,1.5,.5,1)}.x-dr-tp{left:14px}.x-dr-tn{right:14px}.x-dr.x-tour .x-dr-ta{opacity:1;pointer-events:auto}.x-dr-ta:hover{transform:scale(1.1)}',
     '.x-dr-fade{position:absolute;inset:0;background:#fff6ea;opacity:0;pointer-events:none;transition:opacity .45s ease}.x-dr.x-fade .x-dr-fade{opacity:1}.x-dr.x-tour .x-dr-pad,.x-dr.x-tour .x-dr-help{opacity:0;pointer-events:none}',
     '.x-dr.x-touch .x-dr-help{display:none}',
@@ -770,7 +771,8 @@ export function open(opts) {
     for (let k = 0; k < 3; k++) add(rbox(.5, .22, .38, .05), [0xe9873a, 0x4f8fc0, 0xe9873a][k], .3 + (k % 2) * .5, .66, (k - 1) * .36);       // fish boxes
     add(new THREE.TorusGeometry(.2, .06, 8, 14), 0xe9573a, 1.35, .75, .3).rotation.x = PI / 2.5;                         // a lifebuoy
     const fr = new THREE.Mesh(new THREE.CylinderGeometry(.018, .018, 2.0, 5), std(0x6b4a2e)); fr.position.set(1.6, 1.4, -.35); fr.rotation.z = -.9; boatG.add(fr);
-    const fisher = person(0xf2c14a, 0xf0c9a0); fisher.scale.setScalar(.6); fisher.position.set(-.1, .5, .12); boatG.add(fisher); boatG.userData.fisher = fisher; }
+    const b2 = buildBike(), fisher = b2.userData.rider; b2.userData.legs.forEach(([l, f]) => { l.visible = false; f.visible = false; }); fisher.scale.setScalar(.82); fisher.position.set(-.35, .1, 0); boatG.add(fisher); boatG.userData.fisher = fisher; boatG.userData.b2 = b2;
+    add(rbox(.1, .5, .1, .03), 0x6b4a2e, .15, .78, 0); add(rbox(.5, .08, .08, .03), 0x6b4a2e, .15, 1.0, 0); }
 
 
   // ---- the car
@@ -800,9 +802,10 @@ export function open(opts) {
   // ---- inside Casa Martamon
   const exitBtn = root.querySelector('.x-dr-out');
   const enterCasa = () => { if (inCasa || !casa.ok) return; inCasa = true; root.classList.add('x-fade');
-    const done = () => { if (snd) snd.cozy(true); root.classList.add('x-casa'); subEl.textContent = 'Casa Martamon'; root.classList.remove('x-near', 'x-fade'); };
+    const done = () => { welcome(); if (snd) snd.cozy(true); root.classList.add('x-casa'); subEl.textContent = 'Casa Martamon'; root.classList.remove('x-near', 'x-fade'); };
     import('./casa.js?v=13').then((m) => { if (closed) return; if (!casaR) casaR = m.buildCasa(THREE, { std, rbox, PI }); setTimeout(done, 450); }).catch(() => { inCasa = false; root.classList.remove('x-fade'); }); };
-  const leaveCasa = () => { if (!inCasa) return; if (snd) snd.cozy(false); root.classList.add('x-fade'); setTimeout(() => { inCasa = false; root.classList.remove('x-casa', 'x-fade'); nearName = ''; }, 450); };
+  const welcome = () => { let w = root.querySelector('.x-dr-wel'); if (!w) { w = document.createElement('div'); w.className = 'x-dr-wel'; root.appendChild(w); w.addEventListener('click', () => w.classList.remove('x-on')); } w.innerHTML = '<b>' + ['Welcome to my grandmother\u2019s house.', 'Bienvenidos a la casa de mi abuela.', 'Benvidos á casa da miña avoa.'][lang] + '</b><span>' + ['I hope you like it.', 'Espero que os guste.', 'Espero que vos guste.'][lang] + '</span>'; w.classList.remove('x-on'); void w.offsetWidth; w.classList.add('x-on'); clearTimeout(w._t); w._t = setTimeout(() => w.classList.remove('x-on'), 7500); };
+  const leaveCasa = () => { const w0 = root.querySelector('.x-dr-wel'); if (w0) w0.classList.remove('x-on'); if (!inCasa) return; if (snd) snd.cozy(false); root.classList.add('x-fade'); setTimeout(() => { inCasa = false; root.classList.remove('x-casa', 'x-fade'); nearName = ''; }, 450); };
   exitBtn.addEventListener('click', leaveCasa);
 
   // ---- guided tour: the bike pedals by itself along the road to each point of interest; the arrows jump between them
@@ -904,7 +907,7 @@ export function open(opts) {
     S.pitch += ((S.boat ? Math.sin(t * 1.1) * .03 - S.v * .004 : Math.atan2(hF - hB, 3.4)) - S.pitch) * Math.min(1, dt * 8); S.roll += ((S.boat ? Math.sin(t * 1.6) * .05 - S.steer * S.v * .01 : Math.atan2(hL - hR, 2.2)) - S.roll) * Math.min(1, dt * 8);
     carW.position.set(S.x, S.y + Math.sin(t * 9) * Math.min(.03, Math.abs(S.v) * .003), S.z); carW.rotation.set(0, 0, 0); carW.rotation.y = S.yaw - PI / 2; car.rotation.set(0, 0, -S.pitch * .9); car.rotation.x = S.roll * .8; car.rotation.z += -Math.sin(S.steer) * 0 ;
     car.visible = !S.boat; boatG.visible = S.boat;
-    if (S.boat) { boatG.position.set(S.x, S.y + .12, S.z); boatG.rotation.set(S.roll * .6, 0, S.pitch * .8); boatG.rotation.order = 'YXZ'; boatG.rotation.y = S.yaw - PI / 2; boatG.userData.flag.rotation.y = Math.sin(t * 6) * .25; boatG.userData.fisher.visible = true; if (Math.abs(S.v) > 1.5 && (t * 3.2 | 0) !== ((t - dt) * 3.2 | 0)) ripples.push({ x: S.x - Math.sin(S.yaw) * 1.6, z: S.z - Math.cos(S.yaw) * 1.6, t: 0 }); }
+    if (S.boat) { boatG.position.set(S.x, S.y + .12, S.z); boatG.rotation.set(S.roll * .6, 0, S.pitch * .8); boatG.rotation.order = 'YXZ'; boatG.rotation.y = S.yaw - PI / 2; boatG.userData.flag.rotation.y = Math.sin(t * 6) * .25; boatG.userData.b2.userData.setRain(rainT > .45); if (Math.abs(S.v) > 1.5 && (t * 3.2 | 0) !== ((t - dt) * 3.2 | 0)) ripples.push({ x: S.x - Math.sin(S.yaw) * 1.6, z: S.z - Math.cos(S.yaw) * 1.6, t: 0 }); }
     car.userData.setRain(rainT > .45); car.userData.anim(S.v, dt, S.steer); car.rotation.x = S.roll * .8 - S.steer * Math.min(1, Math.abs(S.v) / 7) * .32;
     // water: in and out
     
