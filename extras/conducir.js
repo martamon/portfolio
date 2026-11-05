@@ -490,6 +490,12 @@ export function open(opts) {
     '.x-dr-wel{position:absolute;left:50%;bottom:44px;transform:translate(-50%,16px);width:min(520px,calc(100% - 32px));padding:20px 26px 18px;border-radius:28px;background:rgba(255,248,238,.93);box-shadow:0 14px 44px rgba(90,50,40,.25);text-align:center;opacity:0;pointer-events:none;z-index:3;transition:opacity .9s ease,transform 1.1s cubic-bezier(.22,.8,.24,1)}.x-dr-wel.x-on{opacity:1;transform:translate(-50%,0);pointer-events:auto;cursor:pointer}.x-dr-wel b{display:block;font:700 21px/1.3 "Switzer",system-ui,sans-serif;color:#7a4a3a;margin-bottom:4px}.x-dr-wel span{font:500 16px/1.4 "Switzer",system-ui,sans-serif;color:#9a6a58}',
     '.x-dr-fact{position:absolute;left:50%;top:40%;transform:translate(-50%,-100%) scale(.92);width:min(300px,calc(100% - 28px));padding:13px 16px 14px;border-radius:20px;background:rgba(255,253,248,.96);color:#4a3340;font:500 14px/1.45 "Switzer",system-ui,sans-serif;box-shadow:0 10px 30px rgba(60,70,80,.25);opacity:0;pointer-events:none;z-index:4;text-align:left;transition:opacity .35s ease,transform .45s cubic-bezier(.3,1.4,.5,1)}.x-dr-fact:after{content:"";position:absolute;left:50%;bottom:-7px;margin-left:-8px;width:16px;height:16px;background:inherit;transform:rotate(45deg);border-radius:3px}.x-dr-fact.x-on{opacity:1;transform:translate(-50%,-100%) scale(1);pointer-events:auto}.x-dr.x-casa .x-dr-fact{display:none}',
     '.x-dr-fitl{position:absolute;right:18px;top:70px;max-width:min(260px,calc(100% - 36px));padding:8px 14px;border-radius:16px;background:rgba(255,252,246,.94);color:#4a3340;font:500 13px/1.3 "Switzer",system-ui,sans-serif;text-align:right;box-shadow:0 8px 22px rgba(60,70,80,.2);opacity:0;transform:translateY(-6px);pointer-events:none;transition:opacity .35s ease,transform .45s cubic-bezier(.3,1.4,.5,1);z-index:3}.x-dr-fitl.x-on{opacity:1;transform:none}.x-dr.x-casa .x-dr-fitl,.x-dr.x-casa .x-dr-fit{display:none}',
+    '.x-dr-intro{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(214,232,244,.38);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);transition:opacity .6s ease}.x-dr-intro.x-out{opacity:0;pointer-events:none}',
+    '.x-dr-ic{width:min(430px,100%);padding:30px 28px 22px;border-radius:30px;background:rgba(255,252,246,.97);box-shadow:0 18px 52px rgba(60,70,80,.28);text-align:center;color:#4a3340;animation:x-ipop .7s cubic-bezier(.3,1.3,.5,1) both}@keyframes x-ipop{from{opacity:0;transform:translateY(16px) scale(.96)}}',
+    '.x-dr-ic p{margin:20px 0 26px;min-height:3.9em;display:flex;align-items:center;justify-content:center;font:600 22px/1.35 "Switzer",system-ui,sans-serif;letter-spacing:-.01em;opacity:0;transform:translateY(8px);transition:opacity .45s ease,transform .55s cubic-bezier(.22,.8,.24,1)}.x-dr-ic p.x-in{opacity:1;transform:none}',
+    '.x-dr-idots{display:flex;gap:8px;justify-content:center}.x-dr-idots i{width:8px;height:8px;border-radius:50%;background:#e8d9d0;transition:background .3s,transform .3s}.x-dr-idots i.x-on{background:#e36d57;transform:scale(1.25)}',
+    '.x-dr-iact{display:flex;justify-content:space-between;align-items:center}.x-dr-iact button{border:0;cursor:pointer;font:500 12px/1 "IBM Plex Mono",ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase}.x-dr-inext{padding:13px 24px;border-radius:16px;background:#e36d57;color:#fff;transition:transform .25s cubic-bezier(.3,1.5,.5,1)}.x-dr-inext:hover{transform:scale(1.05)}.x-dr-iskip{padding:10px 6px;background:none;color:#9a7f88}',
+    '@media(prefers-reduced-motion:reduce){.x-dr-ic{animation:none}}',
     '.x-dr-ta{position:absolute;top:50%;margin-top:-23px;width:46px;height:46px;border:0;border-radius:50%;background:rgba(255,252,246,.88);color:#4a3340;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 18px rgba(74,51,64,.2);opacity:0;pointer-events:none;transition:opacity .4s,transform .3s cubic-bezier(.3,1.5,.5,1)}.x-dr-tp{left:14px}.x-dr-tn{right:14px}.x-dr.x-tour .x-dr-ta{opacity:1;pointer-events:auto}.x-dr-ta:hover{transform:scale(1.1)}',
     '.x-dr-fade{position:absolute;inset:0;background:#fff6ea;opacity:0;pointer-events:none;transition:opacity .45s ease}.x-dr.x-fade .x-dr-fade{opacity:1}.x-dr.x-tour .x-dr-pad,.x-dr.x-tour .x-dr-help{opacity:0;pointer-events:none}',
     '.x-dr.x-touch .x-dr-help{display:none}',
@@ -883,6 +889,18 @@ export function open(opts) {
     const apply = (i, say) => { const n = car.userData.setOutfit(i); idx = ((i % car.userData.fits) + car.userData.fits) % car.userData.fits; if (boatG.userData.b2) boatG.userData.b2.userData.setOutfit(idx); try { localStorage.setItem('xr-fit', String(idx)); } catch (e) {} if (say) { fl.textContent = n[lang]; fl.classList.add('x-on'); clearTimeout(ft); ft = setTimeout(() => fl.classList.remove('x-on'), 2200); } };
     fb.addEventListener('click', () => { apply(idx + 1, true); if (snd) { snd.chime(); } });
     car.userData.setOutfit(idx); if (boatG.userData.b2) boatG.userData.b2.userData.setOutfit(idx); }
+  // ---- the welcome: three little screens before the ride starts
+  let introOn = true, introI = 0;
+  const INTRO = [['Ride around the island to learn.', 'Recorre la isla para aprender.', 'Percorre a illa para aprender.'],
+    ['You can talk to Marta’s neighbours: they will tell you things about her.', 'Puedes hablar con los vecinos de Marta: ellos te contarán cosas sobre ella.', 'Podes falar cos veciños de Marta: eles contarán cousas sobre ela.'],
+    ['You can also visit Marta’s grandmother’s house.', 'También puedes ver la casa de la abuela de Marta.', 'Tamén podes ver a casa da avoa de Marta.']];
+  const NEXT = ['Next', 'Siguiente', 'Seguinte'], GO = ['Let’s go', 'Vamos', 'Imos'], SKIP = ['Skip', 'Saltar', 'Saltar'];
+  const introEl = document.createElement('div'); introEl.className = 'x-dr-intro'; introEl.innerHTML = '<div class="x-dr-ic"><div class="x-dr-idots"></div><p></p><div class="x-dr-iact"><button type="button" class="x-dr-iskip"></button><button type="button" class="x-dr-inext"></button></div></div>'; root.appendChild(introEl);
+  const iP = introEl.querySelector('p'), iD = introEl.querySelector('.x-dr-idots'), iN = introEl.querySelector('.x-dr-inext'), iS = introEl.querySelector('.x-dr-iskip');
+  const introPaint = () => { iP.classList.remove('x-in'); void iP.offsetWidth; iP.textContent = INTRO[introI][lang]; iP.classList.add('x-in'); iD.innerHTML = INTRO.map((_, k) => '<i class="' + (k === introI ? 'x-on' : '') + '"></i>').join(''); iN.textContent = introI === INTRO.length - 1 ? GO[lang] : NEXT[lang]; iS.textContent = SKIP[lang]; iS.style.visibility = introI === INTRO.length - 1 ? 'hidden' : 'visible'; };
+  function introEnd() { if (!introOn) return; introOn = false; introEl.classList.add('x-out'); setTimeout(() => introEl.remove(), 700); if (snd) snd.chime(); }
+  function introNext() { if (introI >= INTRO.length - 1) { introEnd(); return; } introI++; introPaint(); if (snd) snd.chime(); }
+  iN.addEventListener('click', introNext); iS.addEventListener('click', introEnd); introPaint();
   // ---- guided tour: the bike pedals by itself along the road to each point of interest; the arrows jump between them
   const tour = { on: false, i: 0, phase: 'wait', route: [], ghost: 0, stuck: 0, lx: 0, lz: 0 };
   const tBtn = root.querySelector('.x-dr-tour'), tLab = tBtn.querySelector('span');
@@ -920,6 +938,7 @@ export function open(opts) {
   const K = { up: 0, down: 0, left: 0, right: 0 }; let closed = false, raf = 0;
   const MAP = { ArrowUp: 'up', w: 'up', W: 'up', ArrowDown: 'down', s: 'down', S: 'down', ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right' };
   const onKey = (e) => {
+    if (introOn) { if (e.type === 'keydown' && (e.key === 'Enter' || e.key === ' ' || e.key === 'e' || e.key === 'E' || e.key === 'ArrowRight')) { introNext(); e.preventDefault(); e.stopPropagation(); } else if (e.type === 'keydown' && e.key === 'Escape') { introEnd(); e.preventDefault(); e.stopPropagation(); } return; }
     const k = MAP[e.key];
     if (k) { K[k] = e.type === 'keydown' ? 1 : 0; if (e.type === 'keydown') root.classList.add('x-drove'); e.preventDefault(); e.stopPropagation(); return; }
     if (e.type !== 'keydown') return;
@@ -973,7 +992,7 @@ export function open(opts) {
       } else if (tour.phase === 'arrive') { aT = S.v > .5 ? -1 : 0; if (S.v < .6) { tour.phase = 'read'; S.v = 0; openCard(orbs[tour.i]); } }
       tour.lx = S.x; tour.lz = S.z; if (tour.ghost > 0) tour.ghost -= dt;
     }
-    const throttle = cardOn || inCasa ? 0 : (tour.on ? aT : K.up - K.down), steerIn = cardOn || inCasa ? 0 : (tour.on ? aS : K.left - K.right);
+    const throttle = cardOn || inCasa || introOn ? 0 : (tour.on ? aT : K.up - K.down), steerIn = cardOn || inCasa || introOn ? 0 : (tour.on ? aS : K.left - K.right);
     if (throttle > 0) S.v += (S.v < 0 ? 14 : 5.5) * dt; else if (throttle < 0) S.v -= (S.v > 0 ? 14 : 6) * dt; else S.v -= Math.sign(S.v) * Math.min(Math.abs(S.v), 6 * dt);
     const vmax = S.boat ? 8 : 11; S.v = clamp(S.v, -3.5, vmax);
     S.steer += (steerIn - S.steer) * Math.min(1, dt * 5); S.yaw += S.steer * 1.55 * Math.min(1, Math.abs(S.v) / 2.8) / (1 + Math.abs(S.v) * .05) * Math.sign(S.v || 1) * dt;
