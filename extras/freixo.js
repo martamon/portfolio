@@ -1369,10 +1369,10 @@ export function open(opts) {
   function schoolYard(x, inl, roofCol, wallCol, nKids) {
     const [px, pz] = onShore(x, inl), yaw = seaYaw(px), slab = new THREE.Group();
     const sl = box(2.5, .24, 2.7, std(0xe6dcc0)); sl.position.y = -.1; slab.add(sl);
-    slab.userData.fp = 2.0; slab.userData.pri = 3; slab.userData.sch = 1; W(put(slab, px, pz, yaw, -.04));
+    slab.userData.fp = 2.0; slab.userData.pri = 6; slab.userData.sch = 1; W(put(slab, px, pz, yaw, -.04));
     const loc = (lx, lz) => [px + lx * Math.cos(yaw) + lz * Math.sin(yaw), pz - lx * Math.sin(yaw) + lz * Math.cos(yaw)];
-    const sc = school(roofCol, wallCol); sc.userData.pri = 3; const [sx, sz] = loc(0, -.95); W(put(sc, sx, sz, yaw, .03)); flags.push(sc.userData.flag);
-    const pt = pitch(1.15, .7, true); pt.userData.pri = 3; const [qx, qz] = loc(0, .5); W(put(pt, qx, qz, yaw, .1));
+    const sc = school(roofCol, wallCol); sc.userData.pri = 6; const [sx, sz] = loc(0, -.95); W(put(sc, sx, sz, yaw, .03)); flags.push(sc.userData.flag);
+    const pt = pitch(1.15, .7, true); pt.userData.pri = 6; const [qx, qz] = loc(0, .5); W(put(pt, qx, qz, yaw, .1));
     for (const lx of [-1.0, 1.0]) for (const lz of [.5, 1.1]) { const tr = new THREE.Group(), tk = new THREE.Mesh(new THREE.CylinderGeometry(.02, .028, .24, 6), std(0x7a5a3c)); tk.position.y = .12; tr.add(tk); const cr = new THREE.Mesh(new THREE.IcosahedronGeometry(.16, 2), std(0x62ae4a)); cr.position.y = .34; tr.add(cr); const [tx, tz] = loc(lx, lz); W(put(tr, tx, tz, 0, .03)); }
     const ball = new THREE.Mesh(new THREE.SphereGeometry(.026, 10, 8), std(0xf6f1e4)); W(ball);
     const kids = []; for (let k = 0; k < nKids; k++) { const kd = person(SHIRTS[(k * 3 + (k % 2 ? 1 : 0)) % SHIRTS.length], { skin: SKINS[k % 4], pants: k % 2 ? 0x2f3f66 : 0x8a2f2f, role: 'kid' }); kd.scale.setScalar(.7); W(kd); kids.push({ kd, x: (rnd() - .5) * 1.4, z: (rnd() - .5) * .7, team: k % 2, ph: rnd() * 6 }); }
@@ -1382,8 +1382,8 @@ export function open(opts) {
   }
   schoolYard(-.5, 5.05, 0xc9462e, 0xf6e6b4, 8);
   schoolYard(15.4, 5.6, 0x5f7f96, 0xf2c6a8, 8);
-  { const [px, pz] = onShore(-7.6, 6.2), yaw = seaYaw(px), slab = new THREE.Group(); const sb = box(1.5, .24, 1.1, std(0xe6dcc0)); sb.position.y = -.1; slab.add(sb); slab.userData.fp = 1.0; slab.userData.pri = 3; W(put(slab, px, pz, yaw, -.05));
-    const pt = pitch(1.2, .7, true); pt.userData.pri = 3; W(put(pt, px, pz, yaw, .1));
+  { const [px, pz] = onShore(-7.6, 6.2), yaw = seaYaw(px), slab = new THREE.Group(); const sb = box(1.5, .24, 1.1, std(0xe6dcc0)); sb.position.y = -.1; slab.add(sb); slab.userData.fp = 1.0; slab.userData.pri = 6; W(put(slab, px, pz, yaw, -.05));
+    const pt = pitch(1.2, .7, true); pt.userData.pri = 6; W(put(pt, px, pz, yaw, .1));
     const loc = (lx, lz) => [px + lx * Math.cos(yaw) + lz * Math.sin(yaw), pz - lx * Math.sin(yaw) + lz * Math.cos(yaw)];
     const ball = new THREE.Mesh(new THREE.SphereGeometry(.026, 10, 8), std(0xf6f1e4)); W(ball);
     const kids = []; for (let k = 0; k < 4; k++) { const kd = person(SHIRTS[(k * 2 + 1) % SHIRTS.length], { skin: SKINS[k % 4], pants: 0x2f3f66, role: 'kid' }); kd.scale.setScalar(.7); W(kd); kids.push({ kd, x: (rnd() - .5) * 1, z: (rnd() - .5) * .5, team: k % 2, ph: rnd() * 6 }); }
@@ -1791,7 +1791,7 @@ export function open(opts) {
     if (tourOn) return; tourOn = true; tourMuted = !!(audio && audio.muted);
     mochi.classList.remove('x-ctaon'); mochi.classList.add('x-load'); root.classList.add('x-tour'); if (audio) { audio.sfx('mochinext'); setTimeout(() => audio && audio.mute(true), 500); }
     const t0 = performance.now();
-    import('./conducir.js?v=28').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
+    import('./conducir.js?v=30').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
       .then((m) => { const ab = m.open({ onClose: endTour, getDark: () => nightT }); if (!ab) throw new Error('no webgl'); setTimeout(mochiClose, 700); })
       .catch(() => { endTour(); mochiClose(); });
   };
