@@ -604,20 +604,24 @@ export function open(opts) {
       // the pool of warm light on the ground in front of the door
       { const c = document.createElement('canvas'); c.width = c.height = 128; const x2 = c.getContext('2d'), gr2 = x2.createRadialGradient(64, 64, 0, 64, 64, 62); gr2.addColorStop(0, 'rgba(255,210,120,.95)'); gr2.addColorStop(.5, 'rgba(255,190,100,.35)'); gr2.addColorStop(1, 'rgba(255,180,90,0)'); x2.fillStyle = gr2; x2.fillRect(0, 0, 128, 128);
         const pool = new THREE.Mesh(new THREE.PlaneGeometry(10, 7.5), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 })); pool.rotation.x = -PI / 2; pool.position.set(0, .16, d / 2 + 2.6); g.add(pool); }
-      // the wire-haired dachshund (teckel de pelo duro) asleep on a cushion by the door
+      // the wire-haired dachshund (teckel de pelo duro), curled up asleep on a cushion by the door: soft, round and cuddly
       { const dg = new THREE.Group(); dg.position.set(1.7, .02, d / 2 + 1.7); dg.rotation.y = -.35; g.add(dg);
-        const fur = 0x8f5c36, dark = 0x5e3b22, bed = new THREE.Mesh(new THREE.CylinderGeometry(.85, .9, .14, 16), std(0x5a95c4)); bed.position.y = .07; bed.receiveShadow = true; dg.add(bed);
-        const br = new THREE.Group(); br.position.y = .14; dg.add(br);
-        const part = (geo, col, x, y, z, sx2, sy2, sz2) => { const o = new THREE.Mesh(geo, std(col, { flatShading: true })); o.position.set(x, y, z); o.scale.set(sx2 || 1, sy2 || 1, sz2 || 1); o.castShadow = true; br.add(o); return o; };
-        part(new THREE.IcosahedronGeometry(.22, 1), fur, -.3, .2, 0, 1.5, .85, 1); part(new THREE.IcosahedronGeometry(.2, 1), fur, .12, .19, 0, 1.4, .85, .95); part(new THREE.IcosahedronGeometry(.17, 1), fur, -.62, .17, .05, 1.1, .8, .9);          // the long body
-        part(new THREE.IcosahedronGeometry(.18, 1), fur, .5, .13, .1, 1.1, .8, 1); part(new THREE.CylinderGeometry(.06, .08, .34, 6), dark, .78, .1, .1, 1, 1, 1).rotation.z = PI / 2 + .1;                                                      // head and long snout, resting low
-        part(new THREE.SphereGeometry(.045, 6, 5), 0x2a1d16, .96, .1, .1); for (const sz of [-1, 1]) { part(new THREE.IcosahedronGeometry(.12, 1), dark, .5, .08, .1 + sz * .17, .7, 1.5, .5); part(new THREE.BoxGeometry(.07, .012, .02), 0x2a1d16, .66, .17, .1 + sz * .07); }   // floppy ears, closed eyes
-        for (let k = 0; k < 5; k++) part(new THREE.ConeGeometry(.025, .08, 4), dark, .86 + (k % 2) * .02, .02 + (k % 3) * .015, .1 + (k - 2) * .035, 1, 1, 1).rotation.x = PI;                                                                          // the wiry beard
-        for (let k = 0; k < 16; k++) { const sp = part(new THREE.ConeGeometry(.03, .1, 4), k % 3 ? fur : dark, -.78 + k * .085, .33 - Math.abs(k - 8) * .006, ((k * 37) % 7 - 3) * .03, 1, 1, 1); sp.rotation.set(((k * 53) % 5 - 2) * .25, 0, ((k * 29) % 5 - 2) * .2); }   // the harsh, bristly coat
-        for (const sz of [-1, 1]) { part(new THREE.IcosahedronGeometry(.07, 1), dark, .55, .05, .1 + sz * .09, 1.6, .7, 1); part(new THREE.IcosahedronGeometry(.08, 1), fur, -.35, .06, sz * .2, 1.4, .7, 1); }
-        const tail = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(-.8, .2, .05), new THREE.Vector3(-1.05, .26, .22), new THREE.Vector3(-.95, .2, .42), new THREE.Vector3(-.7, .12, .45)]), 12, .035, 5), std(fur, { flatShading: true })); br.add(tail);
-        const zs = []; for (let k = 0; k < 3; k++) { const c = document.createElement('canvas'); c.width = c.height = 64; const x3 = c.getContext('2d'); x3.fillStyle = '#fff6e4'; x3.font = '700 54px "Switzer",system-ui,sans-serif'; x3.textAlign = 'center'; x3.textBaseline = 'middle'; x3.fillText('z', 32, 36); x3.strokeStyle = 'rgba(80,60,40,.55)'; x3.lineWidth = 3; x3.strokeText('z', 32, 36); const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false, fog: false })); sp.scale.set(.4, .4, 1); dg.add(sp); zs.push(sp); }
-        g.userData.update = (t) => { br.scale.set(1, 1 + Math.sin(t * 1.6) * .05, 1 + Math.sin(t * 1.6) * .03); zs.forEach((sp, k) => { const u = ((t * .25 + k / 3) % 1); sp.position.set(.95 + u * .35, .45 + u * 1.0, .1); sp.material.opacity = Math.sin(u * PI) * .9; sp.scale.setScalar(.25 + u * .3); }); }; }
+        const FUR = 0x9b6a40, BACK = 0x70492b, MUZ = 0xcfa874, EAR = 0x5e3b22;
+        const sm = (c) => std(c, { flatShading: false, roughness: 1 });
+        const bed = new THREE.Mesh(new THREE.CylinderGeometry(.95, 1.0, .16, 28), std(0xf2c4a8)); bed.position.y = .08; bed.receiveShadow = true; dg.add(bed); const rim = new THREE.Mesh(new THREE.TorusGeometry(.95, .08, 10, 28), std(0xe8b296)); rim.rotation.x = PI / 2; rim.position.y = .14; dg.add(rim);
+        const br = new THREE.Group(); br.position.y = .2; dg.add(br);
+        const ball = (r, col, x, y, z, sx, sy, sz) => { const o = new THREE.Mesh(new THREE.SphereGeometry(r, 18, 14), sm(col)); o.position.set(x, y, z); o.scale.set(sx || 1, sy || 1, sz || 1); o.castShadow = true; br.add(o); return o; };
+        // the long body, curled in a C: a chain of overlapping soft spheres that gets thinner towards the tail
+        for (let k = 0; k < 14; k++) { const u = k / 13, a = -.2 + u * 4.0, rad = .5, r = .2 - u * .06 + Math.sin(u * 3.1) * .03; ball(r, k % 3 ? FUR : BACK, Math.cos(a) * rad, r * .95, Math.sin(a) * rad, 1, .92, 1); }
+        for (let k = 0; k < 10; k++) { const u = k / 9, a = .1 + u * 3.4; ball(.075, BACK, Math.cos(a) * .5 * 1.0, .33 - u * .06, Math.sin(a) * .5, 1.4, .8, 1.4); }        // the rougher back
+        // the head rests on the front paws at the other end of the curl
+        { const hx = Math.cos(-.2) * .5 - .3, hz = Math.sin(-.2) * .5 - .22; ball(.19, FUR, hx, .2, hz, 1.1, .95, 1); ball(.11, MUZ, hx - .21, .13, hz - .1, 1.6, .75, .9); ball(.04, 0x2a1d16, hx - .36, .15, hz - .12);       // skull, long muzzle, nose
+          for (const sd of [-1, 1]) { ball(.1, EAR, hx + .02, .12, hz + sd * .2, .8, 1.5, .55); ball(.012, 0x2a1d16, hx - .1, .27, hz - .1 + sd * .075, 3.2, .6, 1); }            // long floppy ears, closed eyes
+          for (let k = 0; k < 4; k++) ball(.03, MUZ, hx - .27 - k * .015, .06, hz - .06 + (k - 1.5) * .045, 1, 1.5, 1);                                                          // the wiry beard
+          for (const sd of [-1, 1]) ball(.075, MUZ, hx - .3, .07, hz + sd * .16 - .12, 1.4, .8, .9); }
+        for (let k = 0; k < 3; k++) ball(.06, FUR, Math.cos(-.2 + 3.7) * .5 + .08 * k, .1, Math.sin(-.2 + 3.7) * .5 + .12, 1.2, .8, 1);                                                        // hind paws tucked in
+        const zs = []; for (let k = 0; k < 3; k++) { const c = document.createElement('canvas'); c.width = c.height = 64; const x3 = c.getContext('2d'); x3.fillStyle = '#fff6e4'; x3.font = '700 54px "Switzer",system-ui,sans-serif'; x3.textAlign = 'center'; x3.textBaseline = 'middle'; x3.fillText('z', 32, 36); x3.strokeStyle = 'rgba(80,60,40,.45)'; x3.lineWidth = 3; x3.strokeText('z', 32, 36); const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false, fog: false })); sp.scale.set(.4, .4, 1); dg.add(sp); zs.push(sp); }
+        g.userData.update = (t) => { br.scale.set(1 + Math.sin(t * 1.5) * .018, 1 + Math.sin(t * 1.5) * .05, 1 + Math.sin(t * 1.5) * .018); zs.forEach((sp, k) => { const u = ((t * .25 + k / 3) % 1); sp.position.set(-.6 - u * .3, .6 + u * 1.0, -.3); sp.material.opacity = Math.sin(u * PI) * .9; sp.scale.setScalar(.25 + u * .3); }); }; }
       g.userData.fw = w + .2; g.userData.fd = d + .2; g.userData.r = 8.6; g.userData.hx = w / 2 + .9; g.userData.hz = d / 2 + .4; g.userData.porch = d / 2 + 1.6; return g; };
     const hs = casaMesh(); casa.obj = hs;
     for (const [z, off] of cands.flatMap((z) => [[z, 12], [z, 15], [z, 9.5], [z, 18], [z, 21]])) { const x = ROADX(z) - off; if (H(x, z) < .5 || solid(x, z, 4.8) || plazas.some((pl) => Math.hypot(pl[0] - x, pl[1] - z) < pl[2] + 6) || lanes.some((l) => l.some((q) => Math.hypot(q[0] - x, q[1] - z) < 6.5)) || viol(hs.userData, x, z, PI / 2)[0] > 0) continue;
@@ -758,7 +762,7 @@ export function open(opts) {
   const exitBtn = root.querySelector('.x-dr-out');
   const enterCasa = () => { if (inCasa || !casa.ok) return; inCasa = true; root.classList.add('x-fade');
     const done = () => { if (snd) snd.cozy(true); root.classList.add('x-casa'); subEl.textContent = 'Casa Martamon'; root.classList.remove('x-near', 'x-fade'); };
-    import('./casa.js?v=9').then((m) => { if (closed) return; if (!casaR) casaR = m.buildCasa(THREE, { std, rbox, PI }); setTimeout(done, 450); }).catch(() => { inCasa = false; root.classList.remove('x-fade'); }); };
+    import('./casa.js?v=13').then((m) => { if (closed) return; if (!casaR) casaR = m.buildCasa(THREE, { std, rbox, PI }); setTimeout(done, 450); }).catch(() => { inCasa = false; root.classList.remove('x-fade'); }); };
   const leaveCasa = () => { if (!inCasa) return; if (snd) snd.cozy(false); root.classList.add('x-fade'); setTimeout(() => { inCasa = false; root.classList.remove('x-casa', 'x-fade'); nearName = ''; }, 450); };
   exitBtn.addEventListener('click', leaveCasa);
 
