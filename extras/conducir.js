@@ -489,6 +489,7 @@ export function open(opts) {
   { const lbl = lang === 0 ? 'SUPERMARKET' : 'SUPERMERCADO', sz0 = 50, sx0 = ROADX(sz0) - 16, sm = supermercado(lbl); addTo(sm, sx0, sz0, PI / 2, sm.userData.r);
     const lot = new THREE.Mesh(new THREE.BoxGeometry(11, .1, 22), std(0x9aa3b0)); lot.position.set(sx0 + 9.4, H(ROADX(sz0) - 7, sz0) + .05, sz0); scene.add(lot); lot.receiveShadow = true;
     shelters.push([sx0 + 5.6, sz0 - 3], [sx0 + 5.6, sz0 + 3]);
+    reserved.push([sx0 - 9, sx0 + 16, sz0 - 14, sz0 + 14]);
     const mkShopper = (i, z1, z2, withCart) => { const w2 = person([0x7aa6d8, 0xf0907a, 0xf4e6d0, 0xc9a0e8][i % 4], [0xf0c9a0, 0xe3b185, 0xf5d6b5][i % 3], [0xe36d57, 0x5fae8a, 0xf2c14a][i % 3]); if (withCart) { const c = cart(); c.position.set(1.25, 0, 0); w2.add(c); } scene.add(w2); walkers.push({ p: w2, pts: [[sx0 + 5.6, z1], [sx0 + 9.5, (z1 + z2) / 2], [sx0 + 6.4, z2]], d: rng() * 6, sp: .45 + rng() * .25, dir: 1, lift: .08 }); };
     mkShopper(0, sz0 - 6, sz0 + 6, true); mkShopper(1, sz0 + 4, sz0 - 7, false); mkShopper(2, sz0 - 2, sz0 + 8, true); }
 

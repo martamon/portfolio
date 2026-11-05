@@ -1218,6 +1218,27 @@ export function open(opts) {
   }
   { const sqM = square(-12.8, 2.65, 2.0, 1.5, { trees: 4, terraces: 3, people: 12 });
   }
+  // ---- the shipyard (astillero) on the outskirts, by the sea: a big shed, a slipway with rails, a boat on stocks, a gantry crane and a hull being built
+  { let sx = 0, sz = 0, found = false, flip = false;
+    for (const [cx, inl] of [[-5, .8], [-1, .8], [3, .8], [-9, .8], [7, .8], [-5, 1.2], [-1, 1.2], [3, 1.2]]) { const [qx, qz] = onShoreS(cx, inl); let ok = true; for (let a = 0; a < 8 && ok; a++) for (const rr of [.45, .9]) if (groundH(qx + Math.cos(a * .785) * rr, qz + Math.sin(a * .785) * rr + .35) < SEA + .05) ok = false; if (ok) { sx = qx; sz = qz; found = true; flip = true; break; } }
+    if (found) { const g = new THREE.Group(), conc = std(0xcfc8b8), wood = std(0x9a6f45), dark = std(0x4a4640);
+      const add = (o, x, y, z) => { o.position.set(x, y, z); g.add(o); return o; };
+      add(box(.62, .03, 1.15, conc), 0, 0, .35);                                                     // the slipway
+      for (const rx of [-.12, .12]) add(box(.025, .03, 1.1, dark), rx, .028, .36);
+      for (let i = 0; i < 9; i++) add(box(.34, .02, .03, wood), 0, .018, -.1 + i * .12);
+      const shed = add(box(.95, .42, .62, std(0xdfe6ea)), .72, .21, .12); add(gable(1.02, .72, .17, std(0x7a8d9a)), .72, .42, .12);
+      add(box(.34, .3, .02, std(0x4f6f8a)), .72, .15, .435);                                          // the big sliding door
+      add(box(.95, .03, .03, std(0xf2efe6)), .72, .43, .43);
+      const b = boat(0x2f6fa8, 0xf2efe6, 'trawler'); b.scale.setScalar(.8); b.rotation.y = -PI / 2; b.position.set(0, .13, .5); g.add(b);
+      for (const [px, pz] of [[-.17, .3], [.17, .3], [-.17, .72], [.17, .72]]) add(box(.03, .13, .03, wood), px, .07, pz);   // the props that hold the hull
+      for (const sd of [-1, 1]) { add(box(.03, .46, .03, std(0xe9873a)), sd * .4, .23, .3); add(box(.03, .46, .03, std(0xe9873a)), sd * .4, .23, .9); }
+      add(box(.84, .035, .05, std(0xe9873a)), 0, .47, .3); add(box(.84, .035, .05, std(0xe9873a)), 0, .47, .9); add(box(.04, .035, .64, std(0xe9873a)), -.4, .47, .6); add(box(.04, .035, .64, std(0xe9873a)), .4, .47, .6);   // the gantry crane
+      add(box(.012, .2, .012, dark), 0, .36, .6);
+      const hull = new THREE.Group(); for (let i = 0; i < 7; i++) { const rib = box(.02, .1 - Math.abs(i - 3) * .008, .2 - Math.abs(i - 3) * .03, wood); rib.position.set(-.16 + i * .054, .07, 0); hull.add(rib); } hull.add(box(.4, .015, .03, wood)); hull.position.set(-.78, 0, .15); g.add(hull);   // a wooden hull being built
+      for (let i = 0; i < 4; i++) add(box(.22, .015, .05, std(0xc9a46a)), -.73, .015 + i * .016, -.2);                                 // planks
+      for (const [bx, bz] of [[-.55, -.12], [-.6, -.2]]) { const br = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, .06, 8), std(0x8a5a3c)); br.position.set(bx, .03, bz); g.add(br); }
+      for (const [wx, wz, c2] of [[-.12, .55, 0], [-.22, .3, 1], [.42, .6, 2]]) { const p2 = person(SHIRTS[(c2 * 2 + 1) % SHIRTS.length], { skin: SKINS[c2] }); p2.scale.setScalar(.8); p2.position.set(wx, 0, wz); p2.rotation.y = c2 * 1.9; g.add(p2); }
+      g.userData.fp = 1.0; g.userData.pri = 6; g.userData.yard = 1; W(put(g, sx, sz, flip ? PI + seaYaw(sx) : seaYaw(sx), 0)); } }
   // ---- the Sunday market: a little street with stalls of vegetables, fruit, bread, cheese, octopus, empanadas, sausages and honey
   { let mx = 0, mz = 0, found = false;
     for (const cx of [-15.4, -10.2, -16.6, -8.6, -8.15, 1.8]) { for (const inl of [4.3, 4.7, 3.9, 3.5]) { const [qx, qz] = onShore(cx, inl); let ok = true; for (let a = 0; a < 8 && ok; a++) for (const rr of [.6, 1.25]) if (groundH(qx + Math.cos(a * .785) * rr, qz + Math.sin(a * .785) * rr) < SEA + .05) ok = false; if (ok && groundH(qx, qz) > SEA + .05) { mx = qx; mz = qz; found = true; break; } } if (found) break; }
@@ -1751,7 +1772,7 @@ export function open(opts) {
     if (tourOn) return; tourOn = true; tourMuted = !!(audio && audio.muted);
     mochi.classList.remove('x-ctaon'); mochi.classList.add('x-load'); root.classList.add('x-tour'); if (audio) { audio.sfx('mochinext'); setTimeout(() => audio && audio.mute(true), 500); }
     const t0 = performance.now();
-    import('./conducir.js?v=27').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
+    import('./conducir.js?v=28').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
       .then((m) => { const ab = m.open({ onClose: endTour, getDark: () => nightT }); if (!ab) throw new Error('no webgl'); setTimeout(mochiClose, 700); })
       .catch(() => { endTour(); mochiClose(); });
   };
