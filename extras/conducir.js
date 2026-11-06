@@ -924,7 +924,7 @@ export function open(opts) {
   const paintMu = () => { const m = snd && snd.muted; muBtn.innerHTML = m ? '<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m16 9 5 6M21 9l-5 6"/></svg>' : '<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>'; };
   paintMu(); muBtn.addEventListener('click', () => { if (snd) { snd.mute(!snd.muted); paintMu(); } }); if (snd) snd.start();
   // ---- day and night: it starts at the hour of the planet, and the button changes it
-  let night = opts.getDark ? opts.getDark() : 0, nightT = night > .5 ? 1 : 0, nightGoal = nightT;
+  let night = opts.getDark ? opts.getDark() : 0, nightT = night, nightGoal = night;   /* exactly the light of the planet (golden hour included); the button then goes to full day or night */
   const dnBtn = root.querySelector('.x-dr-dn');
   const paintDn = () => { dnBtn.innerHTML = nightGoal > .5 ? '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/></svg>' : '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>'; };
   paintDn(); dnBtn.addEventListener('click', () => { nightGoal = nightGoal > .5 ? 0 : 1; paintDn(); if (snd) snd.chime(); });
@@ -933,9 +933,9 @@ export function open(opts) {
   const moon = new THREE.Mesh(new THREE.SphereGeometry(9, 14, 10), new THREE.MeshBasicMaterial({ color: 0xfff1cf, fog: false, transparent: true, opacity: 0 })); scene.add(moon);
   const RAIN_FOG = new THREE.Color(0xa9b8c4), NIGHT_FOG = new THREE.Color(0x1b2547), NIGHT_SEA = new THREE.Color(0x14405a), WARM = new THREE.Color(0xffd6a0), MOON = new THREE.Color(0x9db4ff);
   // ---- rain: a button, falling drops, a greyer sky, umbrellas on the people and a dash for the shelters
-  let rainGoal = 0, rainT = 0; const rnBtn = root.querySelector('.x-dr-rn');
+  const rain0 = opts.getRain ? opts.getRain() : 0; let rainGoal = rain0 > .5 ? 1 : 0, rainT = rain0 > .02 ? rain0 : 0; const rnBtn = root.querySelector('.x-dr-rn');
   const paintRn = () => { rnBtn.innerHTML = rainGoal ? '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/></svg>' : '<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 15a4 4 0 0 1-.4-7.98A5.5 5.5 0 0 1 17.2 7.6 3.7 3.7 0 0 1 17 15"/><path d="M8 18l-1 2.4M12 17l-1 2.4M16 18l-1 2.4"/></svg>'; };
-  paintRn(); rnBtn.addEventListener('click', () => { rainGoal = rainGoal ? 0 : 1; paintRn(); if (snd) { snd.rain(!!rainGoal); snd.chime(); } });
+  if (rainGoal && snd) snd.rain(true); paintRn(); rnBtn.addEventListener('click', () => { rainGoal = rainGoal ? 0 : 1; paintRn(); if (snd) { snd.rain(!!rainGoal); snd.chime(); } });
   const NR = LOW ? 260 : 700, rainG = new THREE.BufferGeometry(), rp = new Float32Array(NR * 6); for (let i = 0; i < NR; i++) { const x = (rng() - .5) * 46, y = rng() * 22, z = (rng() - .5) * 46; rp.set([x, y, z, x - .08, y - 1.1, z], i * 6); }
   rainG.setAttribute('position', new THREE.BufferAttribute(rp, 3)); const rainL = new THREE.LineSegments(rainG, new THREE.LineBasicMaterial({ color: 0xd4e6f4, transparent: true, opacity: 0 })); rainL.frustumCulled = false; scene.add(rainL);
   const K = { up: 0, down: 0, left: 0, right: 0 }; let closed = false, raf = 0;
