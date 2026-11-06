@@ -145,8 +145,8 @@
     'html[data-xalpha] .x-vfade{display:none!important}',
     'html[data-xp="about"][data-xalpha] [data-framer-name="Hero Video"] video{-webkit-mask-image:linear-gradient(to bottom,#000 0,#000 80%,transparent 100%)!important;mask-image:linear-gradient(to bottom,#000 0,#000 80%,transparent 100%)!important}',
     '@media(max-width:809px){html[data-xp="about"][data-xalpha] [data-framer-name="Hero Video"] video{-webkit-mask-image:linear-gradient(to bottom,transparent calc(50% - 28.125vw),#000 calc(50% - 22.5vw),#000 calc(50% + 17vw),transparent calc(50% + 28.125vw))!important;mask-image:linear-gradient(to bottom,transparent calc(50% - 28.125vw),#000 calc(50% - 22.5vw),#000 calc(50% + 17vw),transparent calc(50% + 28.125vw))!important}}',
-    /* the text blends (negative on the light page, positive on the dark head) with what is behind it inside the video layer, so that layer carries the page colour */
-    'html[data-xp="about"] [data-framer-name="Hero Video"]{background:color-mix(in srgb,rgb(181,197,217) calc((1 - var(--xt)) * 100%),rgb(41,60,89) calc(var(--xt) * 100%))}',
+    /* no flat colour behind the head: the layer must not be its own stacking context, so the text blends with the real page gradient and the head */
+    'html[data-xp="about"] [data-framer-name="Hero Video"]{z-index:auto!important}',
     '.x-dial{top:auto!important;right:auto!important;left:14px;bottom:46px;gap:6px;font-size:11px;opacity:.72}',
     '.x-dn svg{width:15px;height:15px}.x-dn{position:fixed;left:122px;bottom:11px;z-index:12;width:28px;height:28px;border-radius:50%;border:0;padding:0;display:grid;place-items:center;cursor:pointer;color:#1f1f1f;background:rgba(255,255,255,.7);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 2px 10px rgba(20,50,80,.12);transition:background .5s ease,color .5s ease,transform .4s cubic-bezier(.2,.8,.2,1)}.x-dn:hover{transform:scale(1.06)}.x-dn:focus-visible{outline:2px solid currentColor;outline-offset:2px}',
     'html[data-xdark] .x-dn{background:rgba(20,34,66,.65);color:rgb(203,237,255)}',
@@ -996,7 +996,7 @@
     if (planet) return;
     planet = { loading: true };
     jfHint(0);
-    import('/extras/freixo.js?v=231').then(function (m) {
+    import('/extras/freixo.js?v=232').then(function (m) {
       planet = m.open({ getDark: function () { return darkness(theme.hour); }, getHour: function () { return theme.hour; }, onClose: function () { planet = null; } });
     }).catch(function () { planet = null; });
   }
