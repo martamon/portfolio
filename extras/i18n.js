@@ -74,6 +74,7 @@ const ROWS = [
   ['Previous stop', 'Parada anterior', 'Parada anterior'],
   ['Next stop', 'Siguiente parada', 'Seguinte parada'],
   ['Change clothes', 'Cambiar de ropa', 'Cambiar de roupa'],
+  ["Welcome to Martamon's website. I'm a photographer and artificial intelligence specialist. I hope you enjoy your visit and find the content helpful.", 'Bienvenido a la web de Martamon. Soy fotógrafa y especialista en inteligencia artificial. Espero que disfrutes de tu visita y que el contenido te resulte útil.', 'Benvido á web de Martamon. Son fotógrafa e especialista en intelixencia artificial. Espero que goces da túa visita e que o contido che resulte útil.'],
   ['Leave the house', 'Salir de la casa', 'Saír da casa'],
   ['Enter', 'Entrar', 'Entrar'],
   ['Ride with the arrow keys', 'Pedalea con las flechas del teclado · E para leer', 'Pedalea coas frechas do teclado · E para ler'],
