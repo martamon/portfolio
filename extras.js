@@ -116,8 +116,9 @@
     '[data-xn],[data-xcap]{font-family:"IBM Plex Mono","IBM Plex Mono Placeholder",monospace!important;font-size:14px!important;font-weight:500!important;letter-spacing:.025em!important;text-transform:uppercase!important;line-height:1.6em!important;text-decoration:none!important}',
     '[data-xcap]{color:#888!important}',
     // previous / next project links: a finger-sized tap area around the small type (the same look), above anything drifting by
-    'a[data-xl]{position:relative;z-index:12}a[data-xl]::after{content:"";position:absolute;left:-14px;right:-14px;top:-16px;bottom:-16px}',
+    'a[data-xl],a[data-xpn]{position:relative;z-index:12}a[data-xpn]::after,a[data-xl]::after{content:"";position:absolute;left:-14px;right:-14px;top:-16px;bottom:-16px}',
     '.x-drift.x-thru{pointer-events:none!important}',
+    'a[data-xpnsrc]{display:none!important}',
     // the language switch: the same negative/positive type as the menu (white with the difference blend, plain page colour through dusk and dawn,
     // the light blue at night), full strength, and the same rolling letters on hover
     'html .x-lang{opacity:1;color:#fff;mix-blend-mode:difference}html[data-xdusk] .x-lang{mix-blend-mode:normal;color:var(--xfg)}html[data-xnight] .x-lang{color:rgb(203,237,255)}',
@@ -267,7 +268,7 @@
     '.x-vp-fill{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto}',
     '.x-vp-st{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;height:100%;overflow:hidden;background:#000}',
     '.x-vp-fill .x-vp-st{width:min(100%,calc(100vh * 4));height:auto;aspect-ratio:var(--r)}',
-    '.x-vp-po{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;transition:opacity .6s ease}.x-vp.x-play:not(.x-ytp) .x-vp-po,.x-vp.x-ytp.x-shown .x-vp-po{opacity:0;pointer-events:none}',
+    '.x-vp-po{position:absolute;inset:0;width:100%;height:100%;background:#000 center/cover no-repeat;z-index:1;transition:opacity .6s ease}.x-vp.x-play:not(.x-ytp) .x-vp-po,.x-vp.x-ytp.x-shown .x-vp-po{opacity:0;pointer-events:none}',
     // YouTube's player stays invisible (no title, logo, play button or "Watch on YouTube" ever shows): it fades in only once it has been playing for a moment, and out as soon as it stops
     '.x-vp-if{opacity:0;transition:opacity .5s ease}.x-vp.x-shown .x-vp-if{opacity:1}',
     '.x-vp-vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}',
@@ -964,10 +965,11 @@
     var olds = host.querySelectorAll('iframe'); for (var oi = 0; oi < olds.length; oi++) { try { olds[oi].removeAttribute('srcdoc'); olds[oi].src = 'about:blank'; } catch (er) {} }
     for (var i = 0; i < host.children.length; i++) setAttr(host.children[i], 'data-xvh', '');
     var el = document.createElement('div'); el.className = 'x-vp' + (r < 1 ? ' x-vp-v' : '') + (o.fill ? ' x-vp-fill' : '') + (o.autoplay ? ' x-vp-auto' : '') + (VP_FS ? '' : ' x-nofs'); el.style.setProperty('--r', String(r));
-    el.innerHTML = '<div class="x-vp-st"><img class="x-vp-po" alt="" decoding="async"></div><button type="button" class="x-vp-lb"></button><span class="x-vp-cur" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M11 8.6c0-2 2.1-3.1 3.8-2.1l17 10.9c1.5 1 1.5 3.2 0 4.2l-17 10.9c-1.7 1-3.8-.1-3.8-2.1z"/></svg></span><button type="button" class="x-vp-big" aria-label="Play"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></button><div class="x-vp-bar"><button type="button" class="x-vp-sd"></button><button type="button" class="x-vp-fs"></button></div>';
+    el.innerHTML = '<div class="x-vp-st"><div class="x-vp-po" aria-hidden="true"></div></div><button type="button" class="x-vp-lb"></button><span class="x-vp-cur" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M11 8.6c0-2 2.1-3.1 3.8-2.1l17 10.9c1.5 1 1.5 3.2 0 4.2l-17 10.9c-1.7 1-3.8-.1-3.8-2.1z"/></svg></span><button type="button" class="x-vp-big" aria-label="Play"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></button><div class="x-vp-bar"><button type="button" class="x-vp-sd"></button><button type="button" class="x-vp-fs"></button></div>';
     p.el = el; p.st = el.querySelector('.x-vp-st'); var po = el.querySelector('.x-vp-po');
-    var ytPo = function () { po.onerror = function () { po.onerror = null; po.src = 'https://i.ytimg.com/vi/' + id + '/hqdefault.jpg'; }; po.src = 'https://i.ytimg.com/vi/' + id + '/maxresdefault.jpg'; };
-    if (VP_FILE[id]) { po.onerror = ytPo; po.src = '/extras/video/' + VP_FILE[id] + '.jpg'; } else ytPo();
+    var setPo = function (url, next) { var t = new Image(); t.onload = function () { if (t.naturalWidth > 130) po.style.backgroundImage = 'url("' + url + '")'; else if (next) next(); }; t.onerror = function () { if (next) next(); }; t.src = url; };
+    var ytPo = function () { setPo('https://i.ytimg.com/vi/' + id + '/maxresdefault.jpg', function () { setPo('https://i.ytimg.com/vi/' + id + '/hqdefault.jpg'); }); };
+    if (VP_FILE[id]) setPo('/extras/video/' + VP_FILE[id] + '.jpg', ytPo); else ytPo();
     var pp = el.querySelector('.x-vp-lb'), sd = el.querySelector('.x-vp-sd'), fs = el.querySelector('.x-vp-fs');
     var paint = function () {
       var full = document.fullscreenElement === el || document.webkitFullscreenElement === el;
@@ -1524,6 +1526,24 @@
     if (p !== 'home' && NOT_PROJECTS.indexOf(p) === -1) {
       var pn = document.querySelectorAll('section a[href^="./"]');
       for (i = 0; i < pn.length; i++) if (/^\.\/[a-z0-9-]+$/.test(pn[i].getAttribute('href')) && pn[i].closest('[data-framer-name="Previous/Next"]')) setAttr(pn[i], 'data-xl', '');
+      plainPrevNext();
+    }
+  }
+  // the previous / next project links are replaced by plain links of our own (same look): Framer's own link kept its original
+  // target in its code (the removed "Coming soon"), and on some phones its router went there and ended on the home page
+  function plainPrevNext() {
+    var olds = document.querySelectorAll('a[data-xpn]'), i;
+    for (i = 0; i < olds.length; i++) { var pv = olds[i].previousElementSibling; if (!pv || !pv.hasAttribute('data-xpnsrc')) olds[i].parentNode.removeChild(olds[i]); }
+    var ls = document.querySelectorAll('section a[href^="./"]');
+    for (i = 0; i < ls.length; i++) {
+      var a = ls[i], h = a.getAttribute('href'), txt = a.textContent.trim();
+      if (!/^\.\/[a-z0-9-]+$/.test(h) || h === './coming-soon' || !/[\u21b3\u21b5]/.test(txt)) continue;
+      var to = '/' + h.slice(2) + '/', c = a.nextElementSibling;
+      if (!c || !c.hasAttribute('data-xpn')) { c = document.createElement('a'); c.setAttribute('data-xpn', ''); a.parentNode.insertBefore(c, a.nextSibling); }
+      if (c.getAttribute('href') !== to) c.setAttribute('href', to);
+      if (c.className !== a.className) c.className = a.className;
+      if (c.textContent !== txt) c.textContent = txt;
+      setAttr(a, 'data-xpnsrc', '');
     }
   }
 
