@@ -8,12 +8,21 @@
   'use strict';
 
   // ?xdebug on any page prints what the browser reports (errors, sizes) on the page itself, for in-app browsers that can't be inspected
-  if (/[?&]xdebug\b/.test(location.search)) {
+  var XDBG = false;
+  try { if (/[?&]xdebug\b/.test(location.search)) sessionStorage.setItem('xdebug', '1'); if (/[?&]xdebug=0\b/.test(location.search)) sessionStorage.removeItem('xdebug'); XDBG = sessionStorage.getItem('xdebug') === '1'; } catch (e) { XDBG = /[?&]xdebug\b/.test(location.search); }
+  var xlog = function () {};
+  if (XDBG) {
     (function () {
       var box = document.createElement('pre'), lines = [];
+      try { lines = JSON.parse(sessionStorage.getItem('xdbg-lines') || '[]'); lines.push('---- ' + location.pathname); } catch (e) {}
       box.style.cssText = 'position:fixed;left:0;right:0;top:0;max-height:60vh;overflow:auto;margin:0;padding:8px;background:#000;color:#0f0;font:11px/1.35 monospace;white-space:pre-wrap;word-break:break-all;z-index:2147483647';
       var show = function () { box.textContent = lines.join('\n'); if (!box.parentNode && document.documentElement) document.documentElement.appendChild(box); };
-      var log = function (t) { lines.push(t); if (lines.length > 40) lines.shift(); show(); };
+      var log = function (t) { lines.push(t); if (lines.length > 60) lines.shift(); try { sessionStorage.setItem('xdbg-lines', JSON.stringify(lines)); } catch (e) {} show(); };
+      xlog = log;
+      box.addEventListener('dblclick', function () { lines = []; try { sessionStorage.removeItem('xdbg-lines'); } catch (e) {} show(); });
+      var cs = document.currentScript; log('script ' + (cs && cs.src ? cs.src.split('/').pop() : '?') + ' sw-ctrl ' + !!(navigator.serviceWorker && navigator.serviceWorker.controller));
+      addEventListener('click', function (e) { var a = e.target.closest && e.target.closest('a[href]'); if (a) log('tap ' + a.getAttribute('href') + ' xl=' + a.hasAttribute('data-xl') + ' "' + a.textContent.trim().slice(0, 20) + '" prevented=' + e.defaultPrevented); }, true);
+      addEventListener('pagehide', function () { log('leave -> ' + location.href); });
       log('xdebug ' + new Date().toISOString().slice(11, 19) + ' ' + navigator.userAgent);
       log('view ' + innerWidth + 'x' + innerHeight + ' dpr ' + devicePixelRatio + ' sw ' + ('serviceWorker' in navigator) + ' ref ' + (document.referrer || '-'));
       addEventListener('error', function (e) { log('ERR ' + (e.message || (e.target && (e.target.src || e.target.href)) || '?') + (e.filename ? ' @' + e.filename.split('/').pop() + ':' + e.lineno : '')); }, true);
@@ -906,6 +915,7 @@
     for (var i = 0; i < vpAll.length; i++) {
       var p = vpAll[i]; if (!p.f || e.source !== p.f.contentWindow) continue;
       var st = d.event === 'onStateChange' ? d.info : (d.info && typeof d.info.playerState === 'number' ? d.info.playerState : null);
+      if (st !== null && st !== p.lastSt) { p.lastSt = st; xlog('yt ' + p.id + ' state ' + st); }
       if (st === 1) vpCmd(p, 'setPlaybackQuality', ['hd1080']);
       if (st === 1 || st === 3) { p.on = true; p.el.classList.add('x-play'); p.el.classList.add('x-seen'); }
       else if (st === 2 || st === 0 || st === 5) { p.on = false; p.el.classList.remove('x-play'); }
@@ -923,7 +933,7 @@
   };
   ['touchend', 'pointerup', 'click', 'keydown'].forEach(function (ev) { addEventListener(ev, vpGest, { passive: true, capture: true }); });
   function vpCmd(p, fn, args) {
-    if (p.v) { var v = p.v; if (fn === 'playVideo') { var pr = v.play(); if (pr && pr.catch) pr.catch(function () {}); } else if (fn === 'pauseVideo') v.pause(); else if (fn === 'mute') v.muted = true; else if (fn === 'unMute') v.muted = false; else if (fn === 'setVolume') v.volume = Math.max(0, Math.min(1, (args[0] || 100) / 100)); return; }
+    if (p.v) { var v = p.v; if (fn === 'playVideo') { var pr = v.play(); if (pr && pr.catch) pr.catch(function (er) { xlog('video ' + p.id + ' play refused: ' + (er && er.name)); }); } else if (fn === 'pauseVideo') v.pause(); else if (fn === 'mute') v.muted = true; else if (fn === 'unMute') v.muted = false; else if (fn === 'setVolume') v.volume = Math.max(0, Math.min(1, (args[0] || 100) / 100)); return; }
     if (p.f && p.f.contentWindow) p.f.contentWindow.postMessage(JSON.stringify({ event: 'command', func: fn, args: args || [] }), '*'); }
   function vpMount(host, id, o) {
     o = o || {};
@@ -956,7 +966,7 @@
         v.addEventListener('playing', function () { p.on = true; el.classList.add('x-play', 'x-seen'); paint(); });
         v.addEventListener('pause', function () { p.on = false; el.classList.remove('x-play'); paint(); });
         p.st.appendChild(v);
-        if (go) { var pr2 = v.play(); if (pr2 && pr2.catch) pr2.catch(function () {}); }
+        if (go) { var pr2 = v.play(); if (pr2 && pr2.catch) pr2.catch(function (er) { xlog('video ' + p.id + ' autoplay refused: ' + (er && er.name)); }); }
         return;
       }
       var f = document.createElement('iframe'); p.f = f;
@@ -967,7 +977,7 @@
     };
     var big = el.querySelector('.x-vp-big');
     big.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); if (p.v) { p.muted = true; vpCmd(p, 'playVideo'); } else { el.classList.add('x-nopo'); vpCmd(p, 'playVideo'); big.style.display = 'none'; } });
-    if (o.autoplay) setTimeout(function () { if (!p.on) { el.classList.add('x-blocked'); if (p.f) el.classList.add('x-nopo'); } }, 4500);
+    if (o.autoplay) setTimeout(function () { xlog('player ' + id + (p.v ? ' file' : p.f ? ' youtube' : ' none') + ' playing=' + p.on); if (!p.on) { el.classList.add('x-blocked'); if (p.f) el.classList.add('x-nopo'); } }, 4500);
     var play = function () { if (!p.f && !p.v) { p.wantPlay = true; make(false); return; } if (p.muted) vpCmd(p, 'mute'); else { vpCmd(p, 'unMute'); vpCmd(p, 'setVolume', [100]); } vpCmd(p, 'playVideo'); [400, 1200, 2500].forEach(function (ms) { setTimeout(function () { if (!p.on) vpCmd(p, 'playVideo'); }, ms); }); };
     var toggle = function () { if (!p.f || !p.on) { p.on = true; el.classList.add('x-play', 'x-seen'); play(); } else { p.on = false; el.classList.remove('x-play'); vpCmd(p, 'pauseVideo'); } paint(); };
     p.toggle = toggle;
@@ -1666,24 +1676,29 @@
       c.width = 896; c.height = 504; c.className = 'x-hc ' + v.className; c.style.cssText = v.style.cssText + ';position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;display:block'; c.setAttribute('aria-hidden', 'true');
       var pv = document.createElement('video');
       pv.muted = true; pv.defaultMuted = true; pv.loop = true; pv.setAttribute('muted', ''); pv.setAttribute('playsinline', ''); pv.setAttribute('webkit-playsinline', ''); pv.preload = 'auto'; pv.disablePictureInPicture = true;
-      pv.style.cssText = 'position:fixed;left:0;top:0;width:2px;height:2px;opacity:.01;pointer-events:none';
+      pv.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;opacity:0;pointer-events:none';   /* full size (Safari pauses muted videos it thinks are not shown), invisible */
       pv.src = '/extras/head/' + id + '.pack.mp4?v=1';
-      document.body.appendChild(pv); v.parentNode.insertBefore(c, v.nextSibling); v.__xc = c;
+      v.parentNode.insertBefore(pv, v.nextSibling); v.parentNode.insertBefore(c, pv.nextSibling); v.__xc = c; xlog('head ' + id.slice(0, 6) + ' webgl ok');
+      pv.addEventListener('error', function () { xlog('head pack error ' + (pv.error && pv.error.code)); });
+      var kick = function () { if (pv.paused && getComputedStyle(v).visibility !== 'hidden') { var kp = pv.play(); if (kp && kp.catch) kp.catch(function (er) { xlog('head play refused ' + (er && er.name)); }); } };
+      ['touchend', 'click', 'scroll', 'keydown'].forEach(function (t) { addEventListener(t, kick, { passive: true }); });
+      var drawn = false, lastSeek = 0;
       var lost = false; c.addEventListener('webglcontextlost', function (e) { e.preventDefault(); lost = true; });
       var loop = function () {
         if (!c.isConnected || !v.isConnected) { try { pv.pause(); pv.removeAttribute('src'); pv.load(); if (pv.parentNode) pv.parentNode.removeChild(pv); } catch (er) {} return; }
         requestAnimationFrame(loop);
         var vis = getComputedStyle(v).visibility !== 'hidden' && document.visibilityState === 'visible';
         if (!vis) { if (!pv.paused) pv.pause(); return; }
-        if (pv.paused) { var pp = pv.play(); if (pp && pp.catch) pp.catch(function () {}); }
-        if (pv.duration && v.currentTime && Math.abs(pv.currentTime - (v.currentTime % pv.duration)) > 0.3) { try { pv.currentTime = v.currentTime % pv.duration; } catch (er) {} }
+        if (pv.paused && !pv.__tried) { pv.__tried = 1; setTimeout(function () { pv.__tried = 0; }, 1500); var pp = pv.play(); if (pp && pp.catch) pp.catch(function (er) { xlog('head play refused ' + (er && er.name)); }); }
+        var nowS = performance.now();
+        if (pv.duration && v.currentTime && !v.paused && nowS - lastSeek > 2000 && Math.abs(pv.currentTime - (v.currentTime % pv.duration)) > 0.5) { lastSeek = nowS; try { pv.currentTime = v.currentTime % pv.duration; } catch (er) {} }
         if (lost || pv.readyState < 2 || pv.paused) { v.classList.remove('x-hid'); return; }
         try {
           gl.bindTexture(gl.TEXTURE_2D, tex);
           gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, pv);
           gl.viewport(0, 0, c.width, c.height); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-          v.classList.add('x-hid'); setAttr(document.documentElement, 'data-xalpha', '');
-        } catch (er) { v.classList.remove('x-hid'); }
+          v.classList.add('x-hid'); setAttr(document.documentElement, 'data-xalpha', ''); if (!drawn) { drawn = true; xlog('head drawn'); }
+        } catch (er) { v.classList.remove('x-hid'); if (!lost) { lost = true; xlog('head draw failed ' + er.message); } }
       };
       requestAnimationFrame(loop);
     } catch (er) { v.__xc = null; }
@@ -1707,7 +1722,7 @@
     for (i = 0; i < vids.length; i++) {
       v = vids[i];
       if (HEAD_ALPHA) { var hm = /assets\/([A-Za-z0-9_-]+)\.mp4/.exec(v.getAttribute('src') || ''); if (hm && HEAD_IDS.indexOf(hm[1]) > -1) { v.setAttribute('src', '/extras/head/' + hm[1] + '.webm?v=1'); v.__xk = 0; setAttr(document.documentElement, 'data-xalpha', ''); } }
-      if (!HEAD_ALPHA) { var sm = /assets\/([A-Za-z0-9_-]+)\.mp4/.exec(v.getAttribute('src') || ''); if (sm && HEAD_IDS.indexOf(sm[1]) > -1) safariHead(v, sm[1]); }
+      if (!HEAD_ALPHA) { var sm = /assets\/([A-Za-z0-9_-]+)\.mp4/.exec(v.getAttribute('src') || ''); if (sm && HEAD_IDS.indexOf(sm[1]) > -1) safariHead(v, sm[1]); else if (!v.__xl && !/\/extras\/head\//.test(v.getAttribute('src') || '')) { v.__xl = 1; xlog('head src not matched: ' + String(v.currentSrc || v.getAttribute('src')).slice(-60)); } }
       if (!v.__xk) {
         v.__xk = 1; v.disablePictureInPicture = true; v.disableRemotePlayback = true; v.muted = true; v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', ''); v.preload = 'auto';
       }
