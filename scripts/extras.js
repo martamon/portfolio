@@ -259,6 +259,7 @@
     '.x-vp-po{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;transition:opacity .6s ease}.x-vp.x-play:not(.x-ytp) .x-vp-po,.x-vp.x-ytp.x-shown .x-vp-po{opacity:0;pointer-events:none}',
     // YouTube's player stays invisible (no title, logo, play button or "Watch on YouTube" ever shows): it fades in only once it has been playing for a moment, and out as soon as it stops
     '.x-vp-if{opacity:0;transition:opacity .5s ease}.x-vp.x-shown .x-vp-if{opacity:1}',
+    '.x-vp-anim{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:2}.x-vp.x-anim .x-vp-big,.x-vp.x-anim .x-vp-sd{display:none!important}',
     '.x-vp-vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}',
     '.x-vp-if{position:absolute;left:0;top:-16%;width:100%;height:132%;border:0;pointer-events:none;background:#000}',
     '.x-vp-lb,.x-vp-bar button{border:0;background:none;padding:0;color:#fff;font:700 15px/1.2 "Switzer","Switzer Placeholder",system-ui,sans-serif;letter-spacing:0;text-transform:none;cursor:pointer;mix-blend-mode:difference}',
@@ -320,7 +321,7 @@
     '[data-xs]{display:none!important}'
   ].join('\n');
   // the canvas that shows the transparent head where WebM transparency is missing (Safari) gets the same styling as the head's <video>
-  css += '\n' + css.split('\n').filter(function (l) { return /Hero Video"\] video|\[data-xp="about"\] video/.test(l); }).map(function (l) { return l.replace(/Hero Video"\] video/g, 'Hero Video"] canvas.x-hc').replace(/\[data-xp="about"\] video/g, '[data-xp="about"] canvas.x-hc'); }).join('\n');
+  css += '\n' + css.split('\n').filter(function (l) { return /Hero Video"\] video|\[data-xp="about"\] video/.test(l); }).map(function (l) { return l.replace(/Hero Video"\] video/g, 'Hero Video"] .x-hc').replace(/\[data-xp="about"\] video/g, '[data-xp="about"] .x-hc'); }).join('\n');
   css += '\nhtml[data-xp="about"] [data-framer-name="Hero Video"] video.x-hid{opacity:0!important}html[data-xp="about"][data-xalpha] .x-vfade{display:none!important}';
   var style = document.createElement('style');
   style.textContent = css;
@@ -970,6 +971,15 @@
         v.addEventListener('playing', function () { p.on = true; el.classList.add('x-play', 'x-seen'); paint(); });
         v.addEventListener('pause', function () { p.on = false; el.classList.remove('x-play'); paint(); });
         p.st.appendChild(v);
+        /* Low Power Mode on iPhone (and data saver modes) play no video at all without a tap: an animated WebP copy
+           (/extras/video/<name>.webp, no sound) moves in its place; a tap on the player then starts the real video */
+        if (p.auto) setTimeout(function () {
+          if (!v.paused || p.anim || !el.isConnected) return;
+          var im = new Image(); im.className = 'x-vp-anim'; im.alt = ''; im.decoding = 'async';
+          im.onload = function () { p.anim = im; el.classList.add('x-anim'); xlog('video ' + name + ' -> animated picture'); };
+          im.src = '/extras/video/' + name + '.webp?v=1'; p.st.appendChild(im);
+        }, 2500);
+        v.addEventListener('playing', function () { if (p.anim) { el.classList.remove('x-anim'); if (p.anim.parentNode) p.anim.parentNode.removeChild(p.anim); p.anim = null; } });
         if (go) { var pr2 = v.play(); if (pr2 && pr2.catch) pr2.catch(function (er) { xlog('video ' + p.id + ' autoplay refused: ' + (er && er.name)); }); }
         return;
       }
@@ -986,7 +996,7 @@
     var toggle = function () { if (!p.f || !p.on) { p.on = true; el.classList.add('x-play', 'x-seen'); play(); } else { p.on = false; el.classList.remove('x-play'); vpCmd(p, 'pauseVideo'); } paint(); };
     p.toggle = toggle;
     pp.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); toggle(); });
-    p.st.addEventListener('click', function () { if (p.auto) return; toggle(); el.classList.add('x-touch'); clearTimeout(p.tt); p.tt = setTimeout(function () { el.classList.remove('x-touch'); }, 2600); });
+    p.st.addEventListener('click', function () { if (p.anim && p.v) { p.muted = true; p.v.muted = true; var tp = p.v.play(); if (tp && tp.catch) tp.catch(function () {}); return; } if (p.auto) return; toggle(); el.classList.add('x-touch'); clearTimeout(p.tt); p.tt = setTimeout(function () { el.classList.remove('x-touch'); }, 2600); });
     sd.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); p.muted = !p.muted; if (p.v) { p.v.muted = p.muted; if (!p.muted) { p.v.volume = 1; vpCmd(p, 'playVideo'); } } if (p.f) { if (p.muted) vpCmd(p, 'mute'); else { vpCmd(p, 'unMute'); vpCmd(p, 'setVolume', [100]); } } paint(); });
     fs.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); var full = document.fullscreenElement === el || document.webkitFullscreenElement === el; if (full) (document.exitFullscreen || document.webkitExitFullscreen).call(document); else (el.requestFullscreen || el.webkitRequestFullscreen).call(el); });
     var ptr = function (e) { if (e.pointerType !== 'mouse') return; var rc = el.getBoundingClientRect(); el.style.setProperty('--px', Math.max(8, Math.min(rc.width - pp.offsetWidth - 8, e.clientX - rc.left + 16)) + 'px'); el.style.setProperty('--py', Math.max(8, Math.min(rc.height - pp.offsetHeight - 52, e.clientY - rc.top + 16)) + 'px'); el.classList.add('x-ptr'); };
@@ -1707,6 +1717,22 @@
       requestAnimationFrame(loop);
     } catch (er) { v.__xc = null; }
   }
+  // the head clips as animated WebP with transparency (/extras/head/<id>.webp): shown when the phone plays no video (Low Power Mode)
+  function headAnim(v, id) {
+    if (v.__xa || !v.parentNode) return;
+    var im = new Image(); v.__xa = im;
+    im.className = 'x-hc x-hanim ' + v.className.replace(/\bx-hid\b/g, ''); im.alt = ''; im.decoding = 'async';
+    im.style.cssText = v.style.cssText + ';position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;display:block';
+    im.onload = function () {
+      if (!v.isConnected) return;
+      v.classList.add('x-hid'); if (v.__xc) v.__xc.style.display = 'none';
+      setAttr(document.documentElement, 'data-xalpha', ''); xlog('head ' + id.slice(0, 6) + ' -> animated picture');
+    };
+    im.src = '/extras/head/' + id + '.webp?v=1';
+    v.parentNode.insertBefore(im, v.nextSibling);
+    var sync = function () { if (!im.isConnected || !v.isConnected) { if (im.parentNode && !v.isConnected) im.parentNode.removeChild(im); return; } im.style.visibility = getComputedStyle(v).visibility; setTimeout(sync, 250); };
+    sync();
+  }
   function aboutHead() {
     var vids = [], i, v, hero = null, heroes = document.querySelectorAll('[data-framer-name="Hero Video"]');
     for (i = 0; i < heroes.length; i++) if (heroes[i].getBoundingClientRect().width > 0) { hero = heroes[i]; break; }
@@ -1729,6 +1755,12 @@
       if (!HEAD_ALPHA) { var sm = /assets\/([A-Za-z0-9_-]+)\.mp4/.exec(v.getAttribute('src') || ''); if (sm && HEAD_IDS.indexOf(sm[1]) > -1) safariHead(v, sm[1]); else if (!v.__xl && !/\/extras\/head\//.test(v.getAttribute('src') || '')) { v.__xl = 1; xlog('head src not matched: ' + String(v.currentSrc || v.getAttribute('src')).slice(-60)); } }
       if (!v.__xk) {
         v.__xk = 1; v.disablePictureInPicture = true; v.disableRemotePlayback = true; v.muted = true; v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', ''); v.preload = 'auto';
+      }
+      var hid = /assets\/([A-Za-z0-9_-]+)\.mp4|\/extras\/head\/([A-Za-z0-9_-]+)\.webm/.exec(v.getAttribute('src') || ''), hidv = hid && (hid[1] || hid[2]);
+      if (hidv && HEAD_IDS.indexOf(hidv) > -1 && !v.__xa) {
+        if (!v.__xt0) v.__xt0 = performance.now();
+        else if (performance.now() - v.__xt0 > 2500 && v.paused && v.currentTime < 0.5 && getComputedStyle(v).visibility !== 'hidden' && document.visibilityState === 'visible') headAnim(v, hidv);
+        else if (performance.now() - v.__xt0 <= 2500) setTimeout(schedule, 2700);
       }
       if (v.paused && getComputedStyle(v).visibility !== 'hidden' && document.visibilityState === 'visible') { var pr = v.play(); if (pr && pr.catch) pr.catch(function () {}); }
     }
