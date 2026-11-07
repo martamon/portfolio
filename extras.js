@@ -115,6 +115,11 @@
     'html[data-xmid] [data-xfi]{filter:none!important;mix-blend-mode:normal!important}',
     '[data-xn],[data-xcap]{font-family:"IBM Plex Mono","IBM Plex Mono Placeholder",monospace!important;font-size:14px!important;font-weight:500!important;letter-spacing:.025em!important;text-transform:uppercase!important;line-height:1.6em!important;text-decoration:none!important}',
     '[data-xcap]{color:#888!important}',
+    // the language switch: the same negative/positive type as the menu (white with the difference blend, plain page colour through dusk and dawn,
+    // the light blue at night), full strength, and the same rolling letters on hover
+    'html .x-lang{opacity:1;color:#fff;mix-blend-mode:difference}html[data-xdusk] .x-lang{mix-blend-mode:normal;color:var(--xfg)}html[data-xnight] .x-lang{color:rgb(203,237,255)}',
+    'html .x-lang button{opacity:1}html .x-lang>i,html .x-lang .x-roll i{opacity:1;font-style:normal}',
+    '.x-lang button:hover .x-roll .x-a i,.x-lang button:focus-visible .x-roll .x-a i{transform:translateY(-112%)}.x-lang button:hover .x-roll .x-b i,.x-lang button:focus-visible .x-roll .x-b i{transform:translateY(0)}',
     '.x-roll{position:relative;display:inline-grid;overflow:hidden;white-space:pre;vertical-align:top}',
     '.x-roll>span{grid-area:1/1;display:inline-flex}',
     '.x-roll i{font-style:normal;display:inline-block;transition:transform .9s cubic-bezier(.22,.8,.24,1);transition-delay:calc(var(--i) * 45ms)}',
@@ -947,7 +952,7 @@
     }
   });
   function vpCmd(p, fn, args) {
-    if (p.v) { var v = p.v; if (fn === 'playVideo') { var pr = v.play(); if (pr && pr.catch) pr.catch(function (er) { xlog('video ' + p.id + ' play refused: ' + (er && er.name)); }); } else if (fn === 'pauseVideo') v.pause(); else if (fn === 'mute') v.muted = true; else if (fn === 'unMute') v.muted = false; else if (fn === 'setVolume') v.volume = Math.max(0, Math.min(1, (args[0] || 100) / 100)); return; }
+    if (p.v) { var v = p.v; if (fn === 'playVideo') { var pr = v.play(); if (pr && pr.catch) pr.catch(function (er) { xlog('video ' + p.id + ' play refused: ' + (er && er.name)); if (er && er.name === 'NotAllowedError' && p.auto) p.el.classList.add('x-blocked'); }); } else if (fn === 'pauseVideo') v.pause(); else if (fn === 'mute') v.muted = true; else if (fn === 'unMute') v.muted = false; else if (fn === 'setVolume') v.volume = Math.max(0, Math.min(1, (args[0] || 100) / 100)); return; }
     if (p.f && p.f.contentWindow) p.f.contentWindow.postMessage(JSON.stringify({ event: 'command', func: fn, args: args || [] }), '*'); }
   function vpMount(host, id, o) {
     o = o || {};
@@ -980,7 +985,7 @@
         v.addEventListener('playing', function () { p.on = true; el.classList.add('x-play', 'x-seen'); if (el.classList.contains('x-hov')) { el.classList.remove('x-hov'); faces(false); } paint(); });
         v.addEventListener('pause', function () { p.on = false; el.classList.remove('x-play'); paint(); });
         p.st.appendChild(v);
-        if (go) { var pr2 = v.play(); if (pr2 && pr2.catch) pr2.catch(function (er) { xlog('video ' + p.id + ' autoplay refused: ' + (er && er.name)); }); }
+        if (go) { var pr2 = v.play(); if (pr2 && pr2.catch) pr2.catch(function (er) { xlog('video ' + p.id + ' autoplay refused: ' + (er && er.name)); if (er && er.name === 'NotAllowedError') el.classList.add('x-blocked'); }); }
         return;
       }
       var f = document.createElement('iframe'); f.__xraw = true; p.f = f; el.classList.add('x-ytp');
@@ -1444,6 +1449,7 @@
     a.appendChild(w);
   }
   function styleMenu() {
+    var lb = document.querySelectorAll('.x-lang button'); for (var li = 0; li < lb.length; li++) rollify(lb[li]);   /* the language switch rolls like the menu */
     var links = document.querySelectorAll('a[href="./about"],a[href="./contact"]'), i, e;
     for (i = 0; i < links.length; i++) {
       // the header menu is the sticky one; the same links also exist in the page footer
