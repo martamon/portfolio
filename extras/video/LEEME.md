@@ -9,6 +9,7 @@ Sube aquí los vídeos ya comprimidos con **estos nombres** (en minúsculas) y l
 | `schweppes.mp4`  | Schweppes                          |
 | `china.mp4`      | China                              |
 | `lexus.mp4`      | Lexus (sustituye al vídeo de Instagram) |
+| `portugal.mp4`   | Portugal                           |
 
 Opcional: la portada de cada uno como `inicio.jpg`, `soapglory.jpg`… (si no está, se usa la de YouTube).
 

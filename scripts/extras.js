@@ -938,7 +938,7 @@
     }
   });
   // the videos you upload to /extras/video/ (name.mp4 and, optionally, name.jpg as its cover) play from the site itself instead of YouTube
-  var VP_FILE = { 'NSqkOhJESYo': 'soapglory', 'CCBU84Ma-gE': 'schweppes', '6LFyBTCP7ig': 'china', 'NrxFBp4bl2Q': 'inicio' };
+  var VP_FILE = { 'NSqkOhJESYo': 'soapglory', 'CCBU84Ma-gE': 'schweppes', '6LFyBTCP7ig': 'china', 'NrxFBp4bl2Q': 'inicio', 'dyls5U16TLE': 'portugal' };
   // Safari (and phones) may refuse to start a video without a gesture: the first tap / key / click anywhere starts every autoplaying video that is on screen
   var vpGest = function () {
     for (var i = 0; i < vpAll.length; i++) {
