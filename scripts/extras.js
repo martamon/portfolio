@@ -109,8 +109,8 @@
     'html[data-xdusk] [data-xn]{color:var(--xfg)!important}',
     'html[data-xdusk] .x-dial{color:var(--xfg);mix-blend-mode:normal}',
     '[data-xn]{color:#fff!important}',
-    'html[data-xnight] [data-xn]{color:rgb(203,237,255)!important}',
-    'html[data-xnight] .x-dial{color:rgb(203,237,255)}',
+    'html[data-xnight] [data-xn]{color:rgb(201,220,249)!important}',
+    'html[data-xnight] .x-dial{color:rgb(201,220,249)}',
     // the face is never blended once the page leaves the light blue (its inversion only makes it natural against that)
     'html[data-xmid] [data-xfi]{filter:none!important;mix-blend-mode:normal!important}',
     '[data-xn],[data-xcap]{font-family:"IBM Plex Mono","IBM Plex Mono Placeholder",monospace!important;font-size:14px!important;font-weight:500!important;letter-spacing:.025em!important;text-transform:uppercase!important;line-height:1.6em!important;text-decoration:none!important}',
@@ -122,8 +122,7 @@
     '[data-xgone]{display:none!important}',
     // the language switch: the same negative/positive type as the menu (white with the difference blend, plain page colour through dusk and dawn,
     // the light blue at night), full strength, and the same rolling letters on hover
-    'html .x-lang{opacity:1;color:var(--xinkb,#fff);mix-blend-mode:difference}html[data-xdusk] .x-lang{mix-blend-mode:normal;color:var(--xfg)}html[data-xnight] .x-lang{color:var(--xinkb,rgb(203,237,255))}',
-    'html:not([data-xdusk]) [data-xn],html[data-xnight] [data-xn]{color:var(--xink,#fff)!important}html:not([data-xdusk]) .x-dial,html[data-xnight] .x-dial{color:var(--xinkb,#fff)}',
+    'html .x-lang{opacity:1;color:#fff;mix-blend-mode:difference}html[data-xdusk] .x-lang{mix-blend-mode:normal;color:var(--xfg)}html[data-xnight] .x-lang{color:rgb(201,220,249)}',
     'html .x-lang button{opacity:1}html .x-lang>i,html .x-lang .x-roll i{opacity:1;font-style:normal}',
     '.x-lang button:hover .x-roll .x-a i,.x-lang button:focus-visible .x-roll .x-a i{transform:translateY(-112%)}.x-lang button:hover .x-roll .x-b i,.x-lang button:focus-visible .x-roll .x-b i{transform:translateY(0)}',
     '.x-roll{position:relative;display:inline-grid;overflow:hidden;white-space:pre;vertical-align:top}',
@@ -331,11 +330,13 @@
     '[data-xf]:hover>div{transform:perspective(500px) rotateY(360deg)}',
     // About on phones: title and text sit over the turning head as negative/positive type (difference blend), white so it inverts against the head and the page
     // ...and the same on computers, by day and by night: no shadow, always the negative/positive (difference) type
-    'html[data-xp="about"] [data-framer-name="Caption"],html[data-xp="about"] [data-framer-name="Wordmark"],html[data-xp="about"] [data-xbl]{mix-blend-mode:difference!important;isolation:auto!important}html[data-xp="about"] [data-framer-name="Caption"] *,html[data-xp="about"] [data-framer-name="Wordmark"] *,html[data-xp="about"] [data-xbl],html[data-xp="about"] [data-xbl] *,html[data-xp="about"] [data-framer-name="Caption"] [data-xtc]{color:var(--xink,#fff)!important;text-shadow:none!important}html[data-xp="about"] [data-framer-name="Hero Video"]{isolation:auto!important}html[data-xp="about"] [data-framer-name="Content"]{z-index:auto!important;isolation:auto!important}',
+    'html[data-xp="about"] [data-framer-name="Caption"],html[data-xp="about"] [data-framer-name="Wordmark"],html[data-xp="about"] [data-xbl]{mix-blend-mode:difference!important;isolation:auto!important}html[data-xp="about"] [data-framer-name="Caption"] *,html[data-xp="about"] [data-framer-name="Wordmark"] *,html[data-xp="about"] [data-xbl],html[data-xp="about"] [data-xbl] *,html[data-xp="about"] [data-framer-name="Caption"] [data-xtc]{color:#fff!important;text-shadow:none!important}',
+    /* exactly the menu's colours: white (difference) by day, the page's own text colour without blending at dusk and dawn, the light blue (difference) at night */
+    'html[data-xnight][data-xp="about"] [data-framer-name="Caption"] *,html[data-xnight][data-xp="about"] [data-framer-name="Wordmark"] *,html[data-xnight][data-xp="about"] [data-xbl] *{color:rgb(201,220,249)!important}html[data-xdusk][data-xp="about"] [data-framer-name="Caption"],html[data-xdusk][data-xp="about"] [data-framer-name="Wordmark"],html[data-xdusk][data-xp="about"] [data-xbl]{mix-blend-mode:normal!important}html[data-xdusk][data-xp="about"] [data-framer-name="Caption"] *,html[data-xdusk][data-xp="about"] [data-framer-name="Wordmark"] *,html[data-xdusk][data-xp="about"] [data-xbl] *{color:var(--xfg)!important}html[data-xp="about"] [data-framer-name="Hero Video"]{isolation:auto!important}html[data-xp="about"] [data-framer-name="Content"]{z-index:auto!important;isolation:auto!important}',
     /* that block is sticky, so it is a layer of its own and the type could only blend with the head: a copy of the page gradient
        (fixed to the screen like the page's own) sits at the back of the block, so the type also inverts against the page */
-    'html[data-xp="about"] [data-framer-name="Content"]::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background-image:var(--xbgimg);background-attachment:fixed;background-size:100% 100vh}',
-    '@media(max-width:809px){html[data-xp="about"] [data-framer-name="Caption"],html[data-xp="about"] [data-framer-name="Wordmark"]{mix-blend-mode:difference!important;isolation:auto!important}html[data-xp="about"] [data-framer-name="Caption"] *,html[data-xp="about"] [data-framer-name="Wordmark"] *{color:var(--xink,#fff)!important;text-shadow:none!important}html[data-xp="about"] [data-framer-name="Hero Video"]{isolation:auto!important}html[data-xp="about"] [data-framer-name="Hero Video"]>div[class*="framer-"]:not([data-framer-name^="Video"]){mix-blend-mode:difference}}',
+    'html[data-xp="about"] [data-framer-name="Content"]::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background-image:var(--xbgimg);background-repeat:no-repeat;background-size:100% var(--xgh,100vh);background-position:0 var(--xgy,0px)}',
+    '@media(max-width:809px){html[data-xp="about"] [data-framer-name="Caption"],html[data-xp="about"] [data-framer-name="Wordmark"]{mix-blend-mode:difference!important;isolation:auto!important}html[data-xp="about"] [data-framer-name="Caption"] *,html[data-xp="about"] [data-framer-name="Wordmark"] *{text-shadow:none!important}html[data-xp="about"] [data-framer-name="Hero Video"]{isolation:auto!important}html[data-xp="about"] [data-framer-name="Hero Video"]>div[class*="framer-"]:not([data-framer-name^="Video"]){mix-blend-mode:difference}}',
     // About on phones: the intro text a little wider (fewer, longer lines) so it is not a tall thin column
     '@media(max-width:809px){html[data-xp="about"] [data-framer-name="Caption"]{width:var(--xcw,min(62vw,250px))!important;max-width:none!important}html[data-xp="about"] [data-framer-name="Caption"] p{width:100%!important}}',
     '[data-xs]{display:none!important}'
@@ -1591,26 +1592,6 @@
     }
   }
   setInterval(function () { if (!theme.travel && !theme.raf) { theme.hour = localHour(); paintTheme(); } }, 15000);
-  /* the negative/positive type (difference blend) of white over the page's blues gave browns and tans; the type colour is set from the
-     page colour behind it instead, so that over the page the result is a neutral black, grey or white (whichever reads best), and over
-     pictures it still inverts them */
-  function inkFor(c) {
-    var lum = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2], up = 255 - Math.max(c[0], c[1], c[2]), dn = Math.min(18, Math.min(c[0], c[1], c[2]));
-    if (up - lum > lum - dn) return 'rgb(' + (c[0] + up) + ',' + (c[1] + up) + ',' + (c[2] + up) + ')';
-    return 'rgb(' + (c[0] - dn) + ',' + (c[1] - dn) + ',' + (c[2] - dn) + ')';
-  }
-  function paintInk() {
-    try {
-      var bi = getComputedStyle(document.body).backgroundImage, cols = [], m, re = /color\(srgb ([\d.]+) ([\d.]+) ([\d.]+)[^)]*\)|rgba?\((\d+),\s*(\d+),\s*(\d+)/g;
-      while ((m = re.exec(bi))) cols.push(m[1] ? [Math.round(m[1] * 255), Math.round(m[2] * 255), Math.round(m[3] * 255)] : [+m[4], +m[5], +m[6]]);
-      if (!cols.length) { var bc = /(\d+),\s*(\d+),\s*(\d+)/.exec(getComputedStyle(document.body).backgroundColor); if (bc) cols.push([+bc[1], +bc[2], +bc[3]]); }
-      if (!cols.length) return;
-      var st = document.documentElement.style;
-      st.setProperty('--xink', inkFor(cols[0])); st.setProperty('--xinkb', inkFor(cols[cols.length - 1]));
-    } catch (e) {}
-  }
-  setInterval(paintInk, 1000);
-  var paintTheme0 = paintTheme; paintTheme = function () { paintTheme0(); paintInk(); };
   // the day / night button, as on the planet: the page is in the tone of the real hour until you pick the other one (and back)
   var DN_MOON = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>';
   var DN_SUN = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/></svg>';
@@ -1894,7 +1875,17 @@
     var sync = function () { if (!im.isConnected || !v.isConnected) { if (im.parentNode && !v.isConnected) im.parentNode.removeChild(im); return; } im.style.visibility = getComputedStyle(v).visibility; setTimeout(sync, 250); };
     sync();
   }
+  // About: keep the copy of the page gradient behind the sticky block lined up with the page's own gradient (it spans the whole page)
+  function aboutBg() {
+    if (pageKey() !== 'about') return;
+    var cs = document.querySelectorAll('[data-framer-name="Content"]'), H = document.documentElement.scrollHeight, i;
+    for (i = 0; i < cs.length; i++) { var r = cs[i].getBoundingClientRect(); if (!r.width) continue; cs[i].style.setProperty('--xgh', H + 'px'); cs[i].style.setProperty('--xgy', (-(r.top + scrollY)).toFixed(1) + 'px'); }
+  }
+  var aboutBgRaf = 0;
+  addEventListener('scroll', function () { if (!aboutBgRaf && pageKey() === 'about') aboutBgRaf = requestAnimationFrame(function () { aboutBgRaf = 0; aboutBg(); }); }, { passive: true });
+  addEventListener('resize', function () { aboutBg(); });
   function aboutHead() {
+    aboutBg();
     var vids = [], i, v, hero = null, heroes = document.querySelectorAll('[data-framer-name="Hero Video"]');
     for (i = 0; i < heroes.length; i++) if (heroes[i].getBoundingClientRect().width > 0) { hero = heroes[i]; break; }
     var all = document.querySelectorAll('[data-framer-name="Hero Video"] video');
