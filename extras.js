@@ -238,7 +238,7 @@
     // home reel: our own sound button
     'html[data-xinapp] .x-reel-ctl{display:none!important}',
     '.x-vp{isolation:isolate;position:relative;width:100%;aspect-ratio:var(--r);background:#000;overflow:hidden;border-radius:0;color:#fff;user-select:none;-webkit-user-select:none;touch-action:manipulation;cursor:pointer}',
-    '.x-vp.x-vp-v{width:min(100%,calc(80vh * .5625));margin-left:auto;margin-right:auto}',
+    '.x-vp.x-vp-v{width:100%}',
     '[data-gal="grid"] .x-vp.x-vp-v{width:100%}',
     '.x-vp-bar button{white-space:nowrap}[data-gal="grid"] .x-vp-lb,[data-gal="grid"] .x-vp-bar button{font-size:12px}[data-gal="grid"] .x-vp-bar{gap:12px;flex-wrap:wrap;padding-bottom:8px}',
     '.x-vp-fill{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto}',
@@ -937,7 +937,7 @@
       var f = fr[i]; if (f.closest('.x-vp,.x-yt,.x-mreel') || f.classList.contains('x-vp-if')) continue;
       var m = /\/embed\/([\w-]{6,})/.exec(f.src), id = m && m[1]; if (!id || id === 'NrxFBp4bl2Q') continue;
       var host = f.closest('article') || f.parentElement; if (!host || !host.getBoundingClientRect().width) continue;
-      vpMount(host, id, { title: document.title });
+      vpMount(host, id, { title: document.title, autoplay: true, loop: true });
       if (VP_RATIO[id]) { setAttr(host, 'data-xvhost', ''); var up = host.parentElement; if (up && /deo/i.test(up.getAttribute('data-framer-name') || '')) setAttr(up, 'data-xvhost', ''); }
     }
   }
