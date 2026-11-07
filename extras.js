@@ -72,11 +72,11 @@
       };
       var d = Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype, 'src');
       if (d && d.set) {
-        Object.defineProperty(HTMLIFrameElement.prototype, 'src', { configurable: true, enumerable: d.enumerable, get: d.get, set: function (v) { if (YT.test(String(v))) { this.srcdoc = card(String(v)); } else d.set.call(this, v); } });
+        Object.defineProperty(HTMLIFrameElement.prototype, 'src', { configurable: true, enumerable: d.enumerable, get: d.get, set: function (v) { if (YT.test(String(v)) && !this.__xraw) { sa.call(this, 'data-xytsrc', String(v)); this.srcdoc = card(String(v)); } else d.set.call(this, v); } });
       }
       var sa = Element.prototype.setAttribute;
       Element.prototype.setAttribute = function (n, v) {
-        if (this.tagName === 'IFRAME' && String(n).toLowerCase() === 'src' && YT.test(String(v))) return sa.call(this, 'srcdoc', card(String(v)));
+        if (this.tagName === 'IFRAME' && !this.__xraw && String(n).toLowerCase() === 'src' && YT.test(String(v))) { sa.call(this, 'data-xytsrc', String(v)); return sa.call(this, 'srcdoc', card(String(v))); }
         return sa.call(this, n, v);
       };
     })();
@@ -252,11 +252,13 @@
     '.x-vp-bar button{white-space:nowrap}[data-gal="grid"] .x-vp-lb,[data-gal="grid"] .x-vp-bar button{font-size:12px}[data-gal="grid"] .x-vp-bar{gap:12px;flex-wrap:wrap;padding-bottom:8px}',
     // when the phone refuses to autoplay (Low Power Mode, data saver...): a play button, and YouTube's own player becomes tappable
     '.x-vp-big{display:none;position:absolute;z-index:4;left:50%;top:50%;width:64px;height:64px;margin:-32px 0 0 -32px;border:0;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;place-items:center;cursor:pointer;padding:0}.x-vp-big svg{width:30px;height:30px;fill:currentColor;margin-left:3px}',
-    '.x-vp.x-blocked:not(.x-play) .x-vp-big{display:grid}.x-vp.x-blocked.x-nopo .x-vp-if{pointer-events:auto}.x-vp.x-blocked:not(.x-play):not(.x-nopo) .x-vp-po{opacity:1!important}',
+    '.x-vp.x-blocked:not(.x-play) .x-vp-big{display:grid}',
     '.x-vp-fill{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto}',
     '.x-vp-st{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;height:100%;overflow:hidden;background:#000}',
     '.x-vp-fill .x-vp-st{width:min(100%,calc(100vh * 4));height:auto;aspect-ratio:var(--r)}',
-    '.x-vp-po{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;transition:opacity .6s ease}.x-vp.x-play .x-vp-po,.x-vp.x-nopo .x-vp-po{opacity:0;pointer-events:none}',
+    '.x-vp-po{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;transition:opacity .6s ease}.x-vp.x-play:not(.x-ytp) .x-vp-po,.x-vp.x-ytp.x-shown .x-vp-po{opacity:0;pointer-events:none}',
+    // YouTube's player stays invisible (no title, logo, play button or "Watch on YouTube" ever shows): it fades in only once it has been playing for a moment, and out as soon as it stops
+    '.x-vp-if{opacity:0;transition:opacity .5s ease}.x-vp.x-shown .x-vp-if{opacity:1}',
     '.x-vp-vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}',
     '.x-vp-if{position:absolute;left:0;top:-16%;width:100%;height:132%;border:0;pointer-events:none;background:#000}',
     '.x-vp-lb,.x-vp-bar button{border:0;background:none;padding:0;color:#fff;font:700 15px/1.2 "Switzer","Switzer Placeholder",system-ui,sans-serif;letter-spacing:0;text-transform:none;cursor:pointer;mix-blend-mode:difference}',
@@ -918,7 +920,9 @@
       if (st !== null && st !== p.lastSt) { p.lastSt = st; xlog('yt ' + p.id + ' state ' + st); }
       if (st === 1) vpCmd(p, 'setPlaybackQuality', ['hd1080']);
       if (st === 1 || st === 3) { p.on = true; p.el.classList.add('x-play'); p.el.classList.add('x-seen'); }
-      else if (st === 2 || st === 0 || st === 5) { p.on = false; p.el.classList.remove('x-play'); }
+      else if (st === 2 || st === 0 || st === 5 || st === -1) { p.on = false; p.el.classList.remove('x-play'); }
+      if (st === 1 && !p.el.classList.contains('x-shown') && !p.showT) p.showT = setTimeout(function (q) { return function () { q.showT = 0; if (q.lastSt === 1 || q.lastSt === 3) q.el.classList.add('x-shown'); }; }(p), 2800);
+      if (st === 2 || st === 0 || st === 5 || st === -1) { clearTimeout(p.showT); p.showT = 0; p.el.classList.remove('x-shown'); }
     }
   });
   // the videos you upload to /extras/video/ (name.mp4 and, optionally, name.jpg as its cover) play from the site itself instead of YouTube
@@ -937,9 +941,9 @@
     if (p.f && p.f.contentWindow) p.f.contentWindow.postMessage(JSON.stringify({ event: 'command', func: fn, args: args || [] }), '*'); }
   function vpMount(host, id, o) {
     o = o || {};
-    if (!host || host.querySelector(':scope > .x-vp') || INAPP) return null;
+    if (!host || host.querySelector(':scope > .x-vp')) return null;
     var r = VP_RATIO[id] || 16 / 9, p = { id: id, on: false, muted: true, f: null, auto: !!o.autoplay, loop: !!o.loop };
-    var olds = host.querySelectorAll('iframe'); for (var oi = 0; oi < olds.length; oi++) { try { olds[oi].src = 'about:blank'; } catch (er) {} }
+    var olds = host.querySelectorAll('iframe'); for (var oi = 0; oi < olds.length; oi++) { try { olds[oi].removeAttribute('srcdoc'); olds[oi].src = 'about:blank'; } catch (er) {} }
     for (var i = 0; i < host.children.length; i++) setAttr(host.children[i], 'data-xvh', '');
     var el = document.createElement('div'); el.className = 'x-vp' + (r < 1 ? ' x-vp-v' : '') + (o.fill ? ' x-vp-fill' : '') + (o.autoplay ? ' x-vp-auto' : '') + (VP_FS ? '' : ' x-nofs'); el.style.setProperty('--r', String(r));
     el.innerHTML = '<div class="x-vp-st"><img class="x-vp-po" alt="" decoding="async"></div><button type="button" class="x-vp-lb"></button><button type="button" class="x-vp-big" aria-label="Play"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></button><div class="x-vp-bar"><button type="button" class="x-vp-sd"></button><button type="button" class="x-vp-fs"></button></div>';
@@ -969,15 +973,15 @@
         if (go) { var pr2 = v.play(); if (pr2 && pr2.catch) pr2.catch(function (er) { xlog('video ' + p.id + ' autoplay refused: ' + (er && er.name)); }); }
         return;
       }
-      var f = document.createElement('iframe'); p.f = f;
+      var f = document.createElement('iframe'); f.__xraw = true; p.f = f; el.classList.add('x-ytp');
       f.src = 'https://www.youtube-nocookie.com/embed/' + id + '?controls=0&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&disablekb=1&fs=0&cc_load_policy=0&vq=hd1080&enablejsapi=1&origin=' + encodeURIComponent(location.origin) + ((auto || go) ? '&autoplay=1&mute=1' : '') + (p.loop ? '&loop=1&playlist=' + id : '');
       f.title = o.title || 'Video'; f.setAttribute('allow', 'autoplay; encrypted-media; fullscreen; picture-in-picture'); f.setAttribute('tabindex', '-1'); f.setAttribute('aria-hidden', 'true'); f.className = 'x-vp-if';
       f.addEventListener('load', function () { try { f.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*'); } catch (er) {} [300, 1200, 3000].forEach(function (ms) { setTimeout(function () { vpCmd(p, 'addEventListener', ['onStateChange']); vpCmd(p, 'setPlaybackQuality', ['hd1080']); if (p.auto || go) { if (p.muted) vpCmd(p, 'mute'); vpCmd(p, 'playVideo'); } }, ms); }); });
-      p.st.appendChild(f); setTimeout(function () { if (p.on || !p.auto) el.classList.add('x-nopo'); }, 6500);   /* if the player never reports back, the picture is uncovered anyway */
+      p.st.appendChild(f);   /* if the player never reports back, the picture is uncovered anyway */
     };
     var big = el.querySelector('.x-vp-big');
-    big.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); if (p.v) { p.muted = true; vpCmd(p, 'playVideo'); } else { el.classList.add('x-nopo'); vpCmd(p, 'playVideo'); big.style.display = 'none'; } });
-    if (o.autoplay) setTimeout(function () { xlog('player ' + id + (p.v ? ' file' : p.f ? ' youtube' : ' none') + ' playing=' + p.on); if (!p.on) { el.classList.remove('x-nopo'); el.classList.add('x-blocked'); } }, 4500);
+    big.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); if (p.v) { p.muted = true; vpCmd(p, 'playVideo'); } else { vpCmd(p, 'mute'); vpCmd(p, 'playVideo'); setTimeout(function () { if (!p.on) big.style.display = 'none'; }, 1800); } });
+    if (o.autoplay) setTimeout(function () { xlog('player ' + id + (p.v ? ' file' : p.f ? ' youtube' : ' none') + ' playing=' + p.on); if (!p.on) el.classList.add('x-blocked'); }, 4500);
     var play = function () { if (!p.f && !p.v) { p.wantPlay = true; make(false); return; } if (p.muted) vpCmd(p, 'mute'); else { vpCmd(p, 'unMute'); vpCmd(p, 'setVolume', [100]); } vpCmd(p, 'playVideo'); [400, 1200, 2500].forEach(function (ms) { setTimeout(function () { if (!p.on) vpCmd(p, 'playVideo'); }, ms); }); };
     var toggle = function () { if (!p.f || !p.on) { p.on = true; el.classList.add('x-play', 'x-seen'); play(); } else { p.on = false; el.classList.remove('x-play'); vpCmd(p, 'pauseVideo'); } paint(); };
     p.toggle = toggle;
@@ -997,11 +1001,10 @@
   }
   // the YouTube embeds that Framer puts on the project pages: the player replaces them (Soap&Glory gets its vertical frame)
   function upgradeEmbeds() {
-    if (INAPP) return;
-    var fr = document.querySelectorAll('iframe[src*="youtube.com/embed/"],iframe[src*="youtube-nocookie.com/embed/"]');
+    var fr = document.querySelectorAll('iframe[src*="youtube.com/embed/"],iframe[src*="youtube-nocookie.com/embed/"],iframe[data-xytsrc]');
     for (var i = 0; i < fr.length; i++) {
       var f = fr[i]; if (f.closest('.x-vp,.x-yt,.x-mreel') || f.classList.contains('x-vp-if')) continue;
-      var m = /\/embed\/([\w-]{6,})/.exec(f.src), id = m && m[1]; if (!id || id === 'NrxFBp4bl2Q') continue;
+      var m = /\/embed\/([\w-]{6,})/.exec(f.getAttribute('data-xytsrc') || f.src), id = m && m[1]; if (!id || id === 'NrxFBp4bl2Q') continue;
       var host = f.closest('article') || f.parentElement; if (!host || !host.getBoundingClientRect().width) continue;
       vpMount(host, id, { title: document.title, autoplay: true, loop: true });
       if (VP_RATIO[id]) { setAttr(host, 'data-xvhost', ''); var up = host.parentElement; if (up && /deo/i.test(up.getAttribute('data-framer-name') || '')) setAttr(up, 'data-xvhost', ''); }
@@ -1040,10 +1043,11 @@
     if (performance.now() - mobileHero.t0 < 1500) { setTimeout(schedule, 1600); return; }
     if (getComputedStyle(player).position === 'static') player.style.position = 'relative';
     vpMount(player, 'NrxFBp4bl2Q', { fill: true, autoplay: true, loop: true, title: 'Martamon reel' });
+    for (var sb = player.parentElement && player.parentElement.firstElementChild; sb; sb = sb.nextElementSibling) if (sb !== player && sb.tagName === 'BUTTON') setAttr(sb, 'data-xvh', '');   /* Framer's own sound button */
   }
 
   function setupReel(on) {
-    var fs = on ? document.querySelectorAll('iframe[src*="youtube.com/embed/NrxFBp4bl2Q"]') : [], f = null;
+    var fs = on ? document.querySelectorAll('iframe[src*="youtube.com/embed/NrxFBp4bl2Q"],iframe[data-xytsrc*="NrxFBp4bl2Q"]') : [], f = null;
     for (var fi = 0; fi < fs.length; fi++) if (fs[fi].getBoundingClientRect().width > 0) { f = fs[fi]; break; }
     if (!f || !f.parentElement || !f.parentElement.parentElement) {
       if (reel.f || reel.btn) teardownReel();
