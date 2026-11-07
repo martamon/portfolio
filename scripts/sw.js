@@ -10,7 +10,8 @@ self.addEventListener('fetch', e => {
     e.respondWith(slice(u));
   } else if (u.origin === self.location.origin && e.request.method === 'GET' && (e.request.mode === 'navigate' || u.pathname === '/extras.js' || /^\/extras\/[\w.-]+\.js$/.test(u.pathname))) {
     // pages and the site's own scripts are always revalidated with the server, so a phone never keeps showing an old copy for hours
-    e.respondWith(fetch(u.href, { cache: 'no-cache' }).catch(() => fetch(e.request)));
+    // redirect 'manual': GitHub Pages answers /china with a 301 to /china/, which a navigation must be handed on as it is
+    e.respondWith(fetch(u.href, { cache: 'no-cache', redirect: e.request.mode === 'navigate' ? 'manual' : 'follow' }).catch(() => fetch(e.request)));
   } else if (u.hostname === 'framerusercontent.com' && /^\/(images|assets)\//.test(u.pathname) && e.request.method === 'GET') {
     e.respondWith(local(e.request, u));
   }

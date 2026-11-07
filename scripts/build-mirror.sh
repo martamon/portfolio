@@ -14,7 +14,7 @@ for f in $(find "$HERE/framerusercontent.com" "$HERE/app.framerstatic.com" "$HER
   sed -i -E "s#https://(framerusercontent\.com|fonts\.gstatic\.com|app\.framerstatic\.com)/#$BASE/\1/#g" "$f"
 done
 # Framer's router assumes the site is served from the domain root; on a subpath, load internal links as real pages.
-SHIM='<script>addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("a[href]");if(!a||e.defaultPrevented||e.button||e.metaKey||e.ctrlKey||e.shiftKey||a.target==="_blank")return;var u=new URL(a.href,location.href);if(u.origin!==location.origin)return;if(u.pathname===location.pathname)return;e.preventDefault();e.stopImmediatePropagation();location.href=u.href},true)</script>'
+SHIM='<script>addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("a[href]");if(!a||e.defaultPrevented||e.button||e.metaKey||e.ctrlKey||e.shiftKey||a.target==="_blank")return;if(/coming-soon$/.test(a.getAttribute("href")||""))return;var u=new URL(a.href,location.href);if(u.origin!==location.origin)return;if(u.pathname===location.pathname)return;e.preventDefault();e.stopImmediatePropagation();location.href=u.href},true)</script>'
 # Served from the domain root (custom domain): no <base> and no shim needed, Framer's own router works.
 PATH_PART="${BASE#*://*/}"; [ "$PATH_PART" = "$BASE" ] && PATH_PART=""
 if [ -z "$PATH_PART" ]; then HEAD_INJECT='<head>'; else HEAD_INJECT="<head><base href=\"$BASE/\">${SHIM//&/\\&}"; fi

@@ -970,7 +970,7 @@
     p.toggle = toggle;
     pp.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); toggle(); });
     p.st.addEventListener('click', function () { if (p.auto) return; toggle(); el.classList.add('x-touch'); clearTimeout(p.tt); p.tt = setTimeout(function () { el.classList.remove('x-touch'); }, 2600); });
-    sd.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); p.muted = !p.muted; if (p.f) { if (p.muted) vpCmd(p, 'mute'); else { vpCmd(p, 'unMute'); vpCmd(p, 'setVolume', [100]); } } paint(); });
+    sd.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); p.muted = !p.muted; if (p.v) { p.v.muted = p.muted; if (!p.muted) { p.v.volume = 1; vpCmd(p, 'playVideo'); } } if (p.f) { if (p.muted) vpCmd(p, 'mute'); else { vpCmd(p, 'unMute'); vpCmd(p, 'setVolume', [100]); } } paint(); });
     fs.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); var full = document.fullscreenElement === el || document.webkitFullscreenElement === el; if (full) (document.exitFullscreen || document.webkitExitFullscreen).call(document); else (el.requestFullscreen || el.webkitRequestFullscreen).call(el); });
     var ptr = function (e) { if (e.pointerType !== 'mouse') return; var rc = el.getBoundingClientRect(); el.style.setProperty('--px', Math.max(8, Math.min(rc.width - pp.offsetWidth - 8, e.clientX - rc.left + 16)) + 'px'); el.style.setProperty('--py', Math.max(8, Math.min(rc.height - pp.offsetHeight - 52, e.clientY - rc.top + 16)) + 'px'); el.classList.add('x-ptr'); };
     p.st.addEventListener('pointerenter', ptr); p.st.addEventListener('pointermove', ptr); p.st.addEventListener('pointerleave', function () { el.classList.remove('x-ptr'); });
