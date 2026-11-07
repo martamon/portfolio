@@ -502,6 +502,13 @@
     for (k = 0; k < cols; k++) heights.push(0);
     for (i = 0; i < kids.length; i++) {
       c = kids[i];
+      if (c.classList.contains('x-yt')) {     /* the Schweppes video: one big tile across the whole width, the pictures follow below in the grid */
+        var VW = Math.min(W, 1180), fh = Math.round(VW * (parseFloat(c.getAttribute('data-r')) || 9 / 16)), top0 = Math.max.apply(null, heights);
+        c.style.setProperty('--mx', (pad + Math.round((W - VW) / 2)) + 'px'); c.style.setProperty('--my', (top + top0) + 'px');
+        c.style.setProperty('--mw', VW + 'px'); c.style.setProperty('--gh', fh + 'px');
+        for (k = 0; k < cols; k++) heights[k] = top0 + fh + gap;
+        continue;
+      }
       var r = parseFloat(c.getAttribute('data-r')) || 1, h = Math.round(colW * r), col = 0;
       for (k = 1; k < cols; k++) if (heights[k] < heights[col]) col = k;
       c.style.setProperty('--mx', (pad + col * (colW + gap)) + 'px');
@@ -889,6 +896,15 @@
   });
   // the videos you upload to /extras/video/ (name.mp4 and, optionally, name.jpg as its cover) play from the site itself instead of YouTube
   var VP_FILE = { 'NSqkOhJESYo': 'soapglory', 'CCBU84Ma-gE': 'schweppes', '6LFyBTCP7ig': 'china', 'NrxFBp4bl2Q': 'inicio' };
+  // Safari (and phones) may refuse to start a video without a gesture: the first tap / key / click anywhere starts every autoplaying video that is on screen
+  var vpGest = function () {
+    for (var i = 0; i < vpAll.length; i++) {
+      var p = vpAll[i]; if (!p.auto || p.on || !p.el.isConnected) continue;
+      var rc = p.el.getBoundingClientRect(); if (rc.bottom < 0 || rc.top > innerHeight || !rc.width) continue;
+      if (p.muted) vpCmd(p, 'mute'); vpCmd(p, 'playVideo');
+    }
+  };
+  ['touchend', 'pointerup', 'click', 'keydown'].forEach(function (ev) { addEventListener(ev, vpGest, { passive: true, capture: true }); });
   function vpCmd(p, fn, args) {
     if (p.v) { var v = p.v; if (fn === 'playVideo') { var pr = v.play(); if (pr && pr.catch) pr.catch(function () {}); } else if (fn === 'pauseVideo') v.pause(); else if (fn === 'mute') v.muted = true; else if (fn === 'unMute') v.muted = false; else if (fn === 'setVolume') v.volume = Math.max(0, Math.min(1, (args[0] || 100) / 100)); return; }
     if (p.f && p.f.contentWindow) p.f.contentWindow.postMessage(JSON.stringify({ event: 'command', func: fn, args: args || [] }), '*'); }
@@ -917,7 +933,7 @@
       if (!p.ready) { if (!p.waiting) { p.waiting = true; p.check.then(function () { p.ready = true; make(auto); }); } return; }
       var go = auto || p.auto || p.wantPlay; p.wantPlay = false;
       if (p.file) {
-        var v = document.createElement('video'); p.v = v; v.className = 'x-vp-vid'; v.src = p.file; v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', ''); v.preload = 'auto'; v.muted = true; v.loop = !!p.loop; v.disablePictureInPicture = true;
+        var v = document.createElement('video'); p.v = v; v.className = 'x-vp-vid'; v.src = p.file; v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', ''); v.preload = 'auto'; v.muted = true; v.defaultMuted = true; v.setAttribute('muted', ''); v.autoplay = !!(o.autoplay || o.loop); v.loop = !!p.loop; v.disablePictureInPicture = true;
         v.setAttribute('aria-label', o.title || 'Video');
         v.addEventListener('loadedmetadata', function () { if (v.videoWidth && v.videoHeight) { var rr = v.videoWidth / v.videoHeight; el.style.setProperty('--r', String(rr)); el.classList.toggle('x-vp-v', rr < 1); try { schedule(); } catch (er) {} if (rr < 1 && host.parentElement && !host.hasAttribute('data-xvhost')) { setAttr(host, 'data-xvhost', ''); var up2 = host.parentElement; if (up2 && /deo/i.test(up2.getAttribute('data-framer-name') || '')) setAttr(up2, 'data-xvhost', ''); } } });
         v.addEventListener('playing', function () { p.on = true; el.classList.add('x-play', 'x-seen'); paint(); });
