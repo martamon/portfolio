@@ -308,6 +308,9 @@
     '@media(max-width:809px){html[data-xp="about"] [data-framer-name="Caption"]{width:var(--xcw,min(62vw,250px))!important;max-width:none!important}html[data-xp="about"] [data-framer-name="Caption"] p{width:100%!important}}',
     '[data-xs]{display:none!important}'
   ].join('\n');
+  // the canvas that shows the transparent head where WebM transparency is missing (Safari) gets the same styling as the head's <video>
+  css += '\n' + css.split('\n').filter(function (l) { return /Hero Video"\] video|\[data-xp="about"\] video/.test(l); }).map(function (l) { return l.replace(/Hero Video"\] video/g, 'Hero Video"] canvas.x-hc').replace(/\[data-xp="about"\] video/g, '[data-xp="about"] canvas.x-hc'); }).join('\n');
+  css += '\nhtml[data-xp="about"] [data-framer-name="Hero Video"] video.x-hid{opacity:0!important}html[data-xp="about"][data-xalpha] .x-vfade{display:none!important}';
   var style = document.createElement('style');
   style.textContent = css;
   document.head.appendChild(style);
@@ -1641,6 +1644,50 @@
   // the head clips come with a transparent copy (the sky cut away): used wherever the browser shows WebM transparency (not Safari / iOS)
   var HEAD_IDS = ['jPmsdRIE0vlfbsluwT59xxxwp7k', '2jNDbcQEsXgQm7SBTNGCPwcAL8', '2N6eSRRMavPTSQcVgQoxcLF0vmg', 'VbzyX92zHKlr5jcCuyQzl6sgXA'];
   var HEAD_ALPHA = (function () { try { var ua = navigator.userAgent; return /Chrome|Chromium|Firefox|Edg/.test(ua) && !/iPhone|iPad|iPod|CriOS|FxiOS|EdgiOS/.test(ua) && !!document.createElement('video').canPlayType('video/webm; codecs="vp9"'); } catch (e) { return false; } })();
+  // Safari / iOS cannot show transparent WebM: the same clips come as one H.264 video with the picture on the left half and its
+  // transparency (grey) on the right; a WebGL canvas combines them every frame. If anything fails the plain video stays as it was.
+  function safariHead(v, id) {
+    if (v.__xc !== undefined) return; v.__xc = null;
+    try {
+      var c = document.createElement('canvas'), gl = c.getContext('webgl', { alpha: true, premultipliedAlpha: true });
+      if (!gl) return;
+      var sh = function (t, src) { var o = gl.createShader(t); gl.shaderSource(o, src); gl.compileShader(o); return o; };
+      var pr = gl.createProgram();
+      gl.attachShader(pr, sh(gl.VERTEX_SHADER, 'attribute vec2 p;varying vec2 u;void main(){u=vec2(p.x*.5+.5,p.y*.5+.5);gl_Position=vec4(p,0.,1.);}'));
+      gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, 'precision mediump float;varying vec2 u;uniform sampler2D t;void main(){vec3 c=texture2D(t,vec2(u.x*.5,1.-u.y)).rgb;float a=texture2D(t,vec2(.5+u.x*.5,1.-u.y)).r;gl_FragColor=vec4(c*a,a);}'));
+      gl.linkProgram(pr); if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) return;
+      gl.useProgram(pr);
+      var bf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+      var loc = gl.getAttribLocation(pr, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+      var tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.clearColor(0, 0, 0, 0);
+      c.width = 896; c.height = 504; c.className = 'x-hc ' + v.className; c.style.cssText = v.style.cssText + ';position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;display:block'; c.setAttribute('aria-hidden', 'true');
+      var pv = document.createElement('video');
+      pv.muted = true; pv.defaultMuted = true; pv.loop = true; pv.setAttribute('muted', ''); pv.setAttribute('playsinline', ''); pv.setAttribute('webkit-playsinline', ''); pv.preload = 'auto'; pv.disablePictureInPicture = true;
+      pv.style.cssText = 'position:fixed;left:0;top:0;width:2px;height:2px;opacity:.01;pointer-events:none';
+      pv.src = '/extras/head/' + id + '.pack.mp4?v=1';
+      document.body.appendChild(pv); v.parentNode.insertBefore(c, v.nextSibling); v.__xc = c;
+      var lost = false; c.addEventListener('webglcontextlost', function (e) { e.preventDefault(); lost = true; });
+      var loop = function () {
+        if (!c.isConnected || !v.isConnected) { try { pv.pause(); pv.removeAttribute('src'); pv.load(); if (pv.parentNode) pv.parentNode.removeChild(pv); } catch (er) {} return; }
+        requestAnimationFrame(loop);
+        var vis = getComputedStyle(v).visibility !== 'hidden' && document.visibilityState === 'visible';
+        if (!vis) { if (!pv.paused) pv.pause(); return; }
+        if (pv.paused) { var pp = pv.play(); if (pp && pp.catch) pp.catch(function () {}); }
+        if (pv.duration && v.currentTime && Math.abs(pv.currentTime - (v.currentTime % pv.duration)) > 0.3) { try { pv.currentTime = v.currentTime % pv.duration; } catch (er) {} }
+        if (lost || pv.readyState < 2 || pv.paused) { v.classList.remove('x-hid'); return; }
+        try {
+          gl.bindTexture(gl.TEXTURE_2D, tex);
+          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, pv);
+          gl.viewport(0, 0, c.width, c.height); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+          v.classList.add('x-hid'); setAttr(document.documentElement, 'data-xalpha', '');
+        } catch (er) { v.classList.remove('x-hid'); }
+      };
+      requestAnimationFrame(loop);
+    } catch (er) { v.__xc = null; }
+  }
   function aboutHead() {
     var vids = [], i, v, hero = null, heroes = document.querySelectorAll('[data-framer-name="Hero Video"]');
     for (i = 0; i < heroes.length; i++) if (heroes[i].getBoundingClientRect().width > 0) { hero = heroes[i]; break; }
@@ -1660,6 +1707,7 @@
     for (i = 0; i < vids.length; i++) {
       v = vids[i];
       if (HEAD_ALPHA) { var hm = /assets\/([A-Za-z0-9_-]+)\.mp4/.exec(v.getAttribute('src') || ''); if (hm && HEAD_IDS.indexOf(hm[1]) > -1) { v.setAttribute('src', '/extras/head/' + hm[1] + '.webm?v=1'); v.__xk = 0; setAttr(document.documentElement, 'data-xalpha', ''); } }
+      if (!HEAD_ALPHA) { var sm = /assets\/([A-Za-z0-9_-]+)\.mp4/.exec(v.getAttribute('src') || ''); if (sm && HEAD_IDS.indexOf(sm[1]) > -1) safariHead(v, sm[1]); }
       if (!v.__xk) {
         v.__xk = 1; v.disablePictureInPicture = true; v.disableRemotePlayback = true; v.muted = true; v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', ''); v.preload = 'auto';
       }
