@@ -39,12 +39,18 @@ def strip_main(doc):
     raise SystemExit('unbalanced <div id="main">')
 
 
+COMING_SOON = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'coming-soon.html')).read()
+
 made = []
 for it in items:
     slug = it['slug']
     folder = os.path.join(root, slug)
     if slug == 'coming-soon':
+        # the project is gone, but Framer's data still links to it (between Lexus and China): a tiny page sends visitors on
         shutil.rmtree(folder, ignore_errors=True)
+        os.makedirs(folder, exist_ok=True)
+        with open(os.path.join(folder, 'index.html'), 'w') as f:
+            f.write(COMING_SOON)
         continue
     if os.path.exists(os.path.join(folder, 'index.html')):
         continue
