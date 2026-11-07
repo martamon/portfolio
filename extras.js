@@ -143,7 +143,8 @@
     // the menu's face is inverted to go with that blend; without the blend it stays as it is
     'html[data-xmid] [data-xfi]{filter:none!important}',
     // the MARTAMON wordmark of the home hero (white): in the dark it becomes the same grey-blue as the type (white -> #b4c2d5)
-    'img[src*="X22mGNitGaY93ZEObiQgYak"]{filter:brightness(calc(1 - .38 * var(--xtt))) sepia(var(--xtt)) hue-rotate(calc(175deg * var(--xtt))) saturate(calc(1 - .5 * var(--xtt)))}',
+    // (no colour shift on the way, which went through a mint green at dusk: only a little dimmer and slightly see-through, so the page's blue tints it)
+    'img[src*="X22mGNitGaY93ZEObiQgYak"]{filter:brightness(calc(1 - .12 * var(--xtt)));opacity:calc(1 - .3 * var(--xtt))}',
     // the hair/face video of About has a light-blue backdrop of its own: at night a soft frame in the page colour (that of the
     // page at the video's edges, so it follows the theme) covers the backdrop around the head, and the head itself stays untouched
     '.x-vfade{position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;opacity:var(--xt);background:color-mix(in srgb,rgb(181,197,217) calc((1 - var(--xt)) * 100%),rgb(41,60,89) calc(var(--xt) * 100%));-webkit-mask-image:radial-gradient(ellipse 40% 70% at 50% 47%,transparent 0,transparent 50%,#000 100%);mask-image:radial-gradient(ellipse 40% 70% at 50% 47%,transparent 0,transparent 50%,#000 100%)}',
@@ -152,7 +153,6 @@
     '@media(max-width:809px){html[data-xp="about"] [data-framer-name="Hero Video"] video{object-fit:contain!important;transform:scale(var(--xhs,2.25)) translate(var(--xhx,0px),var(--xhy,5px));transform-origin:50% 47%;-webkit-mask-image:linear-gradient(to bottom,transparent calc(50% - 28.125vw),#000 calc(50% - 22.5vw),#000 calc(50% + 22.5vw),transparent calc(50% + 28.125vw)),radial-gradient(ellipse 42.3vw 38.5vw at 50% 50%,#000 0,#000 66%,rgba(0,0,0,.5) 84%,transparent 100%)!important;mask-image:linear-gradient(to bottom,transparent calc(50% - 28.125vw),#000 calc(50% - 22.5vw),#000 calc(50% + 22.5vw),transparent calc(50% + 28.125vw)),radial-gradient(ellipse 42.3vw 38.5vw at 50% 50%,#000 0,#000 66%,rgba(0,0,0,.5) 84%,transparent 100%)!important;-webkit-mask-composite:source-in!important;mask-composite:intersect!important}html[data-xp="about"] .x-vfade{display:none!important}}',
     // text that sits on that video is blended with it (exclusion): in the dark it is plain light type instead, or it would vanish
     'html[data-xdark] [data-xbl]{mix-blend-mode:normal!important}',
-    'html[data-xdark][data-xp="about"] [data-xtc]{text-shadow:0 0 6px rgba(22,32,52,.8),0 0 18px rgba(22,32,52,.65)}',
     // contact portrait: its tilt shadow turns from blue to black
     '[data-x3d][data-hot]{box-shadow:0 28px 55px color-mix(in srgb,rgba(20,60,100,.32) calc((1 - var(--xtt)) * 100%),rgba(0,0,0,.55) calc(var(--xtt) * 100%))}',
     // type colour: original -> (greys only) a darker grey while the page darkens, so they stay readable on the mid blues -> light type
@@ -327,6 +327,11 @@
     '[data-xf]>div{transition:transform 1.2s cubic-bezier(.22,.8,.24,1);transform-origin:center}',
     '[data-xf]:hover>div{transform:perspective(500px) rotateY(360deg)}',
     // About on phones: title and text sit over the turning head as negative/positive type (difference blend), white so it inverts against the head and the page
+    // ...and the same on computers, by day and by night: no shadow, always the negative/positive (difference) type
+    'html[data-xp="about"] [data-framer-name="Caption"],html[data-xp="about"] [data-framer-name="Wordmark"],html[data-xp="about"] [data-xbl]{mix-blend-mode:difference!important;isolation:auto!important}html[data-xp="about"] [data-framer-name="Caption"] *,html[data-xp="about"] [data-framer-name="Wordmark"] *,html[data-xp="about"] [data-xbl],html[data-xp="about"] [data-xbl] *{color:#fff!important;text-shadow:none!important}html[data-xp="about"] [data-framer-name="Hero Video"]{isolation:auto!important}html[data-xp="about"] [data-framer-name="Content"]{z-index:auto!important;isolation:auto!important}',
+    /* that block is sticky, so it is a layer of its own and the type could only blend with the head: a copy of the page gradient
+       (fixed to the screen like the page's own) sits at the back of the block, so the type also inverts against the page */
+    'html[data-xp="about"] [data-framer-name="Content"]::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background-image:var(--xbgimg);background-attachment:fixed;background-size:100% 100vh}',
     '@media(max-width:809px){html[data-xp="about"] [data-framer-name="Caption"],html[data-xp="about"] [data-framer-name="Wordmark"]{mix-blend-mode:difference!important;isolation:auto!important}html[data-xp="about"] [data-framer-name="Caption"] *,html[data-xp="about"] [data-framer-name="Wordmark"] *{color:#fff!important;text-shadow:none!important}html[data-xp="about"] [data-framer-name="Hero Video"]{isolation:auto!important}html[data-xp="about"] [data-framer-name="Hero Video"]>div[class*="framer-"]:not([data-framer-name^="Video"]){mix-blend-mode:difference}}',
     // About on phones: the intro text a little wider (fewer, longer lines) so it is not a tall thin column
     '@media(max-width:809px){html[data-xp="about"] [data-framer-name="Caption"]{width:var(--xcw,min(62vw,250px))!important;max-width:none!important}html[data-xp="about"] [data-framer-name="Caption"] p{width:100%!important}}',
