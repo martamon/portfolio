@@ -1679,6 +1679,7 @@
   var HEAD_ALPHA = (function () { try { var ua = navigator.userAgent; return /Chrome|Chromium|Firefox|Edg/.test(ua) && !/iPhone|iPad|iPod|CriOS|FxiOS|EdgiOS/.test(ua) && !!document.createElement('video').canPlayType('video/webm; codecs="vp9"'); } catch (e) { return false; } })();
   // Safari / iOS cannot show transparent WebM: the same clips come as one H.264 video with the picture on the left half and its
   // transparency (grey) on the right; a WebGL canvas combines them every frame. If anything fails the plain video stays as it was.
+  var HEADLPM = false;   /* the phone refused to play a head clip: it will refuse the others too */
   function safariHead(v, id) {
     if (v.__xc !== undefined) return; v.__xc = null;
     try {
@@ -1704,8 +1705,9 @@
       v.parentNode.insertBefore(pv, v.nextSibling); v.parentNode.insertBefore(c, pv.nextSibling); v.__xc = c; v.__xpv = pv; v.__xid = id;
       /* the original clip (about 10 MB each) is no longer needed: stop its download */
       try { v.pause(); v.removeAttribute('src'); v.load(); } catch (er) {} xlog('head ' + id.slice(0, 6) + ' webgl ok');
+      pv.addEventListener('seeked', function () { lastT = -1; });   /* the new frame is there now: paint it */
       pv.addEventListener('error', function () { xlog('head pack error ' + (pv.error && pv.error.code)); });
-      var kick = function () { if (pv.paused && getComputedStyle(v).visibility !== 'hidden') { var kp = pv.play(); if (kp && kp.catch) kp.catch(function (er) { xlog('head play refused ' + (er && er.name)); }); } };
+      var kick = function () { if (pv.paused && getComputedStyle(v).visibility !== 'hidden') { var kp = pv.play(); if (kp && kp.catch) kp.catch(function (er) { if (er && er.name === 'NotAllowedError') HEADLPM = true; xlog('head play refused ' + (er && er.name)); }); } };
       ['touchend', 'click', 'scroll', 'keydown'].forEach(function (t) { addEventListener(t, kick, { passive: true }); });
       var drawn = false, lastSeek = 0;
       var lost = false; c.addEventListener('webglcontextlost', function (e) { e.preventDefault(); lost = true; });
@@ -1717,22 +1719,30 @@
         c.style.display = ''; v.classList.add('x-hid'); setAttr(document.documentElement, 'data-xalpha', ''); if (!drawn) { drawn = true; xlog('head drawn'); }
       };
       /* Low Power Mode lets no <video> play without a tap, but the browser can still decode the clip itself (WebCodecs): the
-         frames (/extras/head/<id>.frames.bin, the same packed clip without B-frames, plus an index) are decoded here and painted
-         in time, so the head keeps turning smoothly */
-      var cd = null;
+         frames (/extras/head/<id>.frames.bin: the packed clip, every frame a key frame, plus an index) are decoded here and painted
+         in time, and any single frame can be shown at once, so the head also turns with the pointer */
+      var GEN = 1e9, cd = null;
+      var idx = function (t) { var ss = cd.meta.s, us = t * 1e6, lo = 0, hi = ss.length - 1; while (lo < hi) { var mi = (lo + hi + 1) >> 1; if (ss[mi][2] <= us) lo = mi; else hi = mi - 1; } return lo; };
+      var codecGo = function (mode, t) {
+        if (!cd) return; cd.pend = { mode: mode, t: t || 0 }; if (!cd.on) return;
+        if (mode === 'scrub' && cd.mode === 'scrub') { cd.want = t || 0; return; }   /* following the pointer: just aim at the new frame */
+        cd.gen++; cd.q.forEach(function (f) { f.close(); }); cd.q = []; cd.mode = mode; cd.ended = false; cd.t0 = 0; cd.loopN = 0;
+        if (mode === 'play') cd.next = idx(t || 0); else { cd.want = t || 0; cd.sent = -1; }
+      };
       v.__xcodec = function () {
         if (cd) return true;
         if (!('VideoDecoder' in window) || !('EncodedVideoChunk' in window)) return false;
-        cd = { on: false, q: [], next: 0, loopN: 0, t0: 0, frame: null, cv: null };
+        cd = { on: false, q: [], next: 0, loopN: 0, t0: 0, gen: 1, cur: 0, mode: 'play', cv: null };
         var base = '/extras/head/' + id + '.frames';
-        Promise.all([fetch(base + '.json?v=1').then(function (r) { return r.json(); }), fetch(base + '.bin?v=1').then(function (r) { return r.arrayBuffer(); })]).then(function (a) {
+        Promise.all([fetch(base + '.json?v=2').then(function (r) { return r.json(); }), fetch(base + '.bin?v=2').then(function (r) { return r.arrayBuffer(); })]).then(function (a) {
           if (!cd) return;
           var meta = a[0], desc = Uint8Array.from(atob(meta.desc), function (ch) { return ch.charCodeAt(0); });
           var cfg = { codec: meta.codec, description: desc, codedWidth: meta.w, codedHeight: meta.h, optimizeForLatency: true };
           return VideoDecoder.isConfigSupported(cfg).then(function (sup) {
             if (!sup || !sup.supported || !cd) { xlog('head codec unsupported'); cd = null; headAnim(v, id); return; }
-            cd.dec = new VideoDecoder({ output: function (f) { if (cd) cd.q.push(f); else f.close(); }, error: function (e) { xlog('head codec error ' + (e && e.message)); stopCodec(); headAnim(v, id); } });
+            cd.dec = new VideoDecoder({ output: function (f) { if (cd && Math.floor(f.timestamp / GEN) === cd.gen) cd.q.push(f); else f.close(); }, error: function (e) { xlog('head codec error ' + (e && e.message)); stopCodec(); headAnim(v, id); } });
             cd.dec.configure(cfg); cd.meta = meta; cd.bin = new Uint8Array(a[1]); cd.on = true; xlog('head codec on');
+            var pd = cd.pend || (ctl ? { mode: 'scrub', t: proxyT } : { mode: 'play', t: 0 }); codecGo(pd.mode, pd.t);
           });
         }).catch(function (e) { xlog('head codec load failed ' + (e && e.message)); cd = null; headAnim(v, id); });
         return true;
@@ -1741,36 +1751,61 @@
         if (!cd) return; var k = cd; cd = null;
         try { k.q.forEach(function (f) { f.close(); }); if (k.frame) k.frame.close(); if (k.dec && k.dec.state !== 'closed') k.dec.close(); } catch (er) {}
       };
-      var codecFrame = function () {
-        var m = cd.meta, d = cd.dec;
-        while (d.decodeQueueSize < 3 && cd.q.length < 5) {
-          var sm = m.s[cd.next];
-          d.decode(new EncodedVideoChunk({ type: sm[3] ? 'key' : 'delta', timestamp: sm[2] + cd.loopN * m.dur, data: cd.bin.subarray(sm[0], sm[0] + sm[1]) }));
-          if (++cd.next >= m.s.length) { cd.next = 0; cd.loopN++; }
-        }
-        if (!cd.q.length && !cd.frame) return;
-        var now = performance.now();
-        if (!cd.t0 && cd.q.length) cd.t0 = now - cd.q[0].timestamp / 1000;
-        var t = (now - cd.t0) * 1000;
-        if (cd.q.length && cd.q[0].timestamp < t - 400000) cd.t0 = now - cd.q[0].timestamp / 1000, t = cd.q[0].timestamp;   /* fell behind (the phone was busy): carry on from here instead of racing */
-        var fresh = false;
-        while (cd.q.length && cd.q[0].timestamp <= t) { if (cd.frame) cd.frame.close(); cd.frame = cd.q.shift(); fresh = true; }
-        if (!fresh || !cd.frame) return;
-        try { paint(cd.frame); }
+      var show = function (f) {
+        try { paint(f); }
         catch (er) {   /* this browser cannot hand a decoded frame to WebGL directly: go through a small 2D canvas */
-          if (!cd.cv) { cd.cv = document.createElement('canvas'); cd.cv.width = cd.frame.displayWidth; cd.cv.height = cd.frame.displayHeight; cd.cx = cd.cv.getContext('2d'); }
-          cd.cx.drawImage(cd.frame, 0, 0); paint(cd.cv);
+          if (!cd.cv) { cd.cv = document.createElement('canvas'); cd.cv.width = f.displayWidth; cd.cv.height = f.displayHeight; cd.cx = cd.cv.getContext('2d'); }
+          cd.cx.drawImage(f, 0, 0); paint(cd.cv);
         }
       };
+      var chunk = function (sm, ts) { return new EncodedVideoChunk({ type: 'key', timestamp: ts, data: cd.bin.subarray(sm[0], sm[0] + sm[1]) }); };
+      var codecFrame = function () {
+        var m = cd.meta, d = cd.dec, base = cd.gen * GEN, f;
+        if (cd.mode === 'scrub') {
+          if (cd.want !== cd.sent && d.decodeQueueSize === 0) { cd.sent = cd.want; var k = idx(cd.want); d.decode(chunk(m.s[k], base + m.s[k][2])); }
+          if (cd.q.length) { f = cd.q.pop(); cd.q.forEach(function (o) { o.close(); }); cd.q = []; cd.cur = (f.timestamp - base) / 1e6; show(f); if (cd.frame) cd.frame.close(); cd.frame = f; }
+          return;
+        }
+        while (d.decodeQueueSize < 3 && cd.q.length < 5 && cd.next < m.s.length) {
+          var sm = m.s[cd.next]; d.decode(chunk(sm, base + cd.loopN * m.dur + sm[2]));
+          if (++cd.next >= m.s.length && v.loop) { cd.next = 0; cd.loopN++; }
+        }
+        var now = performance.now();
+        if (!cd.t0 && cd.q.length) cd.t0 = now - (cd.q[0].timestamp - base) / 1000;
+        var t = (now - cd.t0) * 1000 + base, fresh = false;
+        if (cd.q.length && cd.q[0].timestamp < t - 400000) { cd.t0 = now - (cd.q[0].timestamp - base) / 1000; t = cd.q[0].timestamp; }   /* fell behind: carry on from here */
+        while (cd.q.length && cd.q[0].timestamp <= t) { if (cd.frame) cd.frame.close(); cd.frame = cd.q.shift(); fresh = true; }
+        if (fresh) { cd.cur = ((cd.frame.timestamp - base) % m.dur) / 1e6; show(cd.frame); }
+        if (!v.loop && cd.next >= m.s.length && !cd.q.length && d.decodeQueueSize === 0 && !cd.ended) { cd.ended = true; try { v.dispatchEvent(new Event('ended')); v.dispatchEvent(new Event('pause')); } catch (er) {} }
+      };
+      /* Framer's video turns the head by setting currentTime from the pointer (and plays / pauses it): the hidden original
+         <video> passes all of that on to the clip that is really shown (the packed video, or the decoded frames) */
+      var ctl = false, proxyT = 0, lastT = -1;
+      var take = function () { if (!ctl) { ctl = true; pv.loop = !!v.loop; } };
+      try {
+        Object.defineProperty(v, 'currentTime', { configurable: true, get: function () { return cd && cd.on ? (cd.mode === 'scrub' ? cd.want : cd.cur) : (pv.readyState ? pv.currentTime : proxyT); }, set: function (t) { take(); proxyT = +t || 0; if (cd) codecGo(cd.on && cd.mode === 'play' && !cd.ended ? 'play' : 'scrub', proxyT); else { try { pv.currentTime = proxyT; } catch (er) {} } } });
+        Object.defineProperty(v, 'duration', { configurable: true, get: function () { return cd && cd.meta ? cd.meta.dur / 1e6 : pv.duration; } });
+        Object.defineProperty(v, 'paused', { configurable: true, get: function () { return cd ? !(cd.mode === 'play' && !cd.ended) : pv.paused; } });
+        Object.defineProperty(v, 'ended', { configurable: true, get: function () { return cd ? !!cd.ended : pv.ended; } });
+        Object.defineProperty(v, 'readyState', { configurable: true, get: function () { return cd && cd.on ? 4 : pv.readyState; } });
+        v.play = function () { if (cd) { codecGo('play', cd.ended ? 0 : cd.cur); return Promise.resolve(); } return pv.play(); };
+        v.pause = function () { take(); if (cd) { codecGo('scrub', cd.cur); return; } pv.pause(); };
+      } catch (er) {}
       var loop = function () {
         if (!c.isConnected || !v.isConnected) { stopCodec(); try { pv.pause(); pv.removeAttribute('src'); pv.load(); if (pv.parentNode) pv.parentNode.removeChild(pv); } catch (er) {} return; }
         requestAnimationFrame(loop);
-        var vis = getComputedStyle(v).visibility !== 'hidden' && document.visibilityState === 'visible';
-        if (!vis) { if (!pv.paused) pv.pause(); if (cd) cd.t0 = 0; return; }
-        if (pv.paused && !pv.__tried) { pv.__tried = 1; setTimeout(function () { pv.__tried = 0; }, 1500); var pp = pv.play(); if (pp && pp.catch) pp.catch(function (er) { xlog('head play refused ' + (er && er.name)); }); }
+        var vv = getComputedStyle(v).visibility; if (c.style.visibility !== vv) c.style.visibility = vv;   /* the canvas shows and hides with its clip */
+        var vis = vv !== 'hidden' && document.visibilityState === 'visible';
+        if (!vis) { if (!pv.paused && !ctl) pv.pause(); if (cd) cd.t0 = 0; return; }
+        /* until Framer takes over (the pointer turns the head), the clip simply plays */
+        if (!ctl && pv.paused && !pv.__tried) { pv.__tried = 1; setTimeout(function () { pv.__tried = 0; }, 1500); var pp = pv.play(); if (pp && pp.catch) pp.catch(function (er) { if (er && er.name === 'NotAllowedError') HEADLPM = true; xlog('head play refused ' + (er && er.name)); }); }
         if (lost) { v.classList.remove('x-hid'); return; }
         try {
-          if (pv.readyState >= 2 && !pv.paused) { if (cd) { stopCodec(); xlog('head: real video after a tap'); } paint(pv); return; }
+          if (pv.readyState >= 2 && (!pv.paused || ctl && !cd)) {
+            if (cd && !pv.paused) { stopCodec(); xlog('head: real video after a tap'); }
+            if (!pv.paused || pv.currentTime !== lastT) { lastT = pv.currentTime; paint(pv); }
+            return;
+          }
           if (cd && cd.on) codecFrame();
         } catch (er) { v.classList.remove('x-hid'); if (!lost) { lost = true; xlog('head draw failed ' + er.message); } }
       };
@@ -1818,6 +1853,7 @@
       }
       var hid = /assets\/([A-Za-z0-9_-]+)\.mp4|\/extras\/head\/([A-Za-z0-9_-]+)\.webm/.exec(v.getAttribute('src') || ''), hidv = hid && (hid[1] || hid[2]);
       if (v.__xa && !v.__xpv && !v.paused && v.currentTime > 0.2) { if (v.__xa.parentNode) v.__xa.parentNode.removeChild(v.__xa); v.__xa = null; v.classList.remove('x-hid'); }
+      if (v.__xpv && !v.__xcd && HEADLPM && getComputedStyle(v).visibility !== 'hidden') { v.__xcd = 1; if (v.__xcodec) v.__xcodec(); }
       if (v.__xpv && !v.__xa) { var tv = v.__xpv; if (!v.__xt0) v.__xt0 = performance.now(); else if (performance.now() - v.__xt0 > 2500 && tv.paused && tv.currentTime < 0.5 && getComputedStyle(v).visibility !== 'hidden' && document.visibilityState === 'visible') { if (!v.__xcd) { v.__xcd = 1; headAnim(v, v.__xid); if (v.__xcodec) v.__xcodec(); } } else if (performance.now() - v.__xt0 <= 2500) setTimeout(schedule, 2700); continue; }
       if (hidv && HEAD_IDS.indexOf(hidv) > -1 && !v.__xa) {
         if (!v.__xt0) v.__xt0 = performance.now();
