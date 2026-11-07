@@ -500,16 +500,26 @@
     g.style.setProperty('--pad', pad + 'px');
     var W = g.clientWidth - 2 * pad, colW = Math.floor((W - gap * (cols - 1)) / cols), heights = [], k;
     for (k = 0; k < cols; k++) heights.push(0);
+    var rowFlow = !!g.querySelector(':scope > .x-yt'), rowCol = 0, rowTop = 0;
     for (i = 0; i < kids.length; i++) {
       c = kids[i];
       if (c.classList.contains('x-yt')) {     /* the Schweppes video: one big tile across the whole width, the pictures follow below in the grid */
-        var VW = Math.min(W, 1180), fh = Math.round(VW * (parseFloat(c.getAttribute('data-r')) || 9 / 16)), top0 = Math.max.apply(null, heights);
+        var VW = W, fh = Math.round(VW * (parseFloat(c.getAttribute('data-r')) || 9 / 16)), top0 = Math.max.apply(null, heights);
         c.style.setProperty('--mx', (pad + Math.round((W - VW) / 2)) + 'px'); c.style.setProperty('--my', (top + top0) + 'px');
         c.style.setProperty('--mw', VW + 'px'); c.style.setProperty('--gh', fh + 'px');
         for (k = 0; k < cols; k++) heights[k] = top0 + fh + gap;
         continue;
       }
       var r = parseFloat(c.getAttribute('data-r')) || 1, h = Math.round(colW * r), col = 0;
+      if (rowFlow) {     /* Schweppes: the pictures fill each row from the left, so the last row is never left with a hole in the middle */
+        if (rowCol === 0) rowTop = Math.max.apply(null, heights);
+        col = rowCol; rowCol = (rowCol + 1) % cols;
+        c.style.setProperty('--mx', (pad + col * (colW + gap)) + 'px'); c.style.setProperty('--my', (top + rowTop) + 'px');
+        c.style.setProperty('--mw', colW + 'px'); c.style.setProperty('--gh', h + 'px');
+        heights[col] = rowTop + h + gap;
+        for (k = 0; k < cols; k++) if (k !== col && heights[k] < rowTop) heights[k] = rowTop;
+        continue;
+      }
       for (k = 1; k < cols; k++) if (heights[k] < heights[col]) col = k;
       c.style.setProperty('--mx', (pad + col * (colW + gap)) + 'px');
       c.style.setProperty('--my', (top + heights[col]) + 'px');
