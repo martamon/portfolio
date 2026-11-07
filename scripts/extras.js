@@ -984,7 +984,7 @@
           if (!v.paused || p.anim || !el.isConnected) return;
           var im = new Image(); im.className = 'x-vp-anim'; im.alt = ''; im.decoding = 'async';
           im.onload = function () { p.anim = im; el.classList.add('x-anim'); xlog('video ' + name + ' -> animated picture'); };
-          im.src = '/extras/video/' + name + '.webp?v=1'; p.st.appendChild(im);
+          im.src = '/extras/video/' + name + '.webp?v=2'; p.st.appendChild(im);
         }, 2500);
         v.addEventListener('playing', function () { if (p.anim) { el.classList.remove('x-anim'); if (p.anim.parentNode) p.anim.parentNode.removeChild(p.anim); p.anim = null; } });
         if (go) { var pr2 = v.play(); if (pr2 && pr2.catch) pr2.catch(function (er) { xlog('video ' + p.id + ' autoplay refused: ' + (er && er.name)); }); }
@@ -1723,6 +1723,7 @@
           gl.bindTexture(gl.TEXTURE_2D, tex);
           gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, pv);
           gl.viewport(0, 0, c.width, c.height); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+          if (v.__xa) { if (v.__xa.parentNode) v.__xa.parentNode.removeChild(v.__xa); v.__xa = null; c.style.display = ''; xlog('head: real video after a tap'); }   /* a tap started the real clip: smooth video again */
           v.classList.add('x-hid'); setAttr(document.documentElement, 'data-xalpha', ''); if (!drawn) { drawn = true; xlog('head drawn'); }
         } catch (er) { v.classList.remove('x-hid'); if (!lost) { lost = true; xlog('head draw failed ' + er.message); } }
       };
@@ -1740,7 +1741,7 @@
       v.classList.add('x-hid'); if (v.__xc) v.__xc.style.display = 'none';
       setAttr(document.documentElement, 'data-xalpha', ''); xlog('head ' + id.slice(0, 6) + ' -> animated picture');
     };
-    im.src = '/extras/head/' + id + '.webp?v=1';
+    im.src = '/extras/head/' + id + '.webp?v=2';
     v.parentNode.insertBefore(im, v.nextSibling);
     var sync = function () { if (!im.isConnected || !v.isConnected) { if (im.parentNode && !v.isConnected) im.parentNode.removeChild(im); return; } im.style.visibility = getComputedStyle(v).visibility; setTimeout(sync, 250); };
     sync();
