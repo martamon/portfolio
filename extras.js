@@ -331,15 +331,23 @@
     // About on phones: title and text sit over the turning head as negative/positive type (difference blend), white so it inverts against the head and the page
     // ...and the same on computers, by day and by night: no shadow, always the negative/positive (difference) type
     'html[data-xp="about"] [data-framer-name="Caption"],html[data-xp="about"] [data-framer-name="Wordmark"],html[data-xp="about"] [data-xbl]{mix-blend-mode:difference!important;isolation:auto!important}html[data-xp="about"] [data-framer-name="Caption"] *,html[data-xp="about"] [data-framer-name="Wordmark"] *,html[data-xp="about"] [data-xbl],html[data-xp="about"] [data-xbl] *,html[data-xp="about"] [data-framer-name="Caption"] [data-xtc]{color:#fff!important;text-shadow:none!important}',
-    /* exactly the menu's colours: white (difference) by day, the page's own text colour without blending at dusk and dawn, the light blue (difference) at night */
-    'html[data-xnight][data-xp="about"] [data-framer-name="Caption"] *,html[data-xnight][data-xp="about"] [data-framer-name="Wordmark"] *,html[data-xnight][data-xp="about"] [data-xbl] *{color:rgb(201,220,249)!important}html[data-xdusk][data-xp="about"] [data-framer-name="Caption"],html[data-xdusk][data-xp="about"] [data-framer-name="Wordmark"],html[data-xdusk][data-xp="about"] [data-xbl]{mix-blend-mode:normal!important}html[data-xdusk][data-xp="about"] [data-framer-name="Caption"] *,html[data-xdusk][data-xp="about"] [data-framer-name="Wordmark"] *,html[data-xdusk][data-xp="about"] [data-xbl] *{color:var(--xfg)!important}html[data-xp="about"] [data-framer-name="Hero Video"]{isolation:auto!important}html[data-xp="about"] [data-framer-name="Content"]{z-index:auto!important;isolation:auto!important}',
     /* that block is sticky, so it is a layer of its own and the type could only blend with the head: a copy of the page gradient
        (fixed to the screen like the page's own) sits at the back of the block, so the type also inverts against the page */
     'html[data-xp="about"] [data-framer-name="Content"]::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background-image:var(--xbgimg);background-repeat:no-repeat;background-size:100% var(--xgh,100vh);background-position:0 var(--xgy,0px)}',
     '@media(max-width:809px){html[data-xp="about"] [data-framer-name="Caption"],html[data-xp="about"] [data-framer-name="Wordmark"]{mix-blend-mode:difference!important;isolation:auto!important}html[data-xp="about"] [data-framer-name="Caption"] *,html[data-xp="about"] [data-framer-name="Wordmark"] *{text-shadow:none!important}html[data-xp="about"] [data-framer-name="Hero Video"]{isolation:auto!important}html[data-xp="about"] [data-framer-name="Hero Video"]>div[class*="framer-"]:not([data-framer-name^="Video"]){mix-blend-mode:difference}}',
     // About on phones: the intro text a little wider (fewer, longer lines) so it is not a tall thin column
     '@media(max-width:809px){html[data-xp="about"] [data-framer-name="Caption"]{width:var(--xcw,min(62vw,250px))!important;max-width:none!important}html[data-xp="about"] [data-framer-name="Caption"] p{width:100%!important}}',
-    '[data-xs]{display:none!important}'
+    '[data-xs]{display:none!important}',
+    // every text of the site in the tones of the MARTAMON wordmark (see paintInk)
+    'html [data-xtc],html [data-xcap]{color:var(--xtone)!important}',
+    'html main[data-xm]~section a,html main[data-xm]~section p,html main[data-xm]~section span,html main[data-xm]~*:not(.x-yt) footer a,html main[data-xm]~*:not(.x-yt) footer p,html main[data-xm]~*:not(.x-yt) footer span{color:var(--xtoneb)!important}',
+    '.x-contact{color:var(--xtone)!important}',
+    // negative/positive in every tone: menu, clock, languages and About always blend, with the worked-out colour
+    'html [data-xnc],html[data-xdusk] [data-xnc]{mix-blend-mode:difference!important}html [data-xn],html[data-xdusk] [data-xn],html[data-xnight] [data-xn]{color:var(--xink,#fff)!important}',
+    'html .x-dial,html[data-xdusk] .x-dial,html[data-xnight] .x-dial{mix-blend-mode:difference;color:var(--xinkb,#fff)}',
+    'html .x-lang,html[data-xdusk] .x-lang,html[data-xnight] .x-lang{mix-blend-mode:difference;color:var(--xinkb,#fff)}',
+    'html[data-xp="about"] [data-framer-name="Caption"],html[data-xp="about"] [data-framer-name="Wordmark"],html[data-xp="about"] [data-xbl],html[data-xdusk][data-xp="about"] [data-framer-name="Caption"],html[data-xdusk][data-xp="about"] [data-framer-name="Wordmark"],html[data-xdusk][data-xp="about"] [data-xbl]{mix-blend-mode:difference!important}',
+    'html[data-xp="about"] [data-framer-name="Caption"] *,html[data-xp="about"] [data-framer-name="Wordmark"] *,html[data-xp="about"] [data-xbl] *,html[data-xp] [data-framer-name="Caption"] [data-xtc]{color:var(--xink,#fff)!important}'
   ].join('\n');
   // the canvas that shows the transparent head where WebM transparency is missing (Safari) gets the same styling as the head's <video>
   css += '\n' + css.split('\n').filter(function (l) { return /Hero Video"\] video|\[data-xp="about"\] video/.test(l); }).map(function (l) { return l.replace(/Hero Video"\] video/g, 'Hero Video"] .x-hc').replace(/\[data-xp="about"\] video/g, '[data-xp="about"] .x-hc'); }).join('\n');
@@ -1592,13 +1600,16 @@
     }
   }
   setInterval(function () { if (!theme.travel && !theme.raf) { theme.hour = localHour(); paintTheme(); } }, 15000);
-  /* the negative/positive type (difference blend) of white over the page's blues gave browns and tans; the type colour is set from the
-     page colour behind it instead, so that over the page the result is a neutral black, grey or white (whichever reads best), and over
-     pictures it still inverts them */
-  function inkFor(c) {
-    var lum = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2], up = 255 - Math.max(c[0], c[1], c[2]), dn = Math.min(18, Math.min(c[0], c[1], c[2]));
-    if (up - lum > lum - dn) return 'rgb(' + (c[0] + up) + ',' + (c[1] + up) + ',' + (c[2] + up) + ')';
-    return 'rgb(' + (c[0] - dn) + ',' + (c[1] - dn) + ',' + (c[2] - dn) + ')';
+  /* the type of the whole site takes the tones of the MARTAMON wordmark: a deep slate blue-grey over the light blues and a pale
+     blue-grey over the dark ones (--xtone). Type that crosses pictures (menu, clock, languages, About) is negative/positive
+     (difference blend): its colour (--xink) is worked out from the page colour behind it so that over the page it shows exactly
+     that tone, and over pictures it inverts them */
+  var TONE_D = [30, 40, 58], TONE_L = [178, 184, 198];
+  function toneFor(c) {
+    var lum = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2], t, ink, i;
+    if (lum > 105) { t = TONE_D; ink = [0, 1, 2].map(function (i) { return Math.max(0, c[i] - t[i]); }); }
+    else { var k = 1; for (i = 0; i < 3; i++) k = Math.min(k, (255 - c[i]) / TONE_L[i]); t = TONE_L.map(function (v) { return Math.round(v * k); }); ink = [0, 1, 2].map(function (i) { return c[i] + t[i]; }); }
+    return { tone: 'rgb(' + t.join(',') + ')', ink: 'rgb(' + ink.join(',') + ')' };
   }
   function paintInk() {
     try {
@@ -1606,8 +1617,9 @@
       while ((m = re.exec(bi))) cols.push(m[1] ? [Math.round(m[1] * 255), Math.round(m[2] * 255), Math.round(m[3] * 255)] : [+m[4], +m[5], +m[6]]);
       if (!cols.length) { var bc = /(\d+),\s*(\d+),\s*(\d+)/.exec(getComputedStyle(document.body).backgroundColor); if (bc) cols.push([+bc[1], +bc[2], +bc[3]]); }
       if (!cols.length) return;
-      var st = document.documentElement.style;
-      st.setProperty('--xink', inkFor(cols[0])); st.setProperty('--xinkb', inkFor(cols[cols.length - 1]));
+      var a = toneFor(cols[0]), z = toneFor(cols[cols.length - 1]), mid = toneFor(cols[Math.floor(cols.length / 2)]), st = document.documentElement.style;
+      st.setProperty('--xtone', mid.tone); st.setProperty('--xtonet', a.tone); st.setProperty('--xtoneb', z.tone);
+      st.setProperty('--xink', a.ink); st.setProperty('--xinkb', z.ink);
     } catch (e) {}
   }
   setInterval(paintInk, 1000);
