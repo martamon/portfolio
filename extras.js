@@ -122,7 +122,8 @@
     '[data-xgone]{display:none!important}',
     // the language switch: the same negative/positive type as the menu (white with the difference blend, plain page colour through dusk and dawn,
     // the light blue at night), full strength, and the same rolling letters on hover
-    'html .x-lang{opacity:1;color:#fff;mix-blend-mode:difference}html[data-xdusk] .x-lang{mix-blend-mode:normal;color:var(--xfg)}html[data-xnight] .x-lang{color:rgb(203,237,255)}',
+    'html .x-lang{opacity:1;color:var(--xinkb,#fff);mix-blend-mode:difference}html[data-xdusk] .x-lang{mix-blend-mode:normal;color:var(--xfg)}html[data-xnight] .x-lang{color:var(--xinkb,rgb(203,237,255))}',
+    'html:not([data-xdusk]) [data-xn],html[data-xnight] [data-xn]{color:var(--xink,#fff)!important}html:not([data-xdusk]) .x-dial,html[data-xnight] .x-dial{color:var(--xinkb,#fff)}',
     'html .x-lang button{opacity:1}html .x-lang>i,html .x-lang .x-roll i{opacity:1;font-style:normal}',
     '.x-lang button:hover .x-roll .x-a i,.x-lang button:focus-visible .x-roll .x-a i{transform:translateY(-112%)}.x-lang button:hover .x-roll .x-b i,.x-lang button:focus-visible .x-roll .x-b i{transform:translateY(0)}',
     '.x-roll{position:relative;display:inline-grid;overflow:hidden;white-space:pre;vertical-align:top}',
@@ -202,6 +203,8 @@
     'main[data-xhome] [data-xhi]{position:absolute!important;left:var(--mx);top:var(--my);width:var(--mw)!important;margin:0!important}',
     'main[data-xhome] [data-xhi][data-xs]{display:none!important}',
     'main[data-xhome] [data-xhi]{overflow:hidden}',
+    // every card's picture fills its card (Framer gave some of them a fixed width at some sizes, so they showed smaller and centred)
+    'main[data-xhome] [data-xhi] a[href]{width:100%!important;max-width:none!important}main[data-xhome] [data-xhi] a[href]>:first-child{width:100%!important;max-width:none!important;height:auto!important}',
     // Framer's own hover effect on the cards (a zoom of the card or its picture) would pile up on ours and push the card past its column
     // the cards can't be hovered at all (so neither Framer's script nor css can react to the pointer); clicks are routed by position, see below
     // (only where there is a mouse: on phones the cards stay real links, so a tap always opens the project)
@@ -328,11 +331,11 @@
     '[data-xf]:hover>div{transform:perspective(500px) rotateY(360deg)}',
     // About on phones: title and text sit over the turning head as negative/positive type (difference blend), white so it inverts against the head and the page
     // ...and the same on computers, by day and by night: no shadow, always the negative/positive (difference) type
-    'html[data-xp="about"] [data-framer-name="Caption"],html[data-xp="about"] [data-framer-name="Wordmark"],html[data-xp="about"] [data-xbl]{mix-blend-mode:difference!important;isolation:auto!important}html[data-xp="about"] [data-framer-name="Caption"] *,html[data-xp="about"] [data-framer-name="Wordmark"] *,html[data-xp="about"] [data-xbl],html[data-xp="about"] [data-xbl] *{color:#fff!important;text-shadow:none!important}html[data-xp="about"] [data-framer-name="Hero Video"]{isolation:auto!important}html[data-xp="about"] [data-framer-name="Content"]{z-index:auto!important;isolation:auto!important}',
+    'html[data-xp="about"] [data-framer-name="Caption"],html[data-xp="about"] [data-framer-name="Wordmark"],html[data-xp="about"] [data-xbl]{mix-blend-mode:difference!important;isolation:auto!important}html[data-xp="about"] [data-framer-name="Caption"] *,html[data-xp="about"] [data-framer-name="Wordmark"] *,html[data-xp="about"] [data-xbl],html[data-xp="about"] [data-xbl] *,html[data-xp="about"] [data-framer-name="Caption"] [data-xtc]{color:var(--xink,#fff)!important;text-shadow:none!important}html[data-xp="about"] [data-framer-name="Hero Video"]{isolation:auto!important}html[data-xp="about"] [data-framer-name="Content"]{z-index:auto!important;isolation:auto!important}',
     /* that block is sticky, so it is a layer of its own and the type could only blend with the head: a copy of the page gradient
        (fixed to the screen like the page's own) sits at the back of the block, so the type also inverts against the page */
     'html[data-xp="about"] [data-framer-name="Content"]::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background-image:var(--xbgimg);background-attachment:fixed;background-size:100% 100vh}',
-    '@media(max-width:809px){html[data-xp="about"] [data-framer-name="Caption"],html[data-xp="about"] [data-framer-name="Wordmark"]{mix-blend-mode:difference!important;isolation:auto!important}html[data-xp="about"] [data-framer-name="Caption"] *,html[data-xp="about"] [data-framer-name="Wordmark"] *{color:#fff!important;text-shadow:none!important}html[data-xp="about"] [data-framer-name="Hero Video"]{isolation:auto!important}html[data-xp="about"] [data-framer-name="Hero Video"]>div[class*="framer-"]:not([data-framer-name^="Video"]){mix-blend-mode:difference}}',
+    '@media(max-width:809px){html[data-xp="about"] [data-framer-name="Caption"],html[data-xp="about"] [data-framer-name="Wordmark"]{mix-blend-mode:difference!important;isolation:auto!important}html[data-xp="about"] [data-framer-name="Caption"] *,html[data-xp="about"] [data-framer-name="Wordmark"] *{color:var(--xink,#fff)!important;text-shadow:none!important}html[data-xp="about"] [data-framer-name="Hero Video"]{isolation:auto!important}html[data-xp="about"] [data-framer-name="Hero Video"]>div[class*="framer-"]:not([data-framer-name^="Video"]){mix-blend-mode:difference}}',
     // About on phones: the intro text a little wider (fewer, longer lines) so it is not a tall thin column
     '@media(max-width:809px){html[data-xp="about"] [data-framer-name="Caption"]{width:var(--xcw,min(62vw,250px))!important;max-width:none!important}html[data-xp="about"] [data-framer-name="Caption"] p{width:100%!important}}',
     '[data-xs]{display:none!important}'
@@ -1588,6 +1591,26 @@
     }
   }
   setInterval(function () { if (!theme.travel && !theme.raf) { theme.hour = localHour(); paintTheme(); } }, 15000);
+  /* the negative/positive type (difference blend) of white over the page's blues gave browns and tans; the type colour is set from the
+     page colour behind it instead, so that over the page the result is a neutral black, grey or white (whichever reads best), and over
+     pictures it still inverts them */
+  function inkFor(c) {
+    var lum = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2], up = 255 - Math.max(c[0], c[1], c[2]), dn = Math.min(18, Math.min(c[0], c[1], c[2]));
+    if (up - lum > lum - dn) return 'rgb(' + (c[0] + up) + ',' + (c[1] + up) + ',' + (c[2] + up) + ')';
+    return 'rgb(' + (c[0] - dn) + ',' + (c[1] - dn) + ',' + (c[2] - dn) + ')';
+  }
+  function paintInk() {
+    try {
+      var bi = getComputedStyle(document.body).backgroundImage, cols = [], m, re = /color\(srgb ([\d.]+) ([\d.]+) ([\d.]+)[^)]*\)|rgba?\((\d+),\s*(\d+),\s*(\d+)/g;
+      while ((m = re.exec(bi))) cols.push(m[1] ? [Math.round(m[1] * 255), Math.round(m[2] * 255), Math.round(m[3] * 255)] : [+m[4], +m[5], +m[6]]);
+      if (!cols.length) { var bc = /(\d+),\s*(\d+),\s*(\d+)/.exec(getComputedStyle(document.body).backgroundColor); if (bc) cols.push([+bc[1], +bc[2], +bc[3]]); }
+      if (!cols.length) return;
+      var st = document.documentElement.style;
+      st.setProperty('--xink', inkFor(cols[0])); st.setProperty('--xinkb', inkFor(cols[cols.length - 1]));
+    } catch (e) {}
+  }
+  setInterval(paintInk, 1000);
+  var paintTheme0 = paintTheme; paintTheme = function () { paintTheme0(); paintInk(); };
   // the day / night button, as on the planet: the page is in the tone of the real hour until you pick the other one (and back)
   var DN_MOON = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>';
   var DN_SUN = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/></svg>';
