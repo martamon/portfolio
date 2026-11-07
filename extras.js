@@ -119,6 +119,7 @@
     'a[data-xl],a[data-xpn]{position:relative;z-index:12}a[data-xpn]::after,a[data-xl]::after{content:"";position:absolute;left:-14px;right:-14px;top:-16px;bottom:-16px}',
     '.x-drift.x-thru{pointer-events:none!important}',
     'a[data-xpnsrc]{display:none!important}',
+    '[data-xgone]{display:none!important}',
     // the language switch: the same negative/positive type as the menu (white with the difference blend, plain page colour through dusk and dawn,
     // the light blue at night), full strength, and the same rolling letters on hover
     'html .x-lang{opacity:1;color:#fff;mix-blend-mode:difference}html[data-xdusk] .x-lang{mix-blend-mode:normal;color:var(--xfg)}html[data-xnight] .x-lang{color:rgb(203,237,255)}',
@@ -346,7 +347,7 @@
   // the images/videos of the column (without the view toggle)
   function items(g) {
     var out = [];
-    for (var i = 0; i < g.children.length; i++) if (!g.children[i].classList.contains('x-toggle')) out.push(g.children[i]);
+    for (var i = 0; i < g.children.length; i++) if (!g.children[i].classList.contains('x-toggle') && !g.children[i].hasAttribute('data-xgone')) out.push(g.children[i]);
     return out;
   }
   function galleryEl(m) {
@@ -1027,11 +1028,13 @@
     return p;
   }
   // the YouTube embeds that Framer puts on the project pages: the player replaces them (Soap&Glory gets its vertical frame)
+  var NO_VIDEO = ['6LFyBTCP7ig'];   /* videos taken off the site (China) */
   function upgradeEmbeds() {
     var fr = document.querySelectorAll('iframe[src*="youtube.com/embed/"],iframe[src*="youtube-nocookie.com/embed/"],iframe[data-xytsrc]');
     for (var i = 0; i < fr.length; i++) {
       var f = fr[i]; if (f.closest('.x-vp,.x-yt,.x-mreel') || f.classList.contains('x-vp-if')) continue;
-      var m = /\/embed\/([\w-]{6,})/.exec(f.getAttribute('data-xytsrc') || f.src), id = m && m[1]; if (!id || id === 'NrxFBp4bl2Q') continue;
+      var m = /\/embed\/([\w-]{6,})/.exec(f.getAttribute('data-xytsrc') || f.src), id = m && m[1];
+      if (id && NO_VIDEO.indexOf(id) > -1) { var gi = f; while (gi.parentElement && !gi.parentElement.hasAttribute('data-xg')) gi = gi.parentElement; if (gi.parentElement) { try { f.removeAttribute('srcdoc'); f.src = 'about:blank'; } catch (er) {} setAttr(gi, 'data-xgone', ''); } continue; } if (!id || id === 'NrxFBp4bl2Q') continue;
       var host = f.closest('article') || f.parentElement; if (!host || !host.getBoundingClientRect().width) continue;
       vpMount(host, id, { title: document.title, autoplay: true, loop: true });
       if (VP_RATIO[id]) { setAttr(host, 'data-xvhost', ''); var up = host.parentElement; if (up && /deo/i.test(up.getAttribute('data-framer-name') || '')) setAttr(up, 'data-xvhost', ''); }
