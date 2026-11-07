@@ -1381,6 +1381,19 @@
     }
   }
 
+  // A tap on a leftover "Coming soon" link (the page is still showing Framer's own markup, or an older copy of this script ran)
+  // goes straight to the real neighbour project with a normal page load, never to the home page.
+  addEventListener('click', function (e) {
+    var a = e.target && e.target.closest && e.target.closest('a[href$="coming-soon"]');
+    if (!a || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey) return;
+    var cur = location.pathname.replace(/\/+$/, '').split('/').pop();
+    var next = /^\s*\u21b3/.test(a.textContent);
+    var slug = cur === 'lexus-singapore' ? (next ? 'china' : 'soapglory') : cur === 'china' ? (next ? 'schweppes' : 'lexus-singapore') : '';
+    if (!slug) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    location.href = '/' + slug;
+  }, true);
+
   // ---- the "Coming soon" project is gone: no card on the home page, footer links skip it, its URL goes home
   function dropComingSoon(p) {
     if (p === 'coming-soon') { location.replace('/'); return; }
