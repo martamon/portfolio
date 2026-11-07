@@ -1709,20 +1709,69 @@
       ['touchend', 'click', 'scroll', 'keydown'].forEach(function (t) { addEventListener(t, kick, { passive: true }); });
       var drawn = false, lastSeek = 0;
       var lost = false; c.addEventListener('webglcontextlost', function (e) { e.preventDefault(); lost = true; });
+      var paint = function (src) {
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src);
+        gl.viewport(0, 0, c.width, c.height); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        if (v.__xa) { if (v.__xa.parentNode) v.__xa.parentNode.removeChild(v.__xa); v.__xa = null; }
+        c.style.display = ''; v.classList.add('x-hid'); setAttr(document.documentElement, 'data-xalpha', ''); if (!drawn) { drawn = true; xlog('head drawn'); }
+      };
+      /* Low Power Mode lets no <video> play without a tap, but the browser can still decode the clip itself (WebCodecs): the
+         frames (/extras/head/<id>.frames.bin, the same packed clip without B-frames, plus an index) are decoded here and painted
+         in time, so the head keeps turning smoothly */
+      var cd = null;
+      v.__xcodec = function () {
+        if (cd) return true;
+        if (!('VideoDecoder' in window) || !('EncodedVideoChunk' in window)) return false;
+        cd = { on: false, q: [], next: 0, loopN: 0, t0: 0, frame: null, cv: null };
+        var base = '/extras/head/' + id + '.frames';
+        Promise.all([fetch(base + '.json?v=1').then(function (r) { return r.json(); }), fetch(base + '.bin?v=1').then(function (r) { return r.arrayBuffer(); })]).then(function (a) {
+          if (!cd) return;
+          var meta = a[0], desc = Uint8Array.from(atob(meta.desc), function (ch) { return ch.charCodeAt(0); });
+          var cfg = { codec: meta.codec, description: desc, codedWidth: meta.w, codedHeight: meta.h, optimizeForLatency: true };
+          return VideoDecoder.isConfigSupported(cfg).then(function (sup) {
+            if (!sup || !sup.supported || !cd) { xlog('head codec unsupported'); cd = null; headAnim(v, id); return; }
+            cd.dec = new VideoDecoder({ output: function (f) { if (cd) cd.q.push(f); else f.close(); }, error: function (e) { xlog('head codec error ' + (e && e.message)); stopCodec(); headAnim(v, id); } });
+            cd.dec.configure(cfg); cd.meta = meta; cd.bin = new Uint8Array(a[1]); cd.on = true; xlog('head codec on');
+          });
+        }).catch(function (e) { xlog('head codec load failed ' + (e && e.message)); cd = null; headAnim(v, id); });
+        return true;
+      };
+      var stopCodec = function () {
+        if (!cd) return; var k = cd; cd = null;
+        try { k.q.forEach(function (f) { f.close(); }); if (k.frame) k.frame.close(); if (k.dec && k.dec.state !== 'closed') k.dec.close(); } catch (er) {}
+      };
+      var codecFrame = function () {
+        var m = cd.meta, d = cd.dec;
+        while (d.decodeQueueSize < 3 && cd.q.length < 5) {
+          var sm = m.s[cd.next];
+          d.decode(new EncodedVideoChunk({ type: sm[3] ? 'key' : 'delta', timestamp: sm[2] + cd.loopN * m.dur, data: cd.bin.subarray(sm[0], sm[0] + sm[1]) }));
+          if (++cd.next >= m.s.length) { cd.next = 0; cd.loopN++; }
+        }
+        if (!cd.q.length && !cd.frame) return;
+        var now = performance.now();
+        if (!cd.t0 && cd.q.length) cd.t0 = now - cd.q[0].timestamp / 1000;
+        var t = (now - cd.t0) * 1000;
+        if (cd.q.length && cd.q[0].timestamp < t - 400000) cd.t0 = now - cd.q[0].timestamp / 1000, t = cd.q[0].timestamp;   /* fell behind (the phone was busy): carry on from here instead of racing */
+        var fresh = false;
+        while (cd.q.length && cd.q[0].timestamp <= t) { if (cd.frame) cd.frame.close(); cd.frame = cd.q.shift(); fresh = true; }
+        if (!fresh || !cd.frame) return;
+        try { paint(cd.frame); }
+        catch (er) {   /* this browser cannot hand a decoded frame to WebGL directly: go through a small 2D canvas */
+          if (!cd.cv) { cd.cv = document.createElement('canvas'); cd.cv.width = cd.frame.displayWidth; cd.cv.height = cd.frame.displayHeight; cd.cx = cd.cv.getContext('2d'); }
+          cd.cx.drawImage(cd.frame, 0, 0); paint(cd.cv);
+        }
+      };
       var loop = function () {
-        if (!c.isConnected || !v.isConnected) { try { pv.pause(); pv.removeAttribute('src'); pv.load(); if (pv.parentNode) pv.parentNode.removeChild(pv); } catch (er) {} return; }
+        if (!c.isConnected || !v.isConnected) { stopCodec(); try { pv.pause(); pv.removeAttribute('src'); pv.load(); if (pv.parentNode) pv.parentNode.removeChild(pv); } catch (er) {} return; }
         requestAnimationFrame(loop);
         var vis = getComputedStyle(v).visibility !== 'hidden' && document.visibilityState === 'visible';
-        if (!vis) { if (!pv.paused) pv.pause(); return; }
+        if (!vis) { if (!pv.paused) pv.pause(); if (cd) cd.t0 = 0; return; }
         if (pv.paused && !pv.__tried) { pv.__tried = 1; setTimeout(function () { pv.__tried = 0; }, 1500); var pp = pv.play(); if (pp && pp.catch) pp.catch(function (er) { xlog('head play refused ' + (er && er.name)); }); }
-        var nowS = performance.now();
-        if (lost || pv.readyState < 2 || pv.paused) { v.classList.remove('x-hid'); return; }
+        if (lost) { v.classList.remove('x-hid'); return; }
         try {
-          gl.bindTexture(gl.TEXTURE_2D, tex);
-          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, pv);
-          gl.viewport(0, 0, c.width, c.height); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-          if (v.__xa) { if (v.__xa.parentNode) v.__xa.parentNode.removeChild(v.__xa); v.__xa = null; c.style.display = ''; xlog('head: real video after a tap'); }   /* a tap started the real clip: smooth video again */
-          v.classList.add('x-hid'); setAttr(document.documentElement, 'data-xalpha', ''); if (!drawn) { drawn = true; xlog('head drawn'); }
+          if (pv.readyState >= 2 && !pv.paused) { if (cd) { stopCodec(); xlog('head: real video after a tap'); } paint(pv); return; }
+          if (cd && cd.on) codecFrame();
         } catch (er) { v.classList.remove('x-hid'); if (!lost) { lost = true; xlog('head draw failed ' + er.message); } }
       };
       requestAnimationFrame(loop);
@@ -1735,7 +1784,7 @@
     im.className = 'x-hc x-hanim ' + v.className.replace(/\bx-hid\b/g, ''); im.alt = ''; im.decoding = 'async';
     im.style.cssText = v.style.cssText + ';position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;display:block';
     im.onload = function () {
-      if (!v.isConnected) return;
+      if (!v.isConnected || v.__xa !== im) return;
       v.classList.add('x-hid'); if (v.__xc) v.__xc.style.display = 'none';
       setAttr(document.documentElement, 'data-xalpha', ''); xlog('head ' + id.slice(0, 6) + ' -> still picture until a tap');
     };
@@ -1769,7 +1818,7 @@
       }
       var hid = /assets\/([A-Za-z0-9_-]+)\.mp4|\/extras\/head\/([A-Za-z0-9_-]+)\.webm/.exec(v.getAttribute('src') || ''), hidv = hid && (hid[1] || hid[2]);
       if (v.__xa && !v.__xpv && !v.paused && v.currentTime > 0.2) { if (v.__xa.parentNode) v.__xa.parentNode.removeChild(v.__xa); v.__xa = null; v.classList.remove('x-hid'); }
-      if (v.__xpv && !v.__xa) { var tv = v.__xpv; if (!v.__xt0) v.__xt0 = performance.now(); else if (performance.now() - v.__xt0 > 2500 && tv.paused && tv.currentTime < 0.5 && getComputedStyle(v).visibility !== 'hidden' && document.visibilityState === 'visible') headAnim(v, v.__xid); else if (performance.now() - v.__xt0 <= 2500) setTimeout(schedule, 2700); continue; }
+      if (v.__xpv && !v.__xa) { var tv = v.__xpv; if (!v.__xt0) v.__xt0 = performance.now(); else if (performance.now() - v.__xt0 > 2500 && tv.paused && tv.currentTime < 0.5 && getComputedStyle(v).visibility !== 'hidden' && document.visibilityState === 'visible') { if (!v.__xcd) { v.__xcd = 1; headAnim(v, v.__xid); if (v.__xcodec) v.__xcodec(); } } else if (performance.now() - v.__xt0 <= 2500) setTimeout(schedule, 2700); continue; }
       if (hidv && HEAD_IDS.indexOf(hidv) > -1 && !v.__xa) {
         if (!v.__xt0) v.__xt0 = performance.now();
         else if (performance.now() - v.__xt0 > 2500 && v.paused && v.currentTime < 0.5 && getComputedStyle(v).visibility !== 'hidden' && document.visibilityState === 'visible') headAnim(v, hidv);
