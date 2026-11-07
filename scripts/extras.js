@@ -241,6 +241,9 @@
     '.x-vp.x-vp-v{width:100%}',
     '[data-gal="grid"] .x-vp.x-vp-v{width:100%}',
     '.x-vp-bar button{white-space:nowrap}[data-gal="grid"] .x-vp-lb,[data-gal="grid"] .x-vp-bar button{font-size:12px}[data-gal="grid"] .x-vp-bar{gap:12px;flex-wrap:wrap;padding-bottom:8px}',
+    // when the phone refuses to autoplay (Low Power Mode, data saver...): a play button, and YouTube's own player becomes tappable
+    '.x-vp-big{display:none;position:absolute;z-index:4;left:50%;top:50%;width:64px;height:64px;margin:-32px 0 0 -32px;border:0;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;place-items:center;cursor:pointer;padding:0}.x-vp-big svg{width:30px;height:30px;fill:currentColor;margin-left:3px}',
+    '.x-vp.x-blocked:not(.x-play) .x-vp-big{display:grid}.x-vp.x-blocked .x-vp-if{pointer-events:auto}',
     '.x-vp-fill{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto}',
     '.x-vp-st{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;height:100%;overflow:hidden;background:#000}',
     '.x-vp-fill .x-vp-st{width:min(100%,calc(100vh * 4));height:auto;aspect-ratio:var(--r)}',
@@ -503,7 +506,8 @@
     var rowFlow = !!g.querySelector(':scope > .x-yt'), rowCol = 0, rowTop = 0;
     for (i = 0; i < kids.length; i++) {
       c = kids[i];
-      if (c.classList.contains('x-yt')) {     /* the Schweppes video: one big tile across the whole width, the pictures follow below in the grid */
+      var cr = parseFloat(c.getAttribute('data-r')) || 1;
+      if (c.classList.contains('x-yt') || (narrow && cr < 1 && c.querySelector('.x-vp'))) {   /* a horizontal video spans the whole row (on phones too) */     /* the Schweppes video: one big tile across the whole width, the pictures follow below in the grid */
         var VW = W, fh = Math.round(VW * (parseFloat(c.getAttribute('data-r')) || 9 / 16)), top0 = Math.max.apply(null, heights);
         c.style.setProperty('--mx', (pad + Math.round((W - VW) / 2)) + 'px'); c.style.setProperty('--my', (top + top0) + 'px');
         c.style.setProperty('--mw', VW + 'px'); c.style.setProperty('--gh', fh + 'px');
@@ -925,7 +929,7 @@
     var olds = host.querySelectorAll('iframe'); for (var oi = 0; oi < olds.length; oi++) { try { olds[oi].src = 'about:blank'; } catch (er) {} }
     for (var i = 0; i < host.children.length; i++) setAttr(host.children[i], 'data-xvh', '');
     var el = document.createElement('div'); el.className = 'x-vp' + (r < 1 ? ' x-vp-v' : '') + (o.fill ? ' x-vp-fill' : '') + (o.autoplay ? ' x-vp-auto' : '') + (VP_FS ? '' : ' x-nofs'); el.style.setProperty('--r', String(r));
-    el.innerHTML = '<div class="x-vp-st"><img class="x-vp-po" alt="" decoding="async"></div><button type="button" class="x-vp-lb"></button><div class="x-vp-bar"><button type="button" class="x-vp-sd"></button><button type="button" class="x-vp-fs"></button></div>';
+    el.innerHTML = '<div class="x-vp-st"><img class="x-vp-po" alt="" decoding="async"></div><button type="button" class="x-vp-lb"></button><button type="button" class="x-vp-big" aria-label="Play"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></button><div class="x-vp-bar"><button type="button" class="x-vp-sd"></button><button type="button" class="x-vp-fs"></button></div>';
     p.el = el; p.st = el.querySelector('.x-vp-st'); var po = el.querySelector('.x-vp-po');
     var ytPo = function () { po.onerror = function () { po.onerror = null; po.src = 'https://i.ytimg.com/vi/' + id + '/hqdefault.jpg'; }; po.src = 'https://i.ytimg.com/vi/' + id + '/maxresdefault.jpg'; };
     if (VP_FILE[id]) { po.onerror = ytPo; po.src = '/extras/video/' + VP_FILE[id] + '.jpg'; } else ytPo();
@@ -958,6 +962,9 @@
       f.addEventListener('load', function () { try { f.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*'); } catch (er) {} [300, 1200, 3000].forEach(function (ms) { setTimeout(function () { vpCmd(p, 'addEventListener', ['onStateChange']); vpCmd(p, 'setPlaybackQuality', ['hd1080']); if (p.auto || go) { if (p.muted) vpCmd(p, 'mute'); vpCmd(p, 'playVideo'); } }, ms); }); });
       p.st.appendChild(f); setTimeout(function () { el.classList.add('x-nopo'); }, 6500);   /* if the player never reports back, the picture is uncovered anyway */
     };
+    var big = el.querySelector('.x-vp-big');
+    big.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); if (p.v) { p.muted = true; vpCmd(p, 'playVideo'); } else { el.classList.add('x-nopo'); vpCmd(p, 'playVideo'); big.style.display = 'none'; } });
+    if (o.autoplay) setTimeout(function () { if (!p.on) { el.classList.add('x-blocked'); if (p.f) el.classList.add('x-nopo'); } }, 4500);
     var play = function () { if (!p.f && !p.v) { p.wantPlay = true; make(false); return; } if (p.muted) vpCmd(p, 'mute'); else { vpCmd(p, 'unMute'); vpCmd(p, 'setVolume', [100]); } vpCmd(p, 'playVideo'); [400, 1200, 2500].forEach(function (ms) { setTimeout(function () { if (!p.on) vpCmd(p, 'playVideo'); }, ms); }); };
     var toggle = function () { if (!p.f || !p.on) { p.on = true; el.classList.add('x-play', 'x-seen'); play(); } else { p.on = false; el.classList.remove('x-play'); vpCmd(p, 'pauseVideo'); } paint(); };
     p.toggle = toggle;
@@ -1015,7 +1022,7 @@
     if (!vbox || innerWidth > 809) return;
     var player = vbox.querySelector('[aria-label="YouTube video player"]');
     if (!player || player.querySelector('iframe.x-mreel')) return;
-    if (player.querySelector('iframe')) return;            // Framer made its own player: keep it
+    if (player.querySelector('.x-vp')) return;            // ours is already there; Framer's own YouTube player (with its controls) is replaced
     if (!mobileHero.t0) mobileHero.t0 = performance.now();
     if (performance.now() - mobileHero.t0 < 1500) { setTimeout(schedule, 1600); return; }
     if (getComputedStyle(player).position === 'static') player.style.position = 'relative';
