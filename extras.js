@@ -239,6 +239,8 @@
     'html[data-xinapp] .x-reel-ctl{display:none!important}',
     '.x-vp{isolation:isolate;position:relative;width:100%;aspect-ratio:var(--r);background:#000;overflow:hidden;border-radius:0;color:#fff;user-select:none;-webkit-user-select:none;touch-action:manipulation;cursor:pointer}',
     '.x-vp.x-vp-v{width:min(100%,calc(80vh * .5625));margin-left:auto;margin-right:auto}',
+    '[data-gal="grid"] .x-vp.x-vp-v{width:100%}',
+    '.x-vp-bar button{white-space:nowrap}[data-gal="grid"] .x-vp-lb,[data-gal="grid"] .x-vp-bar button{font-size:12px}[data-gal="grid"] .x-vp-bar{gap:12px;flex-wrap:wrap;padding-bottom:8px}',
     '.x-vp-fill{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto}',
     '.x-vp-st{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;height:100%;overflow:hidden;background:#000}',
     '.x-vp-fill .x-vp-st{width:min(100%,calc(100vh * 4));height:auto;aspect-ratio:var(--r)}',
@@ -435,6 +437,8 @@
 
   function knownRatio(c) {
     if (c.hasAttribute('data-x')) return 0;
+    var vpw = c.querySelector('.x-vp');       /* a video of the site's player: its frame decides, never its cover picture */
+    if (vpw) { var rr0 = parseFloat(vpw.style.getPropertyValue('--r')); return rr0 ? 1 / rr0 : 9 / 16; }
     var im = c.querySelector('img'), v = c.querySelector('video');
     if (im) {
       var mm = /[?&]width=(\d+)&height=(\d+)/.exec(im.getAttribute('src') || '');
@@ -895,7 +899,7 @@
       if (p.file) {
         var v = document.createElement('video'); p.v = v; v.className = 'x-vp-vid'; v.src = p.file; v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', ''); v.preload = 'auto'; v.muted = true; v.loop = !!p.loop; v.disablePictureInPicture = true;
         v.setAttribute('aria-label', o.title || 'Video');
-        v.addEventListener('loadedmetadata', function () { if (v.videoWidth && v.videoHeight) { var rr = v.videoWidth / v.videoHeight; el.style.setProperty('--r', String(rr)); el.classList.toggle('x-vp-v', rr < 1); if (rr < 1 && host.parentElement && !host.hasAttribute('data-xvhost')) { setAttr(host, 'data-xvhost', ''); var up2 = host.parentElement; if (up2 && /deo/i.test(up2.getAttribute('data-framer-name') || '')) setAttr(up2, 'data-xvhost', ''); } } });
+        v.addEventListener('loadedmetadata', function () { if (v.videoWidth && v.videoHeight) { var rr = v.videoWidth / v.videoHeight; el.style.setProperty('--r', String(rr)); el.classList.toggle('x-vp-v', rr < 1); try { schedule(); } catch (er) {} if (rr < 1 && host.parentElement && !host.hasAttribute('data-xvhost')) { setAttr(host, 'data-xvhost', ''); var up2 = host.parentElement; if (up2 && /deo/i.test(up2.getAttribute('data-framer-name') || '')) setAttr(up2, 'data-xvhost', ''); } } });
         v.addEventListener('playing', function () { p.on = true; el.classList.add('x-play', 'x-seen'); paint(); });
         v.addEventListener('pause', function () { p.on = false; el.classList.remove('x-play'); paint(); });
         p.st.appendChild(v);
@@ -918,7 +922,7 @@
     var ptr = function (e) { if (e.pointerType !== 'mouse') return; var rc = el.getBoundingClientRect(); el.style.setProperty('--px', Math.max(8, Math.min(rc.width - pp.offsetWidth - 8, e.clientX - rc.left + 16)) + 'px'); el.style.setProperty('--py', Math.max(8, Math.min(rc.height - pp.offsetHeight - 52, e.clientY - rc.top + 16)) + 'px'); el.classList.add('x-ptr'); };
     p.st.addEventListener('pointerenter', ptr); p.st.addEventListener('pointermove', ptr); p.st.addEventListener('pointerleave', function () { el.classList.remove('x-ptr'); });
     document.addEventListener('fullscreenchange', paint); document.addEventListener('webkitfullscreenchange', paint);
-    paint(); host.appendChild(el); vpAll.push(p);
+    paint(); host.appendChild(el); vpAll.push(p); try { schedule(); } catch (er) {}
     if (o.autoplay) {
       var io = new IntersectionObserver(function (en) { en.forEach(function (x) { if (x.isIntersecting) { if (!p.f) make(true); else { if (p.muted) vpCmd(p, 'mute'); vpCmd(p, 'playVideo'); } } else if (p.f && p.on) vpCmd(p, 'pauseVideo'); }); }, { threshold: .25 });
       io.observe(el); p.io = io; make(true);   /* the player starts loading at once, so it is already playing when it comes into view */
