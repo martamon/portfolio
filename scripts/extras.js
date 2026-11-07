@@ -236,7 +236,7 @@
     // it follows the time of day like the type: as the page darkens it turns paler and lighter (towards the light grey-blue of the night type)
     '.x-drift{-webkit-filter:brightness(calc(1 + .22 * var(--xt))) saturate(calc(1 - .25 * var(--xt))) hue-rotate(calc(-8deg * var(--xt))) drop-shadow(0 0 calc(10px * var(--xglow,0)) rgba(185,215,255,calc(.95 * var(--xglow,0)))) drop-shadow(0 0 calc(26px * var(--xglow,0)) rgba(120,170,255,calc(.8 * var(--xglow,0))));filter:brightness(calc(1 + .22 * var(--xt))) saturate(calc(1 - .25 * var(--xt))) hue-rotate(calc(-8deg * var(--xt))) drop-shadow(0 0 calc(10px * var(--xglow,0)) rgba(185,215,255,calc(.95 * var(--xglow,0)))) drop-shadow(0 0 calc(26px * var(--xglow,0)) rgba(120,170,255,calc(.8 * var(--xglow,0))))}',
     // at night it glows: a soft halo around it that breathes
-    '.x-drift::after{content:"";position:absolute;left:-60%;top:-60%;width:220%;height:220%;z-index:-2;border-radius:50%;pointer-events:none;background:radial-gradient(closest-side,rgba(150,190,255,.42),rgba(110,155,255,.18) 45%,rgba(120,165,255,0) 72%);opacity:var(--xglow,0);animation:x-glow 2.8s ease-in-out infinite}',
+    '.x-drift::after{content:"";position:absolute;left:-60%;top:-60%;width:220%;height:220%;z-index:-2;border-radius:50%;pointer-events:none;background:radial-gradient(closest-side,rgba(150,190,255,.42),rgba(110,155,255,.18) 45%,rgba(120,165,255,0) 72%);opacity:var(--xglow,0)}html[data-xnight] .x-drift::after,html[data-xdark] .x-drift::after{animation:x-glow 2.8s ease-in-out infinite}',
     '@keyframes x-glow{50%{transform:scale(1.18);filter:brightness(1.25)}}',
     // home on phones: the "Regular Studio" caption under the reel reads "Martamon", centred
     '@media(max-width:809px){html[data-xp="home"] [data-framer-name="Info"]{left:0!important;right:0!important;width:100%!important;text-align:center!important;align-items:center!important;justify-content:center!important}html[data-xp="home"] [data-framer-name="Info"]>*{width:100%!important;text-align:center!important}html[data-xp="home"] [data-framer-name="Info"] p{text-align:center!important;--framer-text-alignment:center!important}}',
@@ -937,6 +937,13 @@
     }
   };
   ['touchend', 'pointerup', 'click', 'keydown'].forEach(function (ev) { addEventListener(ev, vpGest, { passive: true, capture: true }); });
+  document.addEventListener('visibilitychange', function () {
+    for (var i = 0; i < vpAll.length; i++) {
+      var p = vpAll[i]; if (!p.auto || (!p.f && !p.v)) continue;
+      if (document.hidden) { if (p.on) { p.wasOn = true; vpCmd(p, 'pauseVideo'); } }
+      else if (p.wasOn) { p.wasOn = false; var r = p.el.getBoundingClientRect(); if (r.bottom > 0 && r.top < innerHeight) { if (p.muted) vpCmd(p, 'mute'); vpCmd(p, 'playVideo'); } }
+    }
+  });
   function vpCmd(p, fn, args) {
     if (p.v) { var v = p.v; if (fn === 'playVideo') { var pr = v.play(); if (pr && pr.catch) pr.catch(function (er) { xlog('video ' + p.id + ' play refused: ' + (er && er.name)); }); } else if (fn === 'pauseVideo') v.pause(); else if (fn === 'mute') v.muted = true; else if (fn === 'unMute') v.muted = false; else if (fn === 'setVolume') v.volume = Math.max(0, Math.min(1, (args[0] || 100) / 100)); return; }
     if (p.f && p.f.contentWindow) p.f.contentWindow.postMessage(JSON.stringify({ event: 'command', func: fn, args: args || [] }), '*'); }
@@ -991,7 +998,7 @@
     };
     var big = el.querySelector('.x-vp-big');
     big.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); if (p.v) { p.muted = true; vpCmd(p, 'playVideo'); } else { vpCmd(p, 'mute'); vpCmd(p, 'playVideo'); setTimeout(function () { if (!p.on) big.style.display = 'none'; }, 1800); } });
-    if (o.autoplay) setTimeout(function () { xlog('player ' + id + (p.v ? ' file' : p.f ? ' youtube' : ' none') + ' playing=' + p.on); if (!p.on) el.classList.add('x-blocked'); }, 4500);
+    if (o.autoplay) { var chk = function () { if (!el.isConnected) return; if (!p.f && !p.v) { setTimeout(chk, 3000); return; } if (!p.loadedAt) { p.loadedAt = 1; setTimeout(chk, 4500); return; } xlog('player ' + id + (p.v ? ' file' : ' youtube') + ' playing=' + p.on); if (!p.on) el.classList.add('x-blocked'); }; setTimeout(chk, 1000); }
     var play = function () { if (!p.f && !p.v) { p.wantPlay = true; make(false); return; } if (p.muted) vpCmd(p, 'mute'); else { vpCmd(p, 'unMute'); vpCmd(p, 'setVolume', [100]); } vpCmd(p, 'playVideo'); [400, 1200, 2500].forEach(function (ms) { setTimeout(function () { if (!p.on) vpCmd(p, 'playVideo'); }, ms); }); };
     var toggle = function () { if (!p.f || !p.on) { p.on = true; el.classList.add('x-play', 'x-seen'); play(); } else { p.on = false; el.classList.remove('x-play'); vpCmd(p, 'pauseVideo'); } paint(); };
     p.toggle = toggle;
@@ -1005,7 +1012,9 @@
     paint(); host.appendChild(el); vpAll.push(p); try { schedule(); } catch (er) {}
     if (o.autoplay) {
       var io = new IntersectionObserver(function (en) { en.forEach(function (x) { if (x.isIntersecting) { if (!p.f) make(true); else { if (p.muted) vpCmd(p, 'mute'); vpCmd(p, 'playVideo'); } } else if (p.f && p.on) vpCmd(p, 'pauseVideo'); }); }, { threshold: .25 });
-      io.observe(el); p.io = io; make(true);   /* the player starts loading at once, so it is already playing when it comes into view */
+      io.observe(el); p.io = io;
+      var near = new IntersectionObserver(function (en) { for (var k = 0; k < en.length; k++) if (en[k].isIntersecting) { near.disconnect(); make(true); return; } }, { rootMargin: '120% 0px' });
+      near.observe(el);   /* the player starts loading at once, so it is already playing when it comes into view */
     }
     return p;
   }
@@ -1257,6 +1266,7 @@
   addEventListener('pointermove', function (ev) { jfPtr.x = ev.clientX; jfPtr.y = ev.clientY; }, { passive: true });
   function jfFrame(now) {
     JF.raf = requestAnimationFrame(jfFrame);
+    if (JF.sleepUntil && now < JF.sleepUntil) return;   /* out of sight: look again in a moment, no work meanwhile */
     var dt = Math.min(0.05, (now - (JF.last || now)) / 1000); JF.last = now;
     if (document.hidden) return;
     if (!JF.on) { if (now > JF.next) jfLaunch(); else return; }
@@ -1267,10 +1277,11 @@
         JF.fe = null; var fa = document.querySelectorAll('a');
         for (var fi = 0; fi < fa.length; fi++) if (/(Made by|Hecho por|Feito por)\s+Martamon/.test(fa[fi].textContent)) { JF.fe = fa[fi]; break; }
       }
-      var ftop = JF.fe ? JF.fe.getBoundingClientRect().top : document.documentElement.scrollHeight - scrollY - 140, show = ftop < innerHeight - 6 && ftop > 24;
+      if (!JF.ftT || now - JF.ftT > 250 || scrollY !== JF.ftY) { JF.ftT = now; JF.ftY = scrollY; JF.ftop = JF.fe ? JF.fe.getBoundingClientRect().top : document.documentElement.scrollHeight - scrollY - 140; }   /* measured a few times a second (or on scroll), not every frame
+      */ var ftop = JF.ftop, show = ftop < innerHeight - 6 && ftop > 24;
       if (show) JF.fl = Math.max(JF.h * 0.5 + 4, ftop - JF.h * 0.5 - 4);      // it only shows at the very bottom of the page, standing right on top of the "© 2025 · Made by Martamon" row
       if (show !== JF.shown) { JF.shown = show; JF.el.style.opacity = show ? '1' : '0'; JF.el.style.pointerEvents = show ? '' : 'none'; if (show && !JF.held) { JF.y = JF.fl + JF.h * 0.9; JF.vy = -260; } }
-      if (!show) { JF.hid = true; if (JF.hint && JF.hint.isConnected) JF.hint.style.visibility = 'hidden'; JF.last2 = now; return; }
+      if (!show) { JF.hid = true; if (JF.hint && JF.hint.isConnected && JF.hint.style.visibility !== 'hidden') JF.hint.style.visibility = 'hidden'; JF.last2 = now; JF.sleepUntil = now + 250; return; }
       JF.hid = false;
     }
     if (JF.held) {
@@ -1692,7 +1703,9 @@
       pv.muted = true; pv.defaultMuted = true; pv.loop = true; pv.setAttribute('muted', ''); pv.setAttribute('playsinline', ''); pv.setAttribute('webkit-playsinline', ''); pv.preload = 'auto'; pv.disablePictureInPicture = true;
       pv.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;opacity:0;pointer-events:none';   /* full size (Safari pauses muted videos it thinks are not shown), invisible */
       pv.src = '/extras/head/' + id + '.pack.mp4?v=1';
-      v.parentNode.insertBefore(pv, v.nextSibling); v.parentNode.insertBefore(c, pv.nextSibling); v.__xc = c; xlog('head ' + id.slice(0, 6) + ' webgl ok');
+      v.parentNode.insertBefore(pv, v.nextSibling); v.parentNode.insertBefore(c, pv.nextSibling); v.__xc = c; v.__xpv = pv; v.__xid = id;
+      /* the original clip (about 10 MB each) is no longer needed: stop its download */
+      try { v.pause(); v.removeAttribute('src'); v.load(); } catch (er) {} xlog('head ' + id.slice(0, 6) + ' webgl ok');
       pv.addEventListener('error', function () { xlog('head pack error ' + (pv.error && pv.error.code)); });
       var kick = function () { if (pv.paused && getComputedStyle(v).visibility !== 'hidden') { var kp = pv.play(); if (kp && kp.catch) kp.catch(function (er) { xlog('head play refused ' + (er && er.name)); }); } };
       ['touchend', 'click', 'scroll', 'keydown'].forEach(function (t) { addEventListener(t, kick, { passive: true }); });
@@ -1705,7 +1718,6 @@
         if (!vis) { if (!pv.paused) pv.pause(); return; }
         if (pv.paused && !pv.__tried) { pv.__tried = 1; setTimeout(function () { pv.__tried = 0; }, 1500); var pp = pv.play(); if (pp && pp.catch) pp.catch(function (er) { xlog('head play refused ' + (er && er.name)); }); }
         var nowS = performance.now();
-        if (pv.duration && v.currentTime && !v.paused && nowS - lastSeek > 2000 && Math.abs(pv.currentTime - (v.currentTime % pv.duration)) > 0.5) { lastSeek = nowS; try { pv.currentTime = v.currentTime % pv.duration; } catch (er) {} }
         if (lost || pv.readyState < 2 || pv.paused) { v.classList.remove('x-hid'); return; }
         try {
           gl.bindTexture(gl.TEXTURE_2D, tex);
@@ -1757,6 +1769,7 @@
         v.__xk = 1; v.disablePictureInPicture = true; v.disableRemotePlayback = true; v.muted = true; v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', ''); v.preload = 'auto';
       }
       var hid = /assets\/([A-Za-z0-9_-]+)\.mp4|\/extras\/head\/([A-Za-z0-9_-]+)\.webm/.exec(v.getAttribute('src') || ''), hidv = hid && (hid[1] || hid[2]);
+      if (v.__xpv && !v.__xa) { var tv = v.__xpv; if (!v.__xt0) v.__xt0 = performance.now(); else if (performance.now() - v.__xt0 > 2500 && tv.paused && tv.currentTime < 0.5 && getComputedStyle(v).visibility !== 'hidden' && document.visibilityState === 'visible') headAnim(v, v.__xid); else if (performance.now() - v.__xt0 <= 2500) setTimeout(schedule, 2700); continue; }
       if (hidv && HEAD_IDS.indexOf(hidv) > -1 && !v.__xa) {
         if (!v.__xt0) v.__xt0 = performance.now();
         else if (performance.now() - v.__xt0 > 2500 && v.paused && v.currentTime < 0.5 && getComputedStyle(v).visibility !== 'hidden' && document.visibilityState === 'visible') headAnim(v, hidv);
