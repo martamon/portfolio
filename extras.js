@@ -115,6 +115,9 @@
     'html[data-xmid] [data-xfi]{filter:none!important;mix-blend-mode:normal!important}',
     '[data-xn],[data-xcap]{font-family:"IBM Plex Mono","IBM Plex Mono Placeholder",monospace!important;font-size:14px!important;font-weight:500!important;letter-spacing:.025em!important;text-transform:uppercase!important;line-height:1.6em!important;text-decoration:none!important}',
     '[data-xcap]{color:#888!important}',
+    // previous / next project links: a finger-sized tap area around the small type (the same look), above anything drifting by
+    'a[data-xl]{position:relative;z-index:12}a[data-xl]::after{content:"";position:absolute;left:-14px;right:-14px;top:-16px;bottom:-16px}',
+    '.x-drift.x-thru{pointer-events:none!important}',
     // the language switch: the same negative/positive type as the menu (white with the difference blend, plain page colour through dusk and dawn,
     // the light blue at night), full strength, and the same rolling letters on hover
     'html .x-lang{opacity:1;color:#fff;mix-blend-mode:difference}html[data-xdusk] .x-lang{mix-blend-mode:normal;color:var(--xfg)}html[data-xnight] .x-lang{color:rgb(203,237,255)}',
@@ -1280,7 +1283,13 @@
         JF.fe = null; var fa = document.querySelectorAll('a');
         for (var fi = 0; fi < fa.length; fi++) if (/(Made by|Hecho por|Feito por)\s+Martamon/.test(fa[fi].textContent)) { JF.fe = fa[fi]; break; }
       }
-      if (!JF.ftT || now - JF.ftT > 250 || scrollY !== JF.ftY) { JF.ftT = now; JF.ftY = scrollY; JF.ftop = JF.fe ? JF.fe.getBoundingClientRect().top : document.documentElement.scrollHeight - scrollY - 140; }   /* measured a few times a second (or on scroll), not every frame
+      if (!JF.ftT || now - JF.ftT > 250 || scrollY !== JF.ftY) {
+        JF.ftT = now; JF.ftY = scrollY; JF.ftop = JF.fe ? JF.fe.getBoundingClientRect().top : document.documentElement.scrollHeight - scrollY - 140;
+        /* never in the way of a link: near one, taps go through the creature */
+        var dr = JF.el.getBoundingClientRect(), near = false, ls = document.querySelectorAll('a[data-xl],footer a,section a');
+        for (var li = 0; li < ls.length && !near; li++) { var lr = ls[li].getBoundingClientRect(); if (lr.width && lr.right > dr.left - 30 && lr.left < dr.right + 30 && lr.bottom > dr.top - 30 && lr.top < dr.bottom + 30) near = true; }
+        if (near !== JF.el.classList.contains('x-thru')) JF.el.classList.toggle('x-thru', near);
+      }   /* measured a few times a second (or on scroll), not every frame
       */ var ftop = JF.ftop, show = ftop < innerHeight - 6 && ftop > 24;
       if (show) JF.fl = Math.max(JF.h * 0.5 + 4, ftop - JF.h * 0.5 - 4);      // it only shows at the very bottom of the page, standing right on top of the "© 2025 · Made by Martamon" row
       if (show !== JF.shown) { JF.shown = show; JF.el.style.opacity = show ? '1' : '0'; JF.el.style.pointerEvents = show ? '' : 'none'; if (show && !JF.held) { JF.y = JF.fl + JF.h * 0.9; JF.vy = -260; } }
