@@ -252,7 +252,7 @@
     '.x-vp-bar button{white-space:nowrap}[data-gal="grid"] .x-vp-lb,[data-gal="grid"] .x-vp-bar button{font-size:12px}[data-gal="grid"] .x-vp-bar{gap:12px;flex-wrap:wrap;padding-bottom:8px}',
     // when the phone refuses to autoplay (Low Power Mode, data saver...): a play button, and YouTube's own player becomes tappable
     '.x-vp-big{display:none;position:absolute;z-index:4;left:50%;top:50%;width:64px;height:64px;margin:-32px 0 0 -32px;border:0;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;place-items:center;cursor:pointer;padding:0}.x-vp-big svg{width:30px;height:30px;fill:currentColor;margin-left:3px}',
-    '.x-vp.x-blocked:not(.x-play) .x-vp-big{display:grid}.x-vp.x-blocked .x-vp-if{pointer-events:auto}',
+    '.x-vp.x-blocked:not(.x-play) .x-vp-big{display:grid}.x-vp.x-blocked.x-nopo .x-vp-if{pointer-events:auto}.x-vp.x-blocked:not(.x-play):not(.x-nopo) .x-vp-po{opacity:1!important}',
     '.x-vp-fill{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto}',
     '.x-vp-st{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;height:100%;overflow:hidden;background:#000}',
     '.x-vp-fill .x-vp-st{width:min(100%,calc(100vh * 4));height:auto;aspect-ratio:var(--r)}',
@@ -973,11 +973,11 @@
       f.src = 'https://www.youtube-nocookie.com/embed/' + id + '?controls=0&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&disablekb=1&fs=0&cc_load_policy=0&vq=hd1080&enablejsapi=1&origin=' + encodeURIComponent(location.origin) + ((auto || go) ? '&autoplay=1&mute=1' : '') + (p.loop ? '&loop=1&playlist=' + id : '');
       f.title = o.title || 'Video'; f.setAttribute('allow', 'autoplay; encrypted-media; fullscreen; picture-in-picture'); f.setAttribute('tabindex', '-1'); f.setAttribute('aria-hidden', 'true'); f.className = 'x-vp-if';
       f.addEventListener('load', function () { try { f.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*'); } catch (er) {} [300, 1200, 3000].forEach(function (ms) { setTimeout(function () { vpCmd(p, 'addEventListener', ['onStateChange']); vpCmd(p, 'setPlaybackQuality', ['hd1080']); if (p.auto || go) { if (p.muted) vpCmd(p, 'mute'); vpCmd(p, 'playVideo'); } }, ms); }); });
-      p.st.appendChild(f); setTimeout(function () { el.classList.add('x-nopo'); }, 6500);   /* if the player never reports back, the picture is uncovered anyway */
+      p.st.appendChild(f); setTimeout(function () { if (p.on || !p.auto) el.classList.add('x-nopo'); }, 6500);   /* if the player never reports back, the picture is uncovered anyway */
     };
     var big = el.querySelector('.x-vp-big');
     big.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); if (p.v) { p.muted = true; vpCmd(p, 'playVideo'); } else { el.classList.add('x-nopo'); vpCmd(p, 'playVideo'); big.style.display = 'none'; } });
-    if (o.autoplay) setTimeout(function () { xlog('player ' + id + (p.v ? ' file' : p.f ? ' youtube' : ' none') + ' playing=' + p.on); if (!p.on) { el.classList.add('x-blocked'); if (p.f) el.classList.add('x-nopo'); } }, 4500);
+    if (o.autoplay) setTimeout(function () { xlog('player ' + id + (p.v ? ' file' : p.f ? ' youtube' : ' none') + ' playing=' + p.on); if (!p.on) { el.classList.remove('x-nopo'); el.classList.add('x-blocked'); } }, 4500);
     var play = function () { if (!p.f && !p.v) { p.wantPlay = true; make(false); return; } if (p.muted) vpCmd(p, 'mute'); else { vpCmd(p, 'unMute'); vpCmd(p, 'setVolume', [100]); } vpCmd(p, 'playVideo'); [400, 1200, 2500].forEach(function (ms) { setTimeout(function () { if (!p.on) vpCmd(p, 'playVideo'); }, ms); }); };
     var toggle = function () { if (!p.f || !p.on) { p.on = true; el.classList.add('x-play', 'x-seen'); play(); } else { p.on = false; el.classList.remove('x-play'); vpCmd(p, 'pauseVideo'); } paint(); };
     p.toggle = toggle;
@@ -1826,6 +1826,31 @@
   }, true);
   // coming back with the browser's back button must not show the veil again
   addEventListener('pageshow', function (e) { if (e.persisted) { var v = document.querySelectorAll('.x-tr'); for (var i = 0; i < v.length; i++) v[i].parentNode.removeChild(v[i]); } });
+
+  // phones: the previous / next project links go on the tap itself (touchend). iOS sometimes turns the first tap on a link
+  // with a hover effect into a hover only, and Framer's own hop to a CMS page can end on the home page
+  (function () {
+    var t0 = null;
+    var target = function (a) {
+      var h = a.getAttribute('href') || '';
+      if (/coming-soon$/.test(h)) {
+        var cur = location.pathname.replace(/\/+$/, '').split('/').pop(), next = /^\s*\u21b3/.test(a.textContent);
+        var slug = cur === 'lexus-singapore' ? (next ? 'china' : 'soapglory') : cur === 'china' ? (next ? 'schweppes' : 'lexus-singapore') : '';
+        return slug ? '/' + slug + '/' : '';
+      }
+      return /^\.\/[a-z0-9-]+$/.test(h) ? '/' + h.slice(2) + '/' : '';
+    };
+    addEventListener('touchstart', function (e) { var t = e.touches && e.touches[0]; t0 = t ? { x: t.clientX, y: t.clientY, at: Date.now() } : null; }, { passive: true, capture: true });
+    addEventListener('touchend', function (e) {
+      var a = e.target.closest && e.target.closest('a[data-xl],a[href$="coming-soon"]');
+      if (!a || !t0) return;
+      var t = e.changedTouches && e.changedTouches[0];
+      if (!t || Math.abs(t.clientX - t0.x) > 10 || Math.abs(t.clientY - t0.y) > 10 || Date.now() - t0.at > 700) return;
+      var to = target(a); if (!to) return;
+      xlog('touch go ' + to);
+      e.preventDefault(); goPage(to);
+    }, { passive: false, capture: true });
+  })();
 
   // links rewritten by dropComingSoon: Framer's router would still go to its own (original) target
   addEventListener('click', function (e) {
