@@ -38,7 +38,7 @@
   if (/[?&]xoff\b/.test(location.search)) return;
 
   // language of the site (English, Spanish, Galician): the switch in the corner and the translation of every text
-  try { import('/extras/i18n.js?v=24').catch(function () {}); } catch (e) {}
+  try { import('/extras/i18n.js?v=25').catch(function () {}); } catch (e) {}
 
   // In-app browsers (LinkedIn, Instagram, ...) end up on a blank page as soon as the YouTube player of the home page is created, so
   // there every YouTube iframe shows its still picture with a link to YouTube instead (?xinapp forces this in any browser).
@@ -237,20 +237,19 @@
     '[data-xmr] iframe.x-mreel{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}',
     // home reel: our own sound button
     'html[data-xinapp] .x-reel-ctl{display:none!important}',
-    '.x-vp{position:relative;width:100%;aspect-ratio:var(--r);background:#000;overflow:hidden;border-radius:0;color:#fff;user-select:none;-webkit-user-select:none;touch-action:manipulation;cursor:pointer}',
+    '.x-vp{isolation:isolate;position:relative;width:100%;aspect-ratio:var(--r);background:#000;overflow:hidden;border-radius:0;color:#fff;user-select:none;-webkit-user-select:none;touch-action:manipulation;cursor:pointer}',
     '.x-vp.x-vp-v{width:min(100%,calc(80vh * .5625));margin-left:auto;margin-right:auto}',
     '.x-vp-fill{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto}',
     '.x-vp-st{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;height:100%;overflow:hidden;background:#000}',
     '.x-vp-fill .x-vp-st{width:min(100%,calc(100vh * 4));height:auto;aspect-ratio:var(--r)}',
     '.x-vp-po{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;transition:opacity .6s ease}.x-vp.x-play .x-vp-po,.x-vp.x-nopo .x-vp-po{opacity:0;pointer-events:none}',
     '.x-vp-if{position:absolute;left:0;top:-16%;width:100%;height:132%;border:0;pointer-events:none;background:#000}',
-    '.x-vp-big{z-index:3;position:absolute;left:50%;top:50%;width:68px;height:68px;margin:-34px 0 0 -34px;border:0;border-radius:50%;display:grid;place-items:center;background:rgba(255,252,246,.9);color:#2b2530;cursor:pointer;box-shadow:0 8px 28px rgba(0,0,0,.28);transition:transform .35s cubic-bezier(.3,1.4,.5,1),opacity .35s ease}.x-vp-big:hover{transform:scale(1.07)}.x-vp-big svg{width:26px;height:26px;margin-left:3px}',
-    '.x-vp.x-play .x-vp-big,.x-vp.x-seen .x-vp-big{opacity:0;pointer-events:none;transform:scale(.8)}',
-    '.x-vp-bar{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:6px;padding:26px 12px 10px;background:linear-gradient(to top,rgba(0,0,0,.5),rgba(0,0,0,0));opacity:0;transition:opacity .3s ease;z-index:2}',
-    '.x-vp:hover .x-vp-bar,.x-vp.x-touch .x-vp-bar,.x-vp:not(.x-play) .x-vp-bar,.x-vp:focus-within .x-vp-bar{opacity:1}',
-    '.x-vp:not(.x-seen) .x-vp-bar{opacity:0}.x-vp.x-seen:not(.x-play) .x-vp-bar{opacity:1}',
-    '.x-vp-sp{flex:1}.x-vp-bar button{width:40px;height:40px;border:0;border-radius:50%;padding:0;display:grid;place-items:center;background:rgba(255,252,246,.14);color:#fff;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);transition:background .2s,transform .25s}.x-vp-bar button:hover{background:rgba(255,252,246,.32);transform:scale(1.06)}',
-    '.x-vp-bar svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.x-vp.x-nofs .x-vp-fs{display:none}',
+    '.x-vp-lb,.x-vp-bar button{border:0;background:none;padding:0;color:#fff;font:700 15px/1.2 "Switzer","Switzer Placeholder",system-ui,sans-serif;letter-spacing:0;text-transform:none;cursor:pointer;mix-blend-mode:difference}',
+    '.x-vp-lb{position:absolute;z-index:3;left:14px;bottom:50px;opacity:1;transition:opacity .25s}',
+    '.x-vp.x-seen.x-play .x-vp-lb{opacity:0}.x-vp.x-seen.x-play.x-ptr .x-vp-lb,.x-vp.x-touch .x-vp-lb{opacity:1}',
+    '@media(hover:hover) and (pointer:fine){.x-vp{cursor:none}.x-vp.x-ptr .x-vp-lb{left:var(--px);top:var(--py);bottom:auto;pointer-events:none}.x-vp:not(.x-ptr) .x-vp-lb{opacity:1}.x-vp:not(.x-seen):not(.x-ptr) .x-vp-lb{opacity:1}}',
+    '.x-vp-bar{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:18px;padding:0 14px 12px;z-index:2}',
+    '.x-vp-bar button{padding:6px 0}.x-vp-bar button:hover{text-decoration:underline;text-underline-offset:4px}.x-vp.x-nofs .x-vp-fs{display:none}',
     '.x-vp:fullscreen{width:100vw!important;height:100vh!important;max-height:none;aspect-ratio:auto;background:#000}.x-vp:fullscreen .x-vp-st{width:min(100vw,calc(100vh * var(--r)));height:min(100vh,calc(100vw / var(--r)))}',
     '.x-vp:-webkit-full-screen{width:100vw!important;height:100vh!important;max-height:none;aspect-ratio:auto;background:#000}.x-vp:-webkit-full-screen .x-vp-st{width:min(100vw,calc(100vh * var(--r)));height:min(100vh,calc(100vw / var(--r)))}',
     '[data-xvh]{display:none!important}[data-xvhost]{height:auto!important;max-height:none!important}',
@@ -867,16 +866,13 @@
     var olds = host.querySelectorAll('iframe'); for (var oi = 0; oi < olds.length; oi++) { try { olds[oi].src = 'about:blank'; } catch (er) {} }
     for (var i = 0; i < host.children.length; i++) setAttr(host.children[i], 'data-xvh', '');
     var el = document.createElement('div'); el.className = 'x-vp' + (r < 1 ? ' x-vp-v' : '') + (o.fill ? ' x-vp-fill' : '') + (VP_FS ? '' : ' x-nofs'); el.style.setProperty('--r', String(r));
-    el.innerHTML = '<div class="x-vp-st"><img class="x-vp-po" alt="" decoding="async"></div><button type="button" class="x-vp-big" aria-label="Play"></button>' +
-      '<div class="x-vp-bar"><button type="button" class="x-vp-pp"></button><button type="button" class="x-vp-sd"></button><span class="x-vp-sp"></span><button type="button" class="x-vp-fs"></button></div>';
+    el.innerHTML = '<div class="x-vp-st"><img class="x-vp-po" alt="" decoding="async"></div><button type="button" class="x-vp-lb"></button><div class="x-vp-bar"><button type="button" class="x-vp-sd"></button><button type="button" class="x-vp-fs"></button></div>';
     p.el = el; p.st = el.querySelector('.x-vp-st'); var po = el.querySelector('.x-vp-po');
     po.src = 'https://i.ytimg.com/vi/' + id + '/maxresdefault.jpg'; po.onerror = function () { po.onerror = null; po.src = 'https://i.ytimg.com/vi/' + id + '/hqdefault.jpg'; };
-    var big = el.querySelector('.x-vp-big'), pp = el.querySelector('.x-vp-pp'), sd = el.querySelector('.x-vp-sd'), fs = el.querySelector('.x-vp-fs');
-    big.innerHTML = VP_IC.play;
+    var pp = el.querySelector('.x-vp-lb'), sd = el.querySelector('.x-vp-sd'), fs = el.querySelector('.x-vp-fs');
     var paint = function () {
-      pp.innerHTML = p.on ? VP_IC.pause : VP_IC.play; pp.setAttribute('aria-label', p.on ? 'Pause' : 'Play');
-      sd.innerHTML = p.muted ? ICON_OFF : ICON_ON; sd.setAttribute('aria-label', p.muted ? 'Turn sound on' : 'Turn sound off');
-      var full = document.fullscreenElement === el || document.webkitFullscreenElement === el; fs.innerHTML = full ? VP_IC.fsx : VP_IC.fs; fs.setAttribute('aria-label', full ? 'Exit full screen' : 'Full screen');
+      pp.textContent = p.on ? 'Pause' : 'Play'; sd.textContent = p.muted ? 'Sound: off' : 'Sound: on';
+      var full = document.fullscreenElement === el || document.webkitFullscreenElement === el; fs.textContent = full ? 'Exit full screen' : 'Full screen';
     };
     var make = function (auto) {
       if (p.f) return;
@@ -889,11 +885,12 @@
     var play = function () { if (!p.f) make(false); if (p.muted) vpCmd(p, 'mute'); else { vpCmd(p, 'unMute'); vpCmd(p, 'setVolume', [100]); } vpCmd(p, 'playVideo'); [400, 1200, 2500].forEach(function (ms) { setTimeout(function () { if (!p.on) vpCmd(p, 'playVideo'); }, ms); }); };
     var toggle = function () { if (!p.f || !p.on) { p.on = true; el.classList.add('x-play', 'x-seen'); play(); } else { p.on = false; el.classList.remove('x-play'); vpCmd(p, 'pauseVideo'); } paint(); };
     p.toggle = toggle;
-    big.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); toggle(); });
     pp.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); toggle(); });
     p.st.addEventListener('click', function () { toggle(); el.classList.add('x-touch'); clearTimeout(p.tt); p.tt = setTimeout(function () { el.classList.remove('x-touch'); }, 2600); });
     sd.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); p.muted = !p.muted; if (p.f) { if (p.muted) vpCmd(p, 'mute'); else { vpCmd(p, 'unMute'); vpCmd(p, 'setVolume', [100]); } } paint(); });
     fs.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); var full = document.fullscreenElement === el || document.webkitFullscreenElement === el; if (full) (document.exitFullscreen || document.webkitExitFullscreen).call(document); else (el.requestFullscreen || el.webkitRequestFullscreen).call(el); });
+    var ptr = function (e) { if (e.pointerType !== 'mouse') return; var rc = el.getBoundingClientRect(); el.style.setProperty('--px', Math.max(8, Math.min(rc.width - pp.offsetWidth - 8, e.clientX - rc.left + 16)) + 'px'); el.style.setProperty('--py', Math.max(8, Math.min(rc.height - pp.offsetHeight - 52, e.clientY - rc.top + 16)) + 'px'); el.classList.add('x-ptr'); };
+    p.st.addEventListener('pointerenter', ptr); p.st.addEventListener('pointermove', ptr); p.st.addEventListener('pointerleave', function () { el.classList.remove('x-ptr'); });
     document.addEventListener('fullscreenchange', paint); document.addEventListener('webkitfullscreenchange', paint);
     paint(); host.appendChild(el); vpAll.push(p);
     if (o.autoplay) {
