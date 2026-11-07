@@ -237,6 +237,23 @@
     '[data-xmr] iframe.x-mreel{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}',
     // home reel: our own sound button
     'html[data-xinapp] .x-reel-ctl{display:none!important}',
+    '.x-vp{position:relative;width:100%;aspect-ratio:var(--r);background:#000;overflow:hidden;border-radius:0;color:#fff;user-select:none;-webkit-user-select:none;touch-action:manipulation;cursor:pointer}',
+    '.x-vp.x-vp-v{width:min(100%,calc(80vh * .5625));margin-left:auto;margin-right:auto}',
+    '.x-vp-fill{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto}',
+    '.x-vp-st{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;height:100%;overflow:hidden;background:#000}',
+    '.x-vp-fill .x-vp-st{width:min(100%,calc(100vh * 4));height:auto;aspect-ratio:var(--r)}',
+    '.x-vp-po{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;transition:opacity .6s ease}.x-vp.x-play .x-vp-po,.x-vp.x-nopo .x-vp-po{opacity:0;pointer-events:none}',
+    '.x-vp-if{position:absolute;left:0;top:-16%;width:100%;height:132%;border:0;pointer-events:none;background:#000}',
+    '.x-vp-big{z-index:3;position:absolute;left:50%;top:50%;width:68px;height:68px;margin:-34px 0 0 -34px;border:0;border-radius:50%;display:grid;place-items:center;background:rgba(255,252,246,.9);color:#2b2530;cursor:pointer;box-shadow:0 8px 28px rgba(0,0,0,.28);transition:transform .35s cubic-bezier(.3,1.4,.5,1),opacity .35s ease}.x-vp-big:hover{transform:scale(1.07)}.x-vp-big svg{width:26px;height:26px;margin-left:3px}',
+    '.x-vp.x-play .x-vp-big,.x-vp.x-seen .x-vp-big{opacity:0;pointer-events:none;transform:scale(.8)}',
+    '.x-vp-bar{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:6px;padding:26px 12px 10px;background:linear-gradient(to top,rgba(0,0,0,.5),rgba(0,0,0,0));opacity:0;transition:opacity .3s ease;z-index:2}',
+    '.x-vp:hover .x-vp-bar,.x-vp.x-touch .x-vp-bar,.x-vp:not(.x-play) .x-vp-bar,.x-vp:focus-within .x-vp-bar{opacity:1}',
+    '.x-vp:not(.x-seen) .x-vp-bar{opacity:0}.x-vp.x-seen:not(.x-play) .x-vp-bar{opacity:1}',
+    '.x-vp-sp{flex:1}.x-vp-bar button{width:40px;height:40px;border:0;border-radius:50%;padding:0;display:grid;place-items:center;background:rgba(255,252,246,.14);color:#fff;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);transition:background .2s,transform .25s}.x-vp-bar button:hover{background:rgba(255,252,246,.32);transform:scale(1.06)}',
+    '.x-vp-bar svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.x-vp.x-nofs .x-vp-fs{display:none}',
+    '.x-vp:fullscreen{width:100vw!important;height:100vh!important;max-height:none;aspect-ratio:auto;background:#000}.x-vp:fullscreen .x-vp-st{width:min(100vw,calc(100vh * var(--r)));height:min(100vh,calc(100vw / var(--r)))}',
+    '.x-vp:-webkit-full-screen{width:100vw!important;height:100vh!important;max-height:none;aspect-ratio:auto;background:#000}.x-vp:-webkit-full-screen .x-vp-st{width:min(100vw,calc(100vh * var(--r)));height:min(100vh,calc(100vw / var(--r)))}',
+    '[data-xvh]{display:none!important}[data-xvhost]{height:auto!important;max-height:none!important}',
     '.x-reel-ctl{position:absolute;right:16px;bottom:16px;z-index:5;width:44px;height:44px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.45);color:#fff;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);pointer-events:auto;transition:background .5s ease}',
     '.x-reel-ctl:hover{background:rgba(0,0,0,.65)}',
     '.x-reel-ctl svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}',
@@ -652,30 +669,7 @@
       var sec = document.createElement('div');
       sec.className = 'x-si x-yt';
       sec.setAttribute('data-r', String(9 / 16)); sec.style.aspectRatio = '16 / 9';
-      var f = document.createElement('iframe');
-      f.src = 'https://www.youtube-nocookie.com/embed/' + YOUTUBE + '?autoplay=1&mute=1&loop=1&playlist=' + YOUTUBE + '&rel=0&modestbranding=1&playsinline=1&enablejsapi=1';
-      f.title = 'Schweppes';
-      f.allowFullscreen = true;
-      f.setAttribute('allow', 'autoplay; encrypted-media; fullscreen; picture-in-picture');
-      sec.appendChild(f);
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'x-reel-ctl';
-      var muted = true;
-      var paint = function () {
-        b.innerHTML = muted ? ICON_OFF : ICON_ON;
-        b.setAttribute('aria-label', muted ? 'Turn sound on' : 'Turn sound off');
-      };
-      b.addEventListener('click', function (e) {
-        e.preventDefault(); e.stopPropagation();
-        muted = !muted;
-        if (muted) yt('mute', [], f); else { yt('unMute', [], f); yt('setVolume', [100], f); }
-        yt('playVideo', [], f);
-        paint();
-      });
-      paint();
-      sec.appendChild(b);
-      g.appendChild(sec);
+      sec.style.position = 'relative'; g.appendChild(sec); vpMount(sec, YOUTUBE, { fill: true, autoplay: true, loop: true, title: 'Schweppes' });
       var ALT = ['Schweppes leopard at the party', 'Schweppes leopard, portrait', 'The leopard\'s paw on a brass door handle', 'The paw opening a Schweppes tonic water', 'Win a NYE party, Schweppes.com'];
       var HGT = [1135, 1168, 1130, 1113, 1126];
       for (var gi = 1; gi <= 5; gi++) {
@@ -842,6 +836,85 @@
   }, { passive: true });
   document.addEventListener('pointerleave', function () { tilt.x = tilt.y = -1; if (!tilt.raf) tilt.raf = requestAnimationFrame(tiltFrame); });
 
+
+  // ---- the video player of the site: every YouTube video is shown with its own controls (play, sound, full screen) and nothing of YouTube
+  // around it: no logo, no title or channel, no timeline. The YouTube player sits in a box taller than the picture and the picture is
+  // cropped to the video, so whatever the player draws at its top and bottom edges stays outside the visible window.
+  var VP_RATIO = { 'NSqkOhJESYo': 9 / 16 };      // Soap&Glory is a vertical video
+  var VP_IC = {
+    play: '<svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z" fill="currentColor" stroke="none"/></svg>',
+    pause: '<svg viewBox="0 0 24 24"><path d="M8 5.5v13M16 5.5v13"/></svg>',
+    fs: '<svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',
+    fsx: '<svg viewBox="0 0 24 24"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>'
+  };
+  var VP_FS = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled) && !/iPhone|iPod/.test(navigator.userAgent);
+  var vpAll = [];
+  window.addEventListener('message', function (e) {
+    if (typeof e.data !== 'string' || e.data.charAt(0) !== '{') return;
+    var d; try { d = JSON.parse(e.data); } catch (er) { return; }
+    for (var i = 0; i < vpAll.length; i++) {
+      var p = vpAll[i]; if (!p.f || e.source !== p.f.contentWindow) continue;
+      var st = d.event === 'onStateChange' ? d.info : (d.info && typeof d.info.playerState === 'number' ? d.info.playerState : null);
+      if (st === 1 || st === 3) { p.on = true; p.el.classList.add('x-play'); p.el.classList.add('x-seen'); }
+      else if (st === 2 || st === 0 || st === 5) { p.on = false; p.el.classList.remove('x-play'); }
+    }
+  });
+  function vpCmd(p, fn, args) { if (p.f && p.f.contentWindow) p.f.contentWindow.postMessage(JSON.stringify({ event: 'command', func: fn, args: args || [] }), '*'); }
+  function vpMount(host, id, o) {
+    o = o || {};
+    if (!host || host.querySelector(':scope > .x-vp') || INAPP) return null;
+    var r = VP_RATIO[id] || 16 / 9, p = { id: id, on: false, muted: true, f: null, auto: !!o.autoplay, loop: !!o.loop };
+    var olds = host.querySelectorAll('iframe'); for (var oi = 0; oi < olds.length; oi++) { try { olds[oi].src = 'about:blank'; } catch (er) {} }
+    for (var i = 0; i < host.children.length; i++) setAttr(host.children[i], 'data-xvh', '');
+    var el = document.createElement('div'); el.className = 'x-vp' + (r < 1 ? ' x-vp-v' : '') + (o.fill ? ' x-vp-fill' : '') + (VP_FS ? '' : ' x-nofs'); el.style.setProperty('--r', String(r));
+    el.innerHTML = '<div class="x-vp-st"><img class="x-vp-po" alt="" decoding="async"></div><button type="button" class="x-vp-big" aria-label="Play"></button>' +
+      '<div class="x-vp-bar"><button type="button" class="x-vp-pp"></button><button type="button" class="x-vp-sd"></button><span class="x-vp-sp"></span><button type="button" class="x-vp-fs"></button></div>';
+    p.el = el; p.st = el.querySelector('.x-vp-st'); var po = el.querySelector('.x-vp-po');
+    po.src = 'https://i.ytimg.com/vi/' + id + '/maxresdefault.jpg'; po.onerror = function () { po.onerror = null; po.src = 'https://i.ytimg.com/vi/' + id + '/hqdefault.jpg'; };
+    var big = el.querySelector('.x-vp-big'), pp = el.querySelector('.x-vp-pp'), sd = el.querySelector('.x-vp-sd'), fs = el.querySelector('.x-vp-fs');
+    big.innerHTML = VP_IC.play;
+    var paint = function () {
+      pp.innerHTML = p.on ? VP_IC.pause : VP_IC.play; pp.setAttribute('aria-label', p.on ? 'Pause' : 'Play');
+      sd.innerHTML = p.muted ? ICON_OFF : ICON_ON; sd.setAttribute('aria-label', p.muted ? 'Turn sound on' : 'Turn sound off');
+      var full = document.fullscreenElement === el || document.webkitFullscreenElement === el; fs.innerHTML = full ? VP_IC.fsx : VP_IC.fs; fs.setAttribute('aria-label', full ? 'Exit full screen' : 'Full screen');
+    };
+    var make = function (auto) {
+      if (p.f) return;
+      var f = document.createElement('iframe'); p.f = f;
+      f.src = 'https://www.youtube-nocookie.com/embed/' + id + '?controls=0&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&disablekb=1&fs=0&cc_load_policy=0&enablejsapi=1&origin=' + encodeURIComponent(location.origin) + (auto ? '&autoplay=1&mute=1' : '') + (p.loop ? '&loop=1&playlist=' + id : '');
+      f.title = o.title || 'Video'; f.setAttribute('allow', 'autoplay; encrypted-media; fullscreen; picture-in-picture'); f.setAttribute('tabindex', '-1'); f.setAttribute('aria-hidden', 'true'); f.className = 'x-vp-if';
+      f.addEventListener('load', function () { try { f.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*'); } catch (er) {} [300, 1200, 3000].forEach(function (ms) { setTimeout(function () { vpCmd(p, 'addEventListener', ['onStateChange']); if (p.auto || auto) { if (p.muted) vpCmd(p, 'mute'); vpCmd(p, 'playVideo'); } }, ms); }); });
+      p.st.appendChild(f); setTimeout(function () { el.classList.add('x-nopo'); }, 6500);   /* if the player never reports back, the picture is uncovered anyway */
+    };
+    var play = function () { if (!p.f) make(false); if (p.muted) vpCmd(p, 'mute'); else { vpCmd(p, 'unMute'); vpCmd(p, 'setVolume', [100]); } vpCmd(p, 'playVideo'); [400, 1200, 2500].forEach(function (ms) { setTimeout(function () { if (!p.on) vpCmd(p, 'playVideo'); }, ms); }); };
+    var toggle = function () { if (!p.f || !p.on) { p.on = true; el.classList.add('x-play', 'x-seen'); play(); } else { p.on = false; el.classList.remove('x-play'); vpCmd(p, 'pauseVideo'); } paint(); };
+    p.toggle = toggle;
+    big.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); toggle(); });
+    pp.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); toggle(); });
+    p.st.addEventListener('click', function () { toggle(); el.classList.add('x-touch'); clearTimeout(p.tt); p.tt = setTimeout(function () { el.classList.remove('x-touch'); }, 2600); });
+    sd.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); p.muted = !p.muted; if (p.f) { if (p.muted) vpCmd(p, 'mute'); else { vpCmd(p, 'unMute'); vpCmd(p, 'setVolume', [100]); } } paint(); });
+    fs.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); var full = document.fullscreenElement === el || document.webkitFullscreenElement === el; if (full) (document.exitFullscreen || document.webkitExitFullscreen).call(document); else (el.requestFullscreen || el.webkitRequestFullscreen).call(el); });
+    document.addEventListener('fullscreenchange', paint); document.addEventListener('webkitfullscreenchange', paint);
+    paint(); host.appendChild(el); vpAll.push(p);
+    if (o.autoplay) {
+      var io = new IntersectionObserver(function (en) { en.forEach(function (x) { if (x.isIntersecting) { if (!p.f) make(true); else { if (p.muted) vpCmd(p, 'mute'); vpCmd(p, 'playVideo'); } } else if (p.f && p.on) vpCmd(p, 'pauseVideo'); }); }, { threshold: .25 });
+      io.observe(el); p.io = io;
+    }
+    return p;
+  }
+  // the YouTube embeds that Framer puts on the project pages: the player replaces them (Soap&Glory gets its vertical frame)
+  function upgradeEmbeds() {
+    if (INAPP) return;
+    var fr = document.querySelectorAll('iframe[src*="youtube.com/embed/"],iframe[src*="youtube-nocookie.com/embed/"]');
+    for (var i = 0; i < fr.length; i++) {
+      var f = fr[i]; if (f.closest('.x-vp,.x-yt,.x-mreel') || f.classList.contains('x-vp-if')) continue;
+      var m = /\/embed\/([\w-]{6,})/.exec(f.src), id = m && m[1]; if (!id || id === 'NrxFBp4bl2Q') continue;
+      var host = f.closest('article') || f.parentElement; if (!host || !host.getBoundingClientRect().width) continue;
+      vpMount(host, id, { title: document.title });
+      if (VP_RATIO[id]) { setAttr(host, 'data-xvhost', ''); var up = host.parentElement; if (up && /deo/i.test(up.getAttribute('data-framer-name') || '')) setAttr(up, 'data-xvhost', ''); }
+    }
+  }
+
   // ---- home reel: autoplay everywhere, no YouTube UI, own sound button inside the video
   var reel = { f: null, wrap: null, btn: null, muted: true, io: null, timers: [] };
   var ICON_OFF = '<svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m16 9 5 6M21 9l-5 6"/></svg>';
@@ -872,18 +945,8 @@
     if (player.querySelector('iframe')) return;            // Framer made its own player: keep it
     if (!mobileHero.t0) mobileHero.t0 = performance.now();
     if (performance.now() - mobileHero.t0 < 1500) { setTimeout(schedule, 1600); return; }
-    setAttr(player, 'data-xmr', '');
-    for (i = 0; i < player.children.length; i++) setAttr(player.children[i], 'data-xmh', '');
-    var host = vbox.querySelector('button[aria-label]');
-    if (host) setAttr(host, 'data-xmh', '');
-    var f = document.createElement('iframe');
-    f.className = 'x-mreel';
-    f.src = 'https://www.youtube.com/embed/NrxFBp4bl2Q?autoplay=1&mute=1&loop=1&playlist=NrxFBp4bl2Q&controls=0&disablekb=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1&origin=' + encodeURIComponent(location.origin);
-    f.title = 'Martamon reel'; f.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture'); f.setAttribute('playsinline', '');
-    var holder = document.createElement('div'); holder.style.cssText = 'position:absolute;inset:0';
-    holder.appendChild(f);
     if (getComputedStyle(player).position === 'static') player.style.position = 'relative';
-    player.appendChild(holder);
+    vpMount(player, 'NrxFBp4bl2Q', { fill: true, autoplay: true, loop: true, title: 'Martamon reel' });
   }
 
   function setupReel(on) {
@@ -896,27 +959,7 @@
     if (reel.f === f && reel.btn && reel.btn.isConnected) return;
     teardownReel();
     reel.f = f; reel.wrap = f.parentElement.parentElement; reel.muted = true;
-    reel.btn = document.createElement('button');
-    reel.btn.type = 'button';
-    reel.btn.className = 'x-reel-ctl';
-    reel.btn.addEventListener('click', function (e) {
-      e.preventDefault(); e.stopPropagation();
-      reel.muted = !reel.muted;
-      if (reel.muted) yt('mute'); else { yt('unMute'); yt('setVolume', [100]); }
-      yt('playVideo');
-      paintReelBtn();
-    });
-    paintReelBtn();
-    reel.wrap.appendChild(reel.btn);
-    // start playback as soon as the player listens, and keep nudging it: some phones block the first attempt
-    [600, 1500, 3000, 6000].forEach(function (ms) { reel.timers.push(setTimeout(reelPlay, ms)); });
-    f.addEventListener('load', function () { setTimeout(reelPlay, 400); });
-    reel.io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (en) { if (en.isIntersecting) reelPlay(); else yt('pauseVideo'); });
-    }, { threshold: 0.25 });
-    reel.io.observe(reel.wrap);
-    var kick = function () { reelPlay(); };
-    ['pointerdown', 'touchstart', 'keydown', 'scroll'].forEach(function (t) { addEventListener(t, kick, { once: true, passive: true }); });
+    reel.btn = null; vpMount(reel.wrap, 'NrxFBp4bl2Q', { fill: true, autoplay: true, loop: true, title: 'Martamon reel' });
   }
   function teardownReel() {
     reel.timers.forEach(clearTimeout); reel.timers = [];
@@ -1602,6 +1645,7 @@
     }
 
     if (p === 'china' && m) ensureChina(m);
+    upgradeEmbeds();
     if (p === 'schweppes' && m) ensureYoutube(m);
     else { removeAll('.x-yt'); if (p !== 'china') removeAll('.x-si'); unset('[data-xh]', 'data-xh'); unset('[data-xy]', 'data-xy'); }
   }
