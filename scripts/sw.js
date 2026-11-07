@@ -8,6 +8,9 @@ self.addEventListener('fetch', e => {
   const u = new URL(e.request.url);
   if (u.origin === self.location.origin && u.pathname.endsWith('.framercms') && u.searchParams.has('range')) {
     e.respondWith(slice(u));
+  } else if (u.origin === self.location.origin && e.request.method === 'GET' && (e.request.mode === 'navigate' || u.pathname === '/extras.js' || /^\/extras\/[\w.-]+\.js$/.test(u.pathname))) {
+    // pages and the site's own scripts are always revalidated with the server, so a phone never keeps showing an old copy for hours
+    e.respondWith(fetch(u.href, { cache: 'no-cache' }).catch(() => fetch(e.request)));
   } else if (u.hostname === 'framerusercontent.com' && /^\/(images|assets)\//.test(u.pathname) && e.request.method === 'GET') {
     e.respondWith(local(e.request, u));
   }
