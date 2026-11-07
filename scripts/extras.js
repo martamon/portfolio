@@ -382,6 +382,25 @@
     }
   }
 
+  // If /extras/video/lexus.mp4 has been uploaded, the Instagram embed (which cannot autoplay) gives way to the site's own player:
+  // autoplay, muted, looping, with the sound and full screen icons like the other videos
+  function lexusVideo(ig) {
+    var url = '/extras/video/lexus.mp4';
+    fetch(url, { method: 'HEAD', cache: 'no-cache' }).then(function (rs) {
+      if (!rs.ok || !/video|octet/.test(rs.headers.get('content-type') || 'video')) return;
+      var t = document.createElement('video'); t.preload = 'metadata'; t.muted = true;
+      t.addEventListener('loadedmetadata', function () {
+        if (!t.videoWidth || !ig.isConnected) return;
+        var r = t.videoHeight / t.videoWidth;
+        ig.setAttribute('data-r', String(r)); VP_RATIO.lexus = t.videoWidth / t.videoHeight; VP_FILE.lexus = 'lexus';
+        ig.setAttribute('data-xvid', '');
+        vpMount(ig, 'lexus', { autoplay: true, loop: true, title: 'Lexus' });
+        sizeExtras(ig.parentNode); if (mode === 'grid') schedule();
+      });
+      t.src = url;
+    }).catch(function () {});
+  }
+
   function ensureExtras(g, show) {
     var ig = g.querySelector(':scope > .x-insta'), im = g.querySelector(':scope > .x-img');
     if (!show) { if (ig) g.removeChild(ig); if (im) g.removeChild(im); return; }
@@ -399,6 +418,7 @@
       f.setAttribute('allow', 'autoplay; encrypted-media; fullscreen; picture-in-picture');
       ig.appendChild(f);
       g.insertBefore(ig, firstItemSlot(g));   // first in the gallery
+      lexusVideo(ig);
     } else if (firstItemSlot(g) !== ig) {
       g.insertBefore(ig, firstItemSlot(g));
     }
