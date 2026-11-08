@@ -463,7 +463,8 @@
     HZ.its = its;
     HZ.total = total; HZ.gw = gw; HZ.gOff = gOff;
     g.style.setProperty('--xgw', gw + 'px');
-    m.style.setProperty('--xhh', Math.round(gOff + vh + Math.max(0, total - gw) + 60) + 'px');
+    HZ.lead = Math.round(vh * 0.75);   /* the strip waits before it starts to move, so the first picture can be looked at */
+    m.style.setProperty('--xhh', Math.round(gOff + vh + HZ.lead + Math.max(0, total - gw) + 60) + 'px');
     if (!m.style.marginLeft) g.style.marginLeft = '0';
     HZ.infoH = infoH; HZ.cur = null;
     if (!col && !HZ.again) HZ.again = requestAnimationFrame(function () { HZ.again = 0; var h = 0; for (var z2 = 0; z2 < m.children.length; z2++) if (m.children[z2] !== g) h += m.children[z2].offsetHeight; if (Math.abs(h - HZ.infoH) > 2 && HZ.m === m) hzOn(m, g); });
@@ -473,7 +474,7 @@
   // positions and their reveal follow it frame by frame with an exponential ease, so wheel steps never show as jumps
   function hzScroll(snap) {
     var m = HZ.m, g = HZ.g; if (!m || !g || m.getAttribute('data-gal') !== 'hz') return;
-    var top = m.getBoundingClientRect().top, run = Math.max(1, m.offsetHeight - HZ.gOff - innerHeight), p = Math.max(0, Math.min(1, (-top - HZ.gOff) / run));
+    var top = m.getBoundingClientRect().top, run = Math.max(1, m.offsetHeight - HZ.gOff - innerHeight - (HZ.lead || 0) - 60), p = Math.max(0, Math.min(1, (-top - HZ.gOff - (HZ.lead || 0)) / run));
     HZ.target = p * Math.max(0, HZ.total - HZ.gw);
     if (HZ.cur == null || snap || matchMedia('(prefers-reduced-motion:reduce)').matches) HZ.cur = HZ.target;
     if (!HZ.loop) HZ.loop = requestAnimationFrame(hzStep);
