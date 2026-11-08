@@ -263,6 +263,7 @@
     '[data-gal="grid"] .x-vp.x-vp-v{width:100%}',
     '.x-vp-bar button{white-space:nowrap}[data-gal="grid"] .x-vp-lb,[data-gal="grid"] .x-vp-bar button{font-size:12px}[data-gal="grid"] .x-vp-bar{gap:12px;flex-wrap:wrap;padding-bottom:8px}',
     // when the phone refuses to autoplay (Low Power Mode, data saver...): a play button, and YouTube's own player becomes tappable
+    '.x-vp-anim{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;pointer-events:none}',
     '.x-vp-big{display:none;position:absolute;z-index:4;left:50%;top:50%;width:52px;height:52px;margin:-26px 0 0 -26px;border:0;background:none;color:#fff;place-items:center;cursor:pointer;padding:0;opacity:.88;filter:drop-shadow(0 1px 6px rgba(0,0,0,.45));-webkit-tap-highlight-color:transparent}.x-vp-big svg{width:30px;height:30px;fill:currentColor;margin-left:3px}',
     '.x-vp-cur{display:none;position:absolute;z-index:5;left:var(--cx,50%);top:var(--cy,50%);width:44px;height:44px;transform:translate(-50%,-50%);pointer-events:none;color:#fff;filter:drop-shadow(0 2px 8px rgba(20,40,70,.45))}.x-vp-cur svg{display:block;width:100%;height:100%;fill:currentColor;stroke:currentColor;stroke-width:2.4;stroke-linejoin:round}',
     '@media(hover:hover) and (pointer:fine){.x-vp.x-blocked:not(.x-play){cursor:none!important}.x-vp.x-blocked:not(.x-play) .x-vp-big{display:none!important}.x-vp.x-blocked.x-hov:not(.x-play) .x-vp-cur{display:block}}',
@@ -342,7 +343,7 @@
     'html [data-xtc],html [data-xcap]{color:var(--xtone)!important}',
     'html main[data-xm]~section a,html main[data-xm]~section p,html main[data-xm]~section span,html main[data-xm]~*:not(.x-yt) footer a,html main[data-xm]~*:not(.x-yt) footer p,html main[data-xm]~*:not(.x-yt) footer span{color:var(--xtoneb)!important}',
     '.x-contact{color:var(--xtone)!important}',
-    'html footer a,html footer p,html footer span,html [data-xmore],html [data-xmore] *{color:var(--xtoneb)!important;opacity:1!important}html [data-xmore]{border-color:var(--xtoneb)!important}',
+    'html footer a,html footer p,html footer span{color:var(--xtoneb)!important;opacity:1!important}html [data-xmore],html [data-xmore] *{color:var(--xinkb,#fff)!important;opacity:1!important}',
     'html [class*="rolling-text"],html [class*="rolling-text"] *{color:var(--xinkb)!important;--text:var(--xinkb)!important}html a[data-framer-name="Primary"],html a[data-framer-name="Primary"] *{border-color:var(--xtoneb)!important}',
     // negative/positive in every tone: menu, clock, languages and About always blend, with the worked-out colour
     'html [data-xnc],html[data-xdusk] [data-xnc]{mix-blend-mode:difference!important}html [data-xn],html[data-xdusk] [data-xn],html[data-xnight] [data-xn]{color:var(--xink,#fff)!important}',
@@ -1019,6 +1020,16 @@
       f.addEventListener('load', function () { try { f.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*'); } catch (er) {} [300, 1200, 3000].forEach(function (ms) { setTimeout(function () { vpCmd(p, 'addEventListener', ['onStateChange']); vpCmd(p, 'setPlaybackQuality', ['hd1080']); if (p.auto || go) { if (p.muted) vpCmd(p, 'mute'); vpCmd(p, 'playVideo'); } }, ms); }); });
       p.st.appendChild(f);   /* if the player never reports back, the picture is uncovered anyway */
     };
+    /* the home reel only: when the phone plays no video (Low Power Mode), a high-quality moving picture (5 s loop, no sound) runs
+       in place of the still cover until the video plays or is started */
+    var showAnim = function () {
+      if (id !== 'NrxFBp4bl2Q' || p.anim || !el.isConnected) return;
+      var im = new Image(); im.className = 'x-vp-anim'; im.alt = ''; im.decoding = 'async';
+      im.onload = function () { if (p.on) return; p.anim = im; p.st.appendChild(im); el.classList.add('x-anim'); xlog('reel -> moving picture'); };
+      im.src = '/extras/video/inicio-anim.webp?v=1';
+    };
+    var hideAnim = function () { if (p.anim) { if (p.anim.parentNode) p.anim.parentNode.removeChild(p.anim); p.anim = null; el.classList.remove('x-anim'); } };
+    new MutationObserver(function () { if (el.classList.contains('x-blocked') && !el.classList.contains('x-play')) showAnim(); else if (el.classList.contains('x-play')) hideAnim(); }).observe(el, { attributes: true, attributeFilter: ['class'] });
     var big = el.querySelector('.x-vp-big');
     /* computers: over a video that is waiting for a click, the face cursor is swapped for a "Play" label that follows the pointer */
     var faces = function (hide) { var fs2 = document.querySelectorAll('img[src*="KM43sXSqqRGv3zMTaUBwiGVBiA"]'); for (var fi = 0; fi < fs2.length; fi++) { var fc = fs2[fi].closest('.framer-pointer-events-none'); if (!fc) continue; if (hide) fc.setAttribute('data-xcurhide', ''); else fc.removeAttribute('data-xcurhide'); } };
