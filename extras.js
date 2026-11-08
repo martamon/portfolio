@@ -393,9 +393,7 @@
     // on hover the name and the details glide towards each other and meet in the middle (or, on every second card, start together and drift apart)
     '.x-ov-l,.x-ov-r{transition:transform 1.25s cubic-bezier(.65,0,.25,1)!important;will-change:transform}',
     'html main[data-xhome] [data-xhi] a .x-ov[data-m] .x-ov-l,html main[data-xhome] [data-xhi] a .x-ov[data-m] .x-ov-r{transition:transform 1.25s cubic-bezier(.65,0,.25,1)!important}',
-    'html main[data-xhome] [data-xhi] a .x-ov[data-m="split"] .x-ov-l{transform:translateX(var(--xj,0px))!important}html main[data-xhome] [data-xhi] a .x-ov[data-m="split"] .x-ov-r{transform:translateX(calc(var(--xj,0px) * -1))!important}',
-    'html main[data-xhome] [data-xhi][data-xhot] a .x-ov[data-m="join"] .x-ov-l{transform:translateX(var(--xj,0px))!important}html main[data-xhome] [data-xhi][data-xhot] a .x-ov[data-m="join"] .x-ov-r{transform:translateX(calc(var(--xj,0px) * -1))!important}',
-    'html main[data-xhome] [data-xhi][data-xhot] a .x-ov[data-m="split"] .x-ov-l,html main[data-xhome] [data-xhi][data-xhot] a .x-ov[data-m="split"] .x-ov-r{transform:none!important}',
+    'html main[data-xhome] [data-xhi][data-xhot] a .x-ov .x-ov-r{transform:translateX(calc(var(--xj,0px) * -1))!important}',
     'main[data-xhome] [data-xov] [data-xcap]{visibility:hidden!important}',
     // the pictures are muted (paler colour, lower opacity, no blur, no veil) until the pointer is on them; the layout is untouched
     'main[data-xhome] [data-xov] a[href] img{opacity:.66!important;filter:saturate(.62) contrast(1.08)!important;transition:opacity .8s cubic-bezier(.22,.8,.24,1),filter .8s cubic-bezier(.22,.8,.24,1)!important}',
@@ -921,9 +919,11 @@
     if (m.style.cursor !== c) m.style.cursor = c;
     /* the card under the pointer comes into focus (and on some cards its words scramble into place) */
     var card = hit && hit.closest('[data-xhi]'), prev = m.querySelector('[data-xhot]');
+    if (card) { clearTimeout(m.__xhT); m.__xhT = 0; }
     if (card !== prev) {
+      if (!card) { if (!m.__xhT) m.__xhT = setTimeout(function () { m.__xhT = 0; var q = m.querySelector('[data-xhot]'); if (q) q.removeAttribute('data-xhot'); }, 160); return; }
       if (prev) prev.removeAttribute('data-xhot');
-      if (card) card.setAttribute('data-xhot', '');
+      card.setAttribute('data-xhot', '');
     }
   }, { passive: true });
 
@@ -1736,7 +1736,7 @@
     var l = ov.querySelector('.x-ov-l'), r = ov.querySelector('.x-ov-r'), W = ov.clientWidth - 2 * (parseFloat(getComputedStyle(ov).paddingLeft) || 0);
     if (!W) return;
     var lw = l.offsetWidth, rw = r.offsetWidth, free = Math.max(0, W - lw - rw);
-    ov.style.setProperty('--xj', Math.max(0, free / 2 - 8).toFixed(1) + 'px'); ov.__w = W;
+    ov.style.setProperty('--xj', Math.max(0, free - 14).toFixed(1) + 'px'); ov.__w = W;
   }
   function homeTitles(on) {
     if (!on) return;
@@ -1749,7 +1749,6 @@
       var ov = document.createElement('div'); ov.className = 'x-ov'; ov.setAttribute('aria-hidden', 'true');
       ov.innerHTML = '<span class="x-ov-l"></span><span class="x-ov-r"><i></i><b></b></span>';
       ov.querySelector('.x-ov-l').textContent = name; ov.querySelector('.x-ov-r i').textContent = mt[0]; ov.querySelector('.x-ov-r b').textContent = mt[1];
-      ov.setAttribute('data-m', i % 2 ? 'split' : 'join');
       pic.appendChild(ov); setAttr(cards[i], 'data-xov', '');
       if (i % 3 !== 1) cards[i].__xscr = true;   /* some cards: the words scramble into place when the pointer arrives */
     }
