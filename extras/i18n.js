@@ -11,7 +11,7 @@ const ROWS = [
   ['Coming soon', 'Próximamente', 'Próximamente'],
   ['MORE HERE', 'MÁS AQUÍ', 'MÁIS AQUÍ'],
   ['More projects', 'Más proyectos', 'Máis proxectos'],
-  ['MORE PROJECTS', 'MÁS PROYECTOS', 'MÁIS PROXECTOS'],
+  ['MORE PROJECTS', 'MAS PROYECTOS', 'MAIS PROXECTOS'],
   ['About', 'Sobre mí', 'Sobre min'],
   ['Contact', 'Contacto', 'Contacto'],
   ['Ai specialist & photographer. Designer', 'Especialista en IA y fotógrafa. Diseñadora', 'Especialista en IA e fotógrafa. Deseñadora'],
