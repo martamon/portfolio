@@ -388,10 +388,7 @@
     '@media(max-width:809px){main[data-xm] [data-framer-name="Project Writeup"] p,html[data-xp="about"] [data-framer-name="Caption"] p,.x-ct-text{text-align:left!important}}',
     '@media(max-width:809px){.x-dial{display:none!important}.x-lang{bottom:14px!important}.x-dn{bottom:13px!important}}',
     // home cards (see homeTitles)
-    '.x-ov{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);z-index:3;display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:0 20px;pointer-events:none;color:#fff;font:500 13px/1.2 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.05em;text-transform:uppercase;font-weight:600;text-shadow:0 1px 2px rgba(5,12,24,.7),0 0 12px rgba(5,12,24,.55),0 0 28px rgba(5,12,24,.35)}',
-    // a soft dark band behind the line of text keeps it readable on pale pictures too
-    '.x-ov::before{content:"";position:absolute;left:0;right:0;top:-26px;bottom:-26px;z-index:-1;pointer-events:none;background:linear-gradient(180deg,rgba(8,18,34,0),rgba(8,18,34,.38) 28%,rgba(8,18,34,.38) 72%,rgba(8,18,34,0))}',
-    '.x-ov i,.x-ov b,.x-ov-l{font-weight:600!important}',
+    '.x-ov{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);z-index:3;display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:0 20px;pointer-events:none;color:#fff;font:500 13px/1.2 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.05em;text-transform:uppercase;}',
     '.x-ov-l{flex:0 1 auto;max-width:42%}.x-ov-r{display:flex;gap:12px;text-align:right;justify-content:flex-end;flex:0 1 58%}.x-ov i,.x-ov b{font-style:normal;font-weight:500}.x-ov b{white-space:nowrap}',
     // on hover the name and the details glide towards each other and meet in the middle (or, on every second card, start together and drift apart)
     '.x-ov-l,.x-ov-r{transition:transform 1.25s cubic-bezier(.65,0,.25,1)!important;will-change:transform}',
@@ -401,9 +398,9 @@
     'html main[data-xhome] [data-xhi] a .x-ov .x-ov-r{transition:transform 1.9s cubic-bezier(.45,0,.55,1)!important}',
     'main[data-xhome] [data-xov] [data-xcap]{visibility:hidden!important}',
     // the pictures are muted (paler colour, lower opacity, no blur, no veil) until the pointer is on them; the layout is untouched
-    'main[data-xhome] [data-xov] a[href] img{opacity:.66!important;filter:saturate(.62) contrast(1.08)!important;transition:opacity .8s cubic-bezier(.22,.8,.24,1),filter .8s cubic-bezier(.22,.8,.24,1)!important}',
-    'main[data-xhome] [data-xov][data-xhot] a[href] img{opacity:1!important;filter:none!important}',
-    '@media(hover:none){main[data-xhome] [data-xov] a[href] img{opacity:.9!important;filter:saturate(.85) contrast(1.05)!important}}',
+    'main[data-xhome] [data-xov] a[href] img{filter:blur(1.2px) brightness(.8) saturate(.8)!important;transition:filter 1s cubic-bezier(.22,.8,.24,1),transform 1.2s cubic-bezier(.22,.8,.24,1)!important}',
+    'main[data-xhome] [data-xov][data-xhot] a[href] img{filter:none!important;transform:scale(1)!important}',
+    '@media(hover:none){main[data-xhome] [data-xov] a[href] img{filter:brightness(.85) saturate(.9)!important;transform:none!important}}',
     '@media(max-width:809px){.x-ov{font-size:11px;padding:0 12px}.x-ov-r{gap:8px}}',
     // every text of the site in the tones of the MARTAMON wordmark (see paintInk)
     // negative/positive type everywhere: Framer's root box isolated the page, so a blended text had nothing behind it; it no longer does.
