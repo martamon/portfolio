@@ -463,7 +463,7 @@
     g.style.setProperty('--xhx', (-p * Math.max(0, HZ.total - HZ.gw)).toFixed(1) + 'px');
   }
   addEventListener('scroll', function () { if (!HZ.raf && HZ.m) HZ.raf = requestAnimationFrame(function () { HZ.raf = 0; hzScroll(); }); }, { passive: true });
-  addEventListener('resize', function () { if (HZ.m && HZ.g) hzOn(HZ.m, HZ.g); });
+  addEventListener('resize', function () { if (HZ.m && HZ.g) { if (innerWidth < 811) { hzOff(HZ.m); schedule(); } else hzOn(HZ.m, HZ.g); } else if (innerWidth >= 811) schedule(); });
   function ensureToggle(m, g) {
     var t = g.querySelector(':scope > .x-toggle');
     if (!t) {
@@ -2114,7 +2114,7 @@
       if (mode === 'grid') applyGrid(m, g);
       else {
         for (var j = 0; j < m.children.length; j++) if (m.children[j] !== g) m.children[j].style.minHeight = '';
-        hzOn(m, g);
+        if (innerWidth < 811) hzOff(m); else hzOn(m, g);   /* phones keep the single column of pictures */
       }
     } else {
       removeAll('.x-toggle'); removeAll('[data-x]');
