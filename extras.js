@@ -147,7 +147,7 @@
     'main[data-gal="hz"]>:not([data-xg]) [data-framer-name="Project Writeup"]{flex:1 1 0!important;width:auto!important;max-width:none!important}',
     'html main[data-gal="hz"] [data-xg]{top:var(--xit,200px)!important;height:calc(100vh - var(--xit,200px))!important;width:100%!important;padding:44px 20px 0!important;box-sizing:border-box}}',
     // scroll reveal: each picture rises and fades in as it enters the stage from the right; they ease back out on the left
-    'main[data-gal="hz"] [data-xg]>:not(.x-toggle){opacity:var(--xo,1);transform:translate3d(calc(var(--xhx,0px) + var(--xrx,0px)),var(--xry,0px),0)!important;clip-path:inset(var(--xct,0%) 0 0 var(--xcl,0%));will-change:transform,opacity,clip-path;transition:opacity .5s cubic-bezier(.22,.8,.24,1),transform .55s cubic-bezier(.22,.8,.24,1),clip-path .6s cubic-bezier(.22,.8,.24,1)}',
+    'main[data-gal="hz"] [data-xg]>:not(.x-toggle){opacity:var(--xo,1);transform:translate3d(calc(var(--xhx,0px) + var(--xrx,0px)),var(--xry,0px),0)!important;clip-path:inset(var(--xct,0%) 0 0 var(--xcl,0%));will-change:transform,opacity,clip-path}',
     'main[data-gal="hz"] [data-xg]>:not(.x-toggle) img,main[data-gal="hz"] [data-xg]>:not(.x-toggle) .x-vp{transform:scale(var(--xrs,1));transform-origin:50% 50%}',
     'html main[data-gal="hz"] [data-xg]>:not(.x-toggle){height:var(--xih,60vh)!important}',
     'main[data-gal="hz"] [data-xg]{position:sticky!important;top:0!important;flex:none!important;height:100vh!important;width:var(--xgw,100%)!important;max-width:none!important;overflow:hidden;display:flex!important;flex-direction:row!important;align-items:flex-start!important;justify-content:flex-start!important;gap:0!important;padding:0!important;margin:0!important}',
@@ -464,31 +464,41 @@
     g.style.setProperty('--xgw', gw + 'px');
     m.style.setProperty('--xhh', Math.round(gOff + vh + Math.max(0, total - gw) + 60) + 'px');
     if (!m.style.marginLeft) g.style.marginLeft = '0';
-    HZ.infoH = infoH;
+    HZ.infoH = infoH; HZ.cur = null;
     if (!col && !HZ.again) HZ.again = requestAnimationFrame(function () { HZ.again = 0; var h = 0; for (var z2 = 0; z2 < m.children.length; z2++) if (m.children[z2] !== g) h += m.children[z2].offsetHeight; if (Math.abs(h - HZ.infoH) > 2 && HZ.m === m) hzOn(m, g); });
     hzScroll();
   }
-  function hzScroll() {
+  // the strip glides after the scroll with a little inertia (like the reference): the target comes from the scroll position, the picture
+  // positions and their reveal follow it frame by frame with an exponential ease, so wheel steps never show as jumps
+  function hzScroll(snap) {
     var m = HZ.m, g = HZ.g; if (!m || !g || m.getAttribute('data-gal') !== 'hz') return;
     var top = m.getBoundingClientRect().top, run = Math.max(1, m.offsetHeight - HZ.gOff - innerHeight), p = Math.max(0, Math.min(1, (-top - HZ.gOff) / run));
-    var sx = p * Math.max(0, HZ.total - HZ.gw);
-    g.style.setProperty('--xhx', (-sx).toFixed(1) + 'px');
-    /* reveal: each picture arrives in a way of its own (rising from below, sliding in from the side, or both) and is uncovered with a
-       wipe while it settles; t is how far it is on the stage: 0 = just entering at the right, 1 = well inside */
+    HZ.target = p * Math.max(0, HZ.total - HZ.gw);
+    if (HZ.cur == null || snap || matchMedia('(prefers-reduced-motion:reduce)').matches) HZ.cur = HZ.target;
+    if (!HZ.loop) HZ.loop = requestAnimationFrame(hzStep);
+  }
+  function hzStep(now) {
+    HZ.loop = 0;
+    var m = HZ.m, g = HZ.g; if (!m || !g) return;
+    var dt = Math.min(0.05, ((now - (HZ.t || now)) / 1000) || 0.016); HZ.t = now;
+    var d = HZ.target - HZ.cur, k = 1 - Math.pow(0.0009, dt);   /* ~ 0.9 s to settle */
+    HZ.cur = Math.abs(d) < 0.15 ? HZ.target : HZ.cur + d * k;
+    var sx = HZ.cur;
+    g.style.setProperty('--xhx', (-sx).toFixed(2) + 'px');
     var its = HZ.its || [];
     for (var i = 0; i < its.length; i++) {
-      var left = its[i].__hx - sx, t = Math.max(0, Math.min(1, (HZ.gw - left) / (HZ.gw * 0.4)));
-      var e = 1 - Math.pow(1 - t, 4), k = i % 3, st = its[i].style, inv = 1 - e;
-      st.setProperty('--xo', (0.04 + 0.96 * Math.min(1, e * 1.5)).toFixed(3));
-      st.setProperty('--xry', (k === 1 ? 0 : inv * 120).toFixed(1) + 'px');
-      st.setProperty('--xrx', (k === 0 ? 0 : inv * 90).toFixed(1) + 'px');
-      st.setProperty('--xct', (k === 1 ? 0 : inv * 38).toFixed(2) + '%');
-      st.setProperty('--xcl', (k === 1 ? inv * 55 : 0).toFixed(2) + '%');
-      st.setProperty('--xrs', (1.14 - 0.14 * e).toFixed(3));
+      var left = its[i].__hx - sx, t = Math.max(0, Math.min(1, (HZ.gw - left) / (HZ.gw * 0.42)));
+      var e = t * t * t * (t * (t * 6 - 15) + 10), kk = i % 3, st = its[i].style, inv = 1 - e;   /* smootherstep: no kick at either end */
+      st.setProperty('--xo', (0.02 + 0.98 * Math.min(1, e * 1.6)).toFixed(3));
+      st.setProperty('--xry', (kk === 1 ? 0 : inv * 120).toFixed(2) + 'px');
+      st.setProperty('--xrx', (kk === 0 ? 0 : inv * 90).toFixed(2) + 'px');
+      st.setProperty('--xct', (kk === 1 ? 0 : inv * 38).toFixed(2) + '%');
+      st.setProperty('--xcl', (kk === 1 ? inv * 55 : 0).toFixed(2) + '%');
+      st.setProperty('--xrs', (1.14 - 0.14 * e).toFixed(4));
     }
-
+    if (HZ.cur !== HZ.target) HZ.loop = requestAnimationFrame(hzStep); else HZ.t = 0;
   }
-  addEventListener('scroll', function () { if (!HZ.raf && HZ.m) HZ.raf = requestAnimationFrame(function () { HZ.raf = 0; hzScroll(); }); }, { passive: true });
+  addEventListener('scroll', function () { if (HZ.m) hzScroll(); }, { passive: true });
   addEventListener('resize', function () { if (HZ.m && HZ.g) { if (innerWidth < 811) { hzOff(HZ.m); schedule(); } else hzOn(HZ.m, HZ.g); } else if (innerWidth >= 811) schedule(); });
   function ensureToggle(m, g) {
     var t = g.querySelector(':scope > .x-toggle');
