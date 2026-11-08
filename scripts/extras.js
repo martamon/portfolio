@@ -393,7 +393,7 @@
     // on hover the line of text slides out to one side and comes back in from the other
     '@keyframes x-ovslide{0%{transform:translate(0,-50%);opacity:1}42%{transform:translate(55%,-50%);opacity:0}43%{transform:translate(-55%,-50%);opacity:0}100%{transform:translate(0,-50%);opacity:1}}',
     '[data-xhot] .x-ov{animation:x-ovslide 1.15s cubic-bezier(.65,0,.25,1) both}',
-    'main[data-xhome] [data-xov] [data-xcap]{display:none!important}',
+    'main[data-xhome] [data-xov] [data-xcap]{visibility:hidden!important}',
     // the pictures are muted (paler colour, lower opacity, no blur, no veil) until the pointer is on them; the layout is untouched
     'main[data-xhome] [data-xov] a[href] img{opacity:.42!important;filter:saturate(.5) contrast(.9)!important;transition:opacity .8s cubic-bezier(.22,.8,.24,1),filter .8s cubic-bezier(.22,.8,.24,1)!important}',
     'main[data-xhome] [data-xov][data-xhot] a[href] img{opacity:1!important;filter:none!important}',
