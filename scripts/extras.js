@@ -147,7 +147,8 @@
     'main[data-gal="hz"]>:not([data-xg]) [data-framer-name="Project Writeup"]{flex:1 1 0!important;width:auto!important;max-width:none!important}',
     'html main[data-gal="hz"] [data-xg]{top:var(--xit,200px)!important;height:calc(100vh - var(--xit,200px))!important;width:100%!important;padding:44px 20px 0!important;box-sizing:border-box}}',
     // scroll reveal: each picture rises and fades in as it enters the stage from the right; they ease back out on the left
-    'main[data-gal="hz"] [data-xg]>:not(.x-toggle){opacity:var(--xo,1);transform:translate3d(var(--xhx,0px),var(--xry,0px),0) scale(var(--xrs,1))!important;transform-origin:50% 100%}',
+    'main[data-gal="hz"] [data-xg]>:not(.x-toggle){opacity:var(--xo,1);transform:translate3d(calc(var(--xhx,0px) + var(--xrx,0px)),var(--xry,0px),0)!important;clip-path:inset(var(--xct,0%) 0 0 var(--xcl,0%));will-change:transform,opacity,clip-path;transition:opacity .5s cubic-bezier(.22,.8,.24,1),transform .55s cubic-bezier(.22,.8,.24,1),clip-path .6s cubic-bezier(.22,.8,.24,1)}',
+    'main[data-gal="hz"] [data-xg]>:not(.x-toggle) img,main[data-gal="hz"] [data-xg]>:not(.x-toggle) .x-vp{transform:scale(var(--xrs,1));transform-origin:50% 50%}',
     'html main[data-gal="hz"] [data-xg]>:not(.x-toggle){height:var(--xih,60vh)!important}',
     'main[data-gal="hz"] [data-xg]{position:sticky!important;top:0!important;flex:none!important;height:100vh!important;width:var(--xgw,100%)!important;max-width:none!important;overflow:hidden;display:flex!important;flex-direction:row!important;align-items:flex-start!important;justify-content:flex-start!important;gap:0!important;padding:0!important;margin:0!important}',
     'main[data-gal="hz"] [data-xg]>.x-toggle{position:absolute!important;top:6px;right:20px;width:auto!important;z-index:5;height:32px!important}',
@@ -472,15 +473,20 @@
     var top = m.getBoundingClientRect().top, run = Math.max(1, m.offsetHeight - HZ.gOff - innerHeight), p = Math.max(0, Math.min(1, (-top - HZ.gOff) / run));
     var sx = p * Math.max(0, HZ.total - HZ.gw);
     g.style.setProperty('--xhx', (-sx).toFixed(1) + 'px');
-    /* reveal: where a picture is on the stage (0 = just entering at the right, 1 = well inside) */
+    /* reveal: each picture arrives in a way of its own (rising from below, sliding in from the side, or both) and is uncovered with a
+       wipe while it settles; t is how far it is on the stage: 0 = just entering at the right, 1 = well inside */
     var its = HZ.its || [];
     for (var i = 0; i < its.length; i++) {
-      var left = its[i].__hx - sx, t = Math.max(0, Math.min(1, (HZ.gw - left) / (HZ.gw * 0.32)));
-      var e = 1 - Math.pow(1 - t, 3);
-      its[i].style.setProperty('--xo', (0.15 + 0.85 * e).toFixed(3));
-      its[i].style.setProperty('--xry', ((1 - e) * 70).toFixed(1) + 'px');
-      its[i].style.setProperty('--xrs', (0.94 + 0.06 * e).toFixed(3));
+      var left = its[i].__hx - sx, t = Math.max(0, Math.min(1, (HZ.gw - left) / (HZ.gw * 0.4)));
+      var e = 1 - Math.pow(1 - t, 4), k = i % 3, st = its[i].style, inv = 1 - e;
+      st.setProperty('--xo', (0.04 + 0.96 * Math.min(1, e * 1.5)).toFixed(3));
+      st.setProperty('--xry', (k === 1 ? 0 : inv * 120).toFixed(1) + 'px');
+      st.setProperty('--xrx', (k === 0 ? 0 : inv * 90).toFixed(1) + 'px');
+      st.setProperty('--xct', (k === 1 ? 0 : inv * 38).toFixed(2) + '%');
+      st.setProperty('--xcl', (k === 1 ? inv * 55 : 0).toFixed(2) + '%');
+      st.setProperty('--xrs', (1.14 - 0.14 * e).toFixed(3));
     }
+
   }
   addEventListener('scroll', function () { if (!HZ.raf && HZ.m) HZ.raf = requestAnimationFrame(function () { HZ.raf = 0; hzScroll(); }); }, { passive: true });
   addEventListener('resize', function () { if (HZ.m && HZ.g) { if (innerWidth < 811) { hzOff(HZ.m); schedule(); } else hzOn(HZ.m, HZ.g); } else if (innerWidth >= 811) schedule(); });
