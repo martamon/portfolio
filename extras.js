@@ -47,7 +47,7 @@
   if (/[?&]xoff\b/.test(location.search)) return;
 
   // language of the site (English, Spanish, Galician): the switch in the corner and the translation of every text
-  try { import('/extras/i18n.js?v=26').catch(function () {}); } catch (e) {}
+  try { import('/extras/i18n.js?v=27').catch(function () {}); } catch (e) {}
 
   // In-app browsers (LinkedIn, Instagram, ...) end up on a blank page as soon as the YouTube player of the home page is created, so
   // there every YouTube iframe shows its still picture with a link to YouTube instead (?xinapp forces this in any browser).
