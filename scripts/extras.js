@@ -2151,7 +2151,7 @@
       if (mode === 'grid') applyGrid(m, g);
       else {
         for (var j = 0; j < m.children.length; j++) if (m.children[j] !== g) m.children[j].style.minHeight = '';
-        if (innerWidth < 811) hzOff(m); else hzOn(m, g);   /* phones keep the single column of pictures */
+        if (innerWidth < 811) { hzOff(m); m.removeAttribute('data-gal'); } else hzOn(m, g);   /* phones keep the single column of pictures */
       }
     } else {
       removeAll('.x-toggle'); removeAll('[data-x]');
