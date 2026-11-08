@@ -342,10 +342,12 @@
     'html [data-xtc],html [data-xcap]{color:var(--xtone)!important}',
     'html main[data-xm]~section a,html main[data-xm]~section p,html main[data-xm]~section span,html main[data-xm]~*:not(.x-yt) footer a,html main[data-xm]~*:not(.x-yt) footer p,html main[data-xm]~*:not(.x-yt) footer span{color:var(--xtoneb)!important}',
     '.x-contact{color:var(--xtone)!important}',
+    'html footer a,html footer p,html footer span,html [data-xmore],html [data-xmore] *{color:var(--xtoneb)!important;opacity:1!important}html [data-xmore]{border-color:var(--xtoneb)!important}',
+    'html [class*="rolling-text"],html [class*="rolling-text"] *{color:var(--xinkb)!important}html a[data-framer-name="Primary"],html a[data-framer-name="Primary"] *{border-color:var(--xtoneb)!important}',
     // negative/positive in every tone: menu, clock, languages and About always blend, with the worked-out colour
     'html [data-xnc],html[data-xdusk] [data-xnc]{mix-blend-mode:difference!important}html [data-xn],html[data-xdusk] [data-xn],html[data-xnight] [data-xn]{color:var(--xink,#fff)!important}',
-    'html .x-dial,html[data-xdusk] .x-dial,html[data-xnight] .x-dial{mix-blend-mode:difference;color:var(--xinkb,#fff)}',
-    'html .x-lang,html[data-xdusk] .x-lang,html[data-xnight] .x-lang{mix-blend-mode:difference;color:var(--xinkb,#fff)}',
+    'html .x-dial,html[data-xdusk] .x-dial,html[data-xnight] .x-dial{mix-blend-mode:difference!important;color:var(--xinkb,#fff)!important;opacity:1!important}',
+    'html .x-lang,html[data-xdusk] .x-lang,html[data-xnight] .x-lang{mix-blend-mode:difference!important;color:var(--xinkb,#fff)!important;opacity:1!important}',
     'html[data-xp="about"] [data-framer-name="Caption"],html[data-xp="about"] [data-framer-name="Wordmark"],html[data-xp="about"] [data-xbl],html[data-xdusk][data-xp="about"] [data-framer-name="Caption"],html[data-xdusk][data-xp="about"] [data-framer-name="Wordmark"],html[data-xdusk][data-xp="about"] [data-xbl]{mix-blend-mode:difference!important}',
     'html[data-xp="about"] [data-framer-name="Caption"] *,html[data-xp="about"] [data-framer-name="Wordmark"] *,html[data-xp="about"] [data-xbl] *,html[data-xp] [data-framer-name="Caption"] [data-xtc]{color:var(--xink,#fff)!important}'
   ].join('\n');
@@ -1605,10 +1607,15 @@
      (difference blend): its colour (--xink) is worked out from the page colour behind it so that over the page it shows exactly
      that tone, and over pictures it inverts them */
   var TONE_D = [30, 40, 58], TONE_L = [178, 184, 198];
+  var lumOf = function (c) { return [0, 1, 2].map(function (i) { var v = c[i] / 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }).reduce(function (a, v, i) { return a + v * [0.2126, 0.7152, 0.0722][i]; }, 0); };
+  var contrast = function (a, b) { var x = lumOf(a), y = lumOf(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
   function toneFor(c) {
-    var lum = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2], t, ink, i;
-    if (lum > 105) { t = TONE_D; ink = [0, 1, 2].map(function (i) { return Math.max(0, c[i] - t[i]); }); }
-    else { var k = 1; for (i = 0; i < 3; i++) k = Math.min(k, (255 - c[i]) / TONE_L[i]); t = TONE_L.map(function (v) { return Math.round(v * k); }); ink = [0, 1, 2].map(function (i) { return c[i] + t[i]; }); }
+    /* dark: the page colour taken down to a deep slate of the same hue; light: the wordmark's pale blue-grey (as light as the blend allows) */
+    var d = c.map(function (v) { return Math.round(v * 0.22); }), k = 1, i;
+    for (i = 0; i < 3; i++) k = Math.min(k, (255 - c[i]) / TONE_L[i]);
+    var l = TONE_L.map(function (v) { return Math.round(v * k); });
+    var dark = contrast(d, c) >= contrast(l, c), t = dark ? d : l;
+    var ink = dark ? c.map(function (v, i) { return v - t[i]; }) : c.map(function (v, i) { return v + t[i]; });
     return { tone: 'rgb(' + t.join(',') + ')', ink: 'rgb(' + ink.join(',') + ')' };
   }
   function paintInk() {
@@ -1617,6 +1624,7 @@
       while ((m = re.exec(bi))) cols.push(m[1] ? [Math.round(m[1] * 255), Math.round(m[2] * 255), Math.round(m[3] * 255)] : [+m[4], +m[5], +m[6]]);
       if (!cols.length) { var bc = /(\d+),\s*(\d+),\s*(\d+)/.exec(getComputedStyle(document.body).backgroundColor); if (bc) cols.push([+bc[1], +bc[2], +bc[3]]); }
       if (!cols.length) return;
+      if (!paintInk.more || !paintInk.more.isConnected) { var ps = document.querySelectorAll('a,button'); for (var pi = 0; pi < ps.length; pi++) if (/^(more projects|m\u00e1s proyectos|m\u00e1is proxectos)$/i.test(ps[pi].textContent.trim()) && ps[pi].getBoundingClientRect().width) { var bx = ps[pi]; bx.setAttribute('data-xmore', ''); paintInk.more = bx; break; } }
       var a = toneFor(cols[0]), z = toneFor(cols[cols.length - 1]), mid = toneFor(cols[Math.floor(cols.length / 2)]), st = document.documentElement.style;
       st.setProperty('--xtone', mid.tone); st.setProperty('--xtonet', a.tone); st.setProperty('--xtoneb', z.tone);
       st.setProperty('--xink', a.ink); st.setProperty('--xinkb', z.ink);
