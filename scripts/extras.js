@@ -147,7 +147,9 @@
     'main[data-gal="hz"]>:not([data-xg]) [data-framer-name="Project Writeup"]{flex:1 1 0!important;width:auto!important;max-width:none!important}',
     'html main[data-gal="hz"] [data-xg]{top:var(--xit,200px)!important;height:calc(100vh - var(--xit,200px))!important;width:100%!important;padding:44px 20px 0!important;box-sizing:border-box}}',
     // scroll reveal: each picture rises and fades in as it enters the stage from the right; they ease back out on the left
-    'main[data-gal="hz"] [data-xg]>:not(.x-toggle){opacity:var(--xo,1);transform:translate3d(calc(var(--xhx,0px) + var(--xrx,0px)),var(--xry,0px),0)!important;clip-path:inset(var(--xct,0%) 0 0 var(--xcl,0%))}',
+    'main[data-gal="hz"] [data-xg]>:not(.x-toggle){opacity:var(--xo,1);transform:translate3d(calc(var(--xhx,0px) + var(--xrx,0px)),var(--xry,0px),0)!important}',
+    // the blur: a blurred copy painted once (it never changes) under the picture; only the picture's opacity moves, so it costs nothing per frame
+    '.x-blurc{position:absolute!important;inset:0;width:100%!important;height:100%!important;object-fit:cover;filter:blur(14px);transform:scale(1.06);pointer-events:none;z-index:0}main[data-gal="hz"] [data-xg]>:not(.x-toggle){overflow:hidden}main[data-gal="hz"] [data-xg]>:not(.x-toggle) img:not(.x-blurc){position:relative;z-index:1;opacity:var(--xio,1)}',
     'main[data-gal="hz"].x-mv [data-xg]>:not(.x-toggle){will-change:transform,opacity,clip-path}',   /* GPU layers only while the strip is moving */
     'main[data-gal="hz"] [data-xg]>:not(.x-toggle) img,main[data-gal="hz"] [data-xg]>:not(.x-toggle) .x-vp{transform:scale(var(--xrs,1));transform-origin:50% 50%}',
     'html main[data-gal="hz"] [data-xg]>:not(.x-toggle){height:var(--xih,60vh)!important}',
@@ -446,7 +448,7 @@
   function hzOff(m) {
     if (!m || !m.hasAttribute('data-gal') || m.getAttribute('data-gal') !== 'hz') { if (m && m.getAttribute('data-gal') === 'hz') m.removeAttribute('data-gal'); return; }
     m.removeAttribute('data-gal'); m.style.removeProperty('--xhh');
-    var g = HZ.g; if (g) { g.style.removeProperty('--xgw'); g.style.removeProperty('--xhx'); var k = items(g); for (var i = 0; i < k.length; i++) { k[i].style.removeProperty('--r'); k[i].style.removeProperty('--xo'); k[i].style.removeProperty('--xry'); k[i].style.removeProperty('--xrs'); k[i].style.filter = ''; } }
+    var g = HZ.g; if (g) { g.style.removeProperty('--xgw'); g.style.removeProperty('--xhx'); var k = items(g); for (var i = 0; i < k.length; i++) { k[i].style.removeProperty('--r'); k[i].style.removeProperty('--xo'); k[i].style.removeProperty('--xry'); k[i].style.removeProperty('--xrs'); k[i].style.filter = ''; k[i].style.removeProperty('--xio'); var bcs = k[i].querySelectorAll('.x-blurc'); for (var bi = 0; bi < bcs.length; bi++) bcs[bi].parentNode.removeChild(bcs[bi]); } }
     HZ.m = HZ.g = null;
   }
   function hzOn(m, g) {
@@ -472,6 +474,17 @@
       its[i].__hx = total + ml; its[i].__hw = w; total += w + ml;
     }
     HZ.its = its;
+    for (i = 0; i < its.length; i++) {
+      var im0 = its[i].querySelector('img:not(.x-blurc)');
+      if (!im0 || its[i].querySelector('.x-vp') || its[i].querySelector(':scope .x-blurc')) continue;
+      var bc = document.createElement('img'); bc.className = 'x-blurc'; bc.alt = ''; bc.setAttribute('aria-hidden', 'true'); bc.decoding = 'async';
+      var src = im0.currentSrc || im0.src; bc.src = /[?&]scale-down-to=/.test(src) ? src : src + (src.indexOf('?') > -1 ? '&' : '?') + 'scale-down-to=512';
+      im0.parentNode.insertBefore(bc, im0);
+    }
+    /* decode the big pictures ahead of time, one by one while the browser is idle, so none stutters as it slides in */
+    if (!g.__xdec) { g.__xdec = 1; var q = []; its.forEach(function (it) { var ims2 = it.querySelectorAll('img'); for (var z3 = 0; z3 < ims2.length; z3++) q.push(ims2[z3]); });
+      var go = function () { var im = q.shift(); if (!im) return; try { if (im.decode) im.decode().catch(function () {}).then(function () { (window.requestIdleCallback || setTimeout)(go, 60); }); else go(); } catch (er) {} };
+      (window.requestIdleCallback || setTimeout)(go, 400); }
     HZ.total = total; HZ.gw = gw; HZ.gOff = gOff;
     g.style.setProperty('--xgw', gw + 'px');
     HZ.lead = Math.round(vh * 0.75);   /* the strip waits before it starts to move, so the first picture can be looked at */
@@ -479,10 +492,7 @@
     m.style.setProperty('--xhh', Math.round(gOff + vh + HZ.lead + Math.max(0, total - gw) * HZ.slow + 60) + 'px');
     if (!m.style.marginLeft) g.style.marginLeft = '0';
     HZ.infoH = infoH; HZ.cur = null;
-    /* decode the big pictures ahead of time, one by one while the browser is idle, so none stutters as it slides in */
-    if (!g.__xdec) { g.__xdec = 1; var q = []; its.forEach(function (it) { var im = it.querySelector('img'); if (im) q.push(im); });
-      var go = function () { var im = q.shift(); if (!im) return; try { if (im.decode) im.decode().catch(function () {}).then(function () { (window.requestIdleCallback || setTimeout)(go, 60); }); else go(); } catch (er) {} };
-      (window.requestIdleCallback || setTimeout)(go, 400); }
+
     if (!col && !HZ.again) HZ.again = requestAnimationFrame(function () { HZ.again = 0; var h = 0; for (var z2 = 0; z2 < m.children.length; z2++) if (m.children[z2] !== g) h += m.children[z2].offsetHeight; if (Math.abs(h - HZ.infoH) > 2 && HZ.m === m) hzOn(m, g); });
     hzScroll();
   }
@@ -507,13 +517,11 @@
     for (var i = 0; i < its.length; i++) {
       var left = its[i].__hx - sx, t = Math.max(0, Math.min(1, (HZ.gw - left) / (HZ.gw * 0.55)));
       var e = t * t * t * (t * (t * 6 - 15) + 10), kk = i % 3, st = its[i].style, inv = 1 - e;   /* smootherstep: no kick at either end */
-      st.setProperty('--xo', (0.02 + 0.98 * Math.min(1, e * 1.6)).toFixed(3));
+      st.setProperty('--xo', Math.min(1, e * 2.2).toFixed(3));
       st.setProperty('--xry', (kk === 1 ? 0 : inv * 120).toFixed(2) + 'px');
       st.setProperty('--xrx', (kk === 0 ? 0 : inv * 90).toFixed(2) + 'px');
-      st.setProperty('--xct', (kk === 1 ? 0 : inv * 38).toFixed(2) + '%');
-      st.setProperty('--xcl', (kk === 1 ? inv * 55 : 0).toFixed(2) + '%');
       st.setProperty('--xrs', (1.14 - 0.14 * e).toFixed(4));
-      st.filter = inv > 0.01 ? 'blur(' + (inv * 10).toFixed(1) + 'px)' : '';   /* appears out of a soft blur */
+      st.setProperty('--xio', e.toFixed(3));   /* the sharp picture fades in over its blurred copy */
     }
     if (HZ.cur !== HZ.target) { if (!m.classList.contains('x-mv')) m.classList.add('x-mv'); HZ.loop = requestAnimationFrame(hzStep); } else { HZ.t = 0; m.classList.remove('x-mv'); }
   }
