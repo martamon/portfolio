@@ -394,11 +394,10 @@
     '@keyframes x-ovslide{0%{transform:translate(0,-50%);opacity:1}42%{transform:translate(55%,-50%);opacity:0}43%{transform:translate(-55%,-50%);opacity:0}100%{transform:translate(0,-50%);opacity:1}}',
     '[data-xhot] .x-ov{animation:x-ovslide 1.15s cubic-bezier(.65,0,.25,1) both}',
     'main[data-xhome] [data-xov] [data-xcap]{display:none!important}',
-    // the picture under a frosted, low-contrast film (like plastic) until the pointer is on it
-    'main[data-xhome] [data-xov] a[href]>:first-child::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(180deg,rgba(235,240,245,.14),rgba(220,228,238,.10));transition:opacity .8s cubic-bezier(.22,.8,.24,1)}',
-    'main[data-xhome] [data-xov] a[href] img{filter:blur(3px) contrast(.86) saturate(.82) brightness(1.04)!important;transform:scale(1.02)!important;transition:filter .9s cubic-bezier(.22,.8,.24,1),transform 1.1s cubic-bezier(.22,.8,.24,1)!important}',
-    'main[data-xhome] [data-xov][data-xhot] a[href] img{filter:none!important;transform:scale(1)!important}main[data-xhome] [data-xov][data-xhot] a[href]>:first-child::after{opacity:0}',
-    '@media(hover:none){main[data-xhome] [data-xov] a[href] img{filter:contrast(.9) saturate(.9)!important;transform:none!important}main[data-xhome] [data-xov] a[href]>:first-child::after{opacity:.5}}',
+    // the pictures are muted (paler colour, lower opacity, no blur, no veil) until the pointer is on them; the layout is untouched
+    'main[data-xhome] [data-xov] a[href] img{opacity:.58!important;filter:saturate(.55) contrast(.9)!important;transition:opacity .8s cubic-bezier(.22,.8,.24,1),filter .8s cubic-bezier(.22,.8,.24,1)!important}',
+    'main[data-xhome] [data-xov][data-xhot] a[href] img{opacity:1!important;filter:none!important}',
+    '@media(hover:none){main[data-xhome] [data-xov] a[href] img{opacity:.85!important;filter:saturate(.8)!important}}',
     '@media(max-width:809px){.x-ov{font-size:11px;padding:0 12px}.x-ov-r{gap:8px}}',
     // every text of the site in the tones of the MARTAMON wordmark (see paintInk)
     // negative/positive type everywhere: Framer's root box isolated the page, so a blended text had nothing behind it; it no longer does.
