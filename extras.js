@@ -339,6 +339,14 @@
     // About on phones: the intro text a little wider (fewer, longer lines) so it is not a tall thin column
     '@media(max-width:809px){html[data-xp="about"] [data-framer-name="Caption"]{width:var(--xcw,min(62vw,250px))!important;max-width:none!important}html[data-xp="about"] [data-framer-name="Caption"] p{width:100%!important}}',
     '[data-xs]{display:none!important}',
+    // project pages in the style of onseis.com/project/penry-psychology: title in capitals, details and text in small capital mono type, justified, with fine rules
+    'main[data-xm] [data-framer-name="Project Title"] p{text-transform:uppercase!important;font-size:26px!important;line-height:1.05!important;letter-spacing:-.02em!important;font-weight:500!important}',
+    'main[data-xm] [data-framer-name="Project Type & Year"]{display:flex!important;flex-direction:row!important;flex-wrap:wrap;align-items:baseline!important;gap:0 10px!important;height:auto!important;padding-bottom:14px;border-bottom:1px solid var(--xtone)}',
+    'main[data-xm] [data-framer-name="Project Type"] p,main[data-xm] [data-framer-name="Year Completed"] p,main[data-xm] [data-framer-name="Project Writeup"] p{font-family:"IBM Plex Mono","IBM Plex Mono Placeholder",monospace!important;font-weight:500!important;font-size:12.5px!important;line-height:1.35em!important;letter-spacing:.03em!important;text-transform:uppercase!important}',
+    'main[data-xm] [data-framer-name="Year Completed"] p::before{content:"\\2013\\00a0\\00a0"}',
+    'main[data-xm] [data-framer-name="Project Writeup"] p{text-align:justify!important;text-justify:inter-word;hyphens:auto}',
+    'main[data-xm] [data-framer-name="Project Writeup"]{padding-top:2px}',
+    'main[data-xm] [data-framer-name="Project Type"],main[data-xm] [data-framer-name="Year Completed"]{width:auto!important;flex:none!important}',
     // every text of the site in the tones of the MARTAMON wordmark (see paintInk)
     'html [data-xtc],html [data-xcap]{color:var(--xtone)!important}',
     'html main[data-xm]~section a,html main[data-xm]~section p,html main[data-xm]~section span,html main[data-xm]~*:not(.x-yt) footer a,html main[data-xm]~*:not(.x-yt) footer p,html main[data-xm]~*:not(.x-yt) footer span{color:var(--xtoneb)!important}',
