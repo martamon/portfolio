@@ -352,6 +352,10 @@
     'html[data-xp="home"] [data-framer-name="Info"] [data-framer-name="Title"] p{text-transform:uppercase!important;font-weight:700!important;letter-spacing:-.03em!important}',
     'html[data-xp="home"] [data-framer-name="Info"] [data-framer-name="Subtitle"] p,html[data-xp="home"] [data-framer-name="Info"] p:not([data-framer-name="Title"] p){font-family:"IBM Plex Mono","IBM Plex Mono Placeholder",monospace!important;font-weight:500!important;font-size:12.5px!important;letter-spacing:.04em!important;text-transform:uppercase!important}',
     'html main[data-xm]~section a,html main[data-xm]~section p,html main[data-xm]~section span,html main[data-xm]~*:not(.x-yt) footer a,html main[data-xm]~*:not(.x-yt) footer p,html main[data-xm]~*:not(.x-yt) footer span{font-family:"IBM Plex Mono","IBM Plex Mono Placeholder",monospace!important;text-transform:uppercase!important;letter-spacing:.04em!important}',
+    // every picture of a home card fills its card, whatever state Framer's hover variant is in (touch screens keep a hover after a tap)
+    'main[data-xhome] [data-xhi] a[href] div,main[data-xhome] [data-xhi] a[href] figure{width:100%!important;max-width:none!important;height:auto!important}main[data-xhome] [data-xhi] a[href] img{width:100%!important;max-width:100%!important;height:auto!important;object-fit:cover}',
+    // all running text justified
+    'html main[data-xm] [data-framer-name="Info"] p,html main[data-xm]~section p,html main[data-xm]~* footer p,html[data-xp="about"] [data-framer-name="Caption"] p,.x-ct-text{text-align:justify!important;text-justify:inter-word;text-align-last:left}',
     // every text of the site in the tones of the MARTAMON wordmark (see paintInk)
     // negative/positive type everywhere: Framer's root box isolated the page, so a blended text had nothing behind it; it no longer does.
     // Sticky boxes are layers of their own, so there the whole box carries the blend; elsewhere the text itself does.
