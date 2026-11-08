@@ -47,7 +47,7 @@
   if (/[?&]xoff\b/.test(location.search)) return;
 
   // language of the site (English, Spanish, Galician): the switch in the corner and the translation of every text
-  try { import('/extras/i18n.js?v=25').catch(function () {}); } catch (e) {}
+  try { import('/extras/i18n.js?v=26').catch(function () {}); } catch (e) {}
 
   // In-app browsers (LinkedIn, Instagram, ...) end up on a blank page as soon as the YouTube player of the home page is created, so
   // there every YouTube iframe shows its still picture with a link to YouTube instead (?xinapp forces this in any browser).
@@ -343,7 +343,7 @@
     'html main[data-xm]~section a,html main[data-xm]~section p,html main[data-xm]~section span,html main[data-xm]~*:not(.x-yt) footer a,html main[data-xm]~*:not(.x-yt) footer p,html main[data-xm]~*:not(.x-yt) footer span{color:var(--xtoneb)!important}',
     '.x-contact{color:var(--xtone)!important}',
     'html footer a,html footer p,html footer span,html [data-xmore],html [data-xmore] *{color:var(--xtoneb)!important;opacity:1!important}html [data-xmore]{border-color:var(--xtoneb)!important}',
-    'html [class*="rolling-text"],html [class*="rolling-text"] *{color:var(--xinkb)!important}html a[data-framer-name="Primary"],html a[data-framer-name="Primary"] *{border-color:var(--xtoneb)!important}',
+    'html [class*="rolling-text"],html [class*="rolling-text"] *{color:var(--xinkb)!important;--text:var(--xinkb)!important}html a[data-framer-name="Primary"],html a[data-framer-name="Primary"] *{border-color:var(--xtoneb)!important}',
     // negative/positive in every tone: menu, clock, languages and About always blend, with the worked-out colour
     'html [data-xnc],html[data-xdusk] [data-xnc]{mix-blend-mode:difference!important}html [data-xn],html[data-xdusk] [data-xn],html[data-xnight] [data-xn]{color:var(--xink,#fff)!important}',
     'html .x-dial,html[data-xdusk] .x-dial,html[data-xnight] .x-dial{mix-blend-mode:difference!important;color:var(--xinkb,#fff)!important;opacity:1!important}',
