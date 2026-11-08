@@ -446,7 +446,7 @@
   function hzOff(m) {
     if (!m || !m.hasAttribute('data-gal') || m.getAttribute('data-gal') !== 'hz') { if (m && m.getAttribute('data-gal') === 'hz') m.removeAttribute('data-gal'); return; }
     m.removeAttribute('data-gal'); m.style.removeProperty('--xhh');
-    var g = HZ.g; if (g) { g.style.removeProperty('--xgw'); g.style.removeProperty('--xhx'); var k = items(g); for (var i = 0; i < k.length; i++) { k[i].style.removeProperty('--r'); k[i].style.removeProperty('--xo'); k[i].style.removeProperty('--xry'); k[i].style.removeProperty('--xrs'); } }
+    var g = HZ.g; if (g) { g.style.removeProperty('--xgw'); g.style.removeProperty('--xhx'); var k = items(g); for (var i = 0; i < k.length; i++) { k[i].style.removeProperty('--r'); k[i].style.removeProperty('--xo'); k[i].style.removeProperty('--xry'); k[i].style.removeProperty('--xrs'); k[i].style.filter = ''; } }
     HZ.m = HZ.g = null;
   }
   function hzOn(m, g) {
@@ -475,7 +475,8 @@
     HZ.total = total; HZ.gw = gw; HZ.gOff = gOff;
     g.style.setProperty('--xgw', gw + 'px');
     HZ.lead = Math.round(vh * 0.75);   /* the strip waits before it starts to move, so the first picture can be looked at */
-    m.style.setProperty('--xhh', Math.round(gOff + vh + HZ.lead + Math.max(0, total - gw) + 60) + 'px');
+    HZ.slow = 1.9;   /* page scroll per pixel the strip travels: the pictures pass slowly */
+    m.style.setProperty('--xhh', Math.round(gOff + vh + HZ.lead + Math.max(0, total - gw) * HZ.slow + 60) + 'px');
     if (!m.style.marginLeft) g.style.marginLeft = '0';
     HZ.infoH = infoH; HZ.cur = null;
     /* decode the big pictures ahead of time, one by one while the browser is idle, so none stutters as it slides in */
@@ -498,13 +499,13 @@
     HZ.loop = 0;
     var m = HZ.m, g = HZ.g; if (!m || !g) return;
     var dt = Math.min(0.05, ((now - (HZ.t || now)) / 1000) || 0.016); HZ.t = now;
-    var d = HZ.target - HZ.cur, k = 1 - Math.pow(0.0009, dt);   /* ~ 0.9 s to settle */
+    var d = HZ.target - HZ.cur, k = 1 - Math.pow(0.02, dt);   /* ~ 1.5 s to settle: a slow, soft glide */
     HZ.cur = Math.abs(d) < 0.15 ? HZ.target : HZ.cur + d * k;
     var sx = HZ.cur;
     g.style.setProperty('--xhx', (-sx).toFixed(2) + 'px');
     var its = HZ.its || [];
     for (var i = 0; i < its.length; i++) {
-      var left = its[i].__hx - sx, t = Math.max(0, Math.min(1, (HZ.gw - left) / (HZ.gw * 0.42)));
+      var left = its[i].__hx - sx, t = Math.max(0, Math.min(1, (HZ.gw - left) / (HZ.gw * 0.55)));
       var e = t * t * t * (t * (t * 6 - 15) + 10), kk = i % 3, st = its[i].style, inv = 1 - e;   /* smootherstep: no kick at either end */
       st.setProperty('--xo', (0.02 + 0.98 * Math.min(1, e * 1.6)).toFixed(3));
       st.setProperty('--xry', (kk === 1 ? 0 : inv * 120).toFixed(2) + 'px');
@@ -512,6 +513,7 @@
       st.setProperty('--xct', (kk === 1 ? 0 : inv * 38).toFixed(2) + '%');
       st.setProperty('--xcl', (kk === 1 ? inv * 55 : 0).toFixed(2) + '%');
       st.setProperty('--xrs', (1.14 - 0.14 * e).toFixed(4));
+      st.filter = inv > 0.01 ? 'blur(' + (inv * 10).toFixed(1) + 'px)' : '';   /* appears out of a soft blur */
     }
     if (HZ.cur !== HZ.target) { if (!m.classList.contains('x-mv')) m.classList.add('x-mv'); HZ.loop = requestAnimationFrame(hzStep); } else { HZ.t = 0; m.classList.remove('x-mv'); }
   }
