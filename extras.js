@@ -387,19 +387,6 @@
     // narrow columns: justified mono text leaves holes between the words, so there it is set ragged (flush left)
     '@media(max-width:809px){main[data-xm] [data-framer-name="Project Writeup"] p,html[data-xp="about"] [data-framer-name="Caption"] p,.x-ct-text{text-align:left!important}}',
     '@media(max-width:809px){.x-dial{display:none!important}.x-lang{bottom:14px!important}.x-dn{bottom:13px!important}}',
-    // home cards (see homeTitles)
-    '.x-ov{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);z-index:3;display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:0 20px;pointer-events:none;color:#fff;font:500 13px/1.2 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.05em;text-transform:uppercase;text-shadow:0 1px 2px rgba(0,0,0,.35),0 0 18px rgba(0,0,0,.25)}',
-    '.x-ov-r{display:flex;gap:14px;text-align:right}.x-ov i,.x-ov b{font-style:normal;font-weight:500}',
-    // on hover the line of text slides out to one side and comes back in from the other
-    '@keyframes x-ovslide{0%{transform:translate(0,-50%);opacity:1}42%{transform:translate(55%,-50%);opacity:0}43%{transform:translate(-55%,-50%);opacity:0}100%{transform:translate(0,-50%);opacity:1}}',
-    '[data-xhot] .x-ov{animation:x-ovslide 1.15s cubic-bezier(.65,0,.25,1) both}',
-    'main[data-xhome] [data-xov] [data-xcap]{display:none!important}',
-    // the picture under a frosted, low-contrast film (like plastic) until the pointer is on it
-    'main[data-xhome] [data-xov] a[href]>:first-child::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(180deg,rgba(235,240,245,.22),rgba(215,225,235,.16));transition:opacity .8s cubic-bezier(.22,.8,.24,1)}',
-    'main[data-xhome] [data-xov] a[href] img{filter:blur(5px) contrast(.78) saturate(.75) brightness(1.06)!important;transform:scale(1.03)!important;transition:filter .9s cubic-bezier(.22,.8,.24,1),transform 1.1s cubic-bezier(.22,.8,.24,1)!important}',
-    'main[data-xhome] [data-xov][data-xhot] a[href] img{filter:none!important;transform:scale(1)!important}main[data-xhome] [data-xov][data-xhot] a[href]>:first-child::after{opacity:0}',
-    '@media(hover:none){main[data-xhome] [data-xov] a[href] img{filter:contrast(.9) saturate(.9)!important;transform:none!important}main[data-xhome] [data-xov] a[href]>:first-child::after{opacity:.5}}',
-    '@media(max-width:809px){.x-ov{font-size:11px;padding:0 12px}.x-ov-r{gap:8px}}',
     // every text of the site in the tones of the MARTAMON wordmark (see paintInk)
     // negative/positive type everywhere: Framer's root box isolated the page, so a blended text had nothing behind it; it no longer does.
     // Sticky boxes are layers of their own, so there the whole box carries the blend; elsewhere the text itself does.
@@ -912,14 +899,8 @@
   addEventListener('pointermove', function (e) {
     var m = pageKey() === 'home' && document.querySelector('main[data-xhome]');
     if (!m || e.pointerType === 'touch') return;
-    var hit = homeCardAt(e.clientX, e.clientY), c = hit ? 'pointer' : 'default';
+    var c = homeCardAt(e.clientX, e.clientY) ? 'pointer' : 'default';
     if (m.style.cursor !== c) m.style.cursor = c;
-    /* the card under the pointer comes into focus (and on some cards its words scramble into place) */
-    var card = hit && hit.closest('[data-xhi]'), prev = m.querySelector('[data-xhot]');
-    if (card !== prev) {
-      if (prev) prev.removeAttribute('data-xhot');
-      if (card) card.setAttribute('data-xhot', '');
-    }
   }, { passive: true });
 
   function ensureYoutube(m) {
@@ -1708,39 +1689,6 @@
     }
   }
   // ---- home: project captions under the thumbnails
-  // ---- home cards in the manner of nolan-barret.framer.website: the project name and its type / year written over the picture
-  // (white, small mono, across the middle), the picture slightly out of focus until the pointer is on it, and on some cards the
-  // words scramble into place on hover
-  var PROJ_META = { 'ayeaye': ['TFG Editorial design & photography', '2023 - 2024'], 'china': ['Art Direction, Photography', '2025'], 'djone': ['Art direction, Photography', '2025'],
-    'greece': ['Photography', '2026'], 'lexus-singapore': ['Ai generative and retoucher', '2025'], 'nothing-to-see-here': ['Art direction, Ai image generative', '2025'],
-    'pedrapas': ['Brand identity', '2024'], 'portugal': ['Photography', '2024'], 'schweppes': ['Ai generative and retoucher', '2026'], 'soapglory': ['Ai generative and retoucher', '2025-2026'],
-    'soidades-de-onte': ['Art direction, Ai image generative', '2025'], 'studio-girls': ['Photography', '2023'] };
-  var SCR = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_/·';
-  function scramble(el) {
-    var fin = el.textContent; if (!fin || el.__scr) return; el.__scr = 1;
-    var t0 = performance.now(), dur = 520 + fin.length * 14;
-    var step = function (now) {
-      var p = Math.min(1, (now - t0) / dur), out = '';
-      for (var i = 0; i < fin.length; i++) { var c = fin[i]; out += (c === ' ' || i / fin.length < p * 1.15 - 0.15) ? c : SCR[(Math.random() * SCR.length) | 0]; }
-      el.textContent = p < 1 ? out : fin;
-      if (p < 1) requestAnimationFrame(step); else el.__scr = 0;
-    };
-    requestAnimationFrame(step);
-  }
-  function homeTitles(on) {
-    if (!on) return;
-    var cards = document.querySelectorAll('main[data-xhome] [data-xhi]');
-    for (var i = 0; i < cards.length; i++) {
-      var a = cards[i].querySelector('a[href^="./"]'), pic = a && a.firstElementChild; if (!pic || pic.querySelector(':scope > .x-ov')) continue;
-      var slug = a.getAttribute('href').slice(2), cap = cards[i].querySelector('[data-xcap]'), name = cap ? cap.textContent.trim() : slug, mt = PROJ_META[slug] || ['', ''];
-      if (getComputedStyle(pic).position === 'static') pic.style.position = 'relative';
-      var ov = document.createElement('div'); ov.className = 'x-ov'; ov.setAttribute('aria-hidden', 'true');
-      ov.innerHTML = '<span class="x-ov-l"></span><span class="x-ov-r"><i></i><b></b></span>';
-      ov.querySelector('.x-ov-l').textContent = name; ov.querySelector('.x-ov-r i').textContent = mt[0]; ov.querySelector('.x-ov-r b').textContent = mt[1];
-      pic.appendChild(ov); setAttr(cards[i], 'data-xov', '');
-      if (i % 3 !== 1) cards[i].__xscr = true;   /* some cards: the words scramble into place when the pointer arrives */
-    }
-  }
   function styleCaptions(on) {
     var old = document.querySelectorAll('[data-xcap]'), i;
     if (!on) { for (i = 0; i < old.length; i++) old[i].removeAttribute('data-xcap'); return; }
@@ -2254,7 +2202,6 @@
     ensureVideoFade(p === 'about');
     styleMenu();
     styleCaptions(p === 'home');
-    try { homeTitles(p === 'home'); } catch (er) {}
     applyHome(p === 'home');
     setupTilt(p === 'contact');
     if (p === 'about') aboutHead();
