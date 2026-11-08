@@ -1384,7 +1384,12 @@
       try { e.releasePointerCapture(ev.pointerId); } catch (err) {}
       JF.vx = Math.max(-500, Math.min(500, JF.vx)); JF.vy = Math.max(-500, Math.min(500, JF.vy));
       if (Math.abs(JF.vx) > 60) JF.dir = JF.vx > 0 ? 1 : -1;
-      if (JF.walk) { JF.vx = 0; JF.vy = 0; JF.tx = JF.x; JF.wp = 1.2; }      // at the bottom of the page it is simply let go: it drops straight down and stays where it lands
+      if (JF.walk) {
+        JF.vx = 0; JF.vy = 0; JF.tx = JF.x; JF.wp = 1.2;
+        var lifted = (JF.fl || innerHeight - JF.h * 0.55) - JF.y > 30;
+        /* let go high up (a drag, not a tap): it hangs there a moment, then drops off to sleep the way it does on Contact */
+        if (lifted && ev.type === 'pointerup' && Math.hypot(ev.clientX - JF.dx0, ev.clientY - JF.dy0) >= 8) { JF.act = { n: 'sleep', d: 5.4, t: 0, gone: false, hold: 1.1 }; JF.last_act = 'sleep'; }
+      }
       JF.pulse = 0.6; JF.since = 1;
       // a tap (not a drag) makes it react, in a different way each time
       // a double tap/click (not a drag) makes it react, in a different way each time
@@ -1497,6 +1502,10 @@
       // little on its side and dozes, breathing; when it wakes it pushes off upwards and swims on
       if (a.t > a.d) { JF.act = null; JF.vy = -260; JF.pulse = 0.1; return; }
       var floor = JF.walk && JF.fl ? JF.fl : innerHeight - JF.h * 0.55;
+      if (a.hold > 0) {   /* hanging where it was let go: eyes open, a gentle bob, then it nods off and falls */
+        a.hold -= dt; JF.vx *= Math.exp(-6 * dt); JF.vy = 0; JF.y += Math.sin(a.t * 5) * 0.25; JF.rot = Math.sin(a.t * 3) * 4; JF.fo = a.hold < 0.35 ? 9 : -1;
+        return;
+      }
       JF.fo = 9; JF.vx *= Math.exp(-3 * dt);
       if (!a.landed) {
         JF.vy += 1500 * dt; JF.y += JF.vy * dt; JF.x += JF.vx * dt;
@@ -1550,7 +1559,7 @@
       if (!JF.ftT || now - JF.ftT > 250 || scrollY !== JF.ftY) {
         JF.ftT = now; JF.ftY = scrollY; JF.ftop = JF.fe ? JF.fe.getBoundingClientRect().top : document.documentElement.scrollHeight - scrollY - 140;
         /* never in the way of a link: near one, taps go through the creature */
-        var dr = JF.el.getBoundingClientRect(), near = false, ls = document.querySelectorAll('a[data-xl],footer a,section a');
+        var dr = JF.el.getBoundingClientRect(), near = false, ls = document.querySelectorAll('a[data-xpn],a[data-xl]');
         for (var li = 0; li < ls.length && !near; li++) { var lr = ls[li].getBoundingClientRect(); if (lr.width && lr.right > dr.left - 30 && lr.left < dr.right + 30 && lr.bottom > dr.top - 30 && lr.top < dr.bottom + 30) near = true; }
         if (near !== JF.el.classList.contains('x-thru')) JF.el.classList.toggle('x-thru', near);
       }   /* measured a few times a second (or on scroll), not every frame
