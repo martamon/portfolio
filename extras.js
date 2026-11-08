@@ -375,6 +375,16 @@
     'main[data-xhome] [data-xhi] a[href] div,main[data-xhome] [data-xhi] a[href] figure{width:100%!important;max-width:none!important;height:auto!important}main[data-xhome] [data-xhi] a[href] img{width:100%!important;max-width:100%!important;height:auto!important;object-fit:cover}',
     // all running text justified
     'html main[data-xm] [data-framer-name="Info"] p,html main[data-xm]~section p,html main[data-xm]~* footer p,html[data-xp="about"] [data-framer-name="Caption"] p,.x-ct-text{text-align:justify!important;text-justify:inter-word;text-align-last:left}',
+    // visual clean-up: calmer running text (less tracking, more leading, hyphenated so the justified lines have no rivers), lighter titles,
+    // fewer floating bits on small screens
+    'main[data-xm] [data-framer-name="Project Type"] p,main[data-xm] [data-framer-name="Year Completed"] p,main[data-xm] [data-framer-name="Project Writeup"] p,html[data-xp="about"] [data-framer-name="Caption"] p{letter-spacing:.015em!important;word-spacing:-.04em;line-height:1.6em!important;hyphens:auto;-webkit-hyphens:auto;hyphenate-limit-chars:6 3 3}',
+    'main[data-xm] [data-framer-name="Project Writeup"] p+p{margin-top:.9em!important}',
+    'main[data-xm] [data-framer-name="Project Title"] p{font-weight:600!important;letter-spacing:-.03em!important}',
+    'main[data-xm] [data-framer-name="Project Type & Year"]{padding-bottom:16px!important;margin-bottom:6px}',
+    '.x-toggle button{opacity:.28}.x-toggle button[aria-pressed="true"]{opacity:.9}',
+    // narrow columns: justified mono text leaves holes between the words, so there it is set ragged (flush left)
+    '@media(max-width:809px){main[data-xm] [data-framer-name="Project Writeup"] p,html[data-xp="about"] [data-framer-name="Caption"] p,.x-ct-text{text-align:left!important}}',
+    '@media(max-width:809px){.x-dial{display:none!important}.x-lang{bottom:14px!important}.x-dn{bottom:13px!important}}',
     // every text of the site in the tones of the MARTAMON wordmark (see paintInk)
     // negative/positive type everywhere: Framer's root box isolated the page, so a blended text had nothing behind it; it no longer does.
     // Sticky boxes are layers of their own, so there the whole box carries the blend; elsewhere the text itself does.
