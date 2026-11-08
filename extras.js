@@ -388,18 +388,11 @@
     '@media(max-width:809px){main[data-xm] [data-framer-name="Project Writeup"] p,html[data-xp="about"] [data-framer-name="Caption"] p,.x-ct-text{text-align:left!important}}',
     '@media(max-width:809px){.x-dial{display:none!important}.x-lang{bottom:14px!important}.x-dn{bottom:13px!important}}',
     // home cards (see homeTitles)
-    '.x-ov{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);z-index:3;display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:0 20px;pointer-events:none;color:#fff;font:500 13px/1.2 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.05em;text-transform:uppercase;text-shadow:0 1px 2px rgba(0,0,0,.35),0 0 18px rgba(0,0,0,.25)}',
+    '.x-ov{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);z-index:3;display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:0 18px;pointer-events:none;color:#fff;font:500 12px/1.2 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.04em;text-transform:uppercase;text-shadow:0 1px 10px rgba(0,0,0,.18)}',
     '.x-ov-r{display:flex;gap:14px;text-align:right}.x-ov i,.x-ov b{font-style:normal;font-weight:500}',
-    // on hover the line of text slides out to one side and comes back in from the other
-    '@keyframes x-ovslide{0%{transform:translate(0,-50%);opacity:1}42%{transform:translate(55%,-50%);opacity:0}43%{transform:translate(-55%,-50%);opacity:0}100%{transform:translate(0,-50%);opacity:1}}',
-    '[data-xhot] .x-ov{animation:x-ovslide 1.15s cubic-bezier(.65,0,.25,1) both}',
-    'main[data-xhome] [data-xov] [data-xcap]{display:none!important}',
-    // the picture under a frosted, low-contrast film (like plastic) until the pointer is on it
-    'main[data-xhome] [data-xov] a[href]>:first-child::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(180deg,rgba(235,240,245,.22),rgba(215,225,235,.16));transition:opacity .8s cubic-bezier(.22,.8,.24,1)}',
-    'main[data-xhome] [data-xov] a[href] img{filter:blur(5px) contrast(.78) saturate(.75) brightness(1.06)!important;transform:scale(1.03)!important;transition:filter .9s cubic-bezier(.22,.8,.24,1),transform 1.1s cubic-bezier(.22,.8,.24,1)!important}',
-    'main[data-xhome] [data-xov][data-xhot] a[href] img{filter:none!important;transform:scale(1)!important}main[data-xhome] [data-xov][data-xhot] a[href]>:first-child::after{opacity:0}',
-    '@media(hover:none){main[data-xhome] [data-xov] a[href] img{filter:contrast(.9) saturate(.9)!important;transform:none!important}main[data-xhome] [data-xov] a[href]>:first-child::after{opacity:.5}}',
-    '@media(max-width:809px){.x-ov{font-size:11px;padding:0 12px}.x-ov-r{gap:8px}}',
+    'main[data-xhome] [data-xcap]{font-size:11px!important;font-weight:500!important;letter-spacing:.05em!important;margin-top:2px}',
+    '@media(hover:hover) and (pointer:fine){main[data-xhome] [data-xov] a[href] img{filter:blur(2px)!important;transform:scale(1.015)!important;transition:filter .7s cubic-bezier(.22,.8,.24,1),transform .9s cubic-bezier(.22,.8,.24,1)!important}main[data-xhome] [data-xov][data-xhot] a[href] img{filter:blur(0)!important;transform:scale(1)!important}}',
+    '@media(max-width:809px){.x-ov{font-size:10.5px;padding:0 12px}.x-ov-r{gap:8px}}',
     // every text of the site in the tones of the MARTAMON wordmark (see paintInk)
     // negative/positive type everywhere: Framer's root box isolated the page, so a blended text had nothing behind it; it no longer does.
     // Sticky boxes are layers of their own, so there the whole box carries the blend; elsewhere the text itself does.
@@ -918,7 +911,7 @@
     var card = hit && hit.closest('[data-xhi]'), prev = m.querySelector('[data-xhot]');
     if (card !== prev) {
       if (prev) prev.removeAttribute('data-xhot');
-      if (card) card.setAttribute('data-xhot', '');
+      if (card) { card.setAttribute('data-xhot', ''); if (card.__xscr) { var ss = card.querySelectorAll('.x-ov-l,.x-ov-r i,.x-ov-r b'); for (var k = 0; k < ss.length; k++) scramble(ss[k]); } }
     }
   }, { passive: true });
 
