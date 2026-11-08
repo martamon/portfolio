@@ -146,6 +146,8 @@
     'main[data-gal="hz"]>:not([data-xg]) [data-framer-name="Title, Project Type & Year"]{flex:0 0 34%!important;width:34%!important}',
     'main[data-gal="hz"]>:not([data-xg]) [data-framer-name="Project Writeup"]{flex:1 1 0!important;width:auto!important;max-width:none!important}',
     'html main[data-gal="hz"] [data-xg]{top:var(--xit,200px)!important;height:calc(100vh - var(--xit,200px))!important;width:100%!important;padding:44px 20px 0!important;box-sizing:border-box}}',
+    // scroll reveal: each picture rises and fades in as it enters the stage from the right; they ease back out on the left
+    'main[data-gal="hz"] [data-xg]>:not(.x-toggle){opacity:var(--xo,1);transform:translate3d(var(--xhx,0px),var(--xry,0px),0) scale(var(--xrs,1))!important;transform-origin:50% 100%}',
     'html main[data-gal="hz"] [data-xg]>:not(.x-toggle){height:var(--xih,60vh)!important}',
     'main[data-gal="hz"] [data-xg]{position:sticky!important;top:0!important;flex:none!important;height:100vh!important;width:var(--xgw,100%)!important;max-width:none!important;overflow:hidden;display:flex!important;flex-direction:row!important;align-items:flex-start!important;justify-content:flex-start!important;gap:0!important;padding:0!important;margin:0!important}',
     'main[data-gal="hz"] [data-xg]>.x-toggle{position:absolute!important;top:6px;right:20px;width:auto!important;z-index:5;height:32px!important}',
@@ -431,7 +433,7 @@
   function hzOff(m) {
     if (!m || !m.hasAttribute('data-gal') || m.getAttribute('data-gal') !== 'hz') { if (m && m.getAttribute('data-gal') === 'hz') m.removeAttribute('data-gal'); return; }
     m.removeAttribute('data-gal'); m.style.removeProperty('--xhh');
-    var g = HZ.g; if (g) { g.style.removeProperty('--xgw'); g.style.removeProperty('--xhx'); var k = items(g); for (var i = 0; i < k.length; i++) k[i].style.removeProperty('--r'); }
+    var g = HZ.g; if (g) { g.style.removeProperty('--xgw'); g.style.removeProperty('--xhx'); var k = items(g); for (var i = 0; i < k.length; i++) { k[i].style.removeProperty('--r'); k[i].style.removeProperty('--xo'); k[i].style.removeProperty('--xry'); k[i].style.removeProperty('--xrs'); } }
     HZ.m = HZ.g = null;
   }
   function hzOn(m, g) {
@@ -443,18 +445,20 @@
     if (!col) { for (var z = 0; z < m.children.length; z++) if (m.children[z] !== g) infoH += m.children[z].offsetHeight; g.style.setProperty('--xit', Math.max(120, Math.round(infoH)) + 'px'); }
     var gOff = 0;
     if (col) for (var q = 0; q < m.children.length && m.children[q] !== g; q++) gOff += m.children[q].offsetHeight;
-    var ah = col ? Math.min(vh * 0.6, 680) : Math.max(260, vh - infoH - 140), ih = Math.round(Math.min(ah, 800)), its = items(g), total = 0, i;
+    var ah = col ? Math.min(vh * 0.6, 680) : Math.max(260, vh - infoH - 118), ih = Math.round(Math.min(ah + 26, 840)), its = items(g), total = 0, i;
     /* the pictures are not tidied into a row: each has its own size, sits higher or lower and has its own space around it */
-    var SC = [1, .86, 1, .8, 1, .9, .74, 1], YF = [1, 0, 1, .5, 0, 1, .5, 1], GP = [120, 90, 160, 110, 90, 150, 100, 180];   /* big, then smaller; the small ones alternate high / low / centred like a hung exhibition */
+    var SC = [1, .84, 1, .72, .92, 1, .78, 1], YF = [1, 0, 1, 1, 0, 1, 0, 1], GP = [56, 44, 70, 38, 60, 48, 66, 40];   /* big, then smaller; the small ones alternate high / low / centred like a hung exhibition */
     for (i = 0; i < its.length; i++) {
       var r = parseFloat(its[i].getAttribute('data-r')) || knownRatio(its[i]) || 1;
       if (its[i].hasAttribute('data-x') || its[i].classList.contains('x-si')) r = parseFloat(its[i].getAttribute('data-r')) || r;
       var hh = col ? ih : Math.round(ih * SC[i % SC.length]), w = hh / r; if (w > gw * 0.9) { w = gw * 0.9; hh = w * r; }
       var ml = i ? (col ? 14 : GP[i % GP.length]) : 0, mt = col ? 0 : Math.round(Math.max(0, ih - hh) * YF[i % YF.length]);
+      if (!col && i > 0 && YF[i % YF.length] === 1) mt += Math.max(0, Math.round(vh - infoH - 44 - ih));   /* these sit right on the lower edge of the screen, no space under them */
       its[i].style.setProperty('--xih', Math.round(hh) + 'px'); its[i].style.setProperty('--r', String(hh / w));
       its[i].style.setProperty('--xml', ml + 'px'); its[i].style.setProperty('--xmt', mt + 'px');
-      total += w + ml;
+      its[i].__hx = total + ml; its[i].__hw = w; total += w + ml;
     }
+    HZ.its = its;
     HZ.total = total; HZ.gw = gw; HZ.gOff = gOff;
     g.style.setProperty('--xgw', gw + 'px');
     m.style.setProperty('--xhh', Math.round(gOff + vh + Math.max(0, total - gw) + 60) + 'px');
@@ -466,7 +470,17 @@
   function hzScroll() {
     var m = HZ.m, g = HZ.g; if (!m || !g || m.getAttribute('data-gal') !== 'hz') return;
     var top = m.getBoundingClientRect().top, run = Math.max(1, m.offsetHeight - HZ.gOff - innerHeight), p = Math.max(0, Math.min(1, (-top - HZ.gOff) / run));
-    g.style.setProperty('--xhx', (-p * Math.max(0, HZ.total - HZ.gw)).toFixed(1) + 'px');
+    var sx = p * Math.max(0, HZ.total - HZ.gw);
+    g.style.setProperty('--xhx', (-sx).toFixed(1) + 'px');
+    /* reveal: where a picture is on the stage (0 = just entering at the right, 1 = well inside) */
+    var its = HZ.its || [];
+    for (var i = 0; i < its.length; i++) {
+      var left = its[i].__hx - sx, t = Math.max(0, Math.min(1, (HZ.gw - left) / (HZ.gw * 0.32)));
+      var e = 1 - Math.pow(1 - t, 3);
+      its[i].style.setProperty('--xo', (0.15 + 0.85 * e).toFixed(3));
+      its[i].style.setProperty('--xry', ((1 - e) * 70).toFixed(1) + 'px');
+      its[i].style.setProperty('--xrs', (0.94 + 0.06 * e).toFixed(3));
+    }
   }
   addEventListener('scroll', function () { if (!HZ.raf && HZ.m) HZ.raf = requestAnimationFrame(function () { HZ.raf = 0; hzScroll(); }); }, { passive: true });
   addEventListener('resize', function () { if (HZ.m && HZ.g) { if (innerWidth < 811) { hzOff(HZ.m); schedule(); } else hzOn(HZ.m, HZ.g); } else if (innerWidth >= 811) schedule(); });
