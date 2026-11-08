@@ -461,6 +461,7 @@
     mode = m;
     try { localStorage.setItem('gallery-view', m); } catch (e) {}
     apply();
+    if (m === 'grid' && m !== was && scrollY > 0) { try { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); } catch (er) { window.scrollTo(0, 0); } }   /* the grid starts at the top; the pictures fly there from where they were */
     if (m === was || !its0.length || !its0[0].animate || matchMedia('(prefers-reduced-motion:reduce)').matches) return;
     var sy1 = scrollY, n = its0.length, grid = m === 'grid';
     for (i = 0; i < n; i++) {
