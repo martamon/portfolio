@@ -380,11 +380,12 @@
     'html [data-framer-root]{isolation:auto!important}',
     'html main[data-xm] [data-framer-name="Info"]{mix-blend-mode:difference!important;isolation:auto!important}',
     'html main[data-xm] [data-framer-name="Info"] *{color:var(--xink,#fff)!important;mix-blend-mode:normal!important}html main[data-xm] [data-framer-name="Info"] [data-framer-name="Project Type & Year"]{border-bottom-color:var(--xink,#fff)}',
-    'html [data-xcap]{color:var(--xink,#fff)!important;mix-blend-mode:difference}',
-    'html main[data-xm]~section a,html main[data-xm]~section p,html main[data-xm]~section span,html main[data-xm]~*:not(.x-yt) footer a,html main[data-xm]~*:not(.x-yt) footer p,html main[data-xm]~*:not(.x-yt) footer span{color:var(--xinkb,#fff)!important;mix-blend-mode:difference}',
-    '.x-contact{color:var(--xink,#fff)!important;mix-blend-mode:difference}',
-    'html footer a,html footer p,html footer span{color:var(--xinkb,#fff)!important;opacity:1!important;mix-blend-mode:difference}html [data-xmore],html [data-xmore] *{color:var(--xinkb,#fff)!important;opacity:1!important}',
-    'html [class*="rolling-text"],html [class*="rolling-text"] *{color:var(--xinkb)!important;--text:var(--xinkb)!important}html a[data-framer-name="Primary"],html a[data-framer-name="Primary"] *{border-color:var(--xtoneb)!important}',
+    // the captions under the home pictures sit in cards that isolate them, so a blend has nothing to invert: plain, high-contrast type instead
+    'html [data-xcap]{color:var(--xfg,#1b1b1b)!important;mix-blend-mode:normal!important;opacity:1!important;font-weight:600!important}',
+    'html main[data-xm]~section a,html main[data-xm]~section p,html main[data-xm]~section span,html main[data-xm]~*:not(.x-yt) footer a,html main[data-xm]~*:not(.x-yt) footer p,html main[data-xm]~*:not(.x-yt) footer span{color:var(--xfg,#1b1b1b)!important;mix-blend-mode:normal!important}',
+    '.x-contact{color:var(--xfg,#1b1b1b)!important;mix-blend-mode:normal!important}',
+    'html footer a,html footer p,html footer span{color:var(--xfg,#1b1b1b)!important;opacity:1!important;mix-blend-mode:normal!important}html [data-xmore],html [data-xmore] *{color:var(--xinkb,#fff)!important;opacity:1!important}',
+    'html [class*="rolling-text"],html [class*="rolling-text"] *{color:var(--xinkb,#fff)!important;--text:var(--xinkb,#fff)!important}html a[data-framer-name="Primary"],html a[data-framer-name="Primary"] *{border-color:var(--xtoneb)!important}',
     // negative/positive in every tone: menu, clock, languages and About always blend, with the worked-out colour
     'html [data-xnc],html[data-xdusk] [data-xnc]{mix-blend-mode:difference!important}html [data-xn],html[data-xdusk] [data-xn],html[data-xnight] [data-xn]{color:var(--xink,#fff)!important}',
     'html .x-dial,html[data-xdusk] .x-dial,html[data-xnight] .x-dial{mix-blend-mode:difference!important;color:var(--xinkb,#fff)!important;opacity:1!important}',
