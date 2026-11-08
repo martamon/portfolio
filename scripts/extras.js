@@ -452,10 +452,28 @@
     for (var i = 0; i < list.length; i++) list[i].parentNode.removeChild(list[i]);
   }
 
+  // switching between the single view and the grid (after nolan-barret.framer.website/playground): every picture glides from where it
+  // was to where it goes, one after another, with a long ease
   function setMode(m) {
+    var g0 = null, mm = mainEl(), its0 = [], r0 = [], sy0 = scrollY, i;
+    if (mm && (g0 = galleryEl(mm))) { its0 = items(g0); for (i = 0; i < its0.length; i++) r0.push(its0[i].getBoundingClientRect()); }
+    var was = mode;
     mode = m;
     try { localStorage.setItem('gallery-view', m); } catch (e) {}
     apply();
+    if (m === was || !its0.length || !its0[0].animate || matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+    var sy1 = scrollY, n = its0.length, grid = m === 'grid';
+    for (i = 0; i < n; i++) {
+      var el = its0[i]; if (!el.isConnected) continue;
+      var a1 = el.getBoundingClientRect(), a0 = r0[i];
+      if (!a1.width || !a0.width) continue;
+      var dx = a0.left - a1.left, dy = (a0.top + sy0) - (a1.top + sy1), sx = a0.width / a1.width, sy = a0.height / a1.height;
+      if (Math.abs(dx) < 2 && Math.abs(dy) < 2 && Math.abs(sx - 1) < .02 && Math.abs(sy - 1) < .02) continue;
+      el.style.transformOrigin = '0 0';
+      var an = el.animate([{ translate: dx + 'px ' + dy + 'px', scale: sx + ' ' + sy }, { translate: '0px 0px', scale: '1 1' }],
+        { duration: 1000, delay: Math.min(i, 14) * (grid ? 38 : 30), easing: 'cubic-bezier(.77,0,.18,1)', fill: 'backwards' });
+      an.onfinish = an.oncancel = (function (e) { return function () { e.style.transformOrigin = ''; }; })(el);
+    }
   }
 
   // ---- horizontal single view (see the CSS above)
