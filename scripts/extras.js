@@ -1024,11 +1024,43 @@
        in place of the still cover until the video plays or is started */
     var showAnim = function () {
       if (id !== 'NrxFBp4bl2Q' || p.anim || !el.isConnected) return;
-      var im = new Image(); im.className = 'x-vp-anim'; im.alt = ''; im.decoding = 'async';
-      im.onload = function () { if (p.on) return; p.anim = im; p.st.appendChild(im); el.classList.add('x-anim'); xlog('reel -> moving picture'); };
-      im.src = '/extras/video/inicio-anim.webp?v=1';
+      var fallback = function () {
+        if (p.anim || p.on) return;
+        var im = new Image(); im.className = 'x-vp-anim'; im.alt = ''; im.decoding = 'async';
+        im.onload = function () { if (p.on) return; p.anim = im; p.st.appendChild(im); el.classList.add('x-anim'); xlog('reel -> animated picture'); };
+        im.src = '/extras/video/inicio-anim.webp?v=1';
+      };
+      if (!('VideoDecoder' in window) || !('EncodedVideoChunk' in window)) { fallback(); return; }
+      /* smooth: the browser decodes the clip itself (WebCodecs, frame by frame at the clip's own timing) onto a canvas */
+      p.anim = { stop: function () { this.dead = true; try { if (this.dec && this.dec.state !== 'closed') this.dec.close(); } catch (er) {} (this.q || []).forEach(function (f) { f.close(); }); if (this.cv && this.cv.parentNode) this.cv.parentNode.removeChild(this.cv); } };
+      var A = p.anim; A.q = [];
+      Promise.all([fetch('/extras/video/inicio-loop.json?v=1').then(function (r) { return r.json(); }), fetch('/extras/video/inicio-loop.bin?v=1').then(function (r) { return r.arrayBuffer(); })]).then(function (a) {
+        if (A.dead) return;
+        var m = a[0], bin = new Uint8Array(a[1]), desc = Uint8Array.from(atob(m.desc), function (c) { return c.charCodeAt(0); });
+        var cfg = { codec: m.codec, description: desc, codedWidth: m.w, codedHeight: m.h, optimizeForLatency: true };
+        return VideoDecoder.isConfigSupported(cfg).then(function (sup) {
+          if (A.dead) return;
+          if (!sup || !sup.supported) { p.anim = null; fallback(); return; }
+          var cv = document.createElement('canvas'); cv.className = 'x-vp-anim'; cv.width = m.w; cv.height = m.h; A.cv = cv; var cx = cv.getContext('2d');
+          A.dec = new VideoDecoder({ output: function (f) { if (A.dead) f.close(); else A.q.push(f); }, error: function () { A.stop(); p.anim = null; fallback(); } });
+          A.dec.configure(cfg);
+          var next = 0, loopN = 0, t0 = 0, shown = false, frame = null;
+          var tick = function () {
+            if (A.dead) return; requestAnimationFrame(tick);
+            if (document.hidden) { t0 = 0; return; }
+            while (A.dec.decodeQueueSize < 4 && A.q.length < 8) { var sm = m.s[next]; A.dec.decode(new EncodedVideoChunk({ type: sm[3] ? 'key' : 'delta', timestamp: loopN * m.dur + sm[2], data: bin.subarray(sm[0], sm[0] + sm[1]) })); if (++next >= m.s.length) { next = 0; loopN++; } }
+            var now = performance.now();
+            if (!t0 && A.q.length) t0 = now - A.q[0].timestamp / 1000;
+            var t = (now - t0) * 1000, fresh = false;
+            if (A.q.length && A.q[0].timestamp < t - 300000) { t0 = now - A.q[0].timestamp / 1000; t = A.q[0].timestamp; }
+            while (A.q.length && A.q[0].timestamp <= t) { if (frame) frame.close(); frame = A.q.shift(); fresh = true; }
+            if (fresh && frame) { cx.drawImage(frame, 0, 0); if (!shown) { shown = true; p.st.appendChild(cv); el.classList.add('x-anim'); xlog('reel -> smooth moving picture'); } }
+          };
+          requestAnimationFrame(tick);
+        });
+      }).catch(function () { if (!A.dead) { p.anim = null; fallback(); } });
     };
-    var hideAnim = function () { if (p.anim) { if (p.anim.parentNode) p.anim.parentNode.removeChild(p.anim); p.anim = null; el.classList.remove('x-anim'); } };
+    var hideAnim = function () { if (p.anim) { if (p.anim.stop) p.anim.stop(); else if (p.anim.parentNode) p.anim.parentNode.removeChild(p.anim); p.anim = null; el.classList.remove('x-anim'); } };
     new MutationObserver(function () { if (el.classList.contains('x-blocked') && !el.classList.contains('x-play')) showAnim(); else if (el.classList.contains('x-play')) hideAnim(); }).observe(el, { attributes: true, attributeFilter: ['class'] });
     var big = el.querySelector('.x-vp-big');
     /* computers: over a video that is waiting for a click, the face cursor is swapped for a "Play" label that follows the pointer */
