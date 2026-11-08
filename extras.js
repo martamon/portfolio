@@ -443,9 +443,9 @@
     if (!col) { for (var z = 0; z < m.children.length; z++) if (m.children[z] !== g) infoH += m.children[z].offsetHeight; g.style.setProperty('--xit', Math.max(120, Math.round(infoH)) + 'px'); }
     var gOff = 0;
     if (col) for (var q = 0; q < m.children.length && m.children[q] !== g; q++) gOff += m.children[q].offsetHeight;
-    var ah = col ? Math.min(vh * 0.6, 680) : Math.max(220, vh - infoH - 150), ih = Math.round(Math.min(ah - 20, 720)), its = items(g), total = 0, i;
+    var ah = col ? Math.min(vh * 0.6, 680) : Math.max(260, vh - infoH - 140), ih = Math.round(Math.min(ah, 800)), its = items(g), total = 0, i;
     /* the pictures are not tidied into a row: each has its own size, sits higher or lower and has its own space around it */
-    var SC = [1, 1, .84, 1, 1, .8, 1, .9], YF = [.5, .5, .4, .5, .5, .65, .5, .45], GP = [90, 150, 80, 190, 110, 140, 100, 170];
+    var SC = [1, .86, 1, .8, 1, .9, .74, 1], YF = [1, 0, 1, .5, 0, 1, .5, 1], GP = [120, 90, 160, 110, 90, 150, 100, 180];   /* big, then smaller; the small ones alternate high / low / centred like a hung exhibition */
     for (i = 0; i < its.length; i++) {
       var r = parseFloat(its[i].getAttribute('data-r')) || knownRatio(its[i]) || 1;
       if (its[i].hasAttribute('data-x') || its[i].classList.contains('x-si')) r = parseFloat(its[i].getAttribute('data-r')) || r;
