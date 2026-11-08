@@ -1158,6 +1158,41 @@
   // the videos you upload to /extras/video/ (name.mp4 and, optionally, name.jpg as its cover) play from the site itself instead of YouTube
   var VP_FILE = { 'NSqkOhJESYo': 'soapglory', 'CCBU84Ma-gE': 'schweppes', '6LFyBTCP7ig': 'china', 'NrxFBp4bl2Q': 'inicio', 'dyls5U16TLE': 'portugal' };
   // Safari (and phones) may refuse to start a video without a gesture: the first tap / key / click anywhere starts every autoplaying video that is on screen
+  // ---- one sound at a time, and only when asked for. The sound belongs to the one player whose sound button was pressed (vpOwner);
+  // everything else is held muted: other players of the page, copies left behind in hidden layouts, videos Framer put there itself and
+  // any YouTube frame that is not ours. Players that are no longer on the page are stopped, and two players of the same video are never kept.
+  var vpOwner = null;
+  function vpGuard() {
+    var i, p, seen = {};
+    for (i = vpAll.length - 1; i >= 0; i--) {
+      p = vpAll[i];
+      if (!p.el.isConnected) {   /* gone from the page: silence it for good */
+        try { if (p.v) { p.v.pause(); p.v.removeAttribute('src'); p.v.load(); } if (p.f) { p.f.src = 'about:blank'; } } catch (er) {}
+        if (vpOwner === p) vpOwner = null; vpAll.splice(i, 1); continue;
+      }
+    }
+    for (i = 0; i < vpAll.length; i++) {   /* two live players of one video: only the visible one stays */
+      p = vpAll[i]; var k = p.id, r = p.el.getBoundingClientRect();
+      if (seen[k] && seen[k] !== p) {
+        var q = seen[k], rq = q.el.getBoundingClientRect(), lose = (r.width * r.height > rq.width * rq.height) ? q : p;
+        if (lose === vpOwner) vpOwner = null;
+        try { if (lose.v) { lose.v.pause(); lose.v.muted = true; } if (lose.f) { lose.f.src = 'about:blank'; } lose.el.style.display = 'none'; lose.dead = true; } catch (er) {}
+        seen[k] = lose === p ? q : p;
+      } else seen[k] = p;
+    }
+    for (i = 0; i < vpAll.length; i++) {
+      p = vpAll[i]; if (p.dead) continue;
+      var loud = p === vpOwner && !p.muted;
+      if (!loud) { if (!p.muted && p !== vpOwner) { p.muted = true; try { if (p.paint) p.paint(); } catch (er) {} } if (p.v && !p.v.muted) p.v.muted = true; if (p.f && p.f.__xloud) { vpCmd(p, 'mute'); p.f.__xloud = false; } }
+      else if (p.f) p.f.__xloud = true;
+    }
+    /* videos nobody asked for (Framer's own, copies in other layouts) stay silent and stop; YouTube frames that are not ours are removed */
+    var vs = document.querySelectorAll('video');
+    for (i = 0; i < vs.length; i++) { if (!vs[i].muted && !vs[i].closest('.x-vp')) vs[i].muted = true; }
+    var fr = document.querySelectorAll('iframe[src*="youtube"],iframe[srcdoc*="youtube"]');
+    for (i = 0; i < fr.length; i++) { if (!fr[i].closest('.x-vp')) { try { fr[i].removeAttribute('srcdoc'); fr[i].src = 'about:blank'; } catch (er) {} } }
+  }
+  setInterval(vpGuard, 800);
   var vpGest = function () {
     for (var i = 0; i < vpAll.length; i++) {
       var p = vpAll[i]; if (!p.auto || p.on || !p.el.isConnected) continue;
@@ -1269,10 +1304,10 @@
     if (o.autoplay) { var chk = function () { if (!el.isConnected) return; if (!p.f && !p.v) { setTimeout(chk, 3000); return; } if (!p.loadedAt) { p.loadedAt = 1; setTimeout(chk, 4500); return; } xlog('player ' + id + (p.v ? ' file' : ' youtube') + ' playing=' + p.on); if (!p.on) el.classList.add('x-blocked'); }; setTimeout(chk, 1000); }
     var play = function () { if (!p.f && !p.v) { p.wantPlay = true; make(false); return; } if (p.muted) vpCmd(p, 'mute'); else { vpCmd(p, 'unMute'); vpCmd(p, 'setVolume', [100]); } vpCmd(p, 'playVideo'); [400, 1200, 2500].forEach(function (ms) { setTimeout(function () { if (!p.on) vpCmd(p, 'playVideo'); }, ms); }); };
     var toggle = function () { if (!p.f || !p.on) { p.on = true; el.classList.add('x-play', 'x-seen'); play(); } else { p.on = false; el.classList.remove('x-play'); vpCmd(p, 'pauseVideo'); } paint(); };
-    p.toggle = toggle;
+    p.toggle = toggle; p.paint = paint;
     pp.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); toggle(); });
     p.st.addEventListener('click', function () { if (p.v && !p.on) { var tp = p.v.play(); if (tp && tp.catch) tp.catch(function () {}); return; } if (p.auto) return; toggle(); el.classList.add('x-touch'); clearTimeout(p.tt); p.tt = setTimeout(function () { el.classList.remove('x-touch'); }, 2600); });
-    sd.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); p.muted = !p.muted; if (p.v) { p.v.muted = p.muted; if (!p.muted) { p.v.volume = 1; vpCmd(p, 'playVideo'); } } if (p.f) { if (p.muted) vpCmd(p, 'mute'); else { vpCmd(p, 'unMute'); vpCmd(p, 'setVolume', [100]); } } paint(); });
+    sd.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); p.muted = !p.muted; vpOwner = p.muted ? (vpOwner === p ? null : vpOwner) : p; if (p.v) { p.v.muted = p.muted; if (!p.muted) { p.v.volume = 1; vpCmd(p, 'playVideo'); } } if (p.f) { if (p.muted) vpCmd(p, 'mute'); else { vpCmd(p, 'unMute'); vpCmd(p, 'setVolume', [100]); } } paint(); });
     fs.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); var full = document.fullscreenElement === el || document.webkitFullscreenElement === el; if (full) (document.exitFullscreen || document.webkitExitFullscreen).call(document); else (el.requestFullscreen || el.webkitRequestFullscreen).call(el); });
     var ptr = function (e) { if (e.pointerType !== 'mouse') return; var rc = el.getBoundingClientRect(); el.style.setProperty('--px', Math.max(8, Math.min(rc.width - pp.offsetWidth - 8, e.clientX - rc.left + 16)) + 'px'); el.style.setProperty('--py', Math.max(8, Math.min(rc.height - pp.offsetHeight - 52, e.clientY - rc.top + 16)) + 'px'); el.classList.add('x-ptr'); };
     p.st.addEventListener('pointerenter', ptr); p.st.addEventListener('pointermove', ptr); p.st.addEventListener('pointerleave', function () { el.classList.remove('x-ptr'); });
