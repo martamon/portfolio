@@ -146,9 +146,10 @@
     'main[data-gal="hz"]>:not([data-xg]) [data-framer-name="Title, Project Type & Year"]{flex:0 0 34%!important;width:34%!important}',
     'main[data-gal="hz"]>:not([data-xg]) [data-framer-name="Project Writeup"]{flex:1 1 0!important;width:auto!important;max-width:none!important}',
     'html main[data-gal="hz"] [data-xg]{top:var(--xit,200px)!important;height:calc(100vh - var(--xit,200px))!important;width:100%!important;padding:44px 20px 0!important;box-sizing:border-box}}',
-    'main[data-gal="hz"] [data-xg]{position:sticky!important;top:0!important;flex:none!important;height:100vh!important;width:var(--xgw,100%)!important;max-width:none!important;overflow:hidden;display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:var(--xgap,28px)!important;padding:0!important;margin:0!important}',
+    'html main[data-gal="hz"] [data-xg]>:not(.x-toggle){height:var(--xih,60vh)!important}',
+    'main[data-gal="hz"] [data-xg]{position:sticky!important;top:0!important;flex:none!important;height:100vh!important;width:var(--xgw,100%)!important;max-width:none!important;overflow:hidden;display:flex!important;flex-direction:row!important;align-items:flex-start!important;justify-content:flex-start!important;gap:0!important;padding:0!important;margin:0!important}',
     'main[data-gal="hz"] [data-xg]>.x-toggle{position:absolute!important;top:6px;right:20px;width:auto!important;z-index:5;height:32px!important}',
-    'main[data-gal="hz"] [data-xg]>:not(.x-toggle){flex:none!important;height:var(--xih,60vh)!important;width:auto!important;aspect-ratio:calc(1 / var(--r,1))!important;max-width:none!important;max-height:none!important;margin:0!important;position:relative!important;top:auto!important;left:auto!important;transform:translate3d(var(--xhx,0px),0,0)!important;will-change:transform}',
+    'main[data-gal="hz"] [data-xg]>:not(.x-toggle){flex:none!important;height:var(--xih,60vh)!important;width:auto!important;aspect-ratio:calc(1 / var(--r,1))!important;max-width:none!important;max-height:none!important;margin:var(--xmt,0px) 0 0 var(--xml,0px)!important;position:relative!important;top:auto!important;left:auto!important;transform:translate3d(var(--xhx,0px),0,0)!important;will-change:transform}',
     'main[data-gal="hz"] [data-xg]>:not(.x-toggle)>*{width:100%!important;height:100%!important;max-width:none!important}main[data-gal="hz"] [data-xg]>:not(.x-toggle) img{width:100%!important;height:100%!important;object-fit:cover}',
     // light / dark theme (see "theme" below): --xt is how dark the page is (0..1), --xtt the same for the text, which switches over later, where the dusk background is dark enough for light type
     ':root{--xt:0;--xtt:0;--xtd:0;--xfg:color-mix(in srgb,#1b1b1b calc((1 - var(--xtt)) * 100%),#c2cfe0 calc(var(--xtt) * 100%));--xfg55:color-mix(in srgb,rgba(20,20,20,.55) calc((1 - var(--xtt)) * 100%),rgba(194,207,224,.7) calc(var(--xtt) * 100%))}',
@@ -442,15 +443,20 @@
     if (!col) { for (var z = 0; z < m.children.length; z++) if (m.children[z] !== g) infoH += m.children[z].offsetHeight; g.style.setProperty('--xit', Math.max(120, Math.round(infoH)) + 'px'); }
     var gOff = 0;
     if (col) for (var q = 0; q < m.children.length && m.children[q] !== g; q++) gOff += m.children[q].offsetHeight;
-    var ih = Math.round(col ? Math.min(vh * 0.6, 680) : Math.max(200, Math.min(vh - infoH - 150, 700))), gap = vw < 810 ? 14 : 28, its = items(g), total = 0, i;
+    var ah = col ? Math.min(vh * 0.6, 680) : Math.max(220, vh - infoH - 150), ih = Math.round(Math.min(ah, 720)), its = items(g), total = 0, i;
+    /* the pictures are not tidied into a row: each has its own size, sits higher or lower and has its own space around it */
+    var SC = [1, .68, .86, .6, .94, .72, .82], YF = [0, .6, .22, .95, .08, .55, .3], GP = [70, 130, 170, 96, 150, 110, 190];
     for (i = 0; i < its.length; i++) {
       var r = parseFloat(its[i].getAttribute('data-r')) || knownRatio(its[i]) || 1;
       if (its[i].hasAttribute('data-x') || its[i].classList.contains('x-si')) r = parseFloat(its[i].getAttribute('data-r')) || r;
-      var w = ih / r; if (w > gw * 0.96) { w = gw * 0.96; }
-      its[i].style.setProperty('--r', String(ih / w)); total += w + (i ? gap : 0);
+      var hh = col ? ih : Math.round(ih * SC[i % SC.length]), w = hh / r; if (w > gw * 0.9) { w = gw * 0.9; hh = w * r; }
+      var ml = i ? (col ? 14 : GP[i % GP.length]) : 0, mt = col ? 0 : Math.round(Math.max(0, ih - hh) * YF[i % YF.length]);
+      its[i].style.setProperty('--xih', Math.round(hh) + 'px'); its[i].style.setProperty('--r', String(hh / w));
+      its[i].style.setProperty('--xml', ml + 'px'); its[i].style.setProperty('--xmt', mt + 'px');
+      total += w + ml;
     }
     HZ.total = total; HZ.gw = gw; HZ.gOff = gOff;
-    g.style.setProperty('--xgw', gw + 'px'); g.style.setProperty('--xih', ih + 'px'); g.style.setProperty('--xgap', gap + 'px');
+    g.style.setProperty('--xgw', gw + 'px');
     m.style.setProperty('--xhh', Math.round(gOff + vh + Math.max(0, total - gw) + 60) + 'px');
     if (!m.style.marginLeft) g.style.marginLeft = '0';
     HZ.infoH = infoH;
