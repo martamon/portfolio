@@ -393,7 +393,9 @@
     // on hover the name and the details glide towards each other and meet in the middle (or, on every second card, start together and drift apart)
     '.x-ov-l,.x-ov-r{transition:transform 1.25s cubic-bezier(.65,0,.25,1)!important;will-change:transform}',
     'html main[data-xhome] [data-xhi] a .x-ov[data-m] .x-ov-l,html main[data-xhome] [data-xhi] a .x-ov[data-m] .x-ov-r{transition:transform 1.25s cubic-bezier(.65,0,.25,1)!important}',
-    'html main[data-xhome] [data-xhi][data-xhot] a .x-ov .x-ov-r{transform:translateX(calc(var(--xj,0px) * -1))!important}',
+    // while the pointer is on a card the details drift towards the name and back, slowly and without stopping; leaving lets them settle back in place the same way
+    'html main[data-xhome] [data-xhi][data-xph="1"] a .x-ov .x-ov-r{transform:translateX(calc(var(--xj,0px) * -1))!important}',
+    'html main[data-xhome] [data-xhi] a .x-ov .x-ov-r{transition:transform 1.9s cubic-bezier(.45,0,.55,1)!important}',
     'main[data-xhome] [data-xov] [data-xcap]{visibility:hidden!important}',
     // the pictures are muted (paler colour, lower opacity, no blur, no veil) until the pointer is on them; the layout is untouched
     'main[data-xhome] [data-xov] a[href] img{opacity:.66!important;filter:saturate(.62) contrast(1.08)!important;transition:opacity .8s cubic-bezier(.22,.8,.24,1),filter .8s cubic-bezier(.22,.8,.24,1)!important}',
@@ -528,7 +530,7 @@
     g.style.setProperty('--xhx', (-sx).toFixed(2) + 'px');
     var its = HZ.its || [];
     for (var i = 0; i < its.length; i++) {
-      var left = its[i].__hx - sx, t = Math.max(0, Math.min(1, (HZ.gw - left) / (HZ.gw * 0.55)));
+      var left = its[i].__hx - sx, t = Math.max(0, Math.min(1, (HZ.gw - left) / Math.min(HZ.gw * 0.55, (its[i].__hw || HZ.gw) * 0.85)));   /* the last picture ends flush with the stage edge: its reveal must be complete by then */
       var e = t * t * t * (t * (t * 6 - 15) + 10), kk = i % 3, st = its[i].style, inv = 1 - e;   /* smootherstep: no kick at either end */
       st.setProperty('--xo', Math.min(1, e * 2.2).toFixed(3));
       st.setProperty('--xry', (kk === 1 ? 0 : inv * 120).toFixed(2) + 'px');
@@ -912,6 +914,11 @@
     e.preventDefault(); e.stopImmediatePropagation();
     goPage(a.href);
   }, true);
+  function hotOn(c) {
+    c.setAttribute('data-xhot', ''); c.setAttribute('data-xph', '1');
+    clearInterval(c.__xhi); c.__xhi = setInterval(function () { c.setAttribute('data-xph', c.getAttribute('data-xph') === '1' ? '0' : '1'); }, 2100);
+  }
+  function hotOff(c) { clearInterval(c.__xhi); c.removeAttribute('data-xhot'); c.removeAttribute('data-xph'); }
   addEventListener('pointermove', function (e) {
     var m = pageKey() === 'home' && document.querySelector('main[data-xhome]');
     if (!m || e.pointerType === 'touch') return;
@@ -921,9 +928,9 @@
     var card = hit && hit.closest('[data-xhi]'), prev = m.querySelector('[data-xhot]');
     if (card) { clearTimeout(m.__xhT); m.__xhT = 0; }
     if (card !== prev) {
-      if (!card) { if (!m.__xhT) m.__xhT = setTimeout(function () { m.__xhT = 0; var q = m.querySelector('[data-xhot]'); if (q) q.removeAttribute('data-xhot'); }, 160); return; }
-      if (prev) prev.removeAttribute('data-xhot');
-      card.setAttribute('data-xhot', '');
+      if (!card) { if (!m.__xhT) m.__xhT = setTimeout(function () { m.__xhT = 0; var q = m.querySelector('[data-xhot]'); if (q) hotOff(q); }, 160); return; }
+      if (prev) hotOff(prev);
+      hotOn(card);
     }
   }, { passive: true });
 
