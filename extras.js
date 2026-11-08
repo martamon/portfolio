@@ -673,6 +673,16 @@
         for (k = 0; k < cols; k++) heights[k] = top0 + fh + gap;
         continue;
       }
+      if (!narrow && cols >= 3 && !rowFlow && cr < 1 && (c.querySelector('.x-vp') || c.classList.contains('x-insta'))) {   /* wide screens: a horizontal video takes two columns, so it is never small */
+        var c0 = heights[0] + 0 <= heights[2] ? 0 : 1, bw = 2 * colW + gap, hv = Math.round(bw * cr);
+        var cand = [0, 1].map(function (q) { return Math.max(heights[q], heights[q + 1]); });
+        c0 = cand[0] <= cand[1] ? 0 : 1;
+        var ty = cand[c0];
+        c.style.setProperty('--mx', (pad + c0 * (colW + gap)) + 'px'); c.style.setProperty('--my', (top + ty) + 'px');
+        c.style.setProperty('--mw', bw + 'px'); c.style.setProperty('--gh', hv + 'px');
+        heights[c0] = heights[c0 + 1] = ty + hv + gap;
+        continue;
+      }
       var r = parseFloat(c.getAttribute('data-r')) || 1, h = Math.round(colW * r), col = 0;
       if (rowFlow) {     /* Schweppes: the pictures fill each row from the left, so the last row is never left with a hole in the middle */
         if (rowCol === 0) rowTop = Math.max.apply(null, heights);
