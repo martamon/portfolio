@@ -390,14 +390,17 @@
     // home cards (see homeTitles)
     '.x-ov{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);z-index:3;display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:0 20px;pointer-events:none;color:#fff;font:500 13px/1.2 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.05em;text-transform:uppercase;text-shadow:0 1px 2px rgba(0,0,0,.35),0 0 18px rgba(0,0,0,.25)}',
     '.x-ov-l{flex:0 1 auto;max-width:42%}.x-ov-r{display:flex;gap:12px;text-align:right;justify-content:flex-end;flex:0 1 58%}.x-ov i,.x-ov b{font-style:normal;font-weight:500}.x-ov b{white-space:nowrap}',
-    // on hover the line of text slides out to one side and comes back in from the other
-    '@keyframes x-ovslide{0%{transform:translate(0,-50%);opacity:1}42%{transform:translate(55%,-50%);opacity:0}43%{transform:translate(-55%,-50%);opacity:0}100%{transform:translate(0,-50%);opacity:1}}',
-    '[data-xhot] .x-ov{animation:x-ovslide 1.15s cubic-bezier(.65,0,.25,1) both}',
+    // on hover the name and the details glide towards each other and meet in the middle (or, on every second card, start together and drift apart)
+    '.x-ov-l,.x-ov-r{transition:transform 1.25s cubic-bezier(.65,0,.25,1)!important;will-change:transform}',
+    'html main[data-xhome] [data-xhi] a .x-ov[data-m] .x-ov-l,html main[data-xhome] [data-xhi] a .x-ov[data-m] .x-ov-r{transition:transform 1.25s cubic-bezier(.65,0,.25,1)!important}',
+    'html main[data-xhome] [data-xhi] a .x-ov[data-m="split"] .x-ov-l{transform:translateX(var(--xj,0px))!important}html main[data-xhome] [data-xhi] a .x-ov[data-m="split"] .x-ov-r{transform:translateX(calc(var(--xj,0px) * -1))!important}',
+    'html main[data-xhome] [data-xhi][data-xhot] a .x-ov[data-m="join"] .x-ov-l{transform:translateX(var(--xj,0px))!important}html main[data-xhome] [data-xhi][data-xhot] a .x-ov[data-m="join"] .x-ov-r{transform:translateX(calc(var(--xj,0px) * -1))!important}',
+    'html main[data-xhome] [data-xhi][data-xhot] a .x-ov[data-m="split"] .x-ov-l,html main[data-xhome] [data-xhi][data-xhot] a .x-ov[data-m="split"] .x-ov-r{transform:none!important}',
     'main[data-xhome] [data-xov] [data-xcap]{visibility:hidden!important}',
     // the pictures are muted (paler colour, lower opacity, no blur, no veil) until the pointer is on them; the layout is untouched
-    'main[data-xhome] [data-xov] a[href] img{opacity:.42!important;filter:saturate(.5) contrast(.9)!important;transition:opacity .8s cubic-bezier(.22,.8,.24,1),filter .8s cubic-bezier(.22,.8,.24,1)!important}',
+    'main[data-xhome] [data-xov] a[href] img{opacity:.66!important;filter:saturate(.62) contrast(1.08)!important;transition:opacity .8s cubic-bezier(.22,.8,.24,1),filter .8s cubic-bezier(.22,.8,.24,1)!important}',
     'main[data-xhome] [data-xov][data-xhot] a[href] img{opacity:1!important;filter:none!important}',
-    '@media(hover:none){main[data-xhome] [data-xov] a[href] img{opacity:.85!important;filter:saturate(.8)!important}}',
+    '@media(hover:none){main[data-xhome] [data-xov] a[href] img{opacity:.9!important;filter:saturate(.85) contrast(1.05)!important}}',
     '@media(max-width:809px){.x-ov{font-size:11px;padding:0 12px}.x-ov-r{gap:8px}}',
     // every text of the site in the tones of the MARTAMON wordmark (see paintInk)
     // negative/positive type everywhere: Framer's root box isolated the page, so a blended text had nothing behind it; it no longer does.
@@ -760,7 +763,7 @@
       }
       var G = m.__xg, tracks = [];
       // same rhythm as the project galleries: 12px between columns, 18px between rows (room for the captions), the page's own side padding
-      var cols = G.cols, gap = 12, rowGap = 18, padL = G.padL, padR = G.padR, padT = G.padT, padB = G.padB;
+      var cols = G.cols, gap = 12, rowGap = 12, padL = G.padL, padR = G.padR, padT = G.padT, padB = G.padB;
       var colW = Math.floor((Math.min(m.clientWidth, innerWidth) - padL - padR - gap * (cols - 1)) / cols);
       var kids = [], heights = [];
       // the cards may sit inside wrappers that have no box of their own (display: contents)
@@ -780,6 +783,9 @@
       for (j = 0; j < kids.length; j++) {
         var cap = kids[j].querySelector('[data-xcap]'), hh = kids[j].offsetHeight;
         if (cap) hh = Math.min(hh, Math.round(cap.getBoundingClientRect().bottom - kids[j].getBoundingClientRect().top));
+        /* the captions are gone (the titles are on the pictures): a card is just its picture, so the space between rows can equal the space between columns */
+        var pc = kids[j].querySelector('a'), pf = pc && pc.firstElementChild;
+        if (kids[j].hasAttribute('data-xov') && pf) hh = Math.round(pf.getBoundingClientRect().height);
         heights.push(hh);
       }
       // model: each card's column (fixed, so nothing jumps between columns on hover), picture ratio and caption height
@@ -1726,9 +1732,16 @@
     };
     requestAnimationFrame(step);
   }
+  function ovTravel(ov) {   /* how far the two halves must move to meet in the middle */
+    var l = ov.querySelector('.x-ov-l'), r = ov.querySelector('.x-ov-r'), W = ov.clientWidth - 2 * (parseFloat(getComputedStyle(ov).paddingLeft) || 0);
+    if (!W) return;
+    var lw = l.offsetWidth, rw = r.offsetWidth, free = Math.max(0, W - lw - rw);
+    ov.style.setProperty('--xj', Math.max(0, free / 2 - 8).toFixed(1) + 'px'); ov.__w = W;
+  }
   function homeTitles(on) {
     if (!on) return;
     var cards = document.querySelectorAll('main[data-xhome] [data-xhi]');
+    var ovs = document.querySelectorAll('main[data-xhome] .x-ov'); for (var oi = 0; oi < ovs.length; oi++) if (ovs[oi].__w !== ovs[oi].clientWidth - 2 * (parseFloat(getComputedStyle(ovs[oi]).paddingLeft) || 0)) ovTravel(ovs[oi]);
     for (var i = 0; i < cards.length; i++) {
       var a = cards[i].querySelector('a[href^="./"]'), pic = a && a.firstElementChild; if (!pic || pic.querySelector(':scope > .x-ov')) continue;
       var slug = a.getAttribute('href').slice(2), cap = cards[i].querySelector('[data-xcap]'), name = cap ? cap.textContent.trim() : slug, mt = PROJ_META[slug] || ['', ''];
@@ -1736,6 +1749,7 @@
       var ov = document.createElement('div'); ov.className = 'x-ov'; ov.setAttribute('aria-hidden', 'true');
       ov.innerHTML = '<span class="x-ov-l"></span><span class="x-ov-r"><i></i><b></b></span>';
       ov.querySelector('.x-ov-l').textContent = name; ov.querySelector('.x-ov-r i').textContent = mt[0]; ov.querySelector('.x-ov-r b').textContent = mt[1];
+      ov.setAttribute('data-m', i % 2 ? 'split' : 'join');
       pic.appendChild(ov); setAttr(cards[i], 'data-xov', '');
       if (i % 3 !== 1) cards[i].__xscr = true;   /* some cards: the words scramble into place when the pointer arrives */
     }
