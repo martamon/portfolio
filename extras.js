@@ -47,7 +47,7 @@
   if (/[?&]xoff\b/.test(location.search)) return;
 
   // language of the site (English, Spanish, Galician): the switch in the corner and the translation of every text
-  try { import('/extras/i18n.js?v=26').catch(function () {}); } catch (e) {}
+  try { import('/extras/i18n.js?v=27').catch(function () {}); } catch (e) {}
 
   // In-app browsers (LinkedIn, Instagram, ...) end up on a blank page as soon as the YouTube player of the home page is created, so
   // there every YouTube iframe shows its still picture with a link to YouTube instead (?xinapp forces this in any browser).
@@ -136,6 +136,14 @@
     'main[data-xm]{height:auto!important;min-height:0!important}',
     '[data-xr]{height:auto!important;min-height:100vh!important}',
     '[data-xg]{height:auto!important}',
+    // single view as a horizontal gallery (after macmillan.studio/memory-project): the pictures sit side by side, each at its own ratio,
+    // and sliding down the page slides them sideways while the text stays put
+    'main[data-gal="hz"]{height:var(--xhh,auto)!important;overflow:visible!important}',
+    'main[data-gal="hz"]>:not([data-xg]){flex:none!important;width:var(--xiw,420px)!important;max-width:var(--xiw,420px)!important}',
+    'main[data-gal="hz"] [data-xg]{position:sticky!important;top:0!important;flex:none!important;height:100vh!important;width:var(--xgw,100%)!important;max-width:none!important;overflow:hidden;display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:var(--xgap,28px)!important;padding:0!important;margin:0!important}',
+    'main[data-gal="hz"] [data-xg]>.x-toggle{position:absolute!important;top:84px;right:0;width:auto!important;z-index:5;height:32px!important}',
+    'main[data-gal="hz"] [data-xg]>:not(.x-toggle){flex:none!important;height:var(--xih,60vh)!important;width:auto!important;aspect-ratio:calc(1 / var(--r,1))!important;max-width:none!important;max-height:none!important;margin:0!important;position:relative!important;top:auto!important;left:auto!important;transform:translate3d(var(--xhx,0px),0,0)!important;will-change:transform}',
+    'main[data-gal="hz"] [data-xg]>:not(.x-toggle)>*{width:100%!important;height:100%!important;max-width:none!important}main[data-gal="hz"] [data-xg]>:not(.x-toggle) img{width:100%!important;height:100%!important;object-fit:cover}',
     // light / dark theme (see "theme" below): --xt is how dark the page is (0..1), --xtt the same for the text, which switches over later, where the dusk background is dark enough for light type
     ':root{--xt:0;--xtt:0;--xtd:0;--xfg:color-mix(in srgb,#1b1b1b calc((1 - var(--xtt)) * 100%),#c2cfe0 calc(var(--xtt) * 100%));--xfg55:color-mix(in srgb,rgba(20,20,20,.55) calc((1 - var(--xtt)) * 100%),rgba(194,207,224,.7) calc(var(--xtt) * 100%))}',
     '[data-xbgm]{background-image:var(--xbgimg)!important}',
@@ -411,6 +419,42 @@
     apply();
   }
 
+  // ---- horizontal single view (see the CSS above)
+  var HZ = { m: null, g: null, total: 0, gw: 0, gOff: 0, raf: 0 };
+  function hzOff(m) {
+    if (!m || !m.hasAttribute('data-gal') || m.getAttribute('data-gal') !== 'hz') { if (m && m.getAttribute('data-gal') === 'hz') m.removeAttribute('data-gal'); return; }
+    m.removeAttribute('data-gal'); m.style.removeProperty('--xhh');
+    var g = HZ.g; if (g) { g.style.removeProperty('--xgw'); g.style.removeProperty('--xhx'); var k = items(g); for (var i = 0; i < k.length; i++) k[i].style.removeProperty('--r'); }
+    HZ.m = HZ.g = null;
+  }
+  function hzOn(m, g) {
+    var vw = innerWidth, vh = innerHeight, mr = m.getBoundingClientRect(), gr = g.getBoundingClientRect(), col = getComputedStyle(m).flexDirection === 'column';
+    if (m.getAttribute('data-gal') !== 'hz') m.__xleft = Math.max(0, gr.left - mr.left);   /* where the picture column starts before it is turned sideways */
+    setAttr(m, 'data-gal', 'hz'); HZ.m = m; HZ.g = g;
+    // the strip starts where the picture column starts (beside the text on wide screens, under it on narrow ones)
+    var left = col ? 20 : Math.max(0, Math.min(vw * 0.36, 500, m.__xleft || 0)), gw = Math.max(240, (col ? vw : mr.width) - left - 20);
+    var gOff = 0;
+    if (col) for (var q = 0; q < m.children.length && m.children[q] !== g; q++) gOff += m.children[q].offsetHeight;
+    var ih = Math.round(Math.min(vh * (col ? 0.6 : 0.64), 680)), gap = vw < 810 ? 14 : 28, its = items(g), total = 0, i;
+    for (i = 0; i < its.length; i++) {
+      var r = parseFloat(its[i].getAttribute('data-r')) || knownRatio(its[i]) || 1;
+      if (its[i].hasAttribute('data-x') || its[i].classList.contains('x-si')) r = parseFloat(its[i].getAttribute('data-r')) || r;
+      var w = ih / r; if (w > gw * 0.96) { w = gw * 0.96; }
+      its[i].style.setProperty('--r', String(ih / w)); total += w + (i ? gap : 0);
+    }
+    HZ.total = total; HZ.gw = gw; HZ.gOff = gOff;
+    m.style.setProperty('--xiw', col ? '100%' : Math.max(160, left - 36) + 'px'); g.style.setProperty('--xgw', gw + 'px'); g.style.setProperty('--xih', ih + 'px'); g.style.setProperty('--xgap', gap + 'px');
+    m.style.setProperty('--xhh', Math.round(gOff + vh + Math.max(0, total - gw) + 60) + 'px');
+    if (!m.style.marginLeft) g.style.marginLeft = '0';
+    hzScroll();
+  }
+  function hzScroll() {
+    var m = HZ.m, g = HZ.g; if (!m || !g || m.getAttribute('data-gal') !== 'hz') return;
+    var top = m.getBoundingClientRect().top, run = Math.max(1, m.offsetHeight - HZ.gOff - innerHeight), p = Math.max(0, Math.min(1, (-top - HZ.gOff) / run));
+    g.style.setProperty('--xhx', (-p * Math.max(0, HZ.total - HZ.gw)).toFixed(1) + 'px');
+  }
+  addEventListener('scroll', function () { if (!HZ.raf && HZ.m) HZ.raf = requestAnimationFrame(function () { HZ.raf = 0; hzScroll(); }); }, { passive: true });
+  addEventListener('resize', function () { if (HZ.m && HZ.g) hzOn(HZ.m, HZ.g); });
   function ensureToggle(m, g) {
     var t = g.querySelector(':scope > .x-toggle');
     if (!t) {
@@ -2053,14 +2097,15 @@
       unset('[data-xm]', 'data-xm'); unset('[data-xr]', 'data-xr'); unset('[data-xg]', 'data-xg');
     }
 
+    if (!isGallery || mode === 'grid') hzOff(m);
     if (isGallery) {
       ensureToggle(m, g);
       if (p === 'lexus-singapore') ensureExtras(g, true);
       else removeAll('[data-x]');
       if (mode === 'grid') applyGrid(m, g);
       else {
-        m.removeAttribute('data-gal');
         for (var j = 0; j < m.children.length; j++) if (m.children[j] !== g) m.children[j].style.minHeight = '';
+        hzOn(m, g);
       }
     } else {
       removeAll('.x-toggle'); removeAll('[data-x]');
