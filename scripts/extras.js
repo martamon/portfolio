@@ -388,7 +388,10 @@
     '@media(max-width:809px){main[data-xm] [data-framer-name="Project Writeup"] p,html[data-xp="about"] [data-framer-name="Caption"] p,.x-ct-text{text-align:left!important}}',
     '@media(max-width:809px){.x-dial{display:none!important}.x-lang{bottom:14px!important}.x-dn{bottom:13px!important}}',
     // home cards (see homeTitles)
-    '.x-ov{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);z-index:3;display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:0 20px;pointer-events:none;color:#fff;font:500 13px/1.2 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.05em;text-transform:uppercase;text-shadow:0 1px 2px rgba(0,0,0,.35),0 0 18px rgba(0,0,0,.25)}',
+    '.x-ov{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);z-index:3;display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:0 20px;pointer-events:none;color:#fff;font:500 13px/1.2 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.05em;text-transform:uppercase;font-weight:600;text-shadow:0 1px 2px rgba(5,12,24,.7),0 0 12px rgba(5,12,24,.55),0 0 28px rgba(5,12,24,.35)}',
+    // a soft dark band behind the line of text keeps it readable on pale pictures too
+    '.x-ov::before{content:"";position:absolute;left:0;right:0;top:-26px;bottom:-26px;z-index:-1;pointer-events:none;background:linear-gradient(180deg,rgba(8,18,34,0),rgba(8,18,34,.38) 28%,rgba(8,18,34,.38) 72%,rgba(8,18,34,0))}',
+    '.x-ov i,.x-ov b,.x-ov-l{font-weight:600!important}',
     '.x-ov-l{flex:0 1 auto;max-width:42%}.x-ov-r{display:flex;gap:12px;text-align:right;justify-content:flex-end;flex:0 1 58%}.x-ov i,.x-ov b{font-style:normal;font-weight:500}.x-ov b{white-space:nowrap}',
     // on hover the name and the details glide towards each other and meet in the middle (or, on every second card, start together and drift apart)
     '.x-ov-l,.x-ov-r{transition:transform 1.25s cubic-bezier(.65,0,.25,1)!important;will-change:transform}',
