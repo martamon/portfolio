@@ -147,7 +147,8 @@
     'main[data-gal="hz"]>:not([data-xg]) [data-framer-name="Project Writeup"]{flex:1 1 0!important;width:auto!important;max-width:none!important}',
     'html main[data-gal="hz"] [data-xg]{top:var(--xit,200px)!important;height:calc(100vh - var(--xit,200px))!important;width:100%!important;padding:44px 20px 0!important;box-sizing:border-box}}',
     // scroll reveal: each picture rises and fades in as it enters the stage from the right; they ease back out on the left
-    'main[data-gal="hz"] [data-xg]>:not(.x-toggle){opacity:var(--xo,1);transform:translate3d(calc(var(--xhx,0px) + var(--xrx,0px)),var(--xry,0px),0)!important;clip-path:inset(var(--xct,0%) 0 0 var(--xcl,0%));will-change:transform,opacity,clip-path}',
+    'main[data-gal="hz"] [data-xg]>:not(.x-toggle){opacity:var(--xo,1);transform:translate3d(calc(var(--xhx,0px) + var(--xrx,0px)),var(--xry,0px),0)!important;clip-path:inset(var(--xct,0%) 0 0 var(--xcl,0%))}',
+    'main[data-gal="hz"].x-mv [data-xg]>:not(.x-toggle){will-change:transform,opacity,clip-path}',   /* GPU layers only while the strip is moving */
     'main[data-gal="hz"] [data-xg]>:not(.x-toggle) img,main[data-gal="hz"] [data-xg]>:not(.x-toggle) .x-vp{transform:scale(var(--xrs,1));transform-origin:50% 50%}',
     'html main[data-gal="hz"] [data-xg]>:not(.x-toggle){height:var(--xih,60vh)!important}',
     'main[data-gal="hz"] [data-xg]{position:sticky!important;top:0!important;flex:none!important;height:100vh!important;width:var(--xgw,100%)!important;max-width:none!important;overflow:hidden;display:flex!important;flex-direction:row!important;align-items:flex-start!important;justify-content:flex-start!important;gap:0!important;padding:0!important;margin:0!important}',
@@ -467,6 +468,10 @@
     m.style.setProperty('--xhh', Math.round(gOff + vh + HZ.lead + Math.max(0, total - gw) + 60) + 'px');
     if (!m.style.marginLeft) g.style.marginLeft = '0';
     HZ.infoH = infoH; HZ.cur = null;
+    /* decode the big pictures ahead of time, one by one while the browser is idle, so none stutters as it slides in */
+    if (!g.__xdec) { g.__xdec = 1; var q = []; its.forEach(function (it) { var im = it.querySelector('img'); if (im) q.push(im); });
+      var go = function () { var im = q.shift(); if (!im) return; try { if (im.decode) im.decode().catch(function () {}).then(function () { (window.requestIdleCallback || setTimeout)(go, 60); }); else go(); } catch (er) {} };
+      (window.requestIdleCallback || setTimeout)(go, 400); }
     if (!col && !HZ.again) HZ.again = requestAnimationFrame(function () { HZ.again = 0; var h = 0; for (var z2 = 0; z2 < m.children.length; z2++) if (m.children[z2] !== g) h += m.children[z2].offsetHeight; if (Math.abs(h - HZ.infoH) > 2 && HZ.m === m) hzOn(m, g); });
     hzScroll();
   }
@@ -498,7 +503,7 @@
       st.setProperty('--xcl', (kk === 1 ? inv * 55 : 0).toFixed(2) + '%');
       st.setProperty('--xrs', (1.14 - 0.14 * e).toFixed(4));
     }
-    if (HZ.cur !== HZ.target) HZ.loop = requestAnimationFrame(hzStep); else HZ.t = 0;
+    if (HZ.cur !== HZ.target) { if (!m.classList.contains('x-mv')) m.classList.add('x-mv'); HZ.loop = requestAnimationFrame(hzStep); } else { HZ.t = 0; m.classList.remove('x-mv'); }
   }
   addEventListener('scroll', function () { if (HZ.m) hzScroll(); }, { passive: true });
   addEventListener('resize', function () { if (HZ.m && HZ.g) { if (innerWidth < 811) { hzOff(HZ.m); schedule(); } else hzOn(HZ.m, HZ.g); } else if (innerWidth >= 811) schedule(); });
@@ -2169,6 +2174,7 @@
       unset('[data-gal]', 'data-gal');
     }
 
+    try { imgHints(); } catch (er) {}
     watchColumn(isGallery ? g : null);
     dropComingSoon(p);
     themeTag();
@@ -2260,6 +2266,15 @@
 
   if (/[?&]xplanet\b/.test(location.search)) setTimeout(openPlanet, 1200);   // ?xplanet opens the planet at once (to share or test)
 
+  // pictures decode off the main thread and the ones far down load only when needed (smoother scrolling, lighter first load)
+  function imgHints() {
+    var ims = document.querySelectorAll('main img:not([data-xdh])'), n = 0;
+    for (var i = 0; i < ims.length; i++) {
+      var im = ims[i]; im.setAttribute('data-xdh', '');
+      if (!im.getAttribute('decoding')) im.decoding = 'async';
+      if (!im.getAttribute('loading') && im.getBoundingClientRect().top > innerHeight * 2) im.loading = 'lazy';
+    }
+  }
   var timer = 0;
   function schedule() {
     if (timer) return;
