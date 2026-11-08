@@ -340,18 +340,28 @@
     '@media(max-width:809px){html[data-xp="about"] [data-framer-name="Caption"]{width:var(--xcw,min(62vw,250px))!important;max-width:none!important}html[data-xp="about"] [data-framer-name="Caption"] p{width:100%!important}}',
     '[data-xs]{display:none!important}',
     // project pages in the style of onseis.com/project/penry-psychology: title in capitals, details and text in small capital mono type, justified, with fine rules
-    'main[data-xm] [data-framer-name="Project Title"] p{text-transform:uppercase!important;font-size:26px!important;line-height:1.05!important;letter-spacing:-.02em!important;font-weight:500!important}',
-    'main[data-xm] [data-framer-name="Project Type & Year"]{display:flex!important;flex-direction:row!important;flex-wrap:wrap;align-items:baseline!important;gap:0 10px!important;height:auto!important;padding-bottom:14px;border-bottom:1px solid var(--xtone)}',
+    'main[data-xm] [data-framer-name="Project Title"] p{text-transform:uppercase!important;font-size:34px!important;line-height:1!important;letter-spacing:-.035em!important;font-weight:700!important}',
+    'main[data-xm] [data-framer-name="Project Type & Year"]{display:flex!important;flex-direction:row!important;flex-wrap:wrap;align-items:baseline!important;gap:0 10px!important;height:auto!important;padding-bottom:14px;border-bottom:1px solid var(--xink,#fff)}',
     'main[data-xm] [data-framer-name="Project Type"] p,main[data-xm] [data-framer-name="Year Completed"] p,main[data-xm] [data-framer-name="Project Writeup"] p{font-family:"IBM Plex Mono","IBM Plex Mono Placeholder",monospace!important;font-weight:500!important;font-size:12.5px!important;line-height:1.35em!important;letter-spacing:.03em!important;text-transform:uppercase!important}',
     'main[data-xm] [data-framer-name="Year Completed"] p::before{content:"\\2013\\00a0\\00a0"}',
     'main[data-xm] [data-framer-name="Project Writeup"] p{text-align:justify!important;text-justify:inter-word;hyphens:auto}',
     'main[data-xm] [data-framer-name="Project Writeup"]{padding-top:2px}',
     'main[data-xm] [data-framer-name="Project Type"],main[data-xm] [data-framer-name="Year Completed"]{width:auto!important;flex:none!important}',
+    // the same contrast everywhere: big heavy capital titles against small capital mono text
+    'html[data-xp="about"] [data-framer-name="Caption"] p{font-family:"IBM Plex Mono","IBM Plex Mono Placeholder",monospace!important;font-weight:500!important;font-size:12.5px!important;line-height:1.35em!important;letter-spacing:.03em!important;text-transform:uppercase!important;text-align:justify!important}',
+    'html[data-xp="home"] [data-framer-name="Info"] [data-framer-name="Title"] p{text-transform:uppercase!important;font-weight:700!important;letter-spacing:-.03em!important}',
+    'html[data-xp="home"] [data-framer-name="Info"] [data-framer-name="Subtitle"] p,html[data-xp="home"] [data-framer-name="Info"] p:not([data-framer-name="Title"] p){font-family:"IBM Plex Mono","IBM Plex Mono Placeholder",monospace!important;font-weight:500!important;font-size:12.5px!important;letter-spacing:.04em!important;text-transform:uppercase!important}',
+    'html main[data-xm]~section a,html main[data-xm]~section p,html main[data-xm]~section span,html main[data-xm]~*:not(.x-yt) footer a,html main[data-xm]~*:not(.x-yt) footer p,html main[data-xm]~*:not(.x-yt) footer span{font-family:"IBM Plex Mono","IBM Plex Mono Placeholder",monospace!important;text-transform:uppercase!important;letter-spacing:.04em!important}',
     // every text of the site in the tones of the MARTAMON wordmark (see paintInk)
-    'html [data-xtc],html [data-xcap]{color:var(--xtone)!important}',
-    'html main[data-xm]~section a,html main[data-xm]~section p,html main[data-xm]~section span,html main[data-xm]~*:not(.x-yt) footer a,html main[data-xm]~*:not(.x-yt) footer p,html main[data-xm]~*:not(.x-yt) footer span{color:var(--xtoneb)!important}',
-    '.x-contact{color:var(--xtone)!important}',
-    'html footer a,html footer p,html footer span{color:var(--xtoneb)!important;opacity:1!important}html [data-xmore],html [data-xmore] *{color:var(--xinkb,#fff)!important;opacity:1!important}',
+    // negative/positive type everywhere: Framer's root box isolated the page, so a blended text had nothing behind it; it no longer does.
+    // Sticky boxes are layers of their own, so there the whole box carries the blend; elsewhere the text itself does.
+    'html [data-framer-root]{isolation:auto!important}',
+    'html main[data-xm] [data-framer-name="Info"]{mix-blend-mode:difference!important;isolation:auto!important}',
+    'html main[data-xm] [data-framer-name="Info"] *{color:var(--xink,#fff)!important;mix-blend-mode:normal!important}html main[data-xm] [data-framer-name="Info"] [data-framer-name="Project Type & Year"]{border-bottom-color:var(--xink,#fff)}',
+    'html [data-xcap]{color:var(--xink,#fff)!important;mix-blend-mode:difference}',
+    'html main[data-xm]~section a,html main[data-xm]~section p,html main[data-xm]~section span,html main[data-xm]~*:not(.x-yt) footer a,html main[data-xm]~*:not(.x-yt) footer p,html main[data-xm]~*:not(.x-yt) footer span{color:var(--xinkb,#fff)!important;mix-blend-mode:difference}',
+    '.x-contact{color:var(--xink,#fff)!important;mix-blend-mode:difference}',
+    'html footer a,html footer p,html footer span{color:var(--xinkb,#fff)!important;opacity:1!important;mix-blend-mode:difference}html [data-xmore],html [data-xmore] *{color:var(--xinkb,#fff)!important;opacity:1!important}',
     'html [class*="rolling-text"],html [class*="rolling-text"] *{color:var(--xinkb)!important;--text:var(--xinkb)!important}html a[data-framer-name="Primary"],html a[data-framer-name="Primary"] *{border-color:var(--xtoneb)!important}',
     // negative/positive in every tone: menu, clock, languages and About always blend, with the worked-out colour
     'html [data-xnc],html[data-xdusk] [data-xnc]{mix-blend-mode:difference!important}html [data-xn],html[data-xdusk] [data-xn],html[data-xnight] [data-xn]{color:var(--xink,#fff)!important}',
