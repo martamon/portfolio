@@ -493,7 +493,9 @@ function ribbon(pts, width, mat, lift, dash, flo, noSkip, flat) {
 }
 // a ribbon of water that follows the ground uphill and gets narrower (widths per point)
 function ribbonW(pts, widths, mat, lift) {
-  const H = pts.map((q) => groundH(q[0], q[1]));
+  /* the water stays continuous: it rides on the highest ground across its whole width (and a little before and after), so no bank ever covers it */
+  const H = pts.map((q, i) => { const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)], tx = b[0] - a[0], tz = b[1] - a[1], l = Math.hypot(tx, tz) || 1, w2 = (widths[i] || .1) * .6; let h = groundH(q[0], q[1]); for (const k of [-1, -.5, .5, 1]) h = Math.max(h, groundH(q[0] - tz / l * w2 * k, q[1] + tx / l * w2 * k)); return h; });
+  { const M = H.slice(); for (let i = 0; i < H.length; i++) for (let k = -2; k <= 2; k++) M[i] = Math.max(M[i], H[Math.min(H.length - 1, Math.max(0, i + k))]); for (let i = 0; i < H.length; i++) H[i] = M[i]; }
   for (let pass = 0; pass < 5; pass++) for (let i = 1; i < H.length - 1; i++) H[i] = H[i] * .5 + (H[i - 1] + H[i + 1]) * .25;
   const P = pts.map((q, i) => dirFrom(q[0], q[1], new THREE.Vector3()).multiplyScalar(R + H[i] + lift));
   const pos = [], idx = [], tan = new THREE.Vector3(), side = new THREE.Vector3(), nrm = new THREE.Vector3();
@@ -807,7 +809,10 @@ export function open(opts) {
     const mats = [new THREE.MeshStandardMaterial({ map: quayTex, color: 0xffffff, roughness: 1, side: THREE.DoubleSide }), new THREE.MeshStandardMaterial({ color: 0xd9d2c1, roughness: 1, side: THREE.DoubleSide }), new THREE.MeshStandardMaterial({ color: 0xc8c1af, roughness: 1, side: THREE.DoubleSide })];
     for (let g = 0; g < 3; g++) { if (!pos[g].length) continue; const bg = new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.Float32BufferAttribute(pos[g], 3)); bg.setAttribute('uv', new THREE.Float32BufferAttribute(uv[g], 2)); bg.computeVertexNormals(); const m = new THREE.Mesh(bg, mats[g]); m.castShadow = true; m.receiveShadow = true; W(m); }
     // bollards and rings every so often, and an invisible marker so boats keep clear of the wall (as the old blocks did)
-    for (let n = 3; n < N - 1; n += 11) { const x = x0 + dir * n * step, bl = new THREE.Group(); const bd = new THREE.Mesh(new THREE.CylinderGeometry(.018, .024, .05, 8), std(0x2f3a45)); bd.position.y = .025; bl.add(bd); const cp = new THREE.Mesh(new THREE.SphereGeometry(.024, 8, 6), std(0x2f3a45)); cp.position.y = .055; bl.add(cp); W(put(bl, x, zf(x) + sea * (half - .09), 0, SEA + topH + .03 + .06 - .0)); }
+    const posts = [];
+    for (let n = 3; n < N - 1; n += 5) { const x = x0 + dir * n * step, bl = new THREE.Group(); const bd = new THREE.Mesh(new THREE.CylinderGeometry(.016, .022, .1, 8), std(0x4a3a2c)); bd.position.y = .05; bl.add(bd); const cp = new THREE.Mesh(new THREE.SphereGeometry(.024, 8, 6), std(0x4a3a2c)); cp.position.y = .108; bl.add(cp); W(put(bl, x, zf(x) + sea * (half - .09), 0, SEA + topH + .03 + .06 - .0)); posts.push(bl); }
+    /* old-style rails: two sagging ropes joining the posts all along the walk */
+    { const rope = std(0xcdb27c, { roughness: 1 }); for (let k = 1; k < posts.length; k++) { const A = posts[k - 1].position, B = posts[k].position; if (A.distanceTo(B) > .6) continue; for (const [h, sag] of [[.098, .018], [.056, .014]]) { const a2 = A.clone().addScaledVector(A.clone().normalize(), h), b2 = B.clone().addScaledVector(B.clone().normalize(), h), mid = a2.clone().add(b2).multiplyScalar(.5); mid.addScaledVector(mid.clone().normalize(), -sag); W(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([a2, mid, b2]), 8, .0055, 5), rope)); } } }
     for (let n = 0; n <= Math.floor(Math.abs(x1 - x0) / .5); n++) { const x = x0 + dir * n * .5, mk = new THREE.Group(); mk.userData.stoneBlock = 1; W(put(mk, x, zf(x) + sea * .1, 0, .02, true)); }
   }
   quay(-17.2, -9.6, shore, 1, .27);
@@ -885,6 +890,8 @@ export function open(opts) {
     // every road is laid at the same height, all the pavements first and all the asphalt above them, so crossings and junctions merge with no seams
     for (const [pts] of roadList) { const m = ribbon(pts, .56, walkMat, .02, false, undefined, true, true); m.renderOrder = 1; W(m); }
     for (const [pts] of roadList) { const m = ribbon(pts, .4, asphalt, .032, false, undefined, true, true); m.renderOrder = 2; W(m); roadMeshes.push(m); }
+    const centre = std(0xf4f0e4, { roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -5, polygonOffsetUnits: -5 });
+    for (const [pts] of roadList) { const m = ribbon(pts, .014, centre, .037, true, undefined, true, true); m.renderOrder = 3; W(m); }     // the dashed line down the middle of every road
   };
   // the roundabout: a flat ring (pavement + asphalt + grass island) where the coast road is cut; the cars follow the inland half of the ring
   const RB = 0.62, roadRaw = relax(roadN, 4);
@@ -978,11 +985,11 @@ export function open(opts) {
   { const white = std(0xf8f4ea, { roughness: 1, polygonOffset: true, polygonOffsetFactor: -8, polygonOffsetUnits: -8 }), mkLamp = (col, on) => new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: on, roughness: .4 });
     const spotsFor = (ri, want) => { const r = routes[ri], out = [];
       for (const w0 of want) { let best = null; for (let d = 0; d <= .1 && !best; d += .004) for (const sg of [1, -1]) { const u = w0 + sg * d; if (u < .05 || u > .95) continue; const [x, z, yaw] = routeAt(r, u), sy = Math.sin(yaw), cy = Math.cos(yaw);
-          const okG = [-.5, -.3, 0, .3, .5].every((o) => groundH(x + sy * o, z + cy * o) > .06) && inletD(x, z) > 1.1 && (riverPts || []).every((q) => Math.hypot(q[0] - x, q[1] - z) > 1.0) && (roadN.rb || []).every(([jx, z0]) => Math.hypot(x - jx, z - z0) > 1.5) && out.every((o2) => Math.abs(o2.u - u) > .12);
+          const okG = [-.5, -.3, 0, .3, .5].every((o) => groundH(x + sy * o, z + cy * o) > .06) && inletD(x, z) > 1.1 && (riverPts || []).every((q) => Math.hypot(q[0] - x, q[1] - z) > 1.0) && (roadN.rb || []).every(([jx, z0]) => Math.hypot(x - jx, z - z0) > 1.5) && out.every((o2) => Math.abs(o2.u - u) > .07);
           if (okG) best = { u, x, z, yaw }; }
         if (best) out.push(best); }
       return out; };
-    [[0, [.2, .45, .72]], [1, [.3, .65]]].forEach(([ri, want]) => spotsFor(ri, want).forEach((c, i) => {
+    [[0, [.1, .2, .33, .45, .58, .72, .88]], [1, [.15, .3, .5, .68, .85]]].forEach(([ri, want]) => spotsFor(ri, want).forEach((c, i) => {
       const X = { r: routes[ri], u: c.u, x: c.x, z: c.z, yaw: c.yaw, off: crossings.length * 5.3 + i * 2, peds: [], ready: false, occ: false, g: new THREE.Group(), red: mkLamp(0xff5a4a, .1), green: mkLamp(0x5fdc8a, .1), amb: mkLamp(0xffc24a, .1) };
       for (let k = -3; k <= 3; k++) { const st = new THREE.Mesh(zebraG, white); st.position.set(0, 0, k * .058); X.g.add(st); }
       W(X.g);
@@ -1256,13 +1263,13 @@ export function open(opts) {
     const ps = new THREE.Mesh(new THREE.CylinderGeometry(.012, .012, .1, 5), std(0xeeeeee)); ps.position.y = .05; g.add(ps);
     chair(g, -.1, 0, PI / 2); chair(g, .1, 0, -PI / 2); chair(g, 0, .1, PI);
     const pa = parasol(col); pa.scale.setScalar(.72); pa.position.set(0, 0, 0); g.add(pa);
-    W(put(g, px, pz, seaYaw(px), 0));
+    W(put(g, px, pz, seaYaw(px), .02));
   }
   function square(x, inl, w, d, o) {
     o = o || {};
     const [px, pz] = onShore(x, inl), yaw = seaYaw(px), slab = new THREE.Group();
-    const sl = box(w, .16, d, std(0xe3d9c2)); sl.position.y = -.01; slab.add(sl);
-    const bd = box(w + .06, .15, d + .06, std(0xc9bfa8)); bd.position.y = -.015; slab.add(bd);
+    const sl = box(w, .16, d, std(0xe3d9c2)); sl.position.y = -.068; slab.add(sl);
+    const bd = box(w + .06, .15, d + .06, std(0xc9bfa8)); bd.position.y = -.074; slab.add(bd);
     slab.userData.fp = Math.max(w, d) * .62; slab.userData.pri = 6; slab.userData.sqW = w; W(put(slab, px, pz, yaw, -.04));
     for (const [qx, qz] of [[-.5, -.4], [.5, -.4], [-.5, .4], [.5, .4]].slice(0, o.trees === undefined ? 2 : o.trees)) {
       const tr = new THREE.Group(), tk = new THREE.Mesh(new THREE.CylinderGeometry(.02, .028, .24, 6), std(0x7a5a3c)); tk.position.y = .12; tr.add(tk);
@@ -1279,11 +1286,11 @@ export function open(opts) {
         for (let q = 0; q < 4; q++) { const ca = q * PI / 2 + .4, ch = new THREE.Group(); ch.position.set(Math.cos(ca) * .17, 0, Math.sin(ca) * .17); ch.rotation.y = -ca + PI / 2; const st = box(.07, .012, .07, std(0x6b4a2a)); st.position.y = .07; ch.add(st); const bk = box(.07, .07, .012, std(0x6b4a2a)); bk.position.set(0, .11, -.03); ch.add(bk); for (const [lx2, lz2] of [[-.028, -.028], [.028, -.028], [-.028, .028], [.028, .028]]) { const l = box(.01, .07, .01, std(0x6b4a2a)); l.position.set(lx2, .035, lz2); ch.add(l); } g.add(ch); }
         const cup = new THREE.Mesh(new THREE.CylinderGeometry(.012, .01, .02, 8), std(0xfff8ea)); cup.position.set(.04, .15, 0); g.add(cup);
         if (k % 2 === 0) { const pa = parasol(cols[k % cols.length]); pa.scale.setScalar(.5); pa.position.x = -.02; g.add(pa); }
-        g.scale.setScalar(1.45); g.userData.fp = 0; W(put(g, tx, tz, k * 1.3, .01)); }
+        g.scale.setScalar(1.45); g.userData.fp = 0; W(put(g, tx, tz, k * 1.3, .022)); }
     } else for (let k = 0; k < (o.terraces || 2); k++) { const tx = x + (k - ((o.terraces || 2) - 1) / 2) * w * .42; terrace(tx, inl - d * .33, [0xc9473a, 0x2f6fa8, 0xe9b94a][k % 3]); }
     for (let k = 0; k < (o.people || 6); k++) {
       const p = person(SHIRTS[(k * 3 + 2) % SHIRTS.length], { skin: SKINS[k % 4], hat: k % 4 === 0 ? 0xe9e2d2 : undefined }); W(p);
-      strollers.push({ p, x: px, z: pz, yaw, rx: w * (.2 + rnd() * .22), rz: d * (.18 + rnd() * .2), a: rnd() * 6.28, sp: (.18 + rnd() * .16) * (k % 2 ? 1 : -1), still: k % 3 === 0 });
+      strollers.push({ p, x: px, z: pz, yaw, rx: w * (.2 + rnd() * .22), rz: d * (.18 + rnd() * .2), a: rnd() * 6.28, sp: (.18 + rnd() * .16) * (k % 2 ? 1 : -1), still: k % 3 === 0, lift: .02 });
     }
     return slab;
   }
@@ -1298,14 +1305,15 @@ export function open(opts) {
     g.userData.fp = .42; g.userData.pri = 5; return g;
   }
   { const [cx, cz] = onShore(-14.35, 3.35); W(put(cafe(0xc9473a), cx, cz, seaYaw(cx), -.02)); }
-  const archway = (x, inl, sc, yawAdd) => { const [ax, az] = onShore(x, inl), g = new THREE.Group(), st = std(0xcfc7b4), st2 = std(0xb9b2a0), R = .2;   // a stone gateway: two piers, a round arch with a keystone and a small cross
+  const archway = (x, inl, sc, yawAdd, yawFix, pos) => { const [ax, az] = pos || onShore(x, inl), g = new THREE.Group(), st = std(0xcfc7b4), st2 = std(0xb9b2a0), R = .2;   // a stone gateway: two piers, a round arch with a keystone and a small cross
     for (const sx of [-1, 1]) { const pl = box(.085, .32, .085, st); pl.position.set(sx * (R + .01), .16, 0); g.add(pl); const cp = box(.108, .03, .108, st2); cp.position.set(sx * (R + .01), .335, 0); g.add(cp); const bs = box(.108, .035, .108, st2); bs.position.set(sx * (R + .01), .0175, 0); g.add(bs); }
     const arc = new THREE.Mesh(new THREE.TorusGeometry(R + .01, .04, 8, 24, PI), st); arc.position.y = .32; g.add(arc);
     const key = box(.07, .07, .085, st2); key.position.set(0, .32 + R + .02, 0); g.add(key); const cr1 = box(.014, .07, .014, st2); cr1.position.set(0, .32 + R + .09, 0); g.add(cr1); const cr2 = box(.045, .014, .014, st2); cr2.position.set(0, .32 + R + .105, 0); g.add(cr2);
-    g.scale.setScalar(sc); g.userData.fp = 0; W(put(g, ax, az, seaYaw(ax) + (yawAdd || 0), .01)); };
-  archway(-12.8, 3.05 - .62 - .05, 1.9, 0);                                                         // the main entrance, from the road
-  archway(-13.62, 3.05, 1.2, PI / 2); archway(-11.98, 3.05, 1.2, PI / 2);                           // two side gateways
-  archway(-12.8, 3.05 + .62 + .04, 1.2, 0);                                                         // and one at the back
+    g.scale.setScalar(sc); g.userData.fp = 0; W(put(g, ax, az, (yawFix === undefined ? seaYaw(ax) : yawFix) + (yawAdd || 0), .03)); };
+  { /* the four gateways stand on the sides of the square itself (in its own frame), so they are centred on each side and turn with it */
+    const [sqx, sqz] = onShore(-12.8, 3.05), sa = seaYaw(sqx), ca = Math.cos(sa), sn = Math.sin(sa), [ix, iz] = onShore(-12.8, 3.15), zs = Math.sign((ix - sqx) * sn + (iz - sqz) * ca) || 1;
+    const at = (lx, lz) => [sqx + lx * ca + lz * zs * sn, sqz - lx * sn + lz * zs * ca];
+    archway(0, 0, 1.9, 0, sa, at(0, -.7)); archway(0, 0, 1.2, PI / 2, sa, at(-.88, 0)); archway(0, 0, 1.2, PI / 2, sa, at(.88, 0)); archway(0, 0, 1.2, 0, sa, at(0, .7)); }
   { const sqM = square(-12.8, 3.05, 1.75, 1.2, { trees: 2, tables: 6, people: 14 });
   }
   // ---- the shipyard (astillero) on the outskirts, by the sea: a big shed, a slipway with rails, a boat on stocks, a gantry crane and a hull being built
@@ -1333,12 +1341,12 @@ export function open(opts) {
   { let mx = 0, mz = 0, found = false;
     for (const cx of [-15.4, -10.2, -16.6, -8.6, -8.15, 1.8]) { for (const inl of [4.3, 4.7, 3.9, 3.5]) { const [qx, qz] = onShore(cx, inl); let ok = true; for (let a = 0; a < 8 && ok; a++) for (const rr of [.6, 1.25]) if (groundH(qx + Math.cos(a * .785) * rr, qz + Math.sin(a * .785) * rr) < SEA + .05) ok = false; if (ok && groundH(qx, qz) > SEA + .05) { mx = qx; mz = qz; found = true; break; } } if (found) break; }
     if (found) { const yaw = seaYaw(mx), g = new THREE.Group(), SC = .1;
-    const pave = box(.8, .02, 2.3, std(0xd8cdb6)); pave.position.y = -.005; g.add(pave); const edge = box(.7, .022, 2.2, std(0xcfc3aa)); edge.position.y = 0; g.add(edge);
+    const pave = box(.8, .32, 2.3, std(0xd8cdb6)); pave.position.y = -.14; g.add(pave); const edge = box(.7, .022, 2.2, std(0xcfc3aa)); edge.position.y = .03; g.add(edge);
     const awn = [0xc9473a, 0x2f6fa8, 0xe9b94a, 0x3b9a6a, 0xe277a0, 0x7a58b5, 0xf08a3c, 0x4fb3a8];
-    for (let k = 0; k < 4; k++) for (const sd of [-1, 1]) { const st = stall(THREE, std, KINDS[(k * 2 + (sd > 0 ? 1 : 0) + (sd > 0 ? 3 : 0)) % 8], awn[(k * 2 + (sd > 0 ? 1 : 0)) % 8], false); st.scale.setScalar(SC); st.position.set(sd * .31, 0, -.78 + k * .52); st.rotation.y = sd < 0 ? PI / 2 : -PI / 2; g.add(st);
-      const vd = person(SHIRTS[(k + (sd > 0 ? 3 : 0)) % SHIRTS.length], { skin: SKINS[k % 4] }); vd.scale.setScalar(.8); vd.position.set(sd * .47, 0, -.78 + k * .52); vd.rotation.y = sd < 0 ? PI / 2 : -PI / 2; g.add(vd); }
-    g.userData.fp = .9; g.userData.pri = 6; g.userData.market = 1; W(put(g, mx, mz, yaw, -.02));
-    for (let k = 0; k < 7; k++) { const p = person(SHIRTS[(k * 3 + 1) % SHIRTS.length], { skin: SKINS[k % 4] }); W(p); strollers.push({ p, x: mx, z: mz, yaw, rx: .1, rz: .72, a: rnd() * 6.28, sp: (.14 + rnd() * .12) * (k % 2 ? 1 : -1), still: k % 4 === 0 }); } } }
+    for (let k = 0; k < 4; k++) for (const sd of [-1, 1]) { const st = stall(THREE, std, KINDS[(k * 2 + (sd > 0 ? 1 : 0) + (sd > 0 ? 3 : 0)) % 8], awn[(k * 2 + (sd > 0 ? 1 : 0)) % 8], false); st.scale.setScalar(SC); st.position.set(sd * .31, .035, -.78 + k * .52); st.rotation.y = sd < 0 ? PI / 2 : -PI / 2; g.add(st);
+      const vd = person(SHIRTS[(k + (sd > 0 ? 3 : 0)) % SHIRTS.length], { skin: SKINS[k % 4] }); vd.scale.setScalar(.8); vd.position.set(sd * .47, .035, -.78 + k * .52); vd.rotation.y = sd < 0 ? PI / 2 : -PI / 2; g.add(vd); }
+    g.userData.fp = 1.3; g.userData.pri = 6; g.userData.market = 1; W(put(g, mx, mz, yaw, -.02));
+    for (let k = 0; k < 7; k++) { const p = person(SHIRTS[(k * 3 + 1) % SHIRTS.length], { skin: SKINS[k % 4] }); W(p); strollers.push({ p, x: mx, z: mz, yaw, rx: .1, rz: .72, a: rnd() * 6.28, sp: (.14 + rnd() * .12) * (k % 2 ? 1 : -1), still: k % 4 === 0, lift: .035 }); } } }
 
   // ---- Ézaro, on the south shore: a granite village under the mountain and the waterfall of the river Xallas, falling straight into the sea
   const falls = [];
@@ -1890,7 +1898,7 @@ export function open(opts) {
     if (tourOn) return; tourOn = true; tourMuted = !!(audio && audio.muted);
     mochi.classList.remove('x-ctaon'); mochi.classList.add('x-load'); root.classList.add('x-tour'); if (audio) { audio.sfx('mochinext'); setTimeout(() => audio && audio.mute(true), 500); }
     const t0 = performance.now();
-    import('./conducir.js?v=79').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
+    import('./conducir.js?v=80').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
       .then((m) => { const ab = m.open({ onClose: endTour, getDark: () => nightT, getRain: () => rainT }); if (!ab) throw new Error('no webgl'); setTimeout(mochiClose, 700); })
       .catch(() => { endTour(); mochiClose(); });
   };
@@ -2323,9 +2331,9 @@ export function open(opts) {
       X.occ = occ;
     }
     for (const q of strollers) {
-      if (q.still) { put(q.p, q.x + Math.cos(q.a) * q.rx * Math.cos(q.yaw), q.z - Math.cos(q.a) * q.rx * Math.sin(q.yaw), q.yaw + q.a, 0); continue; }
+      if (q.still) { put(q.p, q.x + Math.cos(q.a) * q.rx * Math.cos(q.yaw), q.z - Math.cos(q.a) * q.rx * Math.sin(q.yaw), q.yaw + q.a, q.lift || 0); continue; }
       q.a += q.sp * dt; const sg = Math.sign(q.sp), lx = Math.cos(q.a) * q.rx, lz = Math.sin(q.a) * q.rz, c = Math.cos(q.yaw), sn = Math.sin(q.yaw);
-      q.k = q.k === undefined ? 1 : q.k; strideAnim(q.p, q.a * 7, .8); put(q.p, q.x + lx * c + lz * sn, q.z - lx * sn + lz * c, q.yaw + Math.atan2(-Math.cos(q.a) * q.rz * sg, -Math.sin(q.a) * q.rx * sg), (1 - Math.cos(q.a * 14)) * .0012);
+      q.k = q.k === undefined ? 1 : q.k; strideAnim(q.p, q.a * 7, .8); put(q.p, q.x + lx * c + lz * sn, q.z - lx * sn + lz * c, q.yaw + Math.atan2(-Math.cos(q.a) * q.rz * sg, -Math.sin(q.a) * q.rx * sg), (1 - Math.cos(q.a * 14)) * .0012 + (q.lift || 0));
     }
     for (const q of pathers) {
       if (!q.still) { q.u += q.v * dt / Math.max(.5, q.r.total); if (q.u > 1 || q.u < 0) { q.u = Math.min(1, Math.max(0, q.u)); q.v = -q.v; if (!q.keep) q.off = -q.off; } }

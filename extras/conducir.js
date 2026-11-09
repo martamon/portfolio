@@ -587,7 +587,7 @@ export function open(opts) {
     if (false && u0.hx && top - low < .5) { const cs = new THREE.Mesh(new THREE.PlaneGeometry(u0.hx * 3.1, u0.hz * 3.1), new THREE.MeshBasicMaterial({ map: contactTex(), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 })); cs.rotation.x = -PI / 2; cs.position.y = .07; o.add(cs); }
     o.position.set(x, top, z); o.rotation.y = yaw; scene.add(o); if (o.userData.porch) shelters.push([x + Math.sin(yaw) * o.userData.porch, z + Math.cos(yaw) * o.userData.porch]); if (r) { const u = o.userData; colliders.push(u.hx ? [x, z, r, u.hx, u.hz, yaw] : [x, z, r]); } return o; };
   const infoSpots = [], reserved = [], solid = (x, z, rr) => colliders.some((c) => Math.hypot(c[0] - x, c[1] - z) < c[2] + rr) || reserved.some((r) => x > r[0] - rr && x < r[1] + rr && z > r[2] - rr && z < r[3] + rr), laneNear = (x, z, d) => lanes.some((pts) => pts.some((q) => Math.hypot(q[0] - x, q[1] - z) < d)) || Math.abs(x - ROADX(z)) < d + 2.6;
-  const plazas = [], walkers = [], stops = []; let mkt = null;
+  const plazas = [], walkers = [], stops = []; let mkt = null, mkY = 0;
   { const lbl = lang === 0 ? 'SUPERMARKET' : 'SUPERMERCADO', sz0 = 50, sx0 = ROADX(sz0) - 16, sm = supermercado(lbl); addTo(sm, sx0, sz0, PI / 2, sm.userData.r);
     const lot = new THREE.Mesh(new THREE.BoxGeometry(11, .1, 22), std(0x9aa3b0)); lot.position.set(sx0 + 9.4, H(ROADX(sz0) - 7, sz0) + .05, sz0); scene.add(lot); lot.receiveShadow = true;
     shelters.push([sx0 + 5.6, sz0 - 3], [sx0 + 5.6, sz0 + 3]);
@@ -602,13 +602,17 @@ export function open(opts) {
       for (let u = 0; u <= LEN && ok; u += 3) for (let v = -6; v <= 6 && ok; v += 3) { const x = x0 - u, zz = z + v; if (H(x, zz) < .55 || solid(x, zz, 2.2) || [2, 3].some((vi) => Math.hypot(ROADX(VILLAGES[vi][1]) - 21 - x, VILLAGES[vi][1] + 1 - zz) < (vi === 3 ? 16 : 13)) || VILLAGES.some(([, z0]) => Math.hypot(ROADX(z0 - 2) - 16 - x, z0 - 14 - zz) < 6) || lanes.some((l) => l.some((q) => Math.hypot(q[0] - x, q[1] - zz) < 6))) ok = false; }
       if (ok) { site = [x0, z]; break; } }
     if (site) { const [x0, z] = site, y0 = H(x0 - LEN / 2, z);
-      const sp = []; for (let u = 0; u <= LEN + 4; u += 1.5) sp.push([x0 + 4 - u, z]); ribbon(sp, 7.2, 0xd8cdb6, .06, 3, sandTex()); ribbon(sp, 6.2, 0xcfc3aa, .08, 4, sandTex());
+      /* a flat stone deck for the whole market, at the height of the highest ground under it and going down to the lowest, so nothing sinks or floats */
+      const dx0 = x0 + 4.2, dx1 = x0 - LEN - 1.8; let hi = -9, lo = 9; for (let xx = dx1; xx <= dx0; xx += 1.5) for (let zz = z - 6.5; zz <= z + 6.5; zz += 1.5) { const hh = H(xx, zz); hi = Math.max(hi, hh); lo = Math.min(lo, hh); }
+      const deckY = hi + .12; mkY = deckY;
+      { const dk = new THREE.Mesh(new THREE.BoxGeometry(dx0 - dx1, deckY - lo + .5, 13), PM({ map: sandTex(), color: PASTEL(0xd8cdb6), roughness: 1 })); dk.position.set((dx0 + dx1) / 2, deckY - (deckY - lo + .5) / 2, z); dk.receiveShadow = true; dk.castShadow = true; scene.add(dk);
+        const ed = new THREE.Mesh(new THREE.BoxGeometry(dx0 - dx1 + .5, .1, 13.5), std(0xcfc3aa)); ed.position.set((dx0 + dx1) / 2, deckY - .04, z); ed.receiveShadow = true; scene.add(ed); }
       const awn = [0xe36d57, 0x4f8fc0, 0xf2c14a, 0x5fae8a, 0xe9a0c0, 0xa88bd8, 0xf09a3a, 0x6fc3b8];
       for (let k = 0; k < N; k++) for (let sd = 0; sd < 2; sd++) { const kind = KINDS[(k * 2 + sd + (sd ? 3 : 0)) % 8], sx = x0 - 4.5 - k * STP, sz = z + (sd ? -3.7 : 3.7), st = stall(THREE, std, kind, awn[(k * 2 + sd) % 8], !LOW); st.scale.setScalar(.95);
-        st.userData.hx = 1.6; st.userData.hz = 1.0; st.userData.r = 2; addTo(st, sx, sz, sd ? 0 : PI, 2.1);
-        const vd = person([0xf4e6d0, 0xe9a0c0, 0x7aa6d8, 0xf2c14a][(k + sd) % 4], [0xf0c9a0, 0xe3b185, 0xf5d6b5, 0xc58c5e][(k + sd * 2) % 4]); vd.position.set(sx, H(sx, sz + (sd ? -2.1 : 2.1)) + .08, sz + (sd ? -2.1 : 2.1)); vd.rotation.y = (sd ? 0 : PI) - PI / 2 + (sd ? 0 : 0); scene.add(vd); }
+        st.userData.hx = 1.6; st.userData.hz = 1.0; st.userData.r = 2; addTo(st, sx, sz, sd ? 0 : PI, 2.1); st.position.y = deckY; st.children.forEach((c) => { if (c.geometry && c.geometry.type === 'BoxGeometry' && c.position.y < 0) c.visible = false; });
+        const vd = person([0xf4e6d0, 0xe9a0c0, 0x7aa6d8, 0xf2c14a][(k + sd) % 4], [0xf0c9a0, 0xe3b185, 0xf5d6b5, 0xc58c5e][(k + sd * 2) % 4]); vd.position.set(sx, deckY + .08, sz + (sd ? -2.1 : 2.1)); vd.rotation.y = (sd ? 0 : PI) - PI / 2 + (sd ? 0 : 0); scene.add(vd); }
       const shirts = [0xe36d57, 0x4f8fc0, 0xc9a0e8, 0x5fae8a, 0xf0907a, 0x7aa6d8], skins = [0xf0c9a0, 0xe3b185, 0xf5d6b5, 0xc58c5e];
-      for (let i = 0; i < 6; i++) { const w2 = person(shirts[i], skins[i % 4]); scene.add(w2); const a = x0 - 3 - (i % 3) * 4, b2 = x0 - LEN + 3 + (i % 3) * 2; walkers.push({ p: w2, pts: [[a, z + (i % 2 ? .9 : -.9)], [(a + b2) / 2, z + (i % 2 ? -.6 : .6)], [b2, z + (i % 2 ? .9 : -.9)]], d: i * 4.5, sp: .45 + (i % 3) * .12, dir: i % 2 ? 1 : -1, lift: .14 }); }
+      for (let i = 0; i < 6; i++) { const w2 = person(shirts[i], skins[i % 4]); scene.add(w2); const a = x0 - 3 - (i % 3) * 4, b2 = x0 - LEN + 3 + (i % 3) * 2; walkers.push({ p: w2, pts: [[a, z + (i % 2 ? .9 : -.9)], [(a + b2) / 2, z + (i % 2 ? -.6 : .6)], [b2, z + (i % 2 ? .9 : -.9)]], d: i * 4.5, sp: .45 + (i % 3) * .12, dir: i % 2 ? 1 : -1, lift: .14, flatY: deckY }); }
       reserved.push([x0 - LEN - 2, x0 + 5, z - 6.5, z + 6.5]); mkt = { x: x0 - LEN / 2, z }; } }
   VILLAGES.forEach(([name, z0], vi) => {
     const rx = ROADX(z0), cnt = vi === 3 ? 8 : 5; let made = 0;
@@ -1118,7 +1122,7 @@ export function open(opts) {
       { const spd = moving ? (w.mode === 'walk' ? w.sp : (w.mode === 'back' ? 1.6 : 2.4)) : 0; w.gp = (w.gp || rng() * 6) + spd * dt * 5.2; const k = Math.min(1, spd * 2.2), ud = w.p.userData, sw = Math.sin(w.gp) * .55 * k;
         w.sk = (w.sk || 0) + (k - (w.sk || 0)) * Math.min(1, dt * 8);
         if (ud.legs) { for (const lg of ud.legs) lg.rotation.z = -sw * lg.userData.sz * (w.sk > .05 ? 1 : 0) * Math.min(1, w.sk * 1.6); for (const am of ud.arms) am.position.x = sw * am.userData.arm * .5 * w.sk; }
-        w.p.position.set(w.cx, H(w.cx, w.cz) + (w.lift || .08) + (1 - Math.cos(w.gp * 2)) * .018 * w.sk, w.cz); w.p.rotation.set(0, w.yaw - PI / 2, Math.sin(w.gp) * .025 * w.sk); }
+        w.p.position.set(w.cx, (w.flatY !== undefined ? w.flatY : H(w.cx, w.cz)) + (w.lift || .08) + (1 - Math.cos(w.gp * 2)) * .018 * w.sk, w.cz); w.p.rotation.set(0, w.yaw - PI / 2, Math.sin(w.gp) * .025 * w.sk); }
       const um = w.p.userData.um; if (um) um.visible = raining && w.mode !== 'stay';
     }
     { rainL.material.opacity = rainT * .55 * (1 - uwMix); rainL.visible = rainT > .03 && uwMix < .6; if (rainL.visible) { rainL.position.set(camera.position.x, Math.max(camera.position.y - 5, H(camera.position.x, camera.position.z)), camera.position.z); const a = rainG.attributes.position; for (let i = 0; i < NR; i++) { let y = a.getY(i * 2) - dt * 20; if (y < -1) y += 23; a.setY(i * 2, y); a.setY(i * 2 + 1, y - 1.1); } a.needsUpdate = true; } for (const c of clouds) c.children.forEach((m2) => m2.material.color.lerp(rainT > .3 ? CLOUD_GREY : CLOUD_WARM, dt * .8)); }
