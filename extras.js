@@ -607,20 +607,18 @@
   // If /extras/video/lexus.mp4 has been uploaded, the Instagram embed (which cannot autoplay) gives way to the site's own player:
   // autoplay, muted, looping, with the sound and full screen icons like the other videos
   function lexusVideo(ig) {
-    var url = '/extras/video/lexus.mp4';
-    fetch(url, { method: 'HEAD', cache: 'no-cache' }).then(function (rs) {
-      if (!rs.ok || !/video|octet/.test(rs.headers.get('content-type') || 'video')) return;
-      var t = document.createElement('video'); t.preload = 'metadata'; t.muted = true;
-      t.addEventListener('loadedmetadata', function () {
-        if (!t.videoWidth || !ig.isConnected) return;
-        var r = t.videoHeight / t.videoWidth;
-        ig.setAttribute('data-r', String(r)); VP_RATIO.lexus = t.videoWidth / t.videoHeight; VP_FILE.lexus = 'lexus';
-        ig.setAttribute('data-xvid', '');
-        vpMount(ig, 'lexus', { autoplay: true, loop: true, title: 'Lexus' });
-        sizeExtras(ig.parentNode); if (mode === 'grid') schedule();
-      });
-      t.src = url;
-    }).catch(function () {});
+    /* Lexus plays its own file at once (no Instagram frame is created, so there can never be a second sound); the Instagram embed
+       is only a fallback if the file cannot be loaded */
+    VP_RATIO.lexus = 1080 / 608; VP_FILE.lexus = 'lexus';
+    ig.setAttribute('data-r', String(608 / 1080)); ig.setAttribute('data-xvid', '');
+    var pl = vpMount(ig, 'lexus', { autoplay: true, loop: true, title: 'Lexus' });
+    sizeExtras(ig.parentNode); if (mode === 'grid') schedule();
+    setTimeout(function () {
+      if (!ig.isConnected || !pl || (pl.v && pl.v.readyState > 0) || pl.on) return;
+      if (pl.v && pl.v.networkState !== 3 && !pl.v.error) return;   /* still loading is fine: only a failed load falls back */
+      var f = document.createElement('iframe'); f.src = INSTAGRAM; f.title = 'Lexus on Instagram'; f.allowFullscreen = true; f.setAttribute('scrolling', 'no');
+      f.setAttribute('allow', 'autoplay; encrypted-media; fullscreen; picture-in-picture'); f.__xig = 1; ig.appendChild(f);
+    }, 9000);
   }
 
   function ensureExtras(g, show) {
@@ -630,15 +628,7 @@
       ig = document.createElement('div');
       ig.className = 'x-insta';
       ig.setAttribute('data-x', 'insta');
-      ig.setAttribute('data-r', String(9 / 16));
-      var f = document.createElement('iframe');
-      f.src = INSTAGRAM;
-      f.title = 'Lexus on Instagram';
-      f.loading = 'lazy';
-      f.allowFullscreen = true;
-      f.setAttribute('scrolling', 'no');
-      f.setAttribute('allow', 'autoplay; encrypted-media; fullscreen; picture-in-picture');
-      ig.appendChild(f);
+      ig.setAttribute('data-r', String(608 / 1080));
       g.insertBefore(ig, firstItemSlot(g));   // first in the gallery
       lexusVideo(ig);
     } else if (firstItemSlot(g) !== ig) {
@@ -1167,6 +1157,13 @@
   // everything else is held muted: other players of the page, copies left behind in hidden layouts, videos Framer put there itself and
   // any YouTube frame that is not ours. Players that are no longer on the page are stopped, and two players of the same video are never kept.
   var vpOwner = null;
+  /* the moment any media element starts or changes volume, it is silenced unless it is the one whose sound button was pressed */
+  var vpSilence = function (e) {
+    var t = e.target; if (!t || (t.tagName !== 'VIDEO' && t.tagName !== 'AUDIO')) return;
+    var own = vpOwner && !vpOwner.muted && vpOwner.v === t;
+    if (!own && !t.muted) { t.muted = true; }
+  };
+  ['play', 'playing', 'volumechange'].forEach(function (ev) { document.addEventListener(ev, vpSilence, true); });
   function vpGuard() {
     var i, p, seen = {};
     for (i = vpAll.length - 1; i >= 0; i--) {
