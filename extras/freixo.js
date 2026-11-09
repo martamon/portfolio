@@ -1813,7 +1813,7 @@ export function open(opts) {
   }
   const flyers = [];
   [[-12, shore(-12) + 1.2], [1.5, shore(1.5) + 2], [-4, 4], [9, 3]].forEach((c, ci) => {
-    for (let k = 0; k < 1; k++) { const b = bird(); W(b.wrap); flyers.push({ b, cx: c[0] + (rnd() - .5) * 1.5, cz: c[1], rx: 1.2 + rnd() * 2.2, rz: .7 + rnd() * 1.2, sp: (.22 + rnd() * .22) * (rnd() > .5 ? 1 : -1), a: rnd() * 6.28, lift: .7 + rnd() * .9, ph: rnd() * 6 }); }
+    for (let k = 0; k < 1; k++) { const b = bird(); W(b.wrap); flyers.push({ b, cx: c[0] + (rnd() - .5) * 1.5, cz: c[1], rx: 3 + rnd() * 3.5, rz: 1.6 + rnd() * 1.8, sp: (.3 + rnd() * .25) * (rnd() > .5 ? 1 : -1), a: rnd() * 6.28, lift: .7 + rnd() * .9, ph: rnd() * 6 }); }
   });
   const gulls = [];
   for (let i = 0; i < 7; i++) {
@@ -2278,11 +2278,11 @@ export function open(opts) {
       }
     }
     for (const c of clouds) { c.rotation.y += c.userData.sp * dt; c.scale.setScalar(1 + rainT * .55); }
-    for (const g of gulls) { g.rotateY(g.userData.sp * dt * .6); g.userData.b.wrap.position.y += Math.sin(t * 1.3 + g.userData.ph) * dt * .08; const f = Math.sin(t * 7 + g.userData.ph) * .5; g.userData.b.w1.rotation.z = f; g.userData.b.w2.rotation.z = -f; }
+    for (const g of gulls) { g.rotateY(g.userData.sp * dt * .6); g.userData.b.wrap.position.y += Math.sin(t * 1.3 + g.userData.ph) * dt * .08; const f = Math.sin(t * 7 + g.userData.ph) * .85; g.userData.b.w1.rotation.z = f; g.userData.b.w2.rotation.z = -f; }
     for (const f of flyers) {
       f.a += f.sp * dt; const sg = Math.sign(f.sp), tx = -f.rx * Math.sin(f.a) * sg, tz = f.rz * Math.cos(f.a) * sg;
       put(f.b.wrap, f.cx + f.rx * Math.cos(f.a), f.cz + f.rz * Math.sin(f.a), Math.atan2(-tz, tx), f.lift + Math.sin(t * 1.3 + f.ph) * .12, true);
-      const fl = Math.sin(t * 8 + f.ph) * .55; f.b.w1.rotation.z = fl; f.b.w2.rotation.z = -fl;
+      const fl = Math.sin(t * 9 + f.ph) * .9; f.b.w1.rotation.z = fl; f.b.w2.rotation.z = -fl;
     }
     for (const c of cars) {
       if (c.offT === undefined) { c.offT = c.off; c.v0 = Math.abs(c.v); c.dir = Math.sign(c.v) || 1; c.vm = 1; }
