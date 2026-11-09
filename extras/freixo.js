@@ -918,6 +918,9 @@ export function open(opts) {
     // every road is laid at the same height, all the pavements first and all the asphalt above them, so crossings and junctions merge with no seams
     for (const [pts] of roadList) { const m = ribbon(pts, .56, walkMat, .018, false, undefined, true, 'edge'); m.renderOrder = 1; W(m); }
     for (const [pts] of roadList) { const m = ribbon(pts, .4, asphalt, .03, false, undefined, true, 'edge'); m.renderOrder = 2; W(m); roadMeshes.push(m); }
+    /* real pavements: a raised pale stone footway on each side of the carriageway, with a darker kerb stone along the road edge */
+    const foot = std(0xd9d2c4, { roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }), kerbM = std(0xb4ad9d, { roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -5, polygonOffsetUnits: -5 });
+    for (const [pts] of roadList) for (const sg of [-1, 1]) { const f = ribbon(sideOf(pts, sg * .3), .2, foot, .05, false, undefined, true, 'edge'); f.renderOrder = 3; W(f); const k = ribbon(sideOf(pts, sg * .2), .03, kerbM, .056, false, undefined, true, 'edge'); k.renderOrder = 4; W(k); }
     const centre = std(0xf4f0e4, { roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -5, polygonOffsetUnits: -5 });
     for (const [pts] of roadList) { const m = ribbon(pts, .014, centre, .036, true, undefined, true, 'edge'); m.renderOrder = 3; W(m); }     // the dashed line down the middle of every road
   };
@@ -1287,6 +1290,9 @@ export function open(opts) {
 
   // ---- village squares: a paved plaza with a tree or two, benches, café terraces and people; Muros has the main square (with the cruceiro)
   const strollers = [], pathers = [], kickers = [];
+  // people walking along the pavements of both coast roads, on their own side
+  for (let ri = 0; ri < 2; ri++) { const r = routes[ri], n = Math.round(r.total * .45); for (let i = 0; i < n; i++) { const sg = i % 2 ? 1 : -1, pp = person(SHIRTS[(i * 3 + ri) % SHIRTS.length], { skin: SKINS[i % 4], hat: i % 5 === 0 ? 0xe9e2d2 : undefined }); pp.scale.setScalar(.9); W(pp);
+      pathers.push({ p: pp, r, u: ((i + .4) / n) % 1, v: (.03 + (i % 4) * .007) * (i % 3 === 0 ? -1 : 1), off: .3 * sg, bob: 1, keep: true, walk: true, lift: .05 }); if (i % 3 === 1) { const p2 = person(SHIRTS[(i * 3 + ri + 2) % SHIRTS.length], { skin: SKINS[(i + 1) % 4] }); p2.scale.setScalar(.9); W(p2); const q0 = pathers[pathers.length - 1]; pathers.push({ p: p2, r, u: q0.u + .01, v: q0.v, off: .3 * sg, bob: 1, keep: true, walk: true, lift: .05 }); } } }
   function chair(g, x, z, ry) { const c = box(.045, .045, .045, std(0x6b4a2a)); c.position.set(x, .05, z); g.add(c); const bk = box(.045, .05, .01, std(0x6b4a2a)); bk.position.set(x + Math.sin(ry) * .026, .09, z + Math.cos(ry) * .026); g.add(bk); }
   function terrace(x, inl, col) {
     const [px, pz] = onShore(x, inl), g = new THREE.Group();
