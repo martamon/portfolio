@@ -2323,7 +2323,7 @@ export function open(opts) {
       const [x, z, yaw] = routeAt(c.r, c.u), sy = Math.sin(yaw), cy = Math.cos(yaw), px = x + sy * c.off, pz = z + cy * c.off, onW = 0;
       const hd0 = yaw + (c.dir < 0 ? PI : 0); c.px0 = px; c.pz0 = pz; if (c.hdS === undefined) c.hdS = hd0; { let dh = hd0 - c.hdS; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); c.hdS += dh * Math.min(1, dt * 9); } const hd = c.hdS, hx = Math.cos(hd), hz = -Math.sin(hd);
       { const want = roadLift(px, pz, .028 + Math.max(0, .07 - groundH(px, pz))) + .012; c.ly = c.ly === undefined ? want : c.ly + (want - c.ly) * Math.min(1, dt * 16); put(c.w, px, pz, hd, c.ly + (onW > 0 ? onW * Math.max(0, (Math.abs(px - INLET[0][0]) < 1.5 ? .2 : .28) - groundH(px, pz)) : 0)); }
-      if (onW <= 0) c.w.quaternion.multiply(_q.setFromAxisAngle(Zax, Math.atan2(groundH(px + hx * .12, pz + hz * .12) - groundH(px - hx * .12, pz - hz * .12), .24)));
+      if (onW <= 0) { const tg = Math.max(-.07, Math.min(.07, Math.atan2(groundH(px + hx * .12, pz + hz * .12) - groundH(px - hx * .12, pz - hz * .12), .24) * .4)); c.pit = c.pit === undefined ? 0 : c.pit + (tg - c.pit) * Math.min(1, dt * 4); c.w.quaternion.multiply(_q.setFromAxisAngle(Zax, c.pit)); }      /* a gentle, smoothed tilt: the vehicles never rear up at the front */
     }
     for (const s of sailers) {
       s.a += s.sp * dt; const sg = Math.sign(s.sp), tx = -s.rx * Math.sin(s.a) * sg, tz = s.rz * Math.cos(s.a) * sg;
@@ -2402,7 +2402,7 @@ export function open(opts) {
       if (!c.okOff) { let o = Math.abs(c.off), tries = 0; const dir = c.south ? -1 : 1, fnn = c.south ? shoreS : shore, bad = (oo) => { for (let q = -8; q <= 8; q++) { const xx = c.cx + q / 8 * c.half, zz = fnn(xx) + dir * oo; for (const [dx, dz] of [[0, 0], [.2, 0], [-.2, 0], [0, .2], [0, -.2]]) if (groundH(xx + dx, zz + dz) > -.15 || inletD(xx + dx, zz + dz) < .4 || seaBlocked(xx + dx, zz + dz, .1)) return true; } return false; }; while (bad(o) && tries++ < 20) o += .12; c.off = o * (c.off < 0 ? -1 : 1); c.okOff = 1; }
       const a = t * c.sp * .35 + c.ph, x = c.cx + Math.sin(a) * c.half, dx = Math.cos(a) * c.half * c.sp * .35, fn = c.south ? shoreS : shore, z = fn(x) + (c.south ? -1 : 1) * Math.abs(c.off), sl = (fn(x + .05) - fn(x - .05)) / .1, sg = Math.cos(a) >= 0 ? 1 : -1, yawT = Math.atan2(-sl * sg, sg);
       if (c.yawS === undefined) c.yawS = yawT; { let dh = yawT - c.yawS; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); c.yawS += dh * Math.min(1, dt * 2.2); }      /* it turns round slowly at the ends of its run, like a real canoe, and always points where it is going */
-      const yaw = c.yawS; put(c.g, x, z, yaw, .03, true); c.g.rotation.z = 0; c.pad.rotation.x = Math.sin(t * 2.4 + c.ph) * .5; c.pad.rotation.z = Math.sin(t * 2.4 + c.ph + 1.2) * .22;
+      const yaw = c.yawS; put(c.g, x, z, yaw, .03, true); c.pad.rotation.x = Math.sin(t * 2.4 + c.ph) * .5; c.pad.rotation.z = Math.sin(t * 2.4 + c.ph + 1.2) * .22;
     }
     for (const bl of balls) { const c = Math.cos(t * 2.6 + bl.ph), h = .07 + .24 * Math.abs(Math.sin(t * 2.6 + bl.ph)); put(bl.m, bl.x, bl.z + c * .3 * bl.sg, 0, h); }
     for (const s of swimmers) {
