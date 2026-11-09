@@ -484,9 +484,11 @@ function stoneBridge(span, nA, bw, mat, deckMat, hump) {
 function ribbon(pts, width, mat, lift, dash, flo, noSkip, flat) {
   if (flat === 'edge') {       // a road: each edge of the ribbon follows the ground under it (smoothed along the road), so it is never raised on one side and sunk on the other
     flo = flo === undefined ? .07 : flo; const N = pts.length, HL = [], HR = [], nl = [];
-    for (let i = 0; i < N; i++) { const a2 = pts[Math.max(0, i - 1)], b2 = pts[Math.min(N - 1, i + 1)], tx = b2[0] - a2[0], tz = b2[1] - a2[1], l = Math.hypot(tx, tz) || 1, nx = -tz / l * width / 2, nz = tx / l * width / 2; nl.push([nx, nz]); HL.push(Math.max(groundH(pts[i][0] + nx, pts[i][1] + nz), flo)); HR.push(Math.max(groundH(pts[i][0] - nx, pts[i][1] - nz), flo)); }
+    for (let i = 0; i < N; i++) { const a2 = pts[Math.max(0, i - 1)], b2 = pts[Math.min(N - 1, i + 1)], tx = b2[0] - a2[0], tz = b2[1] - a2[1], l = Math.hypot(tx, tz) || 1, nx = -tz / l * width / 2, nz = tx / l * width / 2; nl.push([nx, nz]); const gm = groundH(pts[i][0], pts[i][1]), gl = Math.max(groundH(pts[i][0] + nx, pts[i][1] + nz), groundH(pts[i][0] + nx * 1.5, pts[i][1] + nz * 1.5)), gr = Math.max(groundH(pts[i][0] - nx, pts[i][1] - nz), groundH(pts[i][0] - nx * 1.5, pts[i][1] - nz * 1.5)); HL.push(Math.max(gl, gm, flo)); HR.push(Math.max(gr, gm, flo)); }
+    const rL = HL.slice(), rR = HR.slice();
     for (let pass = 0; pass < 8; pass++) for (let i = 1; i < N - 1; i++) { HL[i] = HL[i] * .5 + (HL[i - 1] + HL[i + 1]) * .25; HR[i] = HR[i] * .5 + (HR[i - 1] + HR[i + 1]) * .25; }
-    for (let i = 0; i < N; i++) { const m = Math.max(HL[i], HR[i]) , lo = Math.min(HL[i], HR[i]); if (m - lo > .06) { /* a road is never more than a gentle camber across its width */ HL[i] = HL[i] + (m - .06 - HL[i] > 0 ? m - .06 - HL[i] : 0); HR[i] = HR[i] + (m - .06 - HR[i] > 0 ? m - .06 - HR[i] : 0); } }
+    for (let i = 0; i < N; i++) { HL[i] = Math.max(HL[i], rL[i]); HR[i] = Math.max(HR[i], rR[i]); }      /* never below the ground: the terrain cannot cover the road */
+    for (let i = 0; i < N; i++) { const m = Math.max(HL[i], HR[i]) , lo = Math.min(HL[i], HR[i]); if (m - lo > .06 && false) { /* a road is never more than a gentle camber across its width */ HL[i] = HL[i] + (m - .06 - HL[i] > 0 ? m - .06 - HL[i] : 0); HR[i] = HR[i] + (m - .06 - HR[i] > 0 ? m - .06 - HR[i] : 0); } }
     const pos = [], idx = [];
     for (let i = 0; i < N; i++) { const [nx, nz] = nl[i], L = dirFrom(pts[i][0] + nx, pts[i][1] + nz, new THREE.Vector3()).multiplyScalar(R + HL[i] + lift), Rr = dirFrom(pts[i][0] - nx, pts[i][1] - nz, new THREE.Vector3()).multiplyScalar(R + HR[i] + lift); pos.push(L.x, L.y, L.z, Rr.x, Rr.y, Rr.z); }
     for (let i = 0; i < N - 1; i++) { if (dash && i % 4 > 1) continue; const o = i * 2; idx.push(o, o + 1, o + 2, o + 1, o + 3, o + 2); }
@@ -1508,7 +1510,7 @@ export function open(opts) {
   const flags = [];
   function schoolYard(x, inl, roofCol, wallCol, nKids) {
     const [px, pz] = onShore(x, inl), yaw = seaYaw(px), slab = new THREE.Group();
-    const sl = box(2.5, .24, 2.7, std(0xe6dcc0)); sl.position.y = -.1; slab.add(sl);
+    const sl = box(2.5, 1.5, 2.7, std(0xe6dcc0)); sl.position.y = -.77; slab.add(sl);      /* deep base: the yard never floats */
     slab.userData.fp = 2.0; slab.userData.pri = 6; slab.userData.sch = 1; W(put(slab, px, pz, yaw, -.04));
     const loc = (lx, lz) => [px + lx * Math.cos(yaw) + lz * Math.sin(yaw), pz - lx * Math.sin(yaw) + lz * Math.cos(yaw)];
     const sc = school(roofCol, wallCol); sc.userData.pri = 6; const [sx, sz] = loc(0, -.95); W(put(sc, sx, sz, yaw, .03)); flags.push(sc.userData.flag);
