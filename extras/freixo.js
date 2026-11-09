@@ -60,10 +60,10 @@ const COVES = [[-4.2, shore(-4.2) - .15], [3.9, shore(3.9) - .15], [-19.0, shore
 const INLET = [[-6.4, shore(-6.4) + .5], [-6.4, shore(-6.4) - .9], [-6.25, shore(-6.4) - 2.2], [-6.4, shore(-6.4) - 3.4]];     // Esteiro's inlet
 const INLET2 = [[5.8, shore(5.8) + .5], [5.8, shore(5.8) - 1.0], [5.65, shore(5.8) - 2.6], [5.8, shore(5.8) - 4.2], [5.5, -7.2], [6.6, -8.5]];            // the river of Outes (its channel runs on up to where the hillside river takes over)
 // the river of Outes up the hillside: its course is dug into the ground itself (see groundH), so the water lies in a real channel
-const RIVERC = (() => { const raw = [[INLET2[1][0], INLET2[1][1]], [INLET2[2][0], INLET2[2][1]], [INLET2[3][0], INLET2[3][1]], [5.5, -7.2], [6.6, -8.5], [7.9, -9.0], [8.4, -10.3], [9.8, -10.7], [10.2, -12.0], [11.3, -12.4]], d = [];
+const RIVERC = (() => { const raw = [[INLET2[3][0], INLET2[3][1]], [INLET2[4][0], INLET2[4][1]], [6.6, -8.5], [7.9, -9.0], [8.4, -10.3], [9.8, -10.7], [10.2, -12.0], [11.3, -12.4]], d = [];
   for (let i = 0; i < raw.length - 1; i++) for (let k = 0; k < 6; k++) d.push([raw[i][0] + (raw[i + 1][0] - raw[i][0]) * k / 6, raw[i][1] + (raw[i + 1][1] - raw[i][1]) * k / 6]); d.push(raw[raw.length - 1]);
   let q = d; for (let k = 0; k < 6; k++) q = q.map((p, i) => (i === 0 || i === q.length - 1) ? p : [(q[i - 1][0] + 2 * p[0] + q[i + 1][0]) / 4, (q[i - 1][1] + 2 * p[1] + q[i + 1][1]) / 4]); return q; })();
-const RIVERW = RIVERC.map((_, i) => .78 * Math.pow(1 - i / (RIVERC.length - 1), 1.25) + .05);
+const RIVERW = RIVERC.map((_, i) => (.78 * Math.pow(1 - i / (RIVERC.length - 1), 1.25) + .05) * Math.min(1, .12 + i / 9));      // it grows out of the sea channel, so it begins with no square end
 const INLET3 = [[-1.2, shoreS(-1.2) - .6], [-1.2, shoreS(-1.2) + 1.0], [-1.1, shoreS(-1.2) + 2.4], [-1.2, shoreS(-1.2) + 3.7]];      // Ézaro: the sea runs in as a short river up to the waterfall
 const INLETS = [INLET, INLET2, INLET3];
 const LOURO = [-19.8, shore(-19.8) - 3.0], LAG = [-19.0, shore(-19.0) - 1.9], HILL2 = [12.6, shore(12.6) - 8.5];
@@ -916,11 +916,11 @@ export function open(opts) {
   const buildRoad = (pts, up) => { roadList.push([pts, up || 0]); };
   const flushRoads = () => {
     // every road is laid at the same height, all the pavements first and all the asphalt above them, so crossings and junctions merge with no seams
-    for (const [pts] of roadList) { const m = ribbon(pts, .56, walkMat, .018, false, undefined, true, 'edge'); m.renderOrder = 1; W(m); }
-    for (const [pts] of roadList) { const m = ribbon(pts, .4, asphalt, .03, false, undefined, true, 'edge'); m.renderOrder = 2; W(m); roadMeshes.push(m); }
+    for (const [pts] of roadList) { const m = ribbon(pts, .76, walkMat, .018, false, undefined, true, 'edge'); m.renderOrder = 1; W(m); }
+    for (const [pts] of roadList) { const m = ribbon(pts, .56, asphalt, .03, false, undefined, true, 'edge'); m.renderOrder = 2; W(m); roadMeshes.push(m); }
     /* real pavements: a raised pale stone footway on each side of the carriageway, with a darker kerb stone along the road edge */
     const foot = std(0xd9d2c4, { roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }), kerbM = std(0xb4ad9d, { roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -5, polygonOffsetUnits: -5 });
-    for (const [pts] of roadList) for (const sg of [-1, 1]) { const f = ribbon(sideOf(pts, sg * .3), .2, foot, .05, false, undefined, true, 'edge'); f.renderOrder = 3; W(f); const k = ribbon(sideOf(pts, sg * .2), .03, kerbM, .056, false, undefined, true, 'edge'); k.renderOrder = 4; W(k); }
+    for (const [pts] of roadList) for (const sg of [-1, 1]) { const f = ribbon(sideOf(pts, sg * .4), .2, foot, .05, false, undefined, true, 'edge'); f.renderOrder = 3; W(f); const k = ribbon(sideOf(pts, sg * .29), .03, kerbM, .056, false, undefined, true, 'edge'); k.renderOrder = 4; W(k); }
     const centre = std(0xf4f0e4, { roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -5, polygonOffsetUnits: -5 });
     for (const [pts] of roadList) { const m = ribbon(pts, .014, centre, .036, true, undefined, true, 'edge'); m.renderOrder = 3; W(m); }     // the dashed line down the middle of every road
   };
@@ -937,8 +937,8 @@ export function open(opts) {
   for (const [jx, z0] of roadN.rb) {
     const hb = Math.max(groundH(jx, z0), .07), mk = (r0, r1, mat, lift) => { const m = new THREE.Mesh(new THREE.RingGeometry(r0, r1, 48, 1), mat); m.rotation.x = -PI / 2; m.userData.ribbon = true; const g = new THREE.Group(); g.add(m); W(put(g, jx, z0, 0, hb + lift, true)); return m; };
     const lift0 = -SEA;
-    mk(RB - .27, RB + .34, new THREE.MeshStandardMaterial({ color: 0xe2cba0, roughness: 1, side: THREE.DoubleSide }), lift0 + .012);
-    roadMeshes.push(mk(RB - .2, RB + .2, new THREE.MeshStandardMaterial({ color: 0x808a98, roughness: 1, side: THREE.DoubleSide }), lift0 + .03));
+    mk(RB - .4, RB + .5, walkMat, lift0 + .018);      // the roundabout is the same road: same pavement and the very same asphalt, joined to the roads that reach it
+    roadMeshes.push(mk(RB - .28, RB + .28, asphalt, lift0 + .03));
     const isl2 = new THREE.Mesh(new THREE.CylinderGeometry(RB - .3, RB - .27, .05, 28), std(0x7fb35a)); const ig = new THREE.Group(); ig.add(isl2);
     const tr = new THREE.Mesh(new THREE.CylinderGeometry(.015, .02, .16, 6), std(0x7a5a3c)); tr.position.y = .1; ig.add(tr); const cr = new THREE.Mesh(new THREE.IcosahedronGeometry(.11, 2), std(0x3f9576, { flatShading: true })); cr.position.y = .24; ig.add(cr);
     W(put(ig, jx, z0, 0, hb + .04, true));
@@ -953,7 +953,7 @@ export function open(opts) {
     const lot = new THREE.Group(), slab = box(.8, .7, 1.25, std(0xdcd0b8)); slab.position.y = -.345; lot.add(slab); const tar = box(.74, .02, 1.17, std(0x808a98)); tar.position.y = .01; lot.add(tar);
     for (let i = 0; i < 4; i++) { const ln = box(.5, .006, .018, std(0xf6f0e2)); ln.position.set(-.04, .022, -.5 + i * .33); lot.add(ln); }
     lot.userData.fp = .75; lot.userData.pri = 4; W(put(lot, cx, cz, yaw, hb + .05 - SEA, true));
-    { const link = [[e[0] - ux * .15, e[1] - uz * .15], [cx - ux * .2, cz - uz * .2]]; const w1 = ribbon(link, .56, walkMat, .018, false, undefined, true, 'edge'); W(w1); const a1 = ribbon(link, .4, asphalt, .03, false, undefined, true, 'edge'); a1.renderOrder = 2; W(a1); roadMeshes.push(a1); }      // the road runs straight into the car park
+    { const link = [[e[0] - ux * .15, e[1] - uz * .15], [cx - ux * .2, cz - uz * .2]]; const w1 = ribbon(link, .76, walkMat, .018, false, undefined, true, 'edge'); W(w1); const a1 = ribbon(link, .56, asphalt, .03, false, undefined, true, 'edge'); a1.renderOrder = 2; W(a1); roadMeshes.push(a1); }      // the road runs straight into the car park
     [[0xe9577a, -.33], [0x4f8fc0, .0], [0xf2c14a, .33]].slice(0, atEnd ? 2 : 3).forEach(([col, off], k) => { if (k === 2 && roadN === rd) return; const pc = car(col, false); pc.scale.setScalar(.58); const pg = new THREE.Group(); pg.add(pc); parked.push(pg); const ox = -cz * 0, qx = cx + (-uz) * off * -1, qz = cz + ux * off * -1; W(put(pg, cx - uz * off, cz + ux * off, yaw + PI / 2 + (k % 2 ? PI : 0), hb + .062 - SEA, true)); });
   }
   const linkRoads = [];
@@ -1012,7 +1012,7 @@ export function open(opts) {
   { const rs = relax(roadS, 3); roadBridge(rs, INLET3[0][0], 1.3); }
   const routes = [route(roadN), route(roadS)];
   // ---- zebra crossings with traffic lights: cars stop at the red (and for anybody still on the stripes), and the little people cross ONLY there, when the light for them is green
-  const crossings = [], LCYC = 17, zebraG = new THREE.BoxGeometry(.17, .012, .034);
+  const crossings = [], LCYC = 17, zebraG = new THREE.BoxGeometry(.24, .012, .034);
   const lightState = (X, t) => { const c = (t + X.off) % LCYC; return c < 8 ? 'go' : c < 9.6 ? 'amber' : c < 15.2 ? 'red' : 'wait'; };   // for the cars; the people walk while it is red (from 10.4 to 15.2)
   { const white = std(0xf8f4ea, { roughness: 1, polygonOffset: true, polygonOffsetFactor: -8, polygonOffsetUnits: -8 }), mkLamp = (col, on) => new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: on, roughness: .4 });
     const spotsFor = (ri, want) => { const r = routes[ri], out = [];
@@ -1030,15 +1030,15 @@ export function open(opts) {
         const lp = new THREE.Group(), pole = new THREE.Mesh(new THREE.CylinderGeometry(.007, .01, .26, 6), std(0x2f3a45)); pole.position.y = .13; lp.add(pole);
         const hd = box(.034, .09, .034, std(0x2b3036)); hd.position.y = .29; lp.add(hd);
         for (const [m, y] of [[X.red, .315], [X.amb, .29], [X.green, .265]]) { const d = new THREE.Mesh(new THREE.SphereGeometry(.0105, 10, 8), m); d.position.set(.0175 * sd, y, 0); lp.add(d); }
-        lp.rotation.y = 0; const px = c.x + sy * .33 * sd - tx * .12 * sd, pz = c.z + cy * .33 * sd - tz * .12 * sd; W(put(lp, px, pz, c.yaw + (sd > 0 ? PI : 0), .03)); }
-      for (let k = 0; k < 3; k++) { const p = person(SHIRTS[(crossings.length * 3 + k * 2 + 1) % SHIRTS.length], { skin: SKINS[(k + crossings.length) % 4], hat: k === 1 ? 0xe9e2d2 : undefined }); p.scale.setScalar(.9); W(p); X.peds.push({ p, s: (k % 2 ? 1 : -1) * .3, state: 'wait', wait: k * .9, dir: k % 2 ? -1 : 1, ph: 0 }); }
+        lp.rotation.y = 0; const px = c.x + sy * .44 * sd - tx * .12 * sd, pz = c.z + cy * .44 * sd - tz * .12 * sd; W(put(lp, px, pz, c.yaw + (sd > 0 ? PI : 0), .03)); }
+      for (let k = 0; k < 3; k++) { const p = person(SHIRTS[(crossings.length * 3 + k * 2 + 1) % SHIRTS.length], { skin: SKINS[(k + crossings.length) % 4], hat: k === 1 ? 0xe9e2d2 : undefined }); p.scale.setScalar(.9); W(p); X.peds.push({ p, s: (k % 2 ? 1 : -1) * .4, state: 'wait', wait: k * .9, dir: k % 2 ? -1 : 1, ph: 0 }); }
       crossings.push(X); }));
   }
   // the river of Outes keeps going up the hillside, getting narrower and narrower until it is a thread
   const RIVER2 = relax([[INLET2[2][0], INLET2[2][1] + .2], [INLET2[3][0], INLET2[3][1] + .1], [5.5, -7.2], [6.6, -8.5], [7.9, -9.0], [8.4, -10.3], [9.8, -10.7], [10.2, -12.0], [11.3, -12.4]], 0);
   { const dense = []; for (let i = 0; i < RIVER2.length - 1; i++) for (let k = 0; k < 6; k++) dense.push([RIVER2[i][0] + (RIVER2[i + 1][0] - RIVER2[i][0]) * k / 6, RIVER2[i][1] + (RIVER2[i + 1][1] - RIVER2[i][1]) * k / 6]); dense.push(RIVER2[RIVER2.length - 1]);
     const sm = RIVERC, widths = RIVERW;
-    riverPts = sm; riverMat = std(0x62d0ee, { transparent: true, opacity: .9, roughness: .9, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 }); W(ribbonW(sm, widths.map((w) => Math.max(w, .16)), riverMat, .08));
+    riverPts = sm; riverMat = std(0x62d0ee, { transparent: true, opacity: .9, roughness: .9, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 }); W(ribbonW(sm, widths.map((w, i) => Math.max(w, i < 8 ? .02 : .16)), riverMat, .08));
     riverWidths = widths;
     { let best = null; for (const q of roadRaw) for (const r of sm) { const d = Math.hypot(q[0] - r[0], q[1] - r[1]); if (!best || d < best[0]) best = [d, q[0]]; } if (best && best[0] < .5 && Math.abs(best[1] - INLET2[0][0]) > 1.2) roadBridge(roadRaw, best[1], 1.1); } }      /* where the road crosses the river it goes over a little bridge, with the water running underneath */
   const foamMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .5, depthWrite: false, side: THREE.DoubleSide });
@@ -1066,7 +1066,7 @@ export function open(opts) {
   const addCars = (ri, dir, n, speed, colors, bus, ping) => {
     for (let k = 0; k < n; k++) {
       const m = car(colors[k % colors.length], bus === 'all' || (bus && k === 0)), w = new THREE.Group(); m.scale.setScalar(.64); w.add(m); W(w);
-      cars.push({ w, r: routes[ri], u: (k + (dir > 0 ? .1 : .6)) / n, v: speed * dir, off: dir > 0 ? .095 : -.095, ping: !!ping });
+      cars.push({ w, r: routes[ri], u: (k + (dir > 0 ? .1 : .6)) / n, v: speed * dir, off: dir > 0 ? .14 : -.14, ping: !!ping });
     }
   };
   function bike(shirt, col) {
@@ -1292,7 +1292,7 @@ export function open(opts) {
   const strollers = [], pathers = [], kickers = [];
   // people walking along the pavements of both coast roads, on their own side
   for (let ri = 0; ri < 2; ri++) { const r = routes[ri], n = Math.round(r.total * .45); for (let i = 0; i < n; i++) { const sg = i % 2 ? 1 : -1, pp = person(SHIRTS[(i * 3 + ri) % SHIRTS.length], { skin: SKINS[i % 4], hat: i % 5 === 0 ? 0xe9e2d2 : undefined }); pp.scale.setScalar(.9); W(pp);
-      pathers.push({ p: pp, r, u: ((i + .4) / n) % 1, v: (.03 + (i % 4) * .007) * (i % 3 === 0 ? -1 : 1), off: .3 * sg, bob: 1, keep: true, walk: true, lift: .05 }); if (i % 3 === 1) { const p2 = person(SHIRTS[(i * 3 + ri + 2) % SHIRTS.length], { skin: SKINS[(i + 1) % 4] }); p2.scale.setScalar(.9); W(p2); const q0 = pathers[pathers.length - 1]; pathers.push({ p: p2, r, u: q0.u + .01, v: q0.v, off: .3 * sg, bob: 1, keep: true, walk: true, lift: .05 }); } } }
+      pathers.push({ p: pp, r, u: ((i + .4) / n) % 1, v: (.03 + (i % 4) * .007) * (i % 3 === 0 ? -1 : 1), off: .4 * sg, bob: 1, keep: true, walk: true, lift: .05 }); if (i % 3 === 1) { const p2 = person(SHIRTS[(i * 3 + ri + 2) % SHIRTS.length], { skin: SKINS[(i + 1) % 4] }); p2.scale.setScalar(.9); W(p2); const q0 = pathers[pathers.length - 1]; pathers.push({ p: p2, r, u: q0.u + .01, v: q0.v, off: .4 * sg, bob: 1, keep: true, walk: true, lift: .05 }); } } }
   function chair(g, x, z, ry) { const c = box(.045, .045, .045, std(0x6b4a2a)); c.position.set(x, .05, z); g.add(c); const bk = box(.045, .05, .01, std(0x6b4a2a)); bk.position.set(x + Math.sin(ry) * .026, .09, z + Math.cos(ry) * .026); g.add(bk); }
   function terrace(x, inl, col) {
     const [px, pz] = onShore(x, inl), g = new THREE.Group();
@@ -1352,8 +1352,18 @@ export function open(opts) {
   { /* the four gateways stand on the sides of the square itself (in its own frame), so they are centred on each side and turn with it */
     const [sqx, sqz] = onShore(-12.8, 3.05), sa = seaYaw(sqx), ca = Math.cos(sa), sn = Math.sin(sa), [ix, iz] = onShore(-12.8, 3.15), zs = Math.sign((ix - sqx) * sn + (iz - sqz) * ca) || 1;
     const at = (lx, lz) => [sqx + lx * ca + lz * zs * sn, sqz - lx * sn + lz * zs * ca];
-    archway(0, 0, 1.9, 0, sa, at(0, -.7)); archway(0, 0, 1.2, PI / 2, sa, at(-.88, 0)); archway(0, 0, 1.2, PI / 2, sa, at(.88, 0)); archway(0, 0, 1.2, 0, sa, at(0, .7)); }
-  { const sqM = square(-12.8, 3.05, 1.75, 1.2, { trees: 2, tables: 3, people: 5 });
+    archway(0, 0, 1.9, 0, sa, at(0, -.82)); archway(0, 0, 1.2, PI / 2, sa, at(-1.24, 0)); archway(0, 0, 1.2, PI / 2, sa, at(1.24, 0)); archway(0, 0, 1.2, 0, sa, at(0, .82)); }
+  { /* the alameda: a tree-lined promenade from the arcade square to the round fountain, and on to the stone market, all in one stone paving */
+    const stoneP = std(0xd3cbb8, { roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
+    const lerpP = (a, b, n) => { const out = []; for (let k = 0; k <= n; k++) { const u = k / n, p = onShore(a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u); out.push([p[0], p[1]]); } return out; };
+    const legs = [[[-11.55, 3.1], [-10.4, 3.9]], [[-9.6, 4.85], [-9.6, 5.75]]];
+    for (const [a, b] of legs) { const pts = lerpP(a, b, 12), r = ribbon(pts, .62, stoneP, .03, false, undefined, true, 'edge'); r.renderOrder = 3; W(r);
+      const kb = ribbon(pts, .66, std(0xb7b09e, { roughness: 1, side: THREE.DoubleSide }), .024, false, undefined, true, 'edge'); kb.renderOrder = 2; W(kb);
+      for (let k = 1; k < pts.length - 1; k += 2) { const a2 = pts[k - 1], b2 = pts[k + 1], dx = b2[0] - a2[0], dz = b2[1] - a2[1], l = Math.hypot(dx, dz) || 1, nx = -dz / l, nz = dx / l;
+        for (const sd of [-1, 1]) { const tx = pts[k][0] + nx * .42 * sd, tz = pts[k][1] + nz * .42 * sd, tr = new THREE.Group(), tk = new THREE.Mesh(new THREE.CylinderGeometry(.014, .02, .2, 6), std(0x7a5a3c)); tk.position.y = .1; tr.add(tk); const cr = new THREE.Mesh(new THREE.IcosahedronGeometry(.1, 1), std(k % 4 === 1 ? 0xe2a042 : 0x3f9576, { flatShading: true })); cr.position.y = .27; tr.add(cr); tr.userData.fp = 0; W(put(tr, tx, tz, 0, .03)); }
+        if (k % 4 === 3) for (const sd of [-1, 1]) { const bx = pts[k][0] + nx * .27 * sd, bz = pts[k][1] + nz * .27 * sd, bn = new THREE.Group(); bn.add(box(.14, .025, .045, std(0x8a6a44))); const bk = box(.14, .045, .01, std(0x8a6a44)); bk.position.set(0, .04, -.02); bn.add(bk); bn.userData.fp = 0; W(put(bn, bx, bz, Math.atan2(-nz * sd, nx * sd) + PI / 2, .045)); } } }
+  }
+  { const sqM = square(-12.8, 3.05, 2.4, 1.5, { trees: 2, tables: 3, people: 6 });
   }
   // ---- the shipyard (astillero) on the outskirts, by the sea: a big shed, a slipway with rails, a boat on stocks, a gantry crane and a hull being built
   { let sx = 0, sz = 0, found = false, flip = false;
@@ -1387,7 +1397,7 @@ export function open(opts) {
     { /* the market street joins the coast road with a proper road, so no street ends in the middle of nowhere */
       let bq = null, bd = 9; for (const q of roadRaw) { const d = Math.hypot(q[0] - mx, q[1] - mz); if (d < bd) { bd = d; bq = q; } }
       if (bq && bd < 3.5) { const n = Math.max(3, Math.round(bd / .15)), link = []; for (let k = 0; k <= n; k++) { const u = k / n; link.push([bq[0] + (mx - bq[0]) * u, bq[1] + (mz - bq[1]) * u]); }
-        const w1 = ribbon(link, .56, walkMat, .018, false, undefined, true, 'edge'); w1.renderOrder = 1; W(w1); const a1 = ribbon(link, .4, asphalt, .03, false, undefined, true, 'edge'); a1.renderOrder = 2; W(a1); roadMeshes.push(a1); } }
+        const w1 = ribbon(link, .76, walkMat, .018, false, undefined, true, 'edge'); w1.renderOrder = 1; W(w1); const a1 = ribbon(link, .56, asphalt, .03, false, undefined, true, 'edge'); a1.renderOrder = 2; W(a1); roadMeshes.push(a1); } }
     g.userData.fp = 1.3; g.userData.pri = 6; g.userData.market = 1; let mkTop = groundH(mx, mz); for (let k = 0; k < 6; k++) { const a = k * PI / 3 + .4; mkTop = Math.max(mkTop, groundH(mx + Math.cos(a) * 1.3 * .6, mz + Math.sin(a) * 1.3 * .6)); } W(put(g, mx, mz, yaw, -.02));
     for (let k = 0; k < 7; k++) { const p = person(SHIRTS[(k * 3 + 1) % SHIRTS.length], { skin: SKINS[k % 4] }); W(p); strollers.push({ p, x: mx, z: mz, yaw, rx: .1, rz: .72, a: rnd() * 6.28, sp: (.14 + rnd() * .12) * (k % 2 ? 1 : -1), still: k % 4 === 0, lift: .035, sqTop: mkTop }); } } }
 
@@ -1431,7 +1441,7 @@ export function open(opts) {
   // ---- a pretty street of little houses with tulip borders, leading inland from the south road (after the reference miniatures)
   const stX = 4.6, stZ0 = shoreS(stX) + 1.5;
   const stPts = []; { const r0 = roadS.reduce((m, q) => Math.abs(q[0] - stX) < Math.abs(m[0] - stX) ? q : m); for (let k = 0; k <= 22; k++) stPts.push([r0[0] + (stX - r0[0]) * Math.min(1, k / 3) + .28 * Math.sin(k * .38) * Math.min(1, k / 4), r0[1] + k * .2]); }      /* the street starts exactly on the south road and leaves it straight */
-  { const w1 = ribbon(relax(stPts, 3), .5, walkMat, .018, false, undefined, true, 'edge'); w1.renderOrder = 1; W(w1); const a1 = ribbon(relax(stPts, 3), .34, asphalt, .03, false, undefined, true, 'edge'); a1.renderOrder = 2; W(a1); roadMeshes.push(a1); }
+  { const w1 = ribbon(relax(stPts, 3), .7, walkMat, .018, false, undefined, true, 'edge'); w1.renderOrder = 1; W(w1); const a1 = ribbon(relax(stPts, 3), .5, asphalt, .03, false, undefined, true, 'edge'); a1.renderOrder = 2; W(a1); roadMeshes.push(a1); }
   { const PAST = [0xdcb3b4, 0xe8c9b4, 0xf1e0c6, 0xcdb2bb, 0xe6bcab, 0xf0e1cd], RF = [0xd25a4a, 0xdc6a52, 0x6f8fa0, 0xc7503f, 0xe07a5c, 0xb84a40];
     for (let k = 0; k < 5; k++) for (const sd of [-1, 1]) {
       const z = stZ0 + .55 + k * .78 + (sd > 0 ? .3 : 0), px = stX + .28 * Math.sin((z - stZ0) / .2 * .38), x = px + sd * .62;
@@ -1478,17 +1488,17 @@ export function open(opts) {
     for (const [r, dz, n] of rows) for (let k = 0; k < n; k++) {
       const x = base[0] + (k - (n - 1) / 2) * 1.4 + (r % 2) * .35, z = base[1] + dz * 1.25 - r * .0, gh = groundH(x, z);
       if (inletD(x, z) < .7 || riverPts.some((q) => Math.hypot(q[0] - x, q[1] - z) < .5)) continue;
-      const pl = new THREE.Group(); const sl = box(.85, 1.4, .7, stoneT); sl.position.y = -.43; pl.add(sl);   /* the terrace goes deep into the slope, so the house never hangs in the air */ const mt = box(.88, .04, .74, moss); mt.position.y = .27; pl.add(mt);
+      const pl = new THREE.Group();
       const ya = -PI / 2 * 0 + .15 * (k - 1);
       const hs = house({ w: .46, d: .38, floors: 1 + (hi2 % 2), wall: wallsM[hi2 % wallsM.length], roof: ROOF[hi2 % ROOF.length], gal: false, shut: [0x3d78a8, 0x4a9a74, 0xb4483a][hi2 % 3], fr: hi2, stone: false });
-      hs.position.y = .3; pl.add(hs); pl.userData.fp = .52; pl.userData.pri = 2; W(put(pl, x, z, ya, -.02));
+      hs.position.y = 0; pl.add(hs); pl.userData.fp = .52; pl.userData.pri = 2; W(put(pl, x, z, ya, -.02));      // ordinary houses straight on the ground, no raised terrace
       { const hd = house({ w: .42, d: .36, floors: 1 + ((hi2 + 1) % 2), wall: wallsM[(hi2 + 2) % wallsM.length], roof: ROOF[(hi2 + 3) % ROOF.length], gal: false, shut: [0x3d78a8, 0x4a9a74, 0xb4483a][(hi2 + 1) % 3], fr: hi2 + 5, stone: hi2 % 2 === 0 });     // a house at the top of every flight of steps
         if (hd.userData) hd.userData.pri = 2; W(put(hd, x + 1.1, z + .85, ya + .3, -.02)); STAIRS.push([x, z, ya]); }
       hi2++;
     }
     { const sp = []; for (let k = 0; k <= 12; k++) sp.push([base[0] - .3 + k * .05 + Math.sin(k * .6) * .12, base[1] + 1.0 - k * .22]); const sr = route(relax(sp, 2));
       for (const [c, u, v, off] of [[1, .1, .05, .06], [5, .7, -.045, -.06], [3, .4, .03, 0]]) { const pp = person(SHIRTS[c], { skin: SKINS[c % 4] }); pp.scale.setScalar(.85); W(pp); pathers.push({ p: pp, r: sr, u, v, off, bob: 1, lift: 0 }); } }
-    const [cx, cz] = [base[0] + 1.9, base[1] - .5]; if (groundH(cx, cz) > .3) { const pl = new THREE.Group(); pl.userData.fp = .95; pl.userData.pri = 3; { const tb = box(1.0, 1.4, .9, stoneT); tb.position.y = -.5; pl.add(tb); } const mt = box(1.02, .04, .92, moss); mt.position.y = .22; pl.add(mt); W(put(pl, cx, cz, 0, -.05)); const ch = church(.7); ch.position.y = .22; const cg = new THREE.Group(); cg.add(ch); W(put(cg, cx, cz, -.3, -.05)); }
+    const [cx, cz] = [base[0] + 1.9, base[1] - .5]; if (groundH(cx, cz) > .3) { const pl = new THREE.Group(); pl.userData.fp = .95; pl.userData.pri = 3; W(put(pl, cx, cz, 0, -.05)); const ch = church(.7); ch.position.y = 0; const cg = new THREE.Group(); cg.add(ch); W(put(cg, cx, cz, -.3, -.05)); }
     const [px, pz] = [base[0] - 1.9, base[1] + .8]; if (groundH(px, pz) > .2) { const pool = new THREE.Mesh(new THREE.CylinderGeometry(.34, .34, .03, 18), std(0x45b6d0, { transparent: true, opacity: .92, roughness: .15 })); pool.scale.z = .7; const pg = new THREE.Group(); pg.add(pool); W(put(pg, px, pz, .3, .02));
       const arch = new THREE.Group(); const ab = box(.5, .36, .24, stoneT); ab.position.y = .1; arch.add(ab); const ah = new THREE.Mesh(new THREE.CylinderGeometry(.11, .11, .26, 12), std(0x1b1a18)); ah.rotation.x = PI / 2; ah.position.set(0, .06, .02); arch.add(ah); W(put(arch, px + .35, pz - .4, -.3, -.04)); }
   }
@@ -1869,8 +1879,8 @@ export function open(opts) {
   const gulls = [];
   for (let i = 0; i < 7; i++) {
     const pv = new THREE.Group(); pv.rotation.set(.3 + rnd() * 2, rnd() * 6, 0);
-    const b = bird(); b.wrap.position.set(0, R + 1.6 + rnd() * 1.4, 0); pv.add(b.wrap);
-    pv.userData = { sp: (.35 + rnd() * .3) * (i % 2 ? 1 : -1), b, ph: rnd() * 6 }; gulls.push(pv); W(pv);
+    const b = bird(); b.wrap.position.set(R + 1.6 + rnd() * 1.4, 0, 0); pv.add(b.wrap);      /* off the axis it turns on, so the gull really travels round the planet (on the axis it only span on the spot) */
+    pv.userData = { sp: (.35 + rnd() * .3) * (i % 2 ? 1 : -1), b, ph: rnd() * 6 }; b.wrap.rotation.y = (pv.userData.sp > 0 ? 1 : -1) * PI / 2; gulls.push(pv); W(pv);
   }
   const starGeo = new THREE.BufferGeometry(), sp = new Float32Array(900 * 3);
   for (let i = 0; i < 900; i++) { const v = new THREE.Vector3(rnd() - .5, rnd() - .5, rnd() - .5).normalize().multiplyScalar(90 + rnd() * 20); sp.set([v.x, v.y, v.z], i * 3); }
@@ -2329,7 +2339,7 @@ export function open(opts) {
       }
     }
     for (const c of clouds) { c.rotation.y += c.userData.sp * dt; c.scale.setScalar(1 + rainT * .55); }
-    for (const g of gulls) { g.rotateY(g.userData.sp * dt * .6); g.userData.b.wrap.position.y += Math.sin(t * 1.3 + g.userData.ph) * dt * .08; const f = Math.sin(t * 7 + g.userData.ph) * .85; g.userData.b.w1.rotation.z = f; g.userData.b.w2.rotation.z = -f; }
+    for (const g of gulls) { g.rotateY(g.userData.sp * dt * .6); const f = Math.sin(t * 7 + g.userData.ph) * .85; g.userData.b.w1.rotation.z = f; g.userData.b.w2.rotation.z = -f; }
     for (const f of flyers) {
       f.a += f.sp * dt; const sg = Math.sign(f.sp), tx = -f.rx * Math.sin(f.a) * sg, tz = f.rz * Math.cos(f.a) * sg;
       put(f.b.wrap, f.cx + f.rx * Math.cos(f.a), f.cz + f.rz * Math.sin(f.a), Math.atan2(-tz, tx), f.lift + Math.sin(t * 1.3 + f.ph) * .12, true);
@@ -2340,7 +2350,7 @@ export function open(opts) {
       const edge = Math.min(c.u, 1 - c.u) * c.r.total, ahead = c.dir > 0 ? (1 - c.u) * c.r.total : c.u * c.r.total;
       c.vm += (Math.min(1, .25 + ahead * .9) - c.vm) * Math.min(1, dt * 6);          // slows down smoothly before the end of the road
       let lim = 1;
-      for (const X of crossings) if (X.r === c.r) { const dA = (X.u - c.u) * c.dir * c.r.total; if (dA > .2 && dA < 1.3 && (lightState(X, t) !== 'go' || X.occ)) lim = Math.min(lim, Math.max(0, (dA - .3) * 2.2)); }          // stop before the stripes at the red light, or while somebody crosses
+      for (const X of crossings) if (X.r === c.r) { const dA = (X.u - c.u) * c.dir * c.r.total; if (dA > .2 && dA < 1.3 && (lightState(X, t) !== 'go' || X.occ || X.occ2)) lim = Math.min(lim, Math.max(0, (dA - .3) * 2.2)); }          // stop before the stripes at the red light, or while somebody crosses
       for (const o of cars) if (o !== c && o.r === c.r && o.dir === c.dir) { const gp = (o.u - c.u) * c.dir * c.r.total; if (gp > 0 && gp < 1.1) lim = Math.min(lim, Math.max(0, (gp - .42) * 2.4)); }          // and never run into the car in front
       if (c.r === routes[0] && roadN.rb) for (const [jx, z0] of roadN.rb) { const dr = Math.hypot(c.px0 - jx, c.pz0 - z0); if (dr < RB + .55) lim = Math.min(lim, .55 + .45 * Math.max(0, (dr - RB) / .55)); }          // round the roundabout at a calm pace
       c.f2 = c.f2 === undefined ? 1 : c.f2 + (lim - c.f2) * Math.min(1, dt * (lim < c.f2 ? 4 : 2.2));
@@ -2348,7 +2358,7 @@ export function open(opts) {
       if (ahead < .02) { c.dir = -c.dir; c.offT = -c.offT; c.vm = .25; c.u = Math.max(0, Math.min(1, c.u)); }
       c.off += (c.offT - c.off) * Math.min(1, dt * 3);
       const [x, z, yaw] = routeAt(c.r, c.u), sy = Math.sin(yaw), cy = Math.cos(yaw), px = x + sy * c.off, pz = z + cy * c.off, onW = 0;
-      const hd0 = yaw + (c.dir < 0 ? PI : 0); c.px0 = px; c.pz0 = pz; if (c.hdS === undefined) c.hdS = hd0; { let dh = hd0 - c.hdS; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); c.hdS += dh * Math.min(1, dt * 9); } const hd = c.hdS, hx = Math.cos(hd), hz = -Math.sin(hd);
+      const hd0 = yaw + (c.dir < 0 ? PI : 0); c.px0 = px; c.pz0 = pz; if (c.hdS === undefined) c.hdS = hd0; { let dh = hd0 - c.hdS; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); c.hdS += dh * Math.min(1, dt * 30); } const hd = c.hdS, hx = Math.cos(hd), hz = -Math.sin(hd);
       { const want = roadLift(px, pz, .028 + Math.max(0, .07 - groundH(px, pz))) + .012; c.ly = c.ly === undefined ? want : c.ly + (want - c.ly) * Math.min(1, dt * 16); put(c.w, px, pz, hd, c.ly + (onW > 0 ? onW * Math.max(0, (Math.abs(px - INLET[0][0]) < 1.5 ? .2 : .28) - groundH(px, pz)) : 0)); }
       if (onW <= 0) { const tg = Math.max(-.07, Math.min(.07, Math.atan2(groundH(px + hx * .12, pz + hz * .12) - groundH(px - hx * .12, pz - hz * .12), .24) * .4)); c.pit = c.pit === undefined ? 0 : c.pit + (tg - c.pit) * Math.min(1, dt * 4); c.w.quaternion.multiply(_q.setFromAxisAngle(Zax, c.pit)); }      /* a gentle, smoothed tilt: the vehicles never rear up at the front */
     }
@@ -2364,8 +2374,8 @@ export function open(opts) {
       let occ = false; const sy = Math.sin(X.yaw), cy = Math.cos(X.yaw), ry = roadLift(X.x, X.z, .05);
       for (const q of X.peds) {
         if (q.state === 'wait') { q.wait -= dt; if (walk && q.wait <= 0 && cc < 13.6) { q.state = 'go'; q.dir = q.s < 0 ? 1 : -1; } q.ph += 0; }
-        else { const sp = .21; q.s += q.dir * sp * dt; q.ph += sp * dt * 120; if (q.s * q.dir >= .31) { q.s = q.dir * .31; q.state = 'wait'; q.wait = 1.2 + Math.random() * 2; } }
-        const moving = q.state === 'go', onRoad = Math.abs(q.s) < .27; if (moving && onRoad) occ = true;
+        else { const sp = .21; q.s += q.dir * sp * dt; q.ph += sp * dt * 120; if (q.s * q.dir >= .41) { q.s = q.dir * .41; q.state = 'wait'; q.wait = 1.2 + Math.random() * 2; } }
+        const moving = q.state === 'go', onRoad = Math.abs(q.s) < .36; if (moving && onRoad) occ = true;
         q.k = (q.k || 0) + ((moving ? 1 : 0) - (q.k || 0)) * Math.min(1, dt * 8); strideAnim(q.p, q.ph, q.k);
         const wx = X.x + sy * q.s, wz = X.z + cy * q.s, face = q.state === 'go' ? q.dir : (q.s < 0 ? 1 : -1), yawF = Math.atan2(-cy * face, sy * face);
         q.yaw = q.yaw === undefined ? yawF : q.yaw + Math.atan2(Math.sin(yawF - q.yaw), Math.cos(yawF - q.yaw)) * Math.min(1, dt * 7);
@@ -2378,7 +2388,18 @@ export function open(opts) {
       q.a += q.sp * dt; const sg = Math.sign(q.sp), lx = Math.cos(q.a) * q.rx, lz = Math.sin(q.a) * q.rz, c = Math.cos(q.yaw), sn = Math.sin(q.yaw);
       q.k = q.k === undefined ? 1 : q.k; strideAnim(q.p, q.a * 7, .8); put(q.p, q.x + lx * c + lz * sn, q.z - lx * sn + lz * c, q.yaw + Math.atan2(-Math.cos(q.a) * q.rz * sg, -Math.sin(q.a) * q.rx * sg), (1 - Math.cos(q.a * 14)) * .0012 + (q.lift || 0) + (q.sqTop !== undefined ? Math.max(0, q.sqTop - groundH(q.x + lx * c + lz * sn, q.z - lx * sn + lz * c)) : 0));
     }
+    for (const X of crossings) X.occ2 = false;
     for (const q of pathers) {
+      if (q.walk && !q.keepOn) {        // pavement walkers: now and then they want to be on the other side, so at a zebra crossing they stop, wait for the green and cross like anybody would
+        const cr = q.cross;
+        if (!cr) { if (q.lastX && Math.abs(q.lastX.u - q.u) > .02) q.lastX = null; for (const X of crossings) if (X.r === q.r && Math.abs(X.u - q.u) < .004 && (q.lastX !== X) && !q.still) { q.lastX = X; if (Math.sin(X.u * 91 + q.ph * 3.7 + (q.p.userData.idx || 0)) > -.2) { q.cross = { X, dir: q.off < 0 ? 1 : -1, wait: true }; q.still = true; q.sv = q.v; } break; } }
+        else { const X = cr.X, cc = (t + X.off) % LCYC, go = cc >= 10.4 && cc < 13.4;
+          if (cr.wait) { if (go) { cr.wait = false; } }
+          else { q.off += cr.dir * .21 * dt; X.occ2 = true; if (q.off * cr.dir >= .4) { q.off = cr.dir * .4; q.cross = null; q.still = false; q.v = q.sv; } }
+          q.k = (q.k || 0) + ((cr.wait ? 0 : 1) - (q.k || 0)) * Math.min(1, dt * 7); q.ph = (q.ph || 0) + (cr.wait ? 0 : .21 * dt * 120); strideAnim(q.p, q.ph, q.k);
+          const [x, z, yaw] = routeAt(q.r, q.u), sy = Math.sin(yaw), cy = Math.cos(yaw), face = cr.wait ? (cr.dir) : cr.dir, yF = Math.atan2(-cy * face, sy * face);
+          q.yawX = q.yawX === undefined ? yF : q.yawX + Math.atan2(Math.sin(yF - q.yawX), Math.cos(yF - q.yawX)) * Math.min(1, dt * 7);
+          put(q.p, x + sy * q.off, z + cy * q.off, q.yawX, (Math.abs(q.off) < .36 ? roadLift(x + sy * q.off, z + cy * q.off, .05) : .05) + (1 - Math.cos(q.ph * 2)) * .0012 * q.k); continue; } }
       if (!q.still) { q.u += q.v * dt / Math.max(.5, q.r.total); if (q.u > 1 || q.u < 0) { q.u = Math.min(1, Math.max(0, q.u)); q.v = -q.v; if (!q.keep) q.off = -q.off; } }
       const [x, z, yaw] = routeAt(q.r, q.u), sy = Math.sin(yaw), cy = Math.cos(yaw);
       const qx = x + sy * q.off, qz = z + cy * q.off;
