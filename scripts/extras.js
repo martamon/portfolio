@@ -399,7 +399,7 @@
     'main[data-xhome] [data-xov] [data-xcap]{visibility:hidden!important}',
     // the pictures are muted (paler colour, lower opacity, no blur, no veil) until the pointer is on them; the layout is untouched
     'main[data-xhome] [data-xov] a[href] img{filter:blur(1.4px) brightness(.62) saturate(.82)!important;transition:filter 1s cubic-bezier(.22,.8,.24,1),transform 1.2s cubic-bezier(.22,.8,.24,1)!important}',
-    'main[data-xhome] [data-xov][data-xhot] a[href] img{filter:none!important;transform:scale(1)!important}',
+    'main[data-xhome] [data-xov][data-xhot] a[href] img{filter:brightness(.74) saturate(1.08) contrast(1.04)!important;transform:scale(1)!important}',   /* sharp and in full colour, but still dark enough for the white type */
     '@media(hover:none){main[data-xhome] [data-xov] a[href] img{filter:brightness(.85) saturate(.9)!important;transform:none!important}}',
     '@media(max-width:809px){.x-ov{font-size:13px;padding:0 12px}.x-ov-r{gap:8px}}',
     // every text of the site in the tones of the MARTAMON wordmark (see paintInk)
@@ -719,6 +719,9 @@
       if (t.scrollHeight > t.clientHeight) t.style.minHeight = t.scrollHeight + 'px';
     }
     var narrow = innerWidth <= 810, cols = narrow ? 2 : 3, gap = 12, pad = narrow ? 12 : 20, top = 40;
+    /* the pictures start exactly where the title and the text start (the grid's own left edge may differ from the page's margin) */
+    var tl0 = m.querySelector('[data-framer-name="Project Title"] p'), gl0 = g.getBoundingClientRect().left;
+    if (tl0 && tl0.getBoundingClientRect().width) { var want = Math.round(tl0.getBoundingClientRect().left - gl0); if (want >= 0 && want < 80) pad = want; }
     g.style.setProperty('--pad', pad + 'px');
     var W = g.clientWidth - 2 * pad, colW = Math.floor((W - gap * (cols - 1)) / cols), heights = [], k;
     for (k = 0; k < cols; k++) heights.push(0);
