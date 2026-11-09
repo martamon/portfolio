@@ -496,7 +496,7 @@
     if (col) for (var q = 0; q < m.children.length && m.children[q] !== g; q++) gOff += m.children[q].offsetHeight;
     var ah = col ? Math.min(vh * 0.6, 680) : Math.max(260, vh - infoH - 118), ih = Math.round(Math.min(ah + 26, 840)), its = items(g), total = 0, i;
     /* the pictures are not tidied into a row: each has its own size, sits higher or lower and has its own space around it */
-    var SC = [1, .84, 1, .72, .92, 1, .78, 1], YF = [1, 0, 1, 1, 0, 1, 0, 1], GP = [56, 44, 70, 38, 60, 48, 66, 40];   /* big, then smaller; the small ones alternate high / low / centred like a hung exhibition */
+    var SC = [1, .84, 1, .72, .92, 1, .78, 1], YF = [1, 0, 1, 1, 0, 1, 0, 1], GP = [44, 36, 52, 32, 46, 38, 50, 34];   /* big, then smaller; the small ones alternate high / low / centred like a hung exhibition */
     for (i = 0; i < its.length; i++) {
       var r = parseFloat(its[i].getAttribute('data-r')) || knownRatio(its[i]) || 1;
       if (its[i].hasAttribute('data-x') || its[i].classList.contains('x-si')) r = parseFloat(its[i].getAttribute('data-r')) || r;
@@ -549,11 +549,11 @@
     g.style.setProperty('--xhx', (-sx).toFixed(2) + 'px');
     var its = HZ.its || [];
     for (var i = 0; i < its.length; i++) {
-      var left = its[i].__hx - sx, t = Math.max(0, Math.min(1, (HZ.gw - left) / Math.min(HZ.gw * 0.55, (its[i].__hw || HZ.gw) * 0.85)));   /* the last picture ends flush with the stage edge: its reveal must be complete by then */
+      var left = its[i].__hx - sx, t = Math.max(0, Math.min(1, (HZ.gw - left) / Math.min(HZ.gw * 0.3, (its[i].__hw || HZ.gw) * 0.7)));   /* the last picture ends flush with the stage edge: its reveal must be complete by then */
       var e = t * t * t * (t * (t * 6 - 15) + 10), kk = i % 3, st = its[i].style, inv = 1 - e;   /* smootherstep: no kick at either end */
-      st.setProperty('--xo', Math.min(1, e * 2.2).toFixed(3));
-      st.setProperty('--xry', (kk === 1 ? 0 : inv * 120).toFixed(2) + 'px');
-      st.setProperty('--xrx', (kk === 0 ? 0 : inv * 90).toFixed(2) + 'px');
+      st.setProperty('--xo', (0.88 + 0.12 * e).toFixed(3));   /* never empty: an arriving picture is always there, softly out of focus, and sharpens as it settles */
+      st.setProperty('--xry', (kk === 1 ? 0 : inv * 46).toFixed(2) + 'px');
+      st.setProperty('--xrx', (kk === 0 ? 0 : inv * 36).toFixed(2) + 'px');
       st.setProperty('--xrs', (1.14 - 0.14 * e).toFixed(4));
       st.setProperty('--xio', e.toFixed(3));   /* the sharp picture fades in over its blurred copy */
     }
