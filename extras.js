@@ -468,7 +468,7 @@
       var el = its0[i]; if (!el.isConnected) continue;
       var a1 = el.getBoundingClientRect(), a0 = r0[i];
       if (!a1.width || !a0.width) continue;
-      var dx = a0.left - a1.left, dy = (a0.top + sy0) - (a1.top + sy1), sx = a0.width / a1.width, sy = a0.height / a1.height;
+      var dx = a0.left - a1.left, dy = a0.top - a1.top,   /* both measured in the window, so each picture starts exactly where the eye last saw it */ sx = a0.width / a1.width, sy = a0.height / a1.height;
       if (Math.abs(dx) < 2 && Math.abs(dy) < 2 && Math.abs(sx - 1) < .02 && Math.abs(sy - 1) < .02) continue;
       el.style.transformOrigin = '0 0';
       var an = el.animate([{ translate: dx + 'px ' + dy + 'px', scale: sx + ' ' + sy }, { translate: '0px 0px', scale: '1 1' }],
@@ -868,7 +868,7 @@
     var o = document.createElement('div');
     o.className = 'x-tr';
     document.body.appendChild(o);
-    try { sessionStorage.setItem('xt-tr', String(Date.now())); } catch (err) {}
+    try { sessionStorage.setItem('xt-tr', String(Date.now())); sessionStorage.setItem('xt-tr-t', getComputedStyle(document.documentElement).getPropertyValue('--xt') || '0'); } catch (err) {}   /* the next page's veil starts in the same tone, so there is no flash of the wrong colour */
     void o.offsetWidth;
     o.classList.add('x-go');
     setTimeout(go, 750);
@@ -881,6 +881,7 @@
     setTimeout(function () { document.documentElement.removeAttribute('data-xarr'); }, 3000);
     var o = document.createElement('div');
     o.className = 'x-tr x-in';
+    try { var tv = parseFloat(sessionStorage.getItem('xt-tr-t')); if (!isNaN(tv)) o.style.setProperty('--xt', String(tv)); } catch (e) {}
     var add = function () { if (!document.body) return setTimeout(add, 10); document.body.appendChild(o); setTimeout(function () { o.classList.add('x-out'); setTimeout(function () { if (o.parentNode) o.parentNode.removeChild(o); }, 1200); }, 200); };
     add();
   })();
@@ -1191,7 +1192,8 @@
     var vs = document.querySelectorAll('video');
     for (i = 0; i < vs.length; i++) { if (!vs[i].muted && !vs[i].closest('.x-vp')) vs[i].muted = true; }
     var fr = document.querySelectorAll('iframe[src*="youtube"],iframe[srcdoc*="youtube"]');
-    for (i = 0; i < fr.length; i++) { if (!fr[i].closest('.x-vp')) { try { fr[i].removeAttribute('srcdoc'); fr[i].src = 'about:blank'; } catch (er) {} } }
+    for (i = 0; i < fr.length; i++) { if (!fr[i].__xs) fr[i].__xs = Date.now(); if (Date.now() - fr[i].__xs < 6000) continue;   /* Framer's own frames get time to be taken over by our player first */
+      if (!fr[i].closest('.x-vp')) { var mm0 = /embed\/([\w-]{6,})/.exec(fr[i].getAttribute('data-xytsrc') || fr[i].src || fr[i].getAttribute('srcdoc') || ''); if (mm0 && typeof NO_VIDEO !== 'undefined' && NO_VIDEO.indexOf(mm0[1]) > -1 && dropVideoTile(fr[i])) continue; try { fr[i].removeAttribute('srcdoc'); fr[i].src = 'about:blank'; } catch (er) {} } }
   }
   setInterval(vpGuard, 800);
   var vpGest = function () {
@@ -1324,12 +1326,17 @@
   }
   // the YouTube embeds that Framer puts on the project pages: the player replaces them (Soap&Glory gets its vertical frame)
   var NO_VIDEO = ['6LFyBTCP7ig'];   /* videos taken off the site (China) */
+  function dropVideoTile(f) {   /* hide the whole tile (Framer's poster and play button included) of a video that is off the site */
+    var gi = f; while (gi.parentElement && !gi.parentElement.hasAttribute('data-xg')) gi = gi.parentElement;
+    if (gi.parentElement) { try { f.removeAttribute('srcdoc'); f.src = 'about:blank'; } catch (er) {} setAttr(gi, 'data-xgone', ''); return true; }
+    return false;
+  }
   function upgradeEmbeds() {
     var fr = document.querySelectorAll('iframe[src*="youtube.com/embed/"],iframe[src*="youtube-nocookie.com/embed/"],iframe[data-xytsrc]');
     for (var i = 0; i < fr.length; i++) {
       var f = fr[i]; if (f.closest('.x-vp,.x-yt,.x-mreel') || f.classList.contains('x-vp-if')) continue;
       var m = /\/embed\/([\w-]{6,})/.exec(f.getAttribute('data-xytsrc') || f.src), id = m && m[1];
-      if (id && NO_VIDEO.indexOf(id) > -1) { var gi = f; while (gi.parentElement && !gi.parentElement.hasAttribute('data-xg')) gi = gi.parentElement; if (gi.parentElement) { try { f.removeAttribute('srcdoc'); f.src = 'about:blank'; } catch (er) {} setAttr(gi, 'data-xgone', ''); } continue; } if (!id || id === 'NrxFBp4bl2Q') continue;
+      if (id && NO_VIDEO.indexOf(id) > -1) { dropVideoTile(f); continue; } if (!id || id === 'NrxFBp4bl2Q') continue;
       var host = f.closest('article') || f.parentElement; if (!host || !host.getBoundingClientRect().width) continue;
       vpMount(host, id, { title: document.title, autoplay: true, loop: true });
       if (VP_RATIO[id]) { setAttr(host, 'data-xvhost', ''); var up = host.parentElement; if (up && /deo/i.test(up.getAttribute('data-framer-name') || '')) setAttr(up, 'data-xvhost', ''); }
@@ -2397,11 +2404,12 @@
         var slug = cur === 'lexus-singapore' ? (next ? 'china' : 'soapglory') : cur === 'china' ? (next ? 'schweppes' : 'lexus-singapore') : '';
         return slug ? '/' + slug + '/' : '';
       }
+      if (/^\/[a-z0-9-]+\/?$/.test(h)) return h.replace(/\/?$/, '/');
       return /^\.\/[a-z0-9-]+$/.test(h) ? '/' + h.slice(2) + '/' : '';
     };
     addEventListener('touchstart', function (e) { var t = e.touches && e.touches[0]; t0 = t ? { x: t.clientX, y: t.clientY, at: Date.now() } : null; }, { passive: true, capture: true });
     addEventListener('touchend', function (e) {
-      var a = e.target.closest && e.target.closest('a[data-xl],a[href$="coming-soon"]');
+      var a = e.target.closest && e.target.closest('a[data-xl],a[data-xpn],a[href$="coming-soon"]');
       if (!a || !t0) return;
       var t = e.changedTouches && e.changedTouches[0];
       if (!t || Math.abs(t.clientX - t0.x) > 10 || Math.abs(t.clientY - t0.y) > 10 || Date.now() - t0.at > 700) return;
@@ -2413,7 +2421,7 @@
 
   // links rewritten by dropComingSoon: Framer's router would still go to its own (original) target
   addEventListener('click', function (e) {
-    var a = e.target.closest && e.target.closest('a[data-xl]');
+    var a = e.target.closest && e.target.closest('a[data-xl],a[data-xpn]');
     if (!a || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey) return;
     e.preventDefault(); e.stopImmediatePropagation();
     goPage(a.href);
