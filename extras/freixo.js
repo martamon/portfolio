@@ -58,9 +58,9 @@ const shore = (x) => edge(0, x, 1);          // the south shore of the north coa
 const shoreS = (x) => edge(1, x, -1);        // the north shore of the south coast (Louro)
 const COVES = [[-4.2, shore(-4.2) - .15], [3.9, shore(3.9) - .15], [-19.0, shore(-19.0) - .15], [-8.8, shoreS(-8.8) + .2], [15.6, shore(15.6) - .15], [18.7, shore(18.7) - .15]];
 const INLET = [[-6.4, shore(-6.4) + .5], [-6.4, shore(-6.4) - .9], [-6.25, shore(-6.4) - 2.2], [-6.4, shore(-6.4) - 3.4]];     // Esteiro's inlet
-const INLET2 = [[5.8, shore(5.8) + .5], [5.8, shore(5.8) - 1.0], [5.65, shore(5.8) - 2.6], [5.8, shore(5.8) - 4.2]];            // the river of Outes
+const INLET2 = [[5.8, shore(5.8) + .5], [5.8, shore(5.8) - 1.0], [5.65, shore(5.8) - 2.6], [5.8, shore(5.8) - 4.2], [5.5, -7.2], [6.6, -8.5]];            // the river of Outes (its channel runs on up to where the hillside river takes over)
 // the river of Outes up the hillside: its course is dug into the ground itself (see groundH), so the water lies in a real channel
-const RIVERC = (() => { const raw = [[INLET2[2][0], INLET2[2][1] + .2], [INLET2[3][0], INLET2[3][1] + .1], [5.5, -7.2], [6.6, -8.5], [7.9, -9.0], [8.4, -10.3], [9.8, -10.7], [10.2, -12.0], [11.3, -12.4]], d = [];
+const RIVERC = (() => { const raw = [[INLET2[1][0], INLET2[1][1]], [INLET2[2][0], INLET2[2][1]], [INLET2[3][0], INLET2[3][1]], [5.5, -7.2], [6.6, -8.5], [7.9, -9.0], [8.4, -10.3], [9.8, -10.7], [10.2, -12.0], [11.3, -12.4]], d = [];
   for (let i = 0; i < raw.length - 1; i++) for (let k = 0; k < 6; k++) d.push([raw[i][0] + (raw[i + 1][0] - raw[i][0]) * k / 6, raw[i][1] + (raw[i + 1][1] - raw[i][1]) * k / 6]); d.push(raw[raw.length - 1]);
   let q = d; for (let k = 0; k < 6; k++) q = q.map((p, i) => (i === 0 || i === q.length - 1) ? p : [(q[i - 1][0] + 2 * p[0] + q[i + 1][0]) / 4, (q[i - 1][1] + 2 * p[1] + q[i + 1][1]) / 4]); return q; })();
 const RIVERW = RIVERC.map((_, i) => .78 * Math.pow(1 - i / (RIVERC.length - 1), 1.25) + .05);
@@ -82,11 +82,11 @@ function groundRaw(x, z) {
   if (r >= 1) return -.02 - .75 * sstep(1, 1.1, r);
   const k = 1 - r;
   let h = -.02 + .42 * Math.pow(k, .55) + ISL[i].hh * Math.pow(k, 1.3) * (.65 + .35 * n2(x + i * 7, z));
+  if (i === 0) h += 4.2 * Math.exp(-((x - LOURO[0]) ** 2 + (z - LOURO[1]) ** 2) / (2 * 2.6 * 2.6)) + 2.8 * Math.exp(-((x - HILL2[0]) ** 2 + (z - HILL2[1]) ** 2) / (2 * 2.4 * 2.4));
   if (i < 2) {      // the strip of land along the coast, where the villages are, is one smooth, level shelf (no bumps): nothing sinks and roads lie flat
     const d = i === 0 ? edge(0, x, 1) - z : z - edge(1, x, -1), prof = -.02 + .26 * sstep(0, .55, d), wgt = 1 - sstep(8.2, 11.5, d);
     if (wgt > 0) h = h * (1 - wgt) + prof * wgt;
   }
-  if (i === 0) h += 4.2 * Math.exp(-((x - LOURO[0]) ** 2 + (z - LOURO[1]) ** 2) / (2 * 2.6 * 2.6)) + 2.8 * Math.exp(-((x - HILL2[0]) ** 2 + (z - HILL2[1]) ** 2) / (2 * 2.4 * 2.4));
   const g = cove(x, z);
   if (g > 0) h = -.02 + (h + .02) * (1 - .8 * g);
   { const c = 1 - sstep(.26, .5, inletD(x, z)); if (c > 0) h = h * (1 - c) - .16 * c; }
@@ -515,7 +515,7 @@ function ribbon(pts, width, mat, lift, dash, flo, noSkip, flat) {
 }
 // a ribbon of water that follows the ground uphill and gets narrower (widths per point)
 function ribbonW(pts, widths, mat, lift) {
-  const H = pts.map((q) => groundH(q[0], q[1]));
+  const H = pts.map((q, i) => { const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)], tx = b[0] - a[0], tz = b[1] - a[1], l = Math.hypot(tx, tz) || 1, w2 = (widths[i] || .1) * .5; let h = groundH(q[0], q[1]); for (const k of [-1, 1]) h = Math.max(h, groundH(q[0] - tz / l * w2 * k, q[1] + tx / l * w2 * k)); return h; });      // the water rides on the higher bank, so a rise of ground never cuts it
   for (let pass = 0; pass < 5; pass++) for (let i = 1; i < H.length - 1; i++) H[i] = H[i] * .5 + (H[i - 1] + H[i + 1]) * .25;
   const P = pts.map((q, i) => dirFrom(q[0], q[1], new THREE.Vector3()).multiplyScalar(R + H[i] + lift));
   const pos = [], idx = [], tan = new THREE.Vector3(), side = new THREE.Vector3(), nrm = new THREE.Vector3();
@@ -1038,7 +1038,7 @@ export function open(opts) {
   const RIVER2 = relax([[INLET2[2][0], INLET2[2][1] + .2], [INLET2[3][0], INLET2[3][1] + .1], [5.5, -7.2], [6.6, -8.5], [7.9, -9.0], [8.4, -10.3], [9.8, -10.7], [10.2, -12.0], [11.3, -12.4]], 0);
   { const dense = []; for (let i = 0; i < RIVER2.length - 1; i++) for (let k = 0; k < 6; k++) dense.push([RIVER2[i][0] + (RIVER2[i + 1][0] - RIVER2[i][0]) * k / 6, RIVER2[i][1] + (RIVER2[i + 1][1] - RIVER2[i][1]) * k / 6]); dense.push(RIVER2[RIVER2.length - 1]);
     const sm = RIVERC, widths = RIVERW;
-    riverPts = sm; riverMat = std(0x62d0ee, { transparent: true, opacity: .9, roughness: .9, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 }); W(ribbonW(sm, widths, riverMat, .05));
+    riverPts = sm; riverMat = std(0x62d0ee, { transparent: true, opacity: .9, roughness: .9, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 }); W(ribbonW(sm, widths.map((w) => Math.max(w, .16)), riverMat, .08));
     riverWidths = widths;
     { let best = null; for (const q of roadRaw) for (const r of sm) { const d = Math.hypot(q[0] - r[0], q[1] - r[1]); if (!best || d < best[0]) best = [d, q[0]]; } if (best && best[0] < .5 && Math.abs(best[1] - INLET2[0][0]) > 1.2) roadBridge(roadRaw, best[1], 1.1); } }      /* where the road crosses the river it goes over a little bridge, with the water running underneath */
   const foamMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .5, depthWrite: false, side: THREE.DoubleSide });
@@ -1384,6 +1384,10 @@ export function open(opts) {
     const awn = [0xc9473a, 0x2f6fa8, 0xe9b94a, 0x3b9a6a, 0xe277a0, 0x7a58b5, 0xf08a3c, 0x4fb3a8];
     for (let k = 0; k < 4; k++) for (const sd of [-1, 1]) { const st = stall(THREE, std, KINDS[(k * 2 + (sd > 0 ? 1 : 0) + (sd > 0 ? 3 : 0)) % 8], awn[(k * 2 + (sd > 0 ? 1 : 0)) % 8], false); st.scale.setScalar(SC); st.position.set(sd * .31, .035, -.78 + k * .52); st.rotation.y = sd < 0 ? PI / 2 : -PI / 2; g.add(st);
       const vd = person(SHIRTS[(k + (sd > 0 ? 3 : 0)) % SHIRTS.length], { skin: SKINS[k % 4] }); vd.scale.setScalar(.8); vd.position.set(sd * .47, .035, -.78 + k * .52); vd.rotation.y = sd < 0 ? PI / 2 : -PI / 2; g.add(vd); }
+    { /* the market street joins the coast road with a proper road, so no street ends in the middle of nowhere */
+      let bq = null, bd = 9; for (const q of roadRaw) { const d = Math.hypot(q[0] - mx, q[1] - mz); if (d < bd) { bd = d; bq = q; } }
+      if (bq && bd < 3.5) { const n = Math.max(3, Math.round(bd / .15)), link = []; for (let k = 0; k <= n; k++) { const u = k / n; link.push([bq[0] + (mx - bq[0]) * u, bq[1] + (mz - bq[1]) * u]); }
+        const w1 = ribbon(link, .56, walkMat, .018, false, undefined, true, 'edge'); w1.renderOrder = 1; W(w1); const a1 = ribbon(link, .4, asphalt, .03, false, undefined, true, 'edge'); a1.renderOrder = 2; W(a1); roadMeshes.push(a1); } }
     g.userData.fp = 1.3; g.userData.pri = 6; g.userData.market = 1; let mkTop = groundH(mx, mz); for (let k = 0; k < 6; k++) { const a = k * PI / 3 + .4; mkTop = Math.max(mkTop, groundH(mx + Math.cos(a) * 1.3 * .6, mz + Math.sin(a) * 1.3 * .6)); } W(put(g, mx, mz, yaw, -.02));
     for (let k = 0; k < 7; k++) { const p = person(SHIRTS[(k * 3 + 1) % SHIRTS.length], { skin: SKINS[k % 4] }); W(p); strollers.push({ p, x: mx, z: mz, yaw, rx: .1, rz: .72, a: rnd() * 6.28, sp: (.14 + rnd() * .12) * (k % 2 ? 1 : -1), still: k % 4 === 0, lift: .035, sqTop: mkTop }); } } }
 
@@ -1741,7 +1745,8 @@ export function open(opts) {
     const kept = [];
     for (const it of items) {
       const bad = it.circles.some((c) => kept.some((k) => k.circles.some((kc) => Math.hypot(c[0] - kc[0], c[1] - kc[1]) < c[2] + kc[2] + (it.pri >= 4 && k.pri >= 4 ? -.05 : .3))) || (it.pri < 3 && nearRoad(c, it.pri < 2)) || (it.pri < 3 && kept.some((k) => k.pri === 3 && k.circles.some((kc) => Math.hypot(c[0] - kc[0], c[1] - kc[1]) < c[2] + kc[2] + .7))));
-      if (bad) world.remove(it.o); else { addOutline(it.o); if (it.home) HOMES.push([it.x, it.z, it.circles[0][2]]); kept.push(it); for (const c of it.circles) keptC.push(c); }
+      const inRiver = it.pri < 6 && it.circles.some((c) => inletD(c[0], c[1]) < c[2] * .8 + .3 || RIVERC.some((q, qi) => Math.hypot(q[0] - c[0], q[1] - c[1]) < c[2] * .8 + RIVERW[qi] / 2 + .08));
+      if (bad || inRiver) world.remove(it.o); else { addOutline(it.o); if (it.home) HOMES.push([it.x, it.z, it.circles[0][2]]); kept.push(it); for (const c of it.circles) keptC.push(c); }
     } }
   // ---- bus shelters (marquesinas) beside the roads, placed after the tidy pass so they skip whatever stands in the way
   { const shelter = (col) => { const g = new THREE.Group(), glass = std(0xcfe8f0, { transparent: true, opacity: .45 }), post = std(0x59636e);
