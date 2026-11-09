@@ -83,7 +83,7 @@ function groundRaw(x, z) {
   const k = 1 - r;
   let h = -.02 + .42 * Math.pow(k, .55) + ISL[i].hh * Math.pow(k, 1.3) * (.65 + .35 * n2(x + i * 7, z));
   if (i < 2) {      // the strip of land along the coast, where the villages are, is one smooth, level shelf (no bumps): nothing sinks and roads lie flat
-    const d = i === 0 ? edge(0, x, 1) - z : z - edge(1, x, -1), prof = -.02 + .26 * sstep(0, .55, d), wgt = 1 - sstep(4.2, 6.6, d);
+    const d = i === 0 ? edge(0, x, 1) - z : z - edge(1, x, -1), prof = -.02 + .26 * sstep(0, .55, d), wgt = 1 - sstep(8.2, 11.5, d);
     if (wgt > 0) h = h * (1 - wgt) + prof * wgt;
   }
   if (i === 0) h += 4.2 * Math.exp(-((x - LOURO[0]) ** 2 + (z - LOURO[1]) ** 2) / (2 * 2.6 * 2.6)) + 2.8 * Math.exp(-((x - HILL2[0]) ** 2 + (z - HILL2[1]) ** 2) / (2 * 2.4 * 2.4));
@@ -96,7 +96,7 @@ function groundRaw(x, z) {
 // the school yards and the little pitch sit on flat ground: the hill is levelled round them
 let FLAT = null; const flatList = () => FLAT;
 function groundH(x, z) {
-  if (!FLAT) { FLAT = []; for (const [fx, inl, r, so, lvl] of [[-.5, 5.05, 2.1], [15.6, 4.55, 2.1], [-7.6, 4.85, 1.3], [8.3, 1.4, 1.0], [2.2, 5.4, 1.9, 1], [3.9, 7.0, .9], [14.2, 7.4, .9], [-17.8, 1.4, 1.7, 0, 1], [19.6, 1.4, 1.7, 0, 1], [-12.1, 1.45, 1.7, 1, 1], [7.6, 1.45, 1.7, 1, 1]]) { const cz = so ? shoreS(fx) + inl : shore(fx) - inl; FLAT.push([fx, cz, r * 1.25, lvl ? Math.max(groundRaw(fx, cz), .14) : groundRaw(fx, cz) - .14]); } }      // (the last four: the road ends and their car parks, levelled completely smooth)
+  if (!FLAT) { FLAT = []; for (const [fx, inl, r, so, lvl] of [[-.5, 5.05, 2.1], [15.6, 4.55, 2.1], [-7.6, 4.85, 1.3], [8.3, 1.4, 1.0], [2.2, 5.4, 1.9, 1], [3.9, 7.0, .9], [14.2, 7.4, .9], [-17.8, 1.4, 1.7, 0, 1], [19.6, 1.4, 1.7, 0, 1], [-12.1, 1.45, 1.7, 1, 1], [7.6, 1.45, 1.7, 1, 1]]) { const cz = so ? shoreS(fx) + inl : shore(fx) - inl; FLAT.push([fx, cz, r * 1.25, lvl ? Math.max(groundRaw(fx, cz), .14) : groundRaw(fx, cz) - .02]); } }      // (the last four: the road ends and their car parks, levelled completely smooth)
   let h = groundRaw(x, z);
   for (const f of FLAT) { const d = Math.hypot(x - f[0], z - f[1]); if (d < f[2] * 1.9) h += (f[3] - h) * (1 - sstep(f[2] * .8, f[2] * 1.9, d)); }
   if (x > 4.5 && x < 12.5 && z < -5.5 && z > -14) { let cv = 0; for (let i = 0; i < RIVERC.length; i++) { const w2 = RIVERW[i] / 2 + .03, d = Math.hypot(x - RIVERC[i][0], z - RIVERC[i][1]); if (d < w2 + .22) cv = Math.max(cv, 1 - sstep(w2, w2 + .22, d)); } h -= .14 * cv; }      // the river bed
