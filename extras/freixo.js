@@ -471,11 +471,11 @@ function stoneBridge(span, nA, bw, mat, deckMat, hump) {
   return br;
 }
 // a ribbon laid on the ground along a list of map points (road, path); it breaks over water and dashes if asked
-function ribbon(pts, width, mat, lift, dash, flo, noSkip) {
+function ribbon(pts, width, mat, lift, dash, flo, noSkip, flat) {
   flo = flo === undefined ? .07 : flo;
-  const H = pts.map((q, i) => { const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)], tx = b[0] - a[0], tz = b[1] - a[1], l = Math.hypot(tx, tz) || 1, nx = -tz / l * .3, nz = tx / l * .3; return Math.max(groundH(q[0], q[1]), groundH(q[0] + nx, q[1] + nz), groundH(q[0] - nx, q[1] - nz), flo); });
-  { const M = H.slice(); for (let i = 0; i < H.length; i++) for (let k = -2; k <= 2; k++) M[i] = Math.max(M[i], H[Math.min(H.length - 1, Math.max(0, i + k))]); for (let i = 0; i < H.length; i++) H[i] = M[i]; }
-  for (let pass = 0; pass < 6; pass++) for (let i = 1; i < H.length - 1; i++) H[i] = Math.max(H[i] * .5 + (H[i - 1] + H[i + 1]) * .25, Math.min(H[i], flo + .0));
+  const H = flat ? pts.map((q, i) => { const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)], tx = b[0] - a[0], tz = b[1] - a[1], l = Math.hypot(tx, tz) || 1, nx = -tz / l * .2, nz = tx / l * .2; return Math.max((groundH(q[0], q[1]) * 2 + groundH(q[0] + nx, q[1] + nz) + groundH(q[0] - nx, q[1] - nz)) / 4, flo); }) : pts.map((q, i) => { const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)], tx = b[0] - a[0], tz = b[1] - a[1], l = Math.hypot(tx, tz) || 1, nx = -tz / l * .3, nz = tx / l * .3; return Math.max(groundH(q[0], q[1]), groundH(q[0] + nx, q[1] + nz), groundH(q[0] - nx, q[1] - nz), flo); });
+  if (!flat) { const M = H.slice(); for (let i = 0; i < H.length; i++) for (let k = -2; k <= 2; k++) M[i] = Math.max(M[i], H[Math.min(H.length - 1, Math.max(0, i + k))]); for (let i = 0; i < H.length; i++) H[i] = M[i]; }
+  for (let pass = 0; pass < (flat ? 3 : 6); pass++) for (let i = 1; i < H.length - 1; i++) H[i] = flat ? H[i] * .5 + (H[i - 1] + H[i + 1]) * .25 : Math.max(H[i] * .5 + (H[i - 1] + H[i + 1]) * .25, Math.min(H[i], flo + .0));
   const P = pts.map((q, i) => dirFrom(q[0], q[1], new THREE.Vector3()).multiplyScalar(R + H[i] + lift));
   const pos = [], idx = [], tan = new THREE.Vector3(), side = new THREE.Vector3(), nrm = new THREE.Vector3();
   for (let i = 0; i < P.length; i++) {
@@ -793,8 +793,9 @@ export function open(opts) {
     for (const e of [0, N - 1]) { const r = ring[e], cap = []; for (let j = 1; j < prof.length - 1; j++) { cap.push(r[0].x, r[0].y, r[0].z, r[j].x, r[j].y, r[j].z, r[j + 1].x, r[j + 1].y, r[j + 1].z); } const bg = new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.Float32BufferAttribute(cap, 3)); bg.computeVertexNormals(); const m = new THREE.Mesh(bg, mats[0]); W(m); }
     for (let i = 0; i < N; i += 3) { const mk = new THREE.Group(); mk.userData.stoneBlock = 1; W(put(mk, pts[i][0], pts[i][1], 0, .02, true)); }
   }
+  const quayList = [];
   function quay(x0, x1, zf, sea, half) {
-    const zr = zf; zf = (x) => { let a = 0; for (let k = -6; k <= 6; k++) a += zr(x + k * .08); return a / 13; };   /* the shoreline is stepped: the wall follows its smoothed line */
+    const zr = zf; zf = (x) => { let a = 0; for (let k = -6; k <= 6; k++) a += zr(x + k * .08); return a / 13; }; quayList.push({ x0: Math.min(x0, x1), x1: Math.max(x0, x1), zf, sea });   /* the shoreline is stepped: the wall follows its smoothed line */
     half = half || .27; const topH = .17, wallLo = -.12, step = .06, N = Math.max(2, Math.ceil(Math.abs(x1 - x0) / step)), P = [], dir = x1 > x0 ? 1 : -1;
     const at = (x, dz, h) => { const zz = zf(x) + sea * dz; return dirFrom(x, zz, new THREE.Vector3()).multiplyScalar(R + SEA + h); };
     // profile, from the land side to the sea: [dz, height]
@@ -882,8 +883,8 @@ export function open(opts) {
   const buildRoad = (pts, up) => { roadList.push([pts, up || 0]); };
   const flushRoads = () => {
     // every road is laid at the same height, all the pavements first and all the asphalt above them, so crossings and junctions merge with no seams
-    for (const [pts] of roadList) { const m = ribbon(pts, .56, walkMat, .03, false, undefined, true); m.renderOrder = 1; W(m); }
-    for (const [pts] of roadList) { const m = ribbon(pts, .4, asphalt, .05, false, undefined, true); m.renderOrder = 2; W(m); roadMeshes.push(m); }
+    for (const [pts] of roadList) { const m = ribbon(pts, .56, walkMat, .02, false, undefined, true, true); m.renderOrder = 1; W(m); }
+    for (const [pts] of roadList) { const m = ribbon(pts, .4, asphalt, .032, false, undefined, true, true); m.renderOrder = 2; W(m); roadMeshes.push(m); }
   };
   // the roundabout: a flat ring (pavement + asphalt + grass island) where the coast road is cut; the cars follow the inland half of the ring
   const RB = 0.62, roadRaw = relax(roadN, 4);
@@ -1403,22 +1404,16 @@ export function open(opts) {
     mkP(1, 0, 0, .1, .045, .2, sr); mkP(4, 1, 0, .6, -.04, -.22, sr); mkP(6, 2, 0, .35, .11, .05, sr, .7);
     const c1 = mkP(2, 3, 0, .8, 0, -.12, sr); pathers[pathers.length - 1].still = true; const c2 = mkP(5, 0, 0, .815, 0, -.12, sr); pathers[pathers.length - 1].still = true; }
 
-  // ---- the seafront promenade: along the seaward kerb of the north coast road people stroll in pairs, some push prams, a few stop to take photos of the sea
-  { const rd = roadN, okAt = (q, i, sg) => { const a = rd[Math.max(0, i - 1)], b = rd[Math.min(rd.length - 1, i + 1)], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1, nx = -dz / l, nz = dx / l; return groundH(q[0] + nx * .36 * sg, q[1] + nz * .36 * sg) > .07 && inletD(q[0] + nx * .36 * sg, q[1] + nz * .36 * sg) > .5 && (roadN.rb || []).every(([jx, z0]) => Math.hypot(q[0] - jx, q[1] - z0) > 1.0); };
-    const runs = [], seaSg = (i) => { const a = rd[Math.max(0, i - 1)], b = rd[Math.min(rd.length - 1, i + 1)], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1; const hA = groundH(rd[i][0] - dz / l * .8, rd[i][1] + dx / l * .8), hB = groundH(rd[i][0] + dz / l * .8, rd[i][1] - dx / l * .8); return hA < hB ? 1 : -1; };
-    let cur = []; rd.forEach((q, i) => { if (okAt(q, i, seaSg(i))) cur.push(i); else { if (cur.length) runs.push(cur); cur = []; } }); if (cur.length) runs.push(cur);
-    runs.sort((a, b) => b.length - a.length);
-    for (const run of runs.slice(0, 2)) { if (run.length < 20) continue; const idx = run, pts = idx.map((i) => rd[i]), sr = route(pts), sgn = seaSg(idx[Math.floor(idx.length / 2)]), tot = sr.total;
-      const mk = (u, v, off, k, o2) => { const p = person(SHIRTS[(k * 3 + 1) % SHIRTS.length], { skin: SKINS[k % 4], hat: k % 3 === 0 ? 0xe9e2d2 : undefined }); p.scale.setScalar(.9); W(p); const q = Object.assign({ p, r: sr, u, v, off, bob: 1, keep: true }, o2 || {}); pathers.push(q); return q; };
-      const pram = (p) => { const g = new THREE.Group(), hood = new THREE.Mesh(new THREE.SphereGeometry(.03, 10, 8, 0, PI * 2, 0, PI / 2), std(0xf4a6b8)); hood.position.set(.1, .062, 0); hood.scale.set(1.2, 1, 1); g.add(hood); const bd = box(.07, .026, .045, std(0xfff1e6)); bd.position.set(.1, .042, 0); g.add(bd);
-        for (const [wx, wz] of [[.075, -.027], [.075, .027], [.125, -.027], [.125, .027]]) { const wh = new THREE.Mesh(new THREE.CylinderGeometry(.013, .013, .006, 10), std(0x2b3036)); wh.rotation.x = PI / 2; wh.position.set(wx, .015, wz); g.add(wh); }
-        const hn = box(.004, .004, .05, std(0x2b3036)); hn.position.set(.058, .062, 0); g.add(hn); p.add(g); p.userData.handsBusy = true; for (const h of p.userData.hands) h.position.set(.052, .062, h.position.z > 0 ? .022 : -.022); };
-      const nP = Math.max(8, Math.round(tot * 2.4)); let kk = 0;
-      for (let i = 0; i < nP; i++) { const u = (i + .3 + (i % 3) * .17) / nP, kind = i % 7 === 3 ? 'cam' : i % 7 === 5 ? 'pram' : 'walk', dir = i % 2 ? 1 : -1, off = (kind === 'cam' ? .33 : .22 + (i % 3) * .05) * 1;
-        if (kind === 'cam') { mk(u, 0, .34 * sgn, kk++, { still: true, cam: true, face: sgn }); continue; }
-        const sp = (.032 + (i % 4) * .008) * dir, q = mk(u, sp, .24 * sgn + (i % 2 ? .04 : -.04) * sgn, kk++); if (kind === 'pram') pram(q.p);
-        if (kind === 'walk' && i % 2 === 0) mk(Math.min(.99, u + .012), sp, q.off + .09 * sgn, kk++); }   // some walk in pairs
-    }
+  // ---- the seafront promenade: on the grey stone walks along the sea people stroll in pairs, some push prams, a few stop to take photos of the water
+  for (const qy of quayList) { const L = qy.x1 - qy.x0, pts = []; for (let x = qy.x0 + .1; x <= qy.x1 - .1; x += .1) pts.push([x, qy.zf(x)]); if (pts.length < 4) continue; const sr = route(pts), sea = qy.sea; let kk = 0;
+    const mk = (u, v, off, o2) => { const p = person(SHIRTS[(kk * 3 + 1) % SHIRTS.length], { skin: SKINS[kk % 4], hat: kk % 3 === 0 ? 0xe9e2d2 : undefined }); kk++; p.scale.setScalar(.9); W(p); const q = Object.assign({ p, r: sr, u, v, off, bob: 1, keep: true, quay: true }, o2 || {}); pathers.push(q); return q; };
+    const pram = (p) => { const g = new THREE.Group(), hood = new THREE.Mesh(new THREE.SphereGeometry(.03, 10, 8, 0, PI * 2, 0, PI / 2), std(0xf4a6b8)); hood.position.set(.1, .062, 0); hood.scale.set(1.2, 1, 1); g.add(hood); const bd = box(.07, .026, .045, std(0xfff1e6)); bd.position.set(.1, .042, 0); g.add(bd);
+      for (const [wx, wz] of [[.075, -.027], [.075, .027], [.125, -.027], [.125, .027]]) { const wh = new THREE.Mesh(new THREE.CylinderGeometry(.013, .013, .006, 10), std(0x2b3036)); wh.rotation.x = PI / 2; wh.position.set(wx, .015, wz); g.add(wh); }
+      const hn = box(.004, .004, .05, std(0x2b3036)); hn.position.set(.058, .062, 0); g.add(hn); p.add(g); p.userData.handsBusy = true; for (const h of p.userData.hands) h.position.set(.052, .062, h.position.z > 0 ? .022 : -.022); };
+    const nP = Math.max(3, Math.round(L * 1.3));
+    for (let i = 0; i < nP; i++) { const u = (i + .35 + (i % 3) * .12) / nP, kind = i % 5 === 2 ? 'cam' : i % 5 === 4 ? 'pram' : 'walk', dir = i % 2 ? 1 : -1;
+      if (kind === 'cam') { mk(u, 0, sea * .12, { still: true, cam: true, face: sea }); continue; }
+      const sp = (.026 + (i % 4) * .006) * dir, q = mk(u, sp, (i % 2 ? -.07 : .0) * sea); if (kind === 'pram') pram(q.p); else if (i % 2 === 0) mk(Math.min(.99, u + .02), sp, q.off + .08 * sea); }
   }
 
   // ---- the seafront of the south road: a stone sea wall with steps, bollards and moored boats beside the road
@@ -2340,7 +2335,7 @@ export function open(opts) {
       { const mv = q.still ? 0 : 1; q.k = (q.k || 0) + (mv - (q.k || 0)) * Math.min(1, dt * 6); q.ph = (q.ph || 0) + Math.abs(q.v) * dt * 90; strideAnim(q.p, q.ph, q.k);
         let yy = yaw + (q.v < 0 ? PI : 0); if (q.face) yy = yaw - q.face * PI / 2;
         if (q.cam) { const ph2 = (t * .45 + q.u * 37) % 4, up = ph2 < 2.6 ? Math.min(1, ph2 * 3, (2.6 - ph2) * 3) : 0, hs = q.p.userData.hands; q.p.userData.handsBusy = up > .02; for (const h of hs) { h.position.set(.022 * up, .05 + .068 * up, (h.position.z > 0 ? 1 : -1) * (.037 - .02 * up)); } if (!q.fl) { q.fl = new THREE.Mesh(new THREE.SphereGeometry(.011, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffffff })); q.fl.position.set(.04, .125, 0); q.p.add(q.fl); } q.fl.visible = ph2 > 1.2 && ph2 < 1.32; q.fl.scale.setScalar(q.fl.visible ? 1 + Math.sin((ph2 - 1.2) / .12 * PI) * 1.8 : 1); }
-        put(q.p, qx, qz, yy, (1 - Math.cos(q.ph * 2)) * .0013 * q.k + (q.lift || 0)); }
+        put(q.p, qx, qz, yy, (q.quay ? .172 : 0) + (1 - Math.cos(q.ph * 2)) * .0013 * q.k + (q.lift || 0), !!q.quay); }
     }
     for (const k of kickers) {                                              // the ball drifts across the pitch, every child runs after it, and now and then it is kicked towards a goal
       const hw = k.small ? .5 : .5, hd = k.small ? .27 : .27;
