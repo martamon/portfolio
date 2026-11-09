@@ -388,8 +388,8 @@
     '@media(max-width:809px){main[data-xm] [data-framer-name="Project Writeup"] p,html[data-xp="about"] [data-framer-name="Caption"] p,.x-ct-text{text-align:left!important}}',
     '@media(max-width:809px){.x-dial{display:none!important}.x-lang{bottom:14px!important}.x-dn{bottom:13px!important}}',
     // home cards (see homeTitles)
-    '.x-ov{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);z-index:3;display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:0 20px;pointer-events:none;color:#fff;font:600 15px/1.25 "Switzer","Switzer Placeholder","Inter",system-ui,sans-serif;letter-spacing:.03em;text-transform:uppercase;}',
-    '.x-ov-l{flex:0 1 auto;max-width:42%;font-weight:700}.x-ov-r{display:flex;gap:12px;text-align:right;justify-content:flex-end;flex:0 1 58%}.x-ov i,.x-ov b{font-style:normal;font-weight:600}.x-ov b{white-space:nowrap}',
+    '.x-ov{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);z-index:3;display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:0 20px;pointer-events:none;color:#fff;font:500 13px/1.2 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.05em;-webkit-text-stroke:.28px currentColor;text-transform:uppercase;}',
+    '.x-ov-l{flex:0 1 auto;max-width:42%}.x-ov-r{display:flex;gap:12px;text-align:right;justify-content:flex-end;flex:0 1 58%}.x-ov i,.x-ov b{font-style:normal;font-weight:500}.x-ov b{white-space:nowrap}',
     // on hover the name and the details glide towards each other and meet in the middle (or, on every second card, start together and drift apart)
     '.x-ov-l,.x-ov-r{transition:transform 1.25s cubic-bezier(.65,0,.25,1)!important;will-change:transform}',
     'html main[data-xhome] [data-xhi] a .x-ov[data-m] .x-ov-l,html main[data-xhome] [data-xhi] a .x-ov[data-m] .x-ov-r{transition:transform 1.25s cubic-bezier(.65,0,.25,1)!important}',
@@ -401,7 +401,7 @@
     'main[data-xhome] [data-xov] a[href] img{filter:blur(1.4px) brightness(.62) saturate(.82)!important;transition:filter 1s cubic-bezier(.22,.8,.24,1),transform 1.2s cubic-bezier(.22,.8,.24,1)!important}',
     'main[data-xhome] [data-xov][data-xhot] a[href] img{filter:brightness(.74) saturate(1.08) contrast(1.04)!important;transform:scale(1)!important}',   /* sharp and in full colour, but still dark enough for the white type */
     '@media(hover:none){main[data-xhome] [data-xov] a[href] img{filter:brightness(.85) saturate(.9)!important;transform:none!important}}',
-    '@media(max-width:809px){.x-ov{font-size:13px;padding:0 12px}.x-ov-r{gap:8px}}',
+    '@media(max-width:809px){.x-ov{font-size:11px;padding:0 12px}.x-ov-r{gap:8px}}',
     // every text of the site in the tones of the MARTAMON wordmark (see paintInk)
     // negative/positive type everywhere: Framer's root box isolated the page, so a blended text had nothing behind it; it no longer does.
     // Sticky boxes are layers of their own, so there the whole box carries the blend; elsewhere the text itself does.
