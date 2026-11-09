@@ -415,10 +415,12 @@ function person(shirt, o) {
   // round and cute: an egg-shaped body, a big round head with two dot eyes and rosy cheeks, tiny round feet (about as tall as before)
   const g = new THREE.Group(), skin = std(o.skin || 0xf0c9a0), eye = std(0x2b2530), sh = std(shirt);
   const body = new THREE.Mesh(new THREE.IcosahedronGeometry(.036, 2), sh); body.scale.set(1, 1.12, .92); body.position.y = .05; g.add(body);
+  const feet = [], hands = [];
   for (const sz of [-1, 1]) {
-    const ft = new THREE.Mesh(new THREE.IcosahedronGeometry(.013, 1), std(o.pants || 0x3a4a63)); ft.scale.set(1.25, .8, 1); ft.position.set(.006, .01, sz * .016); g.add(ft);
-    const hn = new THREE.Mesh(new THREE.IcosahedronGeometry(.011, 1), skin); hn.position.set(0, .05, sz * .037); g.add(hn);
+    const ft = new THREE.Mesh(new THREE.IcosahedronGeometry(.013, 1), std(o.pants || 0x3a4a63)); ft.scale.set(1.25, .8, 1); ft.position.set(.006, .01, sz * .016); g.add(ft); feet.push(ft);
+    const hn = new THREE.Mesh(new THREE.IcosahedronGeometry(.011, 1), skin); hn.position.set(0, .05, sz * .037); g.add(hn); hands.push(hn);
   }
+  g.userData.feet = feet; g.userData.hands = hands;
   const head = new THREE.Mesh(new THREE.IcosahedronGeometry(.032, 2), skin); head.position.y = .113; g.add(head);
   for (const sz of [-1, 1]) {
     const e = new THREE.Mesh(new THREE.IcosahedronGeometry(.0042, 1), eye); e.position.set(.028, .118, sz * .0115); g.add(e);
@@ -516,6 +518,11 @@ function routeAt(r, u) {
   return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, Math.atan2(-(b[1] - a[1]), b[0] - a[0])];
 }
 
+// a gentle walking cycle for the little people: the feet step one after the other, the hands swing the other way, the body barely rises (no hopping)
+function strideAnim(p, ph, k) {
+  const u = p.userData, f = u.feet, h = u.hands; if (!f) return;
+  for (let i = 0; i < 2; i++) { const a = ph + i * PI; f[i].position.x = .006 + Math.sin(a) * .0115 * k; f[i].position.y = .01 + Math.max(0, Math.cos(a)) * .0045 * k; h[i].position.x = Math.sin(a + PI) * .008 * k * (u.handsBusy ? 0 : 1); }
+}
 
 // ---- sound: all of it is made here with the Web Audio API (no files): a soft pad, a music-box melody, the sea, and little chimes and splashes
 function makeAudio(night0) {
@@ -545,7 +552,7 @@ function makeAudio(night0) {
     }
   }
   const PENT = [72, 74, 76, 79, 81, 84, 79, 76], PENTN = [69, 72, 74, 76, 79, 81, 76, 72];
-  let pi = 0;
+  let pi = 0, kitI = 0;
   function note(m, vol, hold) {
     const t = ctx.currentTime, o = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain();
     o.type = 'sine'; o.frequency.value = NOTE(m); o2.type = 'sine'; o2.frequency.value = NOTE(m) * 2.01;
@@ -634,7 +641,8 @@ function makeAudio(night0) {
       else if (name === 'mochitalk') { const t = ctx.currentTime, f = 520 + Math.random() * 380, o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * (1.1 + Math.random() * .25), t + .06); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.022, t + .008); g.gain.exponentialRampToValueAtTime(.0005, t + .11); o.connect(g); g.connect(tone); o.start(t); o.stop(t + .13); }
       else if (name === 'mochinext') { [74, 79, 83, 91].forEach((m, k) => setTimeout(() => alive && note(m, .042 - k * .004, 2.2), k * 95)); setTimeout(() => { if (!alive || muted) return; const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(600, t); o.frequency.exponentialRampToValueAtTime(1800, t + .22); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.026, t + .02); g.gain.exponentialRampToValueAtTime(.0005, t + .4); o.connect(g); g.connect(tone); g.connect(rev); o.start(t); o.stop(t + .45); }, 60); }
       else if (name === 'mochiend') { [86, 79, 74, 67].forEach((m, k) => setTimeout(() => alive && note(m, .04 - k * .004, 2.4), k * 120)); }
-      else if (name === 'pick') { note(84, .028, 1.2); setTimeout(() => note(91, .022, 1.4), 60); }
+      else if (name === 'pick') { const m = [79, 83, 86, 91, 88, 84][kitI++ % 6]; note(m, .042, 1.8); setTimeout(() => note(m + 12, .024, 2), 55); setTimeout(() => note(m + 19, .016, 2.2), 115); setTimeout(() => note(m + 24, .008, 2.4), 180); }   // a round little bell with a sparkle that climbs
+      else if (name === 'kithover') { note([84, 86, 88, 91][kitI++ % 4], .02, 1.0); }
       else if (name === 'place') { note(67, .05, 2); setTimeout(() => note(74, .04, 2.2), 70); setTimeout(() => note(79, .03, 2.4), 150); }
       else if (name === 'place_tree') { note(72, .045, 1.6); setTimeout(() => note(76, .035, 1.8), 90); setTimeout(() => note(79, .028, 2), 180); const t = ctx.currentTime, b = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = ctx.createGain(); b.buffer = nb; fl.type = 'bandpass'; fl.frequency.value = 3600; fl.Q.value = .8; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.02, t + .05); g.gain.exponentialRampToValueAtTime(.0005, t + .5); b.connect(fl); fl.connect(g); g.connect(tone); b.start(t, Math.random() * 2); b.stop(t + .6); }
       else if (name === 'place_flowers') { [88, 91, 95, 100].forEach((m, k) => setTimeout(() => alive && note(m, .026 - k * .003, 1.2), k * 70)); }
@@ -963,6 +971,29 @@ export function open(opts) {
   roadBridge(roadRaw, INLET[0][0], 1.3); roadBridge(roadRaw, INLET2[0][0], 1.5);
   { const rs = relax(roadS, 3); roadBridge(rs, INLET3[0][0], 1.3); }
   const routes = [route(roadN), route(roadS)];
+  // ---- zebra crossings with traffic lights: cars stop at the red (and for anybody still on the stripes), and the little people cross ONLY there, when the light for them is green
+  const crossings = [], LCYC = 17, zebraG = new THREE.BoxGeometry(.17, .012, .034);
+  const lightState = (X, t) => { const c = (t + X.off) % LCYC; return c < 8 ? 'go' : c < 9.6 ? 'amber' : c < 15.2 ? 'red' : 'wait'; };   // for the cars; the people walk while it is red (from 10.4 to 15.2)
+  { const white = std(0xf8f4ea, { roughness: 1, polygonOffset: true, polygonOffsetFactor: -8, polygonOffsetUnits: -8 }), mkLamp = (col, on) => new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: on, roughness: .4 });
+    const spotsFor = (ri, want) => { const r = routes[ri], out = [];
+      for (const w0 of want) { let best = null; for (let d = 0; d <= .1 && !best; d += .004) for (const sg of [1, -1]) { const u = w0 + sg * d; if (u < .05 || u > .95) continue; const [x, z, yaw] = routeAt(r, u), sy = Math.sin(yaw), cy = Math.cos(yaw);
+          const okG = [-.5, -.3, 0, .3, .5].every((o) => groundH(x + sy * o, z + cy * o) > .06) && inletD(x, z) > 1.1 && (riverPts || []).every((q) => Math.hypot(q[0] - x, q[1] - z) > 1.0) && (roadN.rb || []).every(([jx, z0]) => Math.hypot(x - jx, z - z0) > 1.5) && out.every((o2) => Math.abs(o2.u - u) > .12);
+          if (okG) best = { u, x, z, yaw }; }
+        if (best) out.push(best); }
+      return out; };
+    [[0, [.2, .45, .72]], [1, [.3, .65]]].forEach(([ri, want]) => spotsFor(ri, want).forEach((c, i) => {
+      const X = { r: routes[ri], u: c.u, x: c.x, z: c.z, yaw: c.yaw, off: crossings.length * 5.3 + i * 2, peds: [], ready: false, occ: false, g: new THREE.Group(), red: mkLamp(0xff5a4a, .1), green: mkLamp(0x5fdc8a, .1), amb: mkLamp(0xffc24a, .1) };
+      for (let k = -3; k <= 3; k++) { const st = new THREE.Mesh(zebraG, white); st.position.set(0, 0, k * .058); X.g.add(st); }
+      W(X.g);
+      const sy = Math.sin(c.yaw), cy = Math.cos(c.yaw), tx = Math.cos(c.yaw), tz = -Math.sin(c.yaw);
+      for (const sd of [-1, 1]) {   // a light on each kerb, a little before the stripes (in the direction of the traffic that comes towards it)
+        const lp = new THREE.Group(), pole = new THREE.Mesh(new THREE.CylinderGeometry(.007, .01, .26, 6), std(0x2f3a45)); pole.position.y = .13; lp.add(pole);
+        const hd = box(.034, .09, .034, std(0x2b3036)); hd.position.y = .29; lp.add(hd);
+        for (const [m, y] of [[X.red, .315], [X.amb, .29], [X.green, .265]]) { const d = new THREE.Mesh(new THREE.SphereGeometry(.0105, 10, 8), m); d.position.set(.0175 * sd, y, 0); lp.add(d); }
+        lp.rotation.y = 0; const px = c.x + sy * .33 * sd - tx * .12 * sd, pz = c.z + cy * .33 * sd - tz * .12 * sd; W(put(lp, px, pz, c.yaw + (sd > 0 ? PI : 0), .03)); }
+      for (let k = 0; k < 3; k++) { const p = person(SHIRTS[(crossings.length * 3 + k * 2 + 1) % SHIRTS.length], { skin: SKINS[(k + crossings.length) % 4], hat: k === 1 ? 0xe9e2d2 : undefined }); p.scale.setScalar(.9); W(p); X.peds.push({ p, s: (k % 2 ? 1 : -1) * .3, state: 'wait', wait: k * .9, dir: k % 2 ? -1 : 1, ph: 0 }); }
+      crossings.push(X); }));
+  }
   // the river of Outes keeps going up the hillside, getting narrower and narrower until it is a thread
   const RIVER2 = relax([[INLET2[2][0], INLET2[2][1] + .2], [INLET2[3][0], INLET2[3][1] + .1], [5.5, -7.2], [6.6, -8.5], [7.9, -9.0], [8.4, -10.3], [9.8, -10.7], [10.2, -12.0], [11.3, -12.4]], 0);
   { const dense = []; for (let i = 0; i < RIVER2.length - 1; i++) for (let k = 0; k < 6; k++) dense.push([RIVER2[i][0] + (RIVER2[i + 1][0] - RIVER2[i][0]) * k / 6, RIVER2[i][1] + (RIVER2[i + 1][1] - RIVER2[i][1]) * k / 6]); dense.push(RIVER2[RIVER2.length - 1]);
@@ -1372,6 +1403,24 @@ export function open(opts) {
     mkP(1, 0, 0, .1, .045, .2, sr); mkP(4, 1, 0, .6, -.04, -.22, sr); mkP(6, 2, 0, .35, .11, .05, sr, .7);
     const c1 = mkP(2, 3, 0, .8, 0, -.12, sr); pathers[pathers.length - 1].still = true; const c2 = mkP(5, 0, 0, .815, 0, -.12, sr); pathers[pathers.length - 1].still = true; }
 
+  // ---- the seafront promenade: along the seaward kerb of the north coast road people stroll in pairs, some push prams, a few stop to take photos of the sea
+  { const rd = roadN, okAt = (q, i, sg) => { const a = rd[Math.max(0, i - 1)], b = rd[Math.min(rd.length - 1, i + 1)], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1, nx = -dz / l, nz = dx / l; return groundH(q[0] + nx * .36 * sg, q[1] + nz * .36 * sg) > .07 && inletD(q[0] + nx * .36 * sg, q[1] + nz * .36 * sg) > .5 && (roadN.rb || []).every(([jx, z0]) => Math.hypot(q[0] - jx, q[1] - z0) > 1.0); };
+    const runs = [], seaSg = (i) => { const a = rd[Math.max(0, i - 1)], b = rd[Math.min(rd.length - 1, i + 1)], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1; const hA = groundH(rd[i][0] - dz / l * .8, rd[i][1] + dx / l * .8), hB = groundH(rd[i][0] + dz / l * .8, rd[i][1] - dx / l * .8); return hA < hB ? 1 : -1; };
+    let cur = []; rd.forEach((q, i) => { if (okAt(q, i, seaSg(i))) cur.push(i); else { if (cur.length) runs.push(cur); cur = []; } }); if (cur.length) runs.push(cur);
+    runs.sort((a, b) => b.length - a.length);
+    for (const run of runs.slice(0, 2)) { if (run.length < 20) continue; const idx = run, pts = idx.map((i) => rd[i]), sr = route(pts), sgn = seaSg(idx[Math.floor(idx.length / 2)]), tot = sr.total;
+      const mk = (u, v, off, k, o2) => { const p = person(SHIRTS[(k * 3 + 1) % SHIRTS.length], { skin: SKINS[k % 4], hat: k % 3 === 0 ? 0xe9e2d2 : undefined }); p.scale.setScalar(.9); W(p); const q = Object.assign({ p, r: sr, u, v, off, bob: 1, keep: true }, o2 || {}); pathers.push(q); return q; };
+      const pram = (p) => { const g = new THREE.Group(), hood = new THREE.Mesh(new THREE.SphereGeometry(.03, 10, 8, 0, PI * 2, 0, PI / 2), std(0xf4a6b8)); hood.position.set(.1, .062, 0); hood.scale.set(1.2, 1, 1); g.add(hood); const bd = box(.07, .026, .045, std(0xfff1e6)); bd.position.set(.1, .042, 0); g.add(bd);
+        for (const [wx, wz] of [[.075, -.027], [.075, .027], [.125, -.027], [.125, .027]]) { const wh = new THREE.Mesh(new THREE.CylinderGeometry(.013, .013, .006, 10), std(0x2b3036)); wh.rotation.x = PI / 2; wh.position.set(wx, .015, wz); g.add(wh); }
+        const hn = box(.004, .004, .05, std(0x2b3036)); hn.position.set(.058, .062, 0); g.add(hn); p.add(g); p.userData.handsBusy = true; for (const h of p.userData.hands) h.position.set(.052, .062, h.position.z > 0 ? .022 : -.022); };
+      const nP = Math.max(8, Math.round(tot * 2.4)); let kk = 0;
+      for (let i = 0; i < nP; i++) { const u = (i + .3 + (i % 3) * .17) / nP, kind = i % 7 === 3 ? 'cam' : i % 7 === 5 ? 'pram' : 'walk', dir = i % 2 ? 1 : -1, off = (kind === 'cam' ? .33 : .22 + (i % 3) * .05) * 1;
+        if (kind === 'cam') { mk(u, 0, .34 * sgn, kk++, { still: true, cam: true, face: sgn }); continue; }
+        const sp = (.032 + (i % 4) * .008) * dir, q = mk(u, sp, .24 * sgn + (i % 2 ? .04 : -.04) * sgn, kk++); if (kind === 'pram') pram(q.p);
+        if (kind === 'walk' && i % 2 === 0) mk(Math.min(.99, u + .012), sp, q.off + .09 * sgn, kk++); }   // some walk in pairs
+    }
+  }
+
   // ---- the seafront of the south road: a stone sea wall with steps, bollards and moored boats beside the road
   quay(1.9, 7.6, shoreS, -1, .22);
   for (const x of [2.6, 4.0, 5.3, 6.6]) { const bo = new THREE.Mesh(new THREE.CylinderGeometry(.03, .04, .08, 6), std(0x2b3036)); const g = new THREE.Group(); g.add(bo); W(put(g, x, shoreS(x) - .02, 0, .3, true)); }
@@ -1752,7 +1801,8 @@ export function open(opts) {
   for (let i = 0; i < 5; i++) {
     const pv = new THREE.Group(); pv.rotation.set(rnd() * 3, rnd() * 3, rnd() * 3);
     const cl = new THREE.Group();
-    for (let k = 0; k < 5; k++) { const s = new THREE.Mesh(new THREE.IcosahedronGeometry(.34 + rnd() * .22, 2), std(0xffffff, { roughness: 1, transparent: true, opacity: .94 })); s.position.set(k * .42 - .8, rnd() * .18, rnd() * .22); s.scale.y = .72; s.castShadow = true; cl.add(s); }
+    /* soft, round, cute clouds: a plump middle, two rounder shoulders, little puffs on top and tiny round ends, all smooth spheres with a flat belly */
+    { const sc = .8 + rnd() * .55, flip = rnd() > .5 ? 1 : -1; for (const [x, y, z, r] of [[0, .02, 0, .5], [-.58, -.08, .06, .36], [.6, -.07, -.04, .38], [-.2, .3, .04, .33], [.3, .26, -.03, .29], [1.0, -.15, 0, .21], [-.98, -.15, .02, .21], [.05, -.05, .3, .3], [-.3, -.07, -.3, .27]]) { const m = new THREE.Mesh(new THREE.SphereGeometry(r * sc, 22, 16), std(0xffffff, { roughness: 1, transparent: true, opacity: .96, flatShading: false, emissive: 0xffffff, emissiveIntensity: .1 })); m.position.set(x * sc * flip, y * sc, z * sc); m.scale.set(1, .86, 1); m.castShadow = true; cl.add(m); } }
     cl.position.set(0, R + 3.4 + rnd() * 1.4, 0); pv.add(cl); pv.userData.sp = (.07 + rnd() * .09) * (rnd() > .5 ? 1 : -1); clouds.push(pv); W(pv);
   }
   const wingG = new THREE.BufferGeometry(); wingG.setAttribute('position', new THREE.BufferAttribute(new Float32Array([0, 0, 0, .3, .02, .07, 0, 0, .14]), 3)); wingG.computeVertexNormals();
@@ -1771,10 +1821,10 @@ export function open(opts) {
     for (let k = 0; k < 1; k++) { const b = bird(); W(b.wrap); flyers.push({ b, cx: c[0] + (rnd() - .5) * 1.5, cz: c[1], rx: 1.2 + rnd() * 2.2, rz: .7 + rnd() * 1.2, sp: (.22 + rnd() * .22) * (rnd() > .5 ? 1 : -1), a: rnd() * 6.28, lift: .7 + rnd() * .9, ph: rnd() * 6 }); }
   });
   const gulls = [];
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i < 7; i++) {
     const pv = new THREE.Group(); pv.rotation.set(.3 + rnd() * 2, rnd() * 6, 0);
-    const b = bird(); b.wrap.position.set(0, R + 2.2 + rnd() * .9, 0); pv.add(b.wrap);
-    pv.userData = { sp: .22 + rnd() * .18, b, ph: rnd() * 6 }; gulls.push(pv); W(pv);
+    const b = bird(); b.wrap.position.set(0, R + 1.6 + rnd() * 1.4, 0); pv.add(b.wrap);
+    pv.userData = { sp: (.35 + rnd() * .3) * (i % 2 ? 1 : -1), b, ph: rnd() * 6 }; gulls.push(pv); W(pv);
   }
   const starGeo = new THREE.BufferGeometry(), sp = new Float32Array(900 * 3);
   for (let i = 0; i < 900; i++) { const v = new THREE.Vector3(rnd() - .5, rnd() - .5, rnd() - .5).normalize().multiplyScalar(90 + rnd() * 20); sp.set([v.x, v.y, v.z], i * 3); }
@@ -1845,7 +1895,7 @@ export function open(opts) {
     if (tourOn) return; tourOn = true; tourMuted = !!(audio && audio.muted);
     mochi.classList.remove('x-ctaon'); mochi.classList.add('x-load'); root.classList.add('x-tour'); if (audio) { audio.sfx('mochinext'); setTimeout(() => audio && audio.mute(true), 500); }
     const t0 = performance.now();
-    import('./conducir.js?v=78').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
+    import('./conducir.js?v=79').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
       .then((m) => { const ab = m.open({ onClose: endTour, getDark: () => nightT, getRain: () => rainT }); if (!ab) throw new Error('no webgl'); setTimeout(mochiClose, 700); })
       .catch(() => { endTour(); mochiClose(); });
   };
@@ -2002,6 +2052,7 @@ export function open(opts) {
   const kitUI = document.createElement('div'); kitUI.className = 'x-pl-build'; kitUI.setAttribute('role', 'toolbar'); kitUI.setAttribute('aria-label', tr('Add to the island'));
   for (const [id, label, svg] of KIT) { const b = document.createElement('button'); b.type = 'button'; b.className = 'x-pl-bi'; b.dataset.k = id; b.title = tr(label); b.setAttribute('aria-label', tr(label)); b.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + svg + '</svg>'; kitUI.appendChild(b); }
   root.appendChild(kitUI);
+  if (audio) for (const bt of kitUI.querySelectorAll('button')) bt.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') audio.sfx('kithover'); });
   const isSea = (k) => k === 'boat';
   const rc = new THREE.Raycaster(), ndc = new THREE.Vector2(), _o = new THREE.Vector3(), _v = new THREE.Vector3(), _qi = new THREE.Quaternion();
   // where on the map a point of the screen is (a few passes, so that mountains are hit at their own height)
@@ -2232,7 +2283,7 @@ export function open(opts) {
       }
     }
     for (const c of clouds) { c.rotation.y += c.userData.sp * dt; c.scale.setScalar(1 + rainT * .55); }
-    for (const g of gulls) { g.rotateY(g.userData.sp * dt * .35); const f = Math.sin(t * 7 + g.userData.ph) * .5; g.userData.b.w1.rotation.z = f; g.userData.b.w2.rotation.z = -f; }
+    for (const g of gulls) { g.rotateY(g.userData.sp * dt * .6); g.userData.b.wrap.position.y += Math.sin(t * 1.3 + g.userData.ph) * dt * .08; const f = Math.sin(t * 7 + g.userData.ph) * .5; g.userData.b.w1.rotation.z = f; g.userData.b.w2.rotation.z = -f; }
     for (const f of flyers) {
       f.a += f.sp * dt; const sg = Math.sign(f.sp), tx = -f.rx * Math.sin(f.a) * sg, tz = f.rz * Math.cos(f.a) * sg;
       put(f.b.wrap, f.cx + f.rx * Math.cos(f.a), f.cz + f.rz * Math.sin(f.a), Math.atan2(-tz, tx), f.lift + Math.sin(t * 1.3 + f.ph) * .12, true);
@@ -2242,11 +2293,16 @@ export function open(opts) {
       if (c.offT === undefined) { c.offT = c.off; c.v0 = Math.abs(c.v); c.dir = Math.sign(c.v) || 1; c.vm = 1; }
       const edge = Math.min(c.u, 1 - c.u) * c.r.total, ahead = c.dir > 0 ? (1 - c.u) * c.r.total : c.u * c.r.total;
       c.vm += (Math.min(1, .25 + ahead * .9) - c.vm) * Math.min(1, dt * 6);          // slows down smoothly before the end of the road
-      c.u += c.dir * c.v0 * c.vm / c.r.total * dt; c.v = c.dir * c.v0 * c.vm;
+      let lim = 1;
+      for (const X of crossings) if (X.r === c.r) { const dA = (X.u - c.u) * c.dir * c.r.total; if (dA > .2 && dA < 1.3 && (lightState(X, t) !== 'go' || X.occ)) lim = Math.min(lim, Math.max(0, (dA - .3) * 2.2)); }          // stop before the stripes at the red light, or while somebody crosses
+      for (const o of cars) if (o !== c && o.r === c.r && o.dir === c.dir) { const gp = (o.u - c.u) * c.dir * c.r.total; if (gp > 0 && gp < 1.1) lim = Math.min(lim, Math.max(0, (gp - .42) * 2.4)); }          // and never run into the car in front
+      if (c.r === routes[0] && roadN.rb) for (const [jx, z0] of roadN.rb) { const dr = Math.hypot(c.px0 - jx, c.pz0 - z0); if (dr < RB + .55) lim = Math.min(lim, .55 + .45 * Math.max(0, (dr - RB) / .55)); }          // round the roundabout at a calm pace
+      c.f2 = c.f2 === undefined ? 1 : c.f2 + (lim - c.f2) * Math.min(1, dt * (lim < c.f2 ? 4 : 2.2));
+      const ve = c.vm * c.f2; c.u += c.dir * c.v0 * ve / c.r.total * dt; c.v = c.dir * c.v0 * ve;
       if (ahead < .02) { c.dir = -c.dir; c.offT = -c.offT; c.vm = .25; c.u = Math.max(0, Math.min(1, c.u)); }
       c.off += (c.offT - c.off) * Math.min(1, dt * 3);
       const [x, z, yaw] = routeAt(c.r, c.u), sy = Math.sin(yaw), cy = Math.cos(yaw), px = x + sy * c.off, pz = z + cy * c.off, onW = 0;
-      const hd = yaw + (c.v < 0 ? PI : 0), hx = Math.cos(hd), hz = -Math.sin(hd);
+      const hd0 = yaw + (c.dir < 0 ? PI : 0); c.px0 = px; c.pz0 = pz; if (c.hdS === undefined) c.hdS = hd0; { let dh = hd0 - c.hdS; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); c.hdS += dh * Math.min(1, dt * 9); } const hd = c.hdS, hx = Math.cos(hd), hz = -Math.sin(hd);
       { const want = roadLift(px, pz, .028 + Math.max(0, .07 - groundH(px, pz))) + .012; c.ly = c.ly === undefined ? want : c.ly + (want - c.ly) * Math.min(1, dt * 16); put(c.w, px, pz, hd, c.ly + (onW > 0 ? onW * Math.max(0, (Math.abs(px - INLET[0][0]) < 1.5 ? .2 : .28) - groundH(px, pz)) : 0)); }
       if (onW <= 0) c.w.quaternion.multiply(_q.setFromAxisAngle(Zax, Math.atan2(groundH(px + hx * .12, pz + hz * .12) - groundH(px - hx * .12, pz - hz * .12), .24)));
     }
@@ -2255,17 +2311,36 @@ export function open(opts) {
       put(s.w, s.cx + s.rx * Math.cos(s.a), s.cz + s.rz * Math.sin(s.a), Math.atan2(-tz, tx), 0, true);
       s.b.position.y = Math.sin(t * 1.5 + s.ph) * .02; s.b.rotation.z = Math.sin(t * 1.1 + s.ph) * .05 - .04; s.b.rotation.x = Math.sin(t * .9 + s.ph * 2) * .035;
     }
+    for (const X of crossings) {
+      X.n = (X.n || 0) + 1; if (X.n < 60 || X.n % 300 === 0) { X.ready = true; X.ly = roadLift(X.x, X.z, .05); put(X.g, X.x, X.z, X.yaw, X.ly + .01); }
+      const ls = lightState(X, t), cc = (t + X.off) % LCYC, walk = cc >= 10.4 && cc < 15.2;
+      X.red.emissiveIntensity = ls === 'go' ? .08 : ls === 'amber' ? .08 : 1.5; X.green.emissiveIntensity = ls === 'go' ? 1.5 : .08; X.amb.emissiveIntensity = ls === 'amber' ? 1.5 : .08;
+      let occ = false; const sy = Math.sin(X.yaw), cy = Math.cos(X.yaw), ry = roadLift(X.x, X.z, .05);
+      for (const q of X.peds) {
+        if (q.state === 'wait') { q.wait -= dt; if (walk && q.wait <= 0 && cc < 13.6) { q.state = 'go'; q.dir = q.s < 0 ? 1 : -1; } q.ph += 0; }
+        else { const sp = .21; q.s += q.dir * sp * dt; q.ph += sp * dt * 120; if (q.s * q.dir >= .31) { q.s = q.dir * .31; q.state = 'wait'; q.wait = 1.2 + Math.random() * 2; } }
+        const moving = q.state === 'go', onRoad = Math.abs(q.s) < .27; if (moving && onRoad) occ = true;
+        q.k = (q.k || 0) + ((moving ? 1 : 0) - (q.k || 0)) * Math.min(1, dt * 8); strideAnim(q.p, q.ph, q.k);
+        const wx = X.x + sy * q.s, wz = X.z + cy * q.s, face = q.state === 'go' ? q.dir : (q.s < 0 ? 1 : -1), yawF = Math.atan2(-cy * face, sy * face);
+        q.yaw = q.yaw === undefined ? yawF : q.yaw + Math.atan2(Math.sin(yawF - q.yaw), Math.cos(yawF - q.yaw)) * Math.min(1, dt * 7);
+        put(q.p, wx, wz, q.yaw, (onRoad ? ry : .03) + (1 - Math.cos(q.ph * 2)) * .0012 * q.k);
+      }
+      X.occ = occ;
+    }
     for (const q of strollers) {
       if (q.still) { put(q.p, q.x + Math.cos(q.a) * q.rx * Math.cos(q.yaw), q.z - Math.cos(q.a) * q.rx * Math.sin(q.yaw), q.yaw + q.a, 0); continue; }
       q.a += q.sp * dt; const sg = Math.sign(q.sp), lx = Math.cos(q.a) * q.rx, lz = Math.sin(q.a) * q.rz, c = Math.cos(q.yaw), sn = Math.sin(q.yaw);
-      put(q.p, q.x + lx * c + lz * sn, q.z - lx * sn + lz * c, q.yaw + Math.atan2(-Math.cos(q.a) * q.rz * sg, -Math.sin(q.a) * q.rx * sg), Math.abs(Math.sin(t * 6 + q.a * 3)) * .006);
+      q.k = q.k === undefined ? 1 : q.k; strideAnim(q.p, q.a * 7, .8); put(q.p, q.x + lx * c + lz * sn, q.z - lx * sn + lz * c, q.yaw + Math.atan2(-Math.cos(q.a) * q.rz * sg, -Math.sin(q.a) * q.rx * sg), (1 - Math.cos(q.a * 14)) * .0012);
     }
     for (const q of pathers) {
-      if (!q.still) { q.u += q.v * dt / Math.max(.5, q.r.total); if (q.u > 1 || q.u < 0) { q.u = Math.min(1, Math.max(0, q.u)); q.v = -q.v; q.off = -q.off; } }
+      if (!q.still) { q.u += q.v * dt / Math.max(.5, q.r.total); if (q.u > 1 || q.u < 0) { q.u = Math.min(1, Math.max(0, q.u)); q.v = -q.v; if (!q.keep) q.off = -q.off; } }
       const [x, z, yaw] = routeAt(q.r, q.u), sy = Math.sin(yaw), cy = Math.cos(yaw);
       const qx = x + sy * q.off, qz = z + cy * q.off;
       if (q.bridge) { const B = q.bridge, tgt = Math.hypot(qx - B.cx, qz - B.cz) <= B.half ? Math.max(0, B.top - groundH(qx, qz)) : 0; q.lift = (q.lift || 0) + (tgt - (q.lift || 0)) * Math.min(1, dt * 12); }   // on the deck they stand on its planks, on the banks on the ground
-      put(q.p, qx, qz, yaw + (q.v < 0 ? PI : 0), (q.still ? 0 : Math.abs(Math.sin(t * 7 + q.u * 30)) * .008) + (q.lift || 0));
+      { const mv = q.still ? 0 : 1; q.k = (q.k || 0) + (mv - (q.k || 0)) * Math.min(1, dt * 6); q.ph = (q.ph || 0) + Math.abs(q.v) * dt * 90; strideAnim(q.p, q.ph, q.k);
+        let yy = yaw + (q.v < 0 ? PI : 0); if (q.face) yy = yaw - q.face * PI / 2;
+        if (q.cam) { const ph2 = (t * .45 + q.u * 37) % 4, up = ph2 < 2.6 ? Math.min(1, ph2 * 3, (2.6 - ph2) * 3) : 0, hs = q.p.userData.hands; q.p.userData.handsBusy = up > .02; for (const h of hs) { h.position.set(.022 * up, .05 + .068 * up, (h.position.z > 0 ? 1 : -1) * (.037 - .02 * up)); } if (!q.fl) { q.fl = new THREE.Mesh(new THREE.SphereGeometry(.011, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffffff })); q.fl.position.set(.04, .125, 0); q.p.add(q.fl); } q.fl.visible = ph2 > 1.2 && ph2 < 1.32; q.fl.scale.setScalar(q.fl.visible ? 1 + Math.sin((ph2 - 1.2) / .12 * PI) * 1.8 : 1); }
+        put(q.p, qx, qz, yy, (1 - Math.cos(q.ph * 2)) * .0013 * q.k + (q.lift || 0)); }
     }
     for (const k of kickers) {                                              // the ball drifts across the pitch, every child runs after it, and now and then it is kicked towards a goal
       const hw = k.small ? .5 : .5, hd = k.small ? .27 : .27;
