@@ -888,10 +888,10 @@ export function open(opts) {
   const buildRoad = (pts, up) => { roadList.push([pts, up || 0]); };
   const flushRoads = () => {
     // every road is laid at the same height, all the pavements first and all the asphalt above them, so crossings and junctions merge with no seams
-    for (const [pts] of roadList) { const m = ribbon(pts, .56, walkMat, .02, false, undefined, true, true); m.renderOrder = 1; W(m); }
-    for (const [pts] of roadList) { const m = ribbon(pts, .4, asphalt, .032, false, undefined, true, true); m.renderOrder = 2; W(m); roadMeshes.push(m); }
+    for (const [pts] of roadList) { const m = ribbon(pts, .56, walkMat, .035, false, undefined, true); m.renderOrder = 1; W(m); }
+    for (const [pts] of roadList) { const m = ribbon(pts, .4, asphalt, .06, false, undefined, true); m.renderOrder = 2; W(m); roadMeshes.push(m); }
     const centre = std(0xf4f0e4, { roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -5, polygonOffsetUnits: -5 });
-    for (const [pts] of roadList) { const m = ribbon(pts, .014, centre, .037, true, undefined, true, true); m.renderOrder = 3; W(m); }     // the dashed line down the middle of every road
+    for (const [pts] of roadList) { const m = ribbon(pts, .014, centre, .067, true, undefined, true); m.renderOrder = 3; W(m); }     // the dashed line down the middle of every road
   };
   // the roundabout: a flat ring (pavement + asphalt + grass island) where the coast road is cut; the cars follow the inland half of the ring
   const RB = 0.62, roadRaw = relax(roadN, 4);
@@ -1270,14 +1270,16 @@ export function open(opts) {
     const [px, pz] = onShore(x, inl), yaw = seaYaw(px), slab = new THREE.Group();
     const sl = box(w, .16, d, std(0xe3d9c2)); sl.position.y = -.068; slab.add(sl);
     const bd = box(w + .06, .15, d + .06, std(0xc9bfa8)); bd.position.y = -.074; slab.add(bd);
+    const fpS = Math.max(w, d) * .62; let slabTop = groundH(px, pz); for (let k = 0; k < 6; k++) { const a = k * PI / 3 + .4; slabTop = Math.max(slabTop, groundH(px + Math.cos(a) * fpS * .6, pz + Math.sin(a) * fpS * .6)); }
+    const up = (x, z) => Math.max(0, slabTop - groundH(x, z));      /* everything on the square stands on the slab, however the ground slopes under it */
     slab.userData.fp = Math.max(w, d) * .62; slab.userData.pri = 6; slab.userData.sqW = w; W(put(slab, px, pz, yaw, -.04));
     for (const [qx, qz] of [[-.5, -.4], [.5, -.4], [-.5, .4], [.5, .4]].slice(0, o.trees === undefined ? 2 : o.trees)) {
       const tr = new THREE.Group(), tk = new THREE.Mesh(new THREE.CylinderGeometry(.02, .028, .24, 6), std(0x7a5a3c)); tk.position.y = .12; tr.add(tk);
       const cr = new THREE.Mesh(new THREE.IcosahedronGeometry(.17, 1), std(0x3f9576, { flatShading: true })); cr.position.y = .36; tr.add(cr);
       const a = yaw, tx = px + (qx * w * .8) * Math.cos(a) + (qz * d * .8) * Math.sin(a), tz = pz - (qx * w * .8) * Math.sin(a) + (qz * d * .8) * Math.cos(a);
-      W(put(tr, tx, tz, 0, .03));
+      W(put(tr, tx, tz, 0, .03 + up(tx, tz)));
     }
-    for (const sx of [-1, 1]) { const bn = new THREE.Group(); bn.add(box(.2, .035, .06, std(0x8a6a44))); const bk = box(.2, .06, .012, std(0x8a6a44)); bk.position.set(0, .05, -.03); bn.add(bk); const a = yaw, tx = px + sx * w * .3 * Math.cos(a) + d * .38 * Math.sin(a), tz = pz - sx * w * .3 * Math.sin(a) + d * .38 * Math.cos(a); W(put(bn, tx, tz, yaw, .045)); }
+    for (const sx of [-1, 1]) { const bn = new THREE.Group(); bn.add(box(.2, .035, .06, std(0x8a6a44))); const bk = box(.2, .06, .012, std(0x8a6a44)); bk.position.set(0, .05, -.03); bn.add(bk); const a = yaw, tx = px + sx * w * .3 * Math.cos(a) + d * .38 * Math.sin(a), tz = pz - sx * w * .3 * Math.sin(a) + d * .38 * Math.cos(a); W(put(bn, tx, tz, yaw, .045 + up(tx, tz))); }
     if (o.tables) {   // a café terrace: round tables with four chairs and a parasol, in two rows
       const cols = [0xc9473a, 0x2f6fa8, 0xe9b94a, 0x3b9a6a, 0xe277a0, 0x4fb3a8], nT = o.tables, rows = 2, per = Math.ceil(nT / rows);
       for (let k = 0; k < nT; k++) { const r = Math.floor(k / per), c = k % per, lx = (c - (per - 1) / 2) * w * .36, lz = (r - .5) * d * .44;
@@ -1286,11 +1288,11 @@ export function open(opts) {
         for (let q = 0; q < 4; q++) { const ca = q * PI / 2 + .4, ch = new THREE.Group(); ch.position.set(Math.cos(ca) * .17, 0, Math.sin(ca) * .17); ch.rotation.y = -ca + PI / 2; const st = box(.07, .012, .07, std(0x6b4a2a)); st.position.y = .07; ch.add(st); const bk = box(.07, .07, .012, std(0x6b4a2a)); bk.position.set(0, .11, -.03); ch.add(bk); for (const [lx2, lz2] of [[-.028, -.028], [.028, -.028], [-.028, .028], [.028, .028]]) { const l = box(.01, .07, .01, std(0x6b4a2a)); l.position.set(lx2, .035, lz2); ch.add(l); } g.add(ch); }
         const cup = new THREE.Mesh(new THREE.CylinderGeometry(.012, .01, .02, 8), std(0xfff8ea)); cup.position.set(.04, .15, 0); g.add(cup);
         if (k % 2 === 0) { const pa = parasol(cols[k % cols.length]); pa.scale.setScalar(.5); pa.position.x = -.02; g.add(pa); }
-        g.scale.setScalar(1.45); g.userData.fp = 0; W(put(g, tx, tz, k * 1.3, .022)); }
+        g.scale.setScalar(1.45); g.userData.fp = 0; W(put(g, tx, tz, k * 1.3, .022 + up(tx, tz))); }
     } else for (let k = 0; k < (o.terraces || 2); k++) { const tx = x + (k - ((o.terraces || 2) - 1) / 2) * w * .42; terrace(tx, inl - d * .33, [0xc9473a, 0x2f6fa8, 0xe9b94a][k % 3]); }
     for (let k = 0; k < (o.people || 6); k++) {
       const p = person(SHIRTS[(k * 3 + 2) % SHIRTS.length], { skin: SKINS[k % 4], hat: k % 4 === 0 ? 0xe9e2d2 : undefined }); W(p);
-      strollers.push({ p, x: px, z: pz, yaw, rx: w * (.2 + rnd() * .22), rz: d * (.18 + rnd() * .2), a: rnd() * 6.28, sp: (.18 + rnd() * .16) * (k % 2 ? 1 : -1), still: k % 3 === 0, lift: .02 });
+      strollers.push({ p, x: px, z: pz, yaw, rx: w * (.2 + rnd() * .22), rz: d * (.18 + rnd() * .2), a: rnd() * 6.28, sp: (.18 + rnd() * .16) * (k % 2 ? 1 : -1), still: k % 3 === 0, lift: .02, sqTop: slabTop });
     }
     return slab;
   }
@@ -1345,8 +1347,8 @@ export function open(opts) {
     const awn = [0xc9473a, 0x2f6fa8, 0xe9b94a, 0x3b9a6a, 0xe277a0, 0x7a58b5, 0xf08a3c, 0x4fb3a8];
     for (let k = 0; k < 4; k++) for (const sd of [-1, 1]) { const st = stall(THREE, std, KINDS[(k * 2 + (sd > 0 ? 1 : 0) + (sd > 0 ? 3 : 0)) % 8], awn[(k * 2 + (sd > 0 ? 1 : 0)) % 8], false); st.scale.setScalar(SC); st.position.set(sd * .31, .035, -.78 + k * .52); st.rotation.y = sd < 0 ? PI / 2 : -PI / 2; g.add(st);
       const vd = person(SHIRTS[(k + (sd > 0 ? 3 : 0)) % SHIRTS.length], { skin: SKINS[k % 4] }); vd.scale.setScalar(.8); vd.position.set(sd * .47, .035, -.78 + k * .52); vd.rotation.y = sd < 0 ? PI / 2 : -PI / 2; g.add(vd); }
-    g.userData.fp = 1.3; g.userData.pri = 6; g.userData.market = 1; W(put(g, mx, mz, yaw, -.02));
-    for (let k = 0; k < 7; k++) { const p = person(SHIRTS[(k * 3 + 1) % SHIRTS.length], { skin: SKINS[k % 4] }); W(p); strollers.push({ p, x: mx, z: mz, yaw, rx: .1, rz: .72, a: rnd() * 6.28, sp: (.14 + rnd() * .12) * (k % 2 ? 1 : -1), still: k % 4 === 0, lift: .035 }); } } }
+    g.userData.fp = 1.3; g.userData.pri = 6; g.userData.market = 1; let mkTop = groundH(mx, mz); for (let k = 0; k < 6; k++) { const a = k * PI / 3 + .4; mkTop = Math.max(mkTop, groundH(mx + Math.cos(a) * 1.3 * .6, mz + Math.sin(a) * 1.3 * .6)); } W(put(g, mx, mz, yaw, -.02));
+    for (let k = 0; k < 7; k++) { const p = person(SHIRTS[(k * 3 + 1) % SHIRTS.length], { skin: SKINS[k % 4] }); W(p); strollers.push({ p, x: mx, z: mz, yaw, rx: .1, rz: .72, a: rnd() * 6.28, sp: (.14 + rnd() * .12) * (k % 2 ? 1 : -1), still: k % 4 === 0, lift: .035, sqTop: mkTop }); } } }
 
   // ---- Ézaro, on the south shore: a granite village under the mountain and the waterfall of the river Xallas, falling straight into the sea
   const falls = [];
@@ -2331,9 +2333,9 @@ export function open(opts) {
       X.occ = occ;
     }
     for (const q of strollers) {
-      if (q.still) { put(q.p, q.x + Math.cos(q.a) * q.rx * Math.cos(q.yaw), q.z - Math.cos(q.a) * q.rx * Math.sin(q.yaw), q.yaw + q.a, q.lift || 0); continue; }
+      if (q.still) { { const sx = q.x + Math.cos(q.a) * q.rx * Math.cos(q.yaw), sz = q.z - Math.cos(q.a) * q.rx * Math.sin(q.yaw); put(q.p, sx, sz, q.yaw + q.a, (q.lift || 0) + (q.sqTop !== undefined ? Math.max(0, q.sqTop - groundH(sx, sz)) : 0)); } continue; }
       q.a += q.sp * dt; const sg = Math.sign(q.sp), lx = Math.cos(q.a) * q.rx, lz = Math.sin(q.a) * q.rz, c = Math.cos(q.yaw), sn = Math.sin(q.yaw);
-      q.k = q.k === undefined ? 1 : q.k; strideAnim(q.p, q.a * 7, .8); put(q.p, q.x + lx * c + lz * sn, q.z - lx * sn + lz * c, q.yaw + Math.atan2(-Math.cos(q.a) * q.rz * sg, -Math.sin(q.a) * q.rx * sg), (1 - Math.cos(q.a * 14)) * .0012 + (q.lift || 0));
+      q.k = q.k === undefined ? 1 : q.k; strideAnim(q.p, q.a * 7, .8); put(q.p, q.x + lx * c + lz * sn, q.z - lx * sn + lz * c, q.yaw + Math.atan2(-Math.cos(q.a) * q.rz * sg, -Math.sin(q.a) * q.rx * sg), (1 - Math.cos(q.a * 14)) * .0012 + (q.lift || 0) + (q.sqTop !== undefined ? Math.max(0, q.sqTop - groundH(q.x + lx * c + lz * sn, q.z - lx * sn + lz * c)) : 0));
     }
     for (const q of pathers) {
       if (!q.still) { q.u += q.v * dt / Math.max(.5, q.r.total); if (q.u > 1 || q.u < 0) { q.u = Math.min(1, Math.max(0, q.u)); q.v = -q.v; if (!q.keep) q.off = -q.off; } }
