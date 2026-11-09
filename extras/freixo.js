@@ -1285,7 +1285,7 @@ export function open(opts) {
       for (let k = 0; k < nT; k++) { const r = Math.floor(k / per), c = k % per, lx = (c - (per - 1) / 2) * w * .36, lz = (r - .5) * d * .44;
         const a = yaw, tx = px + lx * Math.cos(a) + lz * Math.sin(a), tz = pz - lx * Math.sin(a) + lz * Math.cos(a), g = new THREE.Group();
         const top = new THREE.Mesh(new THREE.CylinderGeometry(.1, .1, .016, 14), std(0xf4efe4)); top.position.y = .13; g.add(top); const leg = new THREE.Mesh(new THREE.CylinderGeometry(.014, .02, .13, 6), std(0x8a6a44)); leg.position.y = .065; g.add(leg);
-        for (let q = 0; q < 4; q++) { const ca = q * PI / 2 + .4, ch = new THREE.Group(); ch.position.set(Math.cos(ca) * .17, 0, Math.sin(ca) * .17); ch.rotation.y = -ca + PI / 2; const st = box(.07, .012, .07, std(0x6b4a2a)); st.position.y = .07; ch.add(st); const bk = box(.07, .07, .012, std(0x6b4a2a)); bk.position.set(0, .11, -.03); ch.add(bk); for (const [lx2, lz2] of [[-.028, -.028], [.028, -.028], [-.028, .028], [.028, .028]]) { const l = box(.01, .07, .01, std(0x6b4a2a)); l.position.set(lx2, .035, lz2); ch.add(l); } g.add(ch); }
+        for (let q = 0; q < 4; q += 2) { const ca = q * PI / 2 + .4, ch = new THREE.Group(); ch.position.set(Math.cos(ca) * .17, 0, Math.sin(ca) * .17); ch.rotation.y = -ca + PI / 2; const st = box(.07, .012, .07, std(0x6b4a2a)); st.position.y = .07; ch.add(st); const bk = box(.07, .07, .012, std(0x6b4a2a)); bk.position.set(0, .11, -.03); ch.add(bk); for (const [lx2, lz2] of [[-.028, -.028], [.028, -.028], [-.028, .028], [.028, .028]]) { const l = box(.01, .07, .01, std(0x6b4a2a)); l.position.set(lx2, .035, lz2); ch.add(l); } g.add(ch); }
         const cup = new THREE.Mesh(new THREE.CylinderGeometry(.012, .01, .02, 8), std(0xfff8ea)); cup.position.set(.04, .15, 0); g.add(cup);
         if (k % 2 === 0) { const pa = parasol(cols[k % cols.length]); pa.scale.setScalar(.5); pa.position.x = -.02; g.add(pa); }
         g.scale.setScalar(1.45); g.userData.fp = 0; W(put(g, tx, tz, k * 1.3, .022 + up(tx, tz))); }
@@ -1316,7 +1316,7 @@ export function open(opts) {
     const [sqx, sqz] = onShore(-12.8, 3.05), sa = seaYaw(sqx), ca = Math.cos(sa), sn = Math.sin(sa), [ix, iz] = onShore(-12.8, 3.15), zs = Math.sign((ix - sqx) * sn + (iz - sqz) * ca) || 1;
     const at = (lx, lz) => [sqx + lx * ca + lz * zs * sn, sqz - lx * sn + lz * zs * ca];
     archway(0, 0, 1.9, 0, sa, at(0, -.7)); archway(0, 0, 1.2, PI / 2, sa, at(-.88, 0)); archway(0, 0, 1.2, PI / 2, sa, at(.88, 0)); archway(0, 0, 1.2, 0, sa, at(0, .7)); }
-  { const sqM = square(-12.8, 3.05, 1.75, 1.2, { trees: 2, tables: 6, people: 14 });
+  { const sqM = square(-12.8, 3.05, 1.75, 1.2, { trees: 2, tables: 3, people: 5 });
   }
   // ---- the shipyard (astillero) on the outskirts, by the sea: a big shed, a slipway with rails, a boat on stocks, a gantry crane and a hull being built
   { let sx = 0, sz = 0, found = false, flip = false;
