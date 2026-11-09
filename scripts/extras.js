@@ -1010,7 +1010,10 @@
       ims = gs[i].querySelectorAll('img');
       for (k = 0; k < ims.length; k++) if (!ims[k].closest('.x-insta,.x-toggle,.x-vp,button') && ims[k].getBoundingClientRect().width > 40) out.push(ims[k]);
     }
-    return out;
+    /* every picture once: the same photo is often present several times (nested containers, responsive copies), so keep one per file */
+    var seen = {}, uniq = [];
+    for (i = 0; i < out.length; i++) { var u = (lbSrc(out[i]) || '').split('?')[0].replace(/\/(?:\d+x\d+|w_\d+)\//, '/'); if (u && seen[u] !== undefined) { if (out[i].__lbRep === undefined) out[i].__lbRep = seen[u]; continue; } seen[u] = uniq.length; uniq.push(out[i]); out[i].__lbRep = seen[u]; }
+    return uniq;
   }
   function lbSrc(im) { return im.getAttribute('src') || im.currentSrc; }
   function lbShow(n) {
@@ -1043,6 +1046,7 @@
   function lbOpen(im) {
     LB.list = lbList();
     var n = LB.list.indexOf(im);
+    if (n < 0 && im.__lbRep !== undefined) n = im.__lbRep;
     if (n < 0) return;
     if (!LB.el) {
       var o = document.createElement('div');
