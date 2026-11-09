@@ -82,6 +82,10 @@ function groundRaw(x, z) {
   if (r >= 1) return -.02 - .75 * sstep(1, 1.1, r);
   const k = 1 - r;
   let h = -.02 + .42 * Math.pow(k, .55) + ISL[i].hh * Math.pow(k, 1.3) * (.65 + .35 * n2(x + i * 7, z));
+  if (i < 2) {      // the strip of land along the coast, where the villages are, is one smooth, level shelf (no bumps): nothing sinks and roads lie flat
+    const d = i === 0 ? edge(0, x, 1) - z : z - edge(1, x, -1), prof = -.02 + .26 * sstep(0, .55, d), wgt = 1 - sstep(8.2, 11.5, d);
+    if (wgt > 0) h = h * (1 - wgt) + prof * wgt;
+  }
   if (i === 0) h += 4.2 * Math.exp(-((x - LOURO[0]) ** 2 + (z - LOURO[1]) ** 2) / (2 * 2.6 * 2.6)) + 2.8 * Math.exp(-((x - HILL2[0]) ** 2 + (z - HILL2[1]) ** 2) / (2 * 2.4 * 2.4));
   const g = cove(x, z);
   if (g > 0) h = -.02 + (h + .02) * (1 - .8 * g);
@@ -92,7 +96,7 @@ function groundRaw(x, z) {
 // the school yards and the little pitch sit on flat ground: the hill is levelled round them
 let FLAT = null; const flatList = () => FLAT;
 function groundH(x, z) {
-  if (!FLAT) { FLAT = []; for (const [fx, inl, r, so, lvl] of [[-.5, 5.05, 2.1], [15.6, 4.55, 2.1], [-7.6, 4.85, 1.3], [8.3, 1.4, 1.0], [2.2, 5.4, 1.9, 1], [3.9, 7.0, .9], [14.2, 7.4, .9], [-17.8, 1.4, 1.7, 0, 1], [19.6, 1.4, 1.7, 0, 1], [-12.1, 1.45, 1.7, 1, 1], [7.6, 1.45, 1.7, 1, 1]]) { const cz = so ? shoreS(fx) + inl : shore(fx) - inl; FLAT.push([fx, cz, r * 1.25, lvl ? Math.max(groundRaw(fx, cz), .14) : groundRaw(fx, cz) - .14]); } }      // (the last four: the road ends and their car parks, levelled completely smooth)
+  if (!FLAT) { FLAT = []; for (const [fx, inl, r, so, lvl] of [[-.5, 5.05, 2.1], [15.6, 4.55, 2.1], [-7.6, 4.85, 1.3], [8.3, 1.4, 1.0], [2.2, 5.4, 1.9, 1], [3.9, 7.0, .9], [14.2, 7.4, .9], [-17.8, 1.4, 1.7, 0, 1], [19.6, 1.4, 1.7, 0, 1], [-12.1, 1.45, 1.7, 1, 1], [7.6, 1.45, 1.7, 1, 1]]) { const cz = so ? shoreS(fx) + inl : shore(fx) - inl; FLAT.push([fx, cz, r * 1.25, lvl ? Math.max(groundRaw(fx, cz), .14) : groundRaw(fx, cz) - .02]); } }      // (the last four: the road ends and their car parks, levelled completely smooth)
   let h = groundRaw(x, z);
   for (const f of FLAT) { const d = Math.hypot(x - f[0], z - f[1]); if (d < f[2] * 1.9) h += (f[3] - h) * (1 - sstep(f[2] * .8, f[2] * 1.9, d)); }
   if (x > 4.5 && x < 12.5 && z < -5.5 && z > -14) { let cv = 0; for (let i = 0; i < RIVERC.length; i++) { const w2 = RIVERW[i] / 2 + .03, d = Math.hypot(x - RIVERC[i][0], z - RIVERC[i][1]); if (d < w2 + .22) cv = Math.max(cv, 1 - sstep(w2, w2 + .22, d)); } h -= .14 * cv; }      // the river bed
@@ -910,10 +914,10 @@ export function open(opts) {
   const buildRoad = (pts, up) => { roadList.push([pts, up || 0]); };
   const flushRoads = () => {
     // every road is laid at the same height, all the pavements first and all the asphalt above them, so crossings and junctions merge with no seams
-    for (const [pts] of roadList) { const m = ribbon(pts, .56, walkMat, .04, false, undefined, true, 'edge'); m.renderOrder = 1; W(m); }
-    for (const [pts] of roadList) { const m = ribbon(pts, .4, asphalt, .065, false, undefined, true, 'edge'); m.renderOrder = 2; W(m); roadMeshes.push(m); }
+    for (const [pts] of roadList) { const m = ribbon(pts, .56, walkMat, .018, false, undefined, true, 'edge'); m.renderOrder = 1; W(m); }
+    for (const [pts] of roadList) { const m = ribbon(pts, .4, asphalt, .03, false, undefined, true, 'edge'); m.renderOrder = 2; W(m); roadMeshes.push(m); }
     const centre = std(0xf4f0e4, { roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -5, polygonOffsetUnits: -5 });
-    for (const [pts] of roadList) { const m = ribbon(pts, .014, centre, .072, true, undefined, true, 'edge'); m.renderOrder = 3; W(m); }     // the dashed line down the middle of every road
+    for (const [pts] of roadList) { const m = ribbon(pts, .014, centre, .036, true, undefined, true, 'edge'); m.renderOrder = 3; W(m); }     // the dashed line down the middle of every road
   };
   // the roundabout: a flat ring (pavement + asphalt + grass island) where the coast road is cut; the cars follow the inland half of the ring
   const RB = 0.62, roadRaw = relax(roadN, 4);
@@ -944,7 +948,7 @@ export function open(opts) {
     const lot = new THREE.Group(), slab = box(.8, .7, 1.25, std(0xdcd0b8)); slab.position.y = -.345; lot.add(slab); const tar = box(.74, .02, 1.17, std(0x808a98)); tar.position.y = .01; lot.add(tar);
     for (let i = 0; i < 4; i++) { const ln = box(.5, .006, .018, std(0xf6f0e2)); ln.position.set(-.04, .022, -.5 + i * .33); lot.add(ln); }
     lot.userData.fp = .75; lot.userData.pri = 4; W(put(lot, cx, cz, yaw, hb + .05 - SEA, true));
-    { const link = [[e[0] - ux * .15, e[1] - uz * .15], [cx - ux * .2, cz - uz * .2]]; const w1 = ribbon(link, .56, walkMat, .04, false, undefined, true, 'edge'); W(w1); const a1 = ribbon(link, .4, asphalt, .065, false, undefined, true, 'edge'); a1.renderOrder = 2; W(a1); roadMeshes.push(a1); }      // the road runs straight into the car park
+    { const link = [[e[0] - ux * .15, e[1] - uz * .15], [cx - ux * .2, cz - uz * .2]]; const w1 = ribbon(link, .56, walkMat, .018, false, undefined, true, 'edge'); W(w1); const a1 = ribbon(link, .4, asphalt, .03, false, undefined, true, 'edge'); a1.renderOrder = 2; W(a1); roadMeshes.push(a1); }      // the road runs straight into the car park
     [[0xe9577a, -.33], [0x4f8fc0, .0], [0xf2c14a, .33]].slice(0, atEnd ? 2 : 3).forEach(([col, off], k) => { if (k === 2 && roadN === rd) return; const pc = car(col, false); pc.scale.setScalar(.58); const pg = new THREE.Group(); pg.add(pc); parked.push(pg); const ox = -cz * 0, qx = cx + (-uz) * off * -1, qz = cz + ux * off * -1; W(put(pg, cx - uz * off, cz + ux * off, yaw + PI / 2 + (k % 2 ? PI : 0), hb + .062 - SEA, true)); });
   }
   const linkRoads = [];
@@ -1415,7 +1419,7 @@ export function open(opts) {
   // ---- a pretty street of little houses with tulip borders, leading inland from the south road (after the reference miniatures)
   const stX = 4.6, stZ0 = shoreS(stX) + 1.5;
   const stPts = []; { const r0 = roadS.reduce((m, q) => Math.abs(q[0] - stX) < Math.abs(m[0] - stX) ? q : m); for (let k = 0; k <= 22; k++) stPts.push([r0[0] + (stX - r0[0]) * Math.min(1, k / 3) + .28 * Math.sin(k * .38) * Math.min(1, k / 4), r0[1] + k * .2]); }      /* the street starts exactly on the south road and leaves it straight */
-  { const w1 = ribbon(relax(stPts, 3), .5, walkMat, .04, false, undefined, true, 'edge'); w1.renderOrder = 1; W(w1); const a1 = ribbon(relax(stPts, 3), .34, asphalt, .065, false, undefined, true, 'edge'); a1.renderOrder = 2; W(a1); roadMeshes.push(a1); }
+  { const w1 = ribbon(relax(stPts, 3), .5, walkMat, .018, false, undefined, true, 'edge'); w1.renderOrder = 1; W(w1); const a1 = ribbon(relax(stPts, 3), .34, asphalt, .03, false, undefined, true, 'edge'); a1.renderOrder = 2; W(a1); roadMeshes.push(a1); }
   { const PAST = [0xdcb3b4, 0xe8c9b4, 0xf1e0c6, 0xcdb2bb, 0xe6bcab, 0xf0e1cd], RF = [0xd25a4a, 0xdc6a52, 0x6f8fa0, 0xc7503f, 0xe07a5c, 0xb84a40];
     for (let k = 0; k < 5; k++) for (const sd of [-1, 1]) {
       const z = stZ0 + .55 + k * .78 + (sd > 0 ? .3 : 0), px = stX + .28 * Math.sin((z - stZ0) / .2 * .38), x = px + sd * .62;
