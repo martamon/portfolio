@@ -935,7 +935,7 @@ export function open(opts) {
     roadN.rb = roadN.rb || []; roadN.rb.push([jx, z0]);
   }
   { const rn = relax(roadN, 3); rn.rb = roadN.rb; roadN.length = 0; rn.forEach((q) => roadN.push(q)); }
-  { const cut = [[]]; for (const q of roadRaw) { if (roadN.rb.some(([jx, z0]) => Math.hypot(q[0] - jx, q[1] - z0) < RB - .08)) { if (cut[cut.length - 1].length) cut.push([]); } else cut[cut.length - 1].push(q); } for (const part of cut) if (part.length > 2) buildRoad(part); }
+  { const cut = [[]]; for (const q of roadRaw) { if (roadN.rb.some(([jx, z0]) => Math.hypot(q[0] - jx, q[1] - z0) < RB + .3)) { if (cut[cut.length - 1].length) cut.push([]); } else cut[cut.length - 1].push(q); } for (const part of cut) if (part.length > 2) buildRoad(part); }
   for (const [jx, z0] of roadN.rb) {
     const hb = Math.max(groundH(jx, z0), .07), mk = (r0, r1, mat, lift) => { const m = new THREE.Mesh(new THREE.RingGeometry(r0, r1, 48, 1), mat); m.rotation.x = -PI / 2; m.userData.ribbon = true; const g = new THREE.Group(); g.add(m); W(put(g, jx, z0, 0, hb + lift, true)); return m; };
     const lift0 = -SEA;
