@@ -613,20 +613,20 @@ export function open(opts) {
   VILLAGES.forEach(([name, z0], vi) => {
     const rx = ROADX(z0), cnt = vi === 3 ? 8 : 5; let made = 0;
     // houses along the road and the lanes: set well back, spaced out, each turned to face its way
+    // the square of stone is laid out first, so no house can be put on it or against it
+    if (vi === 3 || vi === 2) { const pr = vi === 3 ? 10 : 7, pcx = rx - 21, pcz = z0 + 1; plazas.push([pcx, pcz, pr]); }
     const spots = []; for (const pts of lanes) if (Math.abs(pts[0][1] - z0) < 16 && Math.abs(pts[0][0] - (rx - 3)) < 7) for (let q = 2; q < pts.length - 1; q += 3) for (const sd of [-1, 1]) { const a = pts[q - 1], b = pts[q + 1], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1, nx = -dz / l, nz = dx / l; spots.push([pts[q][0] + nx * 7.2 * sd, pts[q][1] + nz * 7.2 * sd, -nx * sd, -nz * sd]); }
     for (let k = -3; k <= 3; k++) for (const sd of [-1, 1]) { const zz = z0 + k * 9 + sd * 2; spots.push([ROADX(zz) + sd * 12, zz, -sd, 0]); }
     for (let i = spots.length - 1; i > 0; i--) { const j2 = Math.floor(rng() * (i + 1)); [spots[i], spots[j2]] = [spots[j2], spots[i]]; }
     for (const [xx, zz, fx, fz] of spots) {
-      if (made >= cnt || H(xx, zz) < .35 || solid(xx, zz, 6.5) || Math.hypot(xx - (rx - 21), zz - (z0 + 1)) < 15) continue;
+      if (made >= cnt || H(xx, zz) < .35 || plazas.some((pl) => Math.hypot(pl[0] - xx, pl[1] - zz) < pl[2] + 8.5) || solid(xx, zz, 6.5) || Math.hypot(xx - (rx - 21), zz - (z0 + 1)) < 15) continue;
       if (lanes.some((pts) => pts.some((q) => Math.hypot(q[0] - xx, q[1] - zz) < 5.2))) continue;
       const w = 6.6 + rng() * 2, d = 5.4 + rng() * 1.5, fl = 1 + Math.floor(rng() * (vi === 3 ? 3 : 2)), stone = vi === 3 && rng() < .4;
       const h = houseMesh(w, d, fl, WALLS[(vi * 3 + made) % WALLS.length], ROOFS[(made + vi) % ROOFS.length], stone); addTo(h, xx, zz, Math.atan2(fx, fz), h.userData.r); made++;
     }
-    // the square of stone: paving, a fountain or a cruceiro, benches, pruned trees
-    if (vi === 3 || vi === 2) { const pr = vi === 3 ? 10 : 7, pcx = rx - 21, pcz = z0 + 1; plazas.push([pcx, pcz, pr]); }
     { const bs = busStop(); let bz = z0 + 9; for (const dz of [0, -6, 6, -12, 12, 17]) { const zz = z0 + 9 + dz; if (viol(bs.userData, ROADX(zz) + 6.4, zz, -PI / 2)[0] <= 0) { bz = zz; break; } } const bx = ROADX(bz) + 6.4; stops.push([bx, bz]); addTo(bs, bx, bz, -PI / 2, 2.6); shelters.push([bx - .2, bz - .9], [bx - .2, bz + .9]); }
     const sc = ROADX(z0 - 2) - 16, cr = cruceiro(); addTo(cr, sc, z0 - 14, 0, 2.3);
-    for (let k = 0; k < 1; k++) { const hx = rx - 19 - rng() * 7, hzz = z0 - 12 + k * 12 + (rng() - .5) * 4; if (H(hx, hzz) < .4 || solid(hx, hzz, 7) || lanes.some((pts) => pts.some((q) => Math.hypot(q[0] - hx, q[1] - hzz) < 6.5))) continue; const hr = horreo(); const yaw = rng() * PI * 2; addTo(hr, hx, hzz, yaw, hr.userData.r); if (vi === 1 && !infoSpots.length) infoSpots.push(['horreo', hx + Math.cos(yaw) * 0 + 6.5, hzz]); }
+    for (let k = 0; k < 1; k++) { const hx = rx - 19 - rng() * 7, hzz = z0 - 12 + k * 12 + (rng() - .5) * 4; if (H(hx, hzz) < .4 || solid(hx, hzz, 7) || plazas.some((pl) => Math.hypot(pl[0] - hx, pl[1] - hzz) < pl[2] + 5) || lanes.some((pts) => pts.some((q) => Math.hypot(q[0] - hx, q[1] - hzz) < 6.5))) continue; const hr = horreo(); const yaw = rng() * PI * 2; addTo(hr, hx, hzz, yaw, hr.userData.r); if (vi === 1 && !infoSpots.length) infoSpots.push(['horreo', hx + Math.cos(yaw) * 0 + 6.5, hzz]); }
     if (vi === 3 || vi === 2) { const ch = church(); const cx = rx - 21, cz = z0 + (vi === 3 ? -21 : 17); if (!solid(cx, cz, 9)) addTo(ch, cx, cz, PI / 2, 8); }
   });
   for (const [px, pz, pr] of plazas) {
@@ -995,6 +995,8 @@ export function open(opts) {
       nd.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); rc.setFromCamera(nd, camera); const hit = rc.intersectObject(casa.obj.userData.dogG, true); if (hit.length && casa.obj.userData.wake <= 0 && casa.obj.userData.act <= 0) { casa.obj.userData.poke(['Woof!', '¡Guau!', 'Gau!'][lang] || 'Guau!'); if (snd) snd.bark(); } }); }
   // ---- the neighbours who know Martamon: nine people carry three little dots over their heads; tap one and they turn to you, ask "do you know Martamon?" in their own way, and then tell you something about her
   const factEl = document.createElement('div'); factEl.className = 'x-dr-fact'; root.appendChild(factEl);
+  const bubbleTex = (() => { const c = document.createElement('canvas'); c.width = 128; c.height = 64; const g = c.getContext('2d'); g.fillStyle = '#e9735e'; g.beginPath(); g.roundRect ? g.roundRect(6, 6, 116, 40, 20) : g.rect(6, 6, 116, 40); g.fill(); g.beginPath(); g.moveTo(52, 44); g.lineTo(64, 60); g.lineTo(76, 44); g.fill(); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
+  const bubbleSp = () => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: bubbleTex, depthWrite: false, transparent: true, fog: false })); sp.scale.set(1.5, .75, 1); sp.position.set(0, -.12, 0); sp.renderOrder = 8; return sp; };
   const talkers = [], nbDotTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 28); gr.addColorStop(0, '#fff'); gr.addColorStop(.7, '#fff6e4'); gr.addColorStop(1, 'rgba(255,246,228,0)'); g.fillStyle = gr; g.beginPath(); g.arc(32, 32, 28, 0, 6.3); g.fill(); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
   { // Mario and Adrián: two colleagues from Madrid who are visiting Marta's village; they stroll together along the main road of Muros
     const mkV = (k) => { const w = person(k === 2 ? 0x8a5fb0 : k ? 0x2f7a5a : 0x3f6fa8, k === 1 ? 0xe3b185 : k === 2 ? 0xfbe9db : 0xf0c9a0);
@@ -1006,9 +1008,9 @@ export function open(opts) {
     const pair = [mkV(0), mkV(1), mkV(2)]; pair.forEach((w, k) => { w.userData.pairIdx = 9 + k; });
   }
   { const pool = PEOPLE.filter((q) => q.parent === scene && q.userData.pairIdx === undefined), step = Math.max(1, Math.floor(pool.length / 9));
-    for (const q of PEOPLE) if (q.userData.pairIdx !== undefined) { q.userData.talker = q.userData.pairIdx; q.userData.line = 0; const dots = new THREE.Group(); dots.position.set(0, 2.85, 0); q.add(dots); for (let n = 0; n < 3; n++) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: nbDotTex, depthWrite: false, transparent: true, fog: false })); sp.scale.set(.34, .34, 1); sp.position.x = (n - 1) * .42; sp.renderOrder = 9; dots.add(sp); } q.userData.dots = dots; talkers.push(q); }
+    for (const q of PEOPLE) if (q.userData.pairIdx !== undefined) { q.userData.talker = q.userData.pairIdx; q.userData.line = 0; const dots = new THREE.Group(); dots.position.set(0, 3.15, 0); dots.scale.setScalar(1.25); dots.add(bubbleSp()); q.add(dots); for (let n = 0; n < 3; n++) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: nbDotTex, depthWrite: false, transparent: true, fog: false })); sp.scale.set(.34, .34, 1); sp.position.x = (n - 1) * .42; sp.renderOrder = 9; dots.add(sp); } q.userData.dots = dots; talkers.push(q); }
     for (let k = 0; k < 9; k++) { const g = pool[(k * step + 1) % pool.length]; if (!g || g.userData.talker !== undefined) continue; g.userData.talker = k; g.userData.line = 0;
-      const dots = new THREE.Group(); dots.position.set(0, 2.85, 0); g.add(dots); for (let q = 0; q < 3; q++) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: nbDotTex, depthWrite: false, transparent: true, fog: false })); sp.scale.set(.34, .34, 1); sp.position.x = (q - 1) * .42; sp.renderOrder = 9; dots.add(sp); }
+      const dots = new THREE.Group(); dots.position.set(0, 3.15, 0); dots.scale.setScalar(1.25); dots.add(bubbleSp()); g.add(dots); for (let q = 0; q < 3; q++) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: nbDotTex, depthWrite: false, transparent: true, fog: false })); sp.scale.set(.34, .34, 1); sp.position.x = (q - 1) * .42; sp.renderOrder = 9; dots.add(sp); }
       g.userData.dots = dots; talkers.push(g); } }
   { let dn2 = null, factP = null, factT = 0, stage = 0, lines = null; const rcF = new THREE.Raycaster(), ndF = new THREE.Vector2(), hv = new THREE.Vector3();
     const showLine = (txt) => { const nm = TALKER_NAMES[factP.userData.talker]; factEl.textContent = ''; if (nm) { const b = document.createElement('b'); b.textContent = nm; factEl.appendChild(b); } factEl.appendChild(document.createTextNode(txt)); factEl.classList.remove('x-pop'); void factEl.offsetWidth; factEl.classList.add('x-on', 'x-pop'); if (snd) snd.talk(txt.length, factP.userData.talker * 3 + 1); };
@@ -1021,7 +1023,7 @@ export function open(opts) {
       factP = g; const T = TALKERS[g.userData.talker]; lines = T[g.userData.line % T.length]; g.userData.line++; stage = 0; factT = 3.6; g.userData.pop = 1; g.userData.hold = 16; g.userData.rot0 = g.rotation.y; showLine(lines[0][lang]); });
     const endTalk = () => { factEl.classList.remove('x-on'); if (factP) { factP.userData.hold = 0; } factP = null; };
     root.__factTick = (dt, t) => {
-      for (const g of talkers) { const d = g.userData.dots; if (!d) continue; const talking = g === factP; d.visible = !talking; d.children.forEach((sp, q) => { const w = Math.sin(t * 4 + q * .9); sp.position.y = w * .1; sp.material.opacity = .65 + .35 * Math.max(0, w); sp.scale.setScalar(.3 + .08 * Math.max(0, w)); }); }
+      for (const g of talkers) { const d = g.userData.dots; if (!d) continue; const talking = g === factP; d.visible = !talking; d.children.forEach((sp, q) => { const w = Math.sin(t * 4 + q * .9); sp.position.y = w * .06; sp.material.opacity = .65 + .35 * Math.max(0, w); sp.scale.setScalar(.3 + .08 * Math.max(0, w)); }); }
       if (!factP) return; factT -= dt; if (factT <= 0) { if (stage === 0) { stage = 1; factT = 9; showLine(lines[1][lang]); } else { endTalk(); return; } }
       factP.userData.hold = Math.max(factP.userData.hold, 1);
       hv.setFromMatrixPosition(factP.matrixWorld); hv.y += 2.5 * (factP.scale.y || 1); hv.project(camera); const bx = Math.max(150, Math.min(innerWidth - 150, (hv.x + 1) / 2 * innerWidth)), by = Math.max(130, (1 - hv.y) / 2 * innerHeight);
@@ -1159,5 +1161,5 @@ export function open(opts) {
     opts.onClose && opts.onClose();
   }
   root.querySelector('.x-dr-x').addEventListener('click', close);
-  return { close, state: S, dbg: { colliders, lanes, traffic, casa, walkers, fishers, scene, camera, grazers } };
+  return { close, state: S, dbg: { colliders, lanes, traffic, casa, walkers, fishers, scene, camera, grazers, talkers } };
 }
