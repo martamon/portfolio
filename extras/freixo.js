@@ -935,7 +935,7 @@ export function open(opts) {
     roadN.rb = roadN.rb || []; roadN.rb.push([jx, z0]);
   }
   { const rn = relax(roadN, 3); rn.rb = roadN.rb; roadN.length = 0; rn.forEach((q) => roadN.push(q)); }
-  { const cut = [[]]; for (const q of roadRaw) { if (roadN.rb.some(([jx, z0]) => Math.hypot(q[0] - jx, q[1] - z0) < RB - .1)) { if (cut[cut.length - 1].length) cut.push([]); } else cut[cut.length - 1].push(q); } for (const part of cut) if (part.length > 2) buildRoad(part); }
+  { const cut = [[]]; for (const q of roadRaw) { if (roadN.rb.some(([jx, z0]) => Math.hypot(q[0] - jx, q[1] - z0) < RB - .24)) { if (cut[cut.length - 1].length) cut.push([]); } else cut[cut.length - 1].push(q); } for (const part of cut) if (part.length > 2) buildRoad(part); }
   for (const [jx, z0] of roadN.rb) {
     const hb = Math.max(groundH(jx, z0), .07), mk = (r0, r1, mat, lift) => { const m = new THREE.Mesh(new THREE.RingGeometry(r0, r1, 48, 1), mat); m.rotation.x = -PI / 2; m.userData.ribbon = true; const g = new THREE.Group(); g.add(m); W(put(g, jx, z0, 0, hb + lift, true)); return m; };
     const lift0 = -SEA;
@@ -1193,7 +1193,7 @@ export function open(opts) {
     const fl = new THREE.Mesh(new THREE.BoxGeometry(.05, .012, .22), skin); fl.position.x = -.19; tail.add(fl);
     g.scale.setScalar(sc || 1); return { g, tail };
   }
-  for (const [cx, cz, rx, rz, sp, ph, n, gap] of [[0, 0, 32.5, 32.5, .042, 0, 3, .035], [0, 0, 29.5, 29.5, -.04, 2, 2, .04]]) {
+  for (const [cx, cz, rx, rz, sp, ph, n, gap] of [[0, 5.2, 17, 2.4, .075, 0, 3, .035], [0, 4.7, 14, 1.9, -.075, 2, 2, .04]]) {
     for (let k = 0; k < n; k++) { const d = dolphin(1.25), w = new THREE.Group(); w.add(d.g); W(w); seaLife.push({ kind: 'dol', w, d, cx, cz, rx, rz, sp, a: ph + k * (gap || .55), ph: rnd() * 6, off: k * .22 }); }
   }
   const fishBody = new THREE.SphereGeometry(.05, 8, 6), fishTail = new THREE.ConeGeometry(.04, .07, 4), fishEye = new THREE.SphereGeometry(.009, 5, 4), eyeM = std(0x1b1b1b);
@@ -1218,7 +1218,7 @@ export function open(opts) {
     g.scale.setScalar(sc);
     const w = new THREE.Group(); w.add(g); W(w); seaLife.push({ kind: 'whale', w, g, tail, spout: sp2, cx, cz, rx, rz, sp, a, ph: rnd() * 6 });
   };
-  whale(0, 0, 31, 31, .018, 1.2, .8); whale(0, 0, 33.5, 33.5, -.015, 3.9, .9); whale(0, 0, 36, 36, .012, 5.6, .75);
+  whale(0, 5.4, 18, 2.8, .03, 1.2, .7); whale(0, 4.8, 15, 2.3, -.025, 3.9, .75); whale(0, 5.6, 12, 2, .02, 5.6, .65);
 
   // ---- canoes (piraguas) paddling slowly up and down the coast, close to the beaches
   const canoes = [];
@@ -1411,7 +1411,7 @@ export function open(opts) {
       let bq = roadRaw[0], bd = 9; for (const q of roadRaw) { const d = Math.hypot(q[0] - mx, q[1] - mz); if (d < bd) { bd = d; bq = q; } }
       let nx = mx - bq[0], nz = mz - bq[1]; const nl = Math.hypot(nx, nz) || 1; nx /= nl; nz /= nl; mx = bq[0] + nx * 2.05; mz = bq[1] + nz * 2.05; yaw = Math.atan2(nx, nz); }
     if (found) { const g = new THREE.Group(), SC = .1;
-    const pave = box(.8, .32, 2.3, std(0xd8cdb6)); pave.position.y = -.14; g.add(pave); const edge = box(.7, .022, 2.2, std(0xcfc3aa)); edge.position.y = .03; g.add(edge);
+    const pave = box(.8, .32, 2.3, std(0xe2cba0)); pave.position.y = -.14; g.add(pave); const edge = box(.7, .022, 2.2, std(0xe2cba0)); edge.position.y = .03; g.add(edge);
     const awn = [0xc9473a, 0x2f6fa8, 0xe9b94a, 0x3b9a6a, 0xe277a0, 0x7a58b5, 0xf08a3c, 0x4fb3a8];
     for (let k = 0; k < 4; k++) for (const sd of [-1, 1]) { const st = stall(THREE, std, KINDS[(k * 2 + (sd > 0 ? 1 : 0) + (sd > 0 ? 3 : 0)) % 8], awn[(k * 2 + (sd > 0 ? 1 : 0)) % 8], false); st.scale.setScalar(SC); st.position.set(sd * .31, .035, -.78 + k * .52); st.rotation.y = sd < 0 ? PI / 2 : -PI / 2; g.add(st);
       const vd = person(SHIRTS[(k + (sd > 0 ? 3 : 0)) % SHIRTS.length], { skin: SKINS[k % 4] }); vd.scale.setScalar(.8); vd.position.set(sd * .47, .035, -.78 + k * .52); vd.rotation.y = sd < 0 ? PI / 2 : -PI / 2; g.add(vd); }
@@ -1439,8 +1439,8 @@ export function open(opts) {
       for (let i = 0; i <= 11; i += 3) { const y = .04 + i * .085, z = 1.15 - i * .11, po = box(.02, .13, .02, dark); po.position.set(.99, y + .08, z); g.add(po); }
       for (let i = 0; i < 11; i++) { const y0 = .04 + i * .085, z0 = 1.15 - i * .11, y1 = y0 + .085, z1 = z0 - .11, ln = box(.012, .012, Math.hypot(.11, .085) + .01, rope); ln.position.set(.99, (y0 + y1) / 2 + .13, (z0 + z1) / 2); ln.rotation.x = Math.atan2(.085, .11); g.add(ln); } }
     W(put(g, fx, fz, yaw, -.08));
-    for (const x of [-3.7, -2.9, -2.2, .4, 1.1, 1.8]) hhS(x, .9 + rnd() * .3, 1 + (hc % 2), { stone: true });
-    const [cx, cz] = onShoreS(-3.4, 3.1); W(put(church(.9), cx, cz, seaYawS(cx), -.03)); }
+    for (const x of [-6.2, -5.4, -4.7, 3.2, 3.9, 4.6]) hhS(x, .9 + rnd() * .3, 1 + (hc % 2), { stone: true });
+    const [cx, cz] = onShoreS(-7.6, 3.1); W(put(church(.9), cx, cz, seaYawS(cx), -.03)); }
 
   // ---- the small island: a tiny harbour with a boat, one little house in the middle and two horses grazing
   const horses = [];
@@ -1458,7 +1458,7 @@ export function open(opts) {
     const hs = house({ w: .42, d: .36, floors: 1, wall: 0xf7f1e4, roof: ROOF[0], gal: false, shut: 0x2f6fa8, fr: 2, door: 0x2f6fa8 }); W(put(hs, ix, iz - .1, .5, -.02));
     for (let k = 0; k < 3; k++) { const q = new THREE.Group(); q.add(box(.3, .4, .3, std(0xb2ac9c))); const c = box(.34, .05, .34, std(0xd0cabb)); c.position.y = .22; q.add(c); W(put(q, ix, sz - .05 + k * .3, 0, .02, true)); }
     const bt = boat(0xc9473a, 0xf2efe6, 'fisher'); bt.scale.setScalar(.7); const bw = new THREE.Group(); bw.add(bt); put(bw, ix + .45, sz + .55, PI / 2, 0, true); W(bw); boats.push({ w: bw, b: bt, ph: 1.3, base: 0 });
-    for (const [hx, hz, c, mn, ry] of [[-.9, .35, 0x7a4a2e, 0x2a1a10, .6], [.95, -.2, 0xf1ece0, 0x8a7a66, 3.4]]) { const h = horse(c, mn), w = new THREE.Group(); h.g.scale.setScalar(.5); w.add(h.g); const x = ix + hx, z = iz + hz; put(w, x, z, ry, -.02); W(w); horses.push({ h, ph: rnd() * 6 }); } }
+    for (const [hx, hz, c, mn, ry] of [[-.9, .35, 0x7a4a2e, 0x2a1a10, .6], [.95, -.2, 0xf1ece0, 0x8a7a66, 3.4]]) { const h = horse(c, mn), w = new THREE.Group(); h.g.scale.setScalar(.5); w.add(h.g); const x = ix + hx, z = iz + hz; put(w, x, z, ry, -.02); W(w); horses.push({ h, w, ph: rnd() * 6, x0: x, z0: z, r: .35 + rnd() * .25, a: rnd() * 6.28, sp: (.12 + rnd() * .06) * (hx > 0 ? 1 : -1) }); } }
 
   // ---- a pretty street of little houses with tulip borders, leading inland from the south road (after the reference miniatures)
   const stX = 4.6, stZ0 = shoreS(stX) + 2.3;      // the street begins a clear step beyond the road pavement, so the houses never touch it
@@ -1552,7 +1552,7 @@ export function open(opts) {
   function schoolYard(x, inl, roofCol, wallCol, nKids) {
     const [px, pz] = onShore(x, inl), yaw = seaYaw(px), slab = new THREE.Group();
     const sl = box(2.5, 1.5, 2.7, std(0xe6dcc0)); sl.position.y = -.77; slab.add(sl);      /* deep base: the yard never floats */
-    slab.userData.fp = 2.0; slab.userData.pri = 6; slab.userData.sch = 1; W(put(slab, px, pz, yaw, -.04));
+    slab.userData.fp = 2.0; slab.userData.pri = 6; slab.userData.sch = 1; W(put(slab, px, pz, yaw, .07));
     const loc = (lx, lz) => [px + lx * Math.cos(yaw) + lz * Math.sin(yaw), pz - lx * Math.sin(yaw) + lz * Math.cos(yaw)];
     const sc = school(roofCol, wallCol); sc.userData.pri = 6; const [sx, sz] = loc(0, -.95); W(put(sc, sx, sz, yaw, .03)); flags.push(sc.userData.flag);
     const pt = pitch(1.15, .7, true); pt.userData.pri = 6; const [qx, qz] = loc(0, .5); W(put(pt, qx, qz, yaw, .1));
@@ -1758,7 +1758,7 @@ export function open(opts) {
   // ---- a little wooden bridge over the river, and neighbours who walk across it
   { const n = riverPts.length, k = Math.floor(n * .66), a1 = riverPts[k - 1], b1 = riverPts[k + 1], c0 = riverPts[k], tx = b1[0] - a1[0], tz = b1[1] - a1[1], tl = Math.hypot(tx, tz) || 1, nx = -tz / tl, nz = tx / tl, wr = riverWidths[k] || .4, len = wr + 1.0;
     BRIDGE_C = [c0[0], c0[1]]; const yaw = Math.atan2(-nz, nx), g = new THREE.Group(), wood = std(0xb98a5a), dark = std(0x8a6a44);
-    const deck = box(len, .04, .28, wood); deck.position.y = .045; g.add(deck); for (const sx of [-1, 1]) { const ab = box(.14, 1.1, .32, std(0xa7a08e)); ab.position.set(sx * (len / 2 - .07), -.52, 0); g.add(ab); }      /* deep stone abutments: the bridge rests on the banks and never floats */
+    const deck = box(len, .04, .28, wood); deck.position.y = .045; g.add(deck); for (const sx of [-1, 1]) for (let k = 0; k < 2; k++) { const st = box(.07, .02 + .0 * k, .3, wood); st.position.set(sx * (len / 2 + .02 + (1 - k) * .06), .012 + k * .012, 0); g.add(st); st.scale.y = 1; }      /* two tiny steps at each end for the people to climb */
     for (let q = 0; q < Math.floor(len / .1); q++) { const pl = box(.012, .038, .27, dark); pl.position.set(-len / 2 + .06 + q * .1, .047, 0); g.add(pl); }
     for (const sz of [-1, 1]) { const rl = box(len, .02, .02, dark); rl.position.set(0, .13, sz * .14); g.add(rl); for (let q = 0; q <= 5; q++) { const po = box(.02, .1, .02, dark); po.position.set(-len / 2 + .05 + q * (len - .1) / 5, .09, sz * .14); g.add(po); } }
     const hm = Math.max(groundH(c0[0] + nx * len * .5, c0[1] + nz * len * .5), groundH(c0[0] - nx * len * .5, c0[1] - nz * len * .5), groundH(c0[0], c0[1]));
@@ -2330,7 +2330,11 @@ export function open(opts) {
       c.legs.forEach((l, i) => { l.rotation.z = graze ? 0 : Math.sin(t * 4 + i * PI / 2 + c.ph) * .25; });
       if (c.kind === 'rabbit' && !graze) c.g.position.addScaledVector(c.g.position.clone().normalize(), Math.max(0, Math.sin(t * 5 + c.ph)) * .03);
     }
-    for (const o of horses) o.h.head.rotation.z = -.35;      // the island horses stand still, calmly grazing
+    for (const o of horses) {      // the island horses walk slowly round the island and now and then lower their heads
+      o.a += o.sp * dt; const sg = Math.sign(o.sp), x = o.x0 + Math.cos(o.a) * o.r * 1.4, z = o.z0 + Math.sin(o.a) * o.r, tx = -Math.sin(o.a) * 1.4 * sg, tz = Math.cos(o.a) * sg;
+      put(o.w, x, z, Math.atan2(-tz, tx), -.02); o.h.head.rotation.z = -Math.max(0, Math.sin(t * .45 + o.ph)) * .8;
+      if (o.h.legs) o.h.legs.forEach((lg, i) => { lg.rotation.z = Math.sin(t * 4 + (i % 2 ? PI : 0) + (i > 1 ? PI / 2 : 0)) * .35; });
+    }
     for (const f of falls) {
       if (f.mist) { f.mist.scale.set(1.4 + Math.sin(t * 2) * .1, .55 + Math.sin(t * 2) * .05, 1.1); f.mist.material.opacity = .36 + Math.sin(t * 1.6) * .07; }
       else if (f.foam) { const u = (t * .5 + f.k / 16) % 1, r = .14 + u * .5; f.foam.position.set(Math.cos(f.a + f.k) * r * .8 + Math.sin(t * 1.3 + f.k) * .03, .035 + Math.sin(t * 4 + f.k) * .012, .72 + Math.abs(Math.sin(f.a + f.k * 2)) * r * .9); f.foam.material.opacity = .9 * (1 - u); f.foam.scale.setScalar(.7 + u * .8); }
