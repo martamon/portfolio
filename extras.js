@@ -259,7 +259,7 @@
     'html.x-about-on.x-about-on [data-xn],html.x-about-on.x-about-on [data-xn] *,html.x-about-on.x-about-on [data-xnc] *,html.x-about-on.x-about-on [data-framer-name="Studio Link"] *,html.x-about-on.x-about-on [data-framer-name="Contact Link"] *{color:#fbefe9!important;mix-blend-mode:normal!important}html.x-about-on.x-about-on [data-xnc] img,html.x-about-on.x-about-on a[data-xf] *{filter:none!important;mix-blend-mode:normal!important}',
     'html.x-about-on.x-about-on div[data-xnc],html.x-about-on.x-about-on div[data-xbl],html.x-about-on.x-about-on [data-xnc] img{mix-blend-mode:normal!important;filter:none!important}html.x-about-on.x-about-on [data-xnc] a,html.x-about-on.x-about-on [data-xnc] a *{color:#f3f7ff!important;text-shadow:0 1px 10px rgba(10,30,70,.45)}',
     'html.x-about-on,html.x-about-on body{background:#265899 url(/extras/about/ground.webp?v=2) top center/100% auto repeat-y!important}',
-    '.x-ab-bg{position:fixed;left:0;top:0;width:100%;height:100vh;overflow:hidden;z-index:0;pointer-events:none;will-change:transform}.x-ab-vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:62% 100%;-webkit-mask-image:linear-gradient(#000 88%,transparent);mask-image:linear-gradient(#000 88%,transparent)}.x-ab-blue{position:absolute;inset:0;background:#265899;opacity:0}',
+    '.x-ab-bg{position:fixed;left:0;top:0;width:100%;height:100vh;overflow:hidden;z-index:0;pointer-events:none;will-change:transform}.x-ab-vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:62% 100%;transform-origin:50% 100%}',
     
     '.x-ab-grain{position:absolute;inset:-80px;pointer-events:none;mix-blend-mode:overlay;opacity:.22;animation:x-grain .8s steps(6) infinite}@keyframes x-grain{0%{transform:translate(0,0)}17%{transform:translate(-37px,23px)}33%{transform:translate(29px,-41px)}50%{transform:translate(-18px,-12px)}67%{transform:translate(41px,31px)}83%{transform:translate(-26px,38px)}100%{transform:translate(0,0)}}@media (prefers-reduced-motion:reduce){.x-ab-grain{animation:none}}',
     'html[data-xp="about"] [data-framer-name="Wordmark"],html[data-xp="about"] [data-framer-name="Caption"]{z-index:5!important}',
@@ -291,7 +291,7 @@
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"]{left:6vw!important;top:calc(110px + 22px + 28px)!important;bottom:auto!important;width:min(640px,calc(100vw - 12vw))!important}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"]::before{display:none!important}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Wordmark"],html:not(#x)[data-xp="about"] [data-framer-name="Caption"]{visibility:hidden!important}',
-    '.x-ab-txt{position:fixed;will-change:transform;left:6vw;top:110px;width:min(640px,calc(100vw - 12vw));z-index:8;pointer-events:none;color:#fff;mix-blend-mode:difference}.x-ab-txt h1{margin:0 0 28px;font:400 22px/1 "Outfit","Plus Jakarta Sans",sans-serif;letter-spacing:.14em;text-transform:uppercase}.x-ab-txt p{margin:0;font:700 17px/1.28 "Lekton","IBM Plex Mono",monospace;letter-spacing:.01em;text-align:justify;text-transform:uppercase}',
+    '.x-ab-txt{position:fixed;will-change:transform;left:6vw;top:150px;width:min(560px,calc(100vw - 12vw));z-index:8;pointer-events:none;color:#fff;text-shadow:0 0 2px rgba(6,16,44,.95),0 1px 3px rgba(6,16,44,.9),0 0 14px rgba(6,16,44,.75)}.x-ab-txt h1{margin:0 0 28px;font:400 22px/1 "Outfit","Plus Jakarta Sans",sans-serif;letter-spacing:.14em;text-transform:uppercase}.x-ab-txt p{margin:0;font:700 14px/1.28 "Lekton","IBM Plex Mono",monospace;letter-spacing:.01em;text-align:justify;text-transform:uppercase}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"] p,html:not(#x)[data-xp="about"] [data-framer-name="Caption"] *{font-family:"Lekton","IBM Plex Mono",monospace!important;font-weight:400!important;font-size:13px!important;line-height:1.3!important;letter-spacing:.01em!important;text-align:justify!important;text-justify:inter-word!important}',
     // tighter lines in the running texts of the site
     'html main[data-xm] [data-framer-name="Project Writeup"] p,html main[data-xm] [data-framer-name="Info"] p,html main[data-xm]~section p,html main[data-xm]~* footer p,html [data-framer-name="Info"] p,.x-ct-text,.x-ct-text p{line-height:1.25!important}',
@@ -2025,7 +2025,7 @@
   /* About: the rider video fills the screen and is played by the scroll (no sound): scroll plays it, grain flickers over it; once it has ended the screen fades to the blue
      of the ground and the page carries on over that blue */
   (function aboutScene() {
-    var px = 0, py = 0, cx = 0, cy = 0, coarse = matchMedia('(pointer:coarse)').matches, wrap = null, vid = null, blue = null, grain = null, tx = null, run = false, sm = 0, lastY = 0, vel = 0, tgt = 0, ready = false;
+    var bl = null, px = 0, py = 0, cx = 0, cy = 0, coarse = matchMedia('(pointer:coarse)').matches, wrap = null, vid = null, blue = null, grain = null, tx = null, run = false, sm = 0, lastY = 0, vel = 0, tgt = 0, ready = false;
     var calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
     addEventListener('pointermove', function (e) { px = e.clientX / innerWidth - .5; py = e.clientY / innerHeight - .5; }, { passive: true });
     function frame() {
@@ -2034,9 +2034,9 @@
       sm += (y - sm) * .12;
       var p = Math.min(1, sm / (H * 1.0)), q = Math.min(1, Math.max(0, (sm - H * .9) / (H * .45)));
       if (vid && vid.duration && ready) { tgt = p * (vid.duration - .04); if (Math.abs(vid.currentTime - tgt) > .012) { try { vid.currentTime = tgt; } catch (e) {} } }
-      cx += (px - cx) * .05; cy += (py - cy) * .05; if (!calm && !coarse) vid.style.transform = 'perspective(1200px) rotateY(' + (cx * 4).toFixed(2) + 'deg) rotateX(' + (-cy * 2.6).toFixed(2) + 'deg) translate3d(' + (-cx * 22).toFixed(1) + 'px,' + (-cy * 12).toFixed(1) + 'px,0) scale(1.02)';
+      cx += (px - cx) * .05; cy += (py - cy) * .05; if (!calm && !coarse) vid.style.transform = 'translate3d(' + (-cx * 18).toFixed(1) + 'px,' + (-cy * 8).toFixed(1) + 'px,0) scale(1.06)'
       var off = Math.max(0, sm - H * 1.0); wrap.style.transform = 'translate3d(0,' + (-off).toFixed(1) + 'px,0)';      /* once the video has ended the picture scrolls away with the page and the ground carries on, in its own blue */
-      if (tx) tx.style.transform = 'translate3d(0,' + (-off) + 'px,0)';
+      if (tx) tx.style.transform = 'translate3d(0,' + (-off) + 'px,0)'; if (bl) bl.style.transform = 'translate3d(0,' + (-off) + 'px,0)';
       requestAnimationFrame(frame);
     }
     function build() {
@@ -2050,10 +2050,10 @@
     }
     function sync() {
       var on = document.documentElement.getAttribute('data-xp') === 'about';
-      if (on && !wrap) build(); else if (!on && wrap) { wrap.remove(); wrap = vid = blue = null; ready = false; document.documentElement.classList.remove('x-about-on'); }
+      if (on && !wrap) build(); else if (!on && wrap) { wrap.remove(); if (bl) { bl.remove(); bl = null; } wrap = vid = blue = null; ready = false; document.documentElement.classList.remove('x-about-on'); }
       if (on) { if (wrap && !wrap.isConnected) document.body.insertBefore(wrap, document.body.firstChild);
-        if (!tx || !tx.isConnected) { tx = document.createElement('div'); tx.className = 'x-ab-txt'; tx.setAttribute('aria-hidden', 'true'); tx.innerHTML = '<h1></h1><p></p>'; document.body.appendChild(tx); }
-        var w = document.querySelector('[data-framer-name="Wordmark"] p'), c = document.querySelector('[data-framer-name="Caption"] p, [data-framer-name="Caption"]'); if (w && tx.firstChild.textContent !== w.textContent) tx.firstChild.textContent = w.textContent; if (c && tx.lastChild.textContent !== c.textContent) tx.lastChild.textContent = c.textContent;
+        if (!tx || !tx.isConnected) { tx = document.createElement('div'); tx.className = 'x-ab-txt'; tx.setAttribute('aria-hidden', 'true'); tx.innerHTML = '<p></p>'; document.body.appendChild(tx); }
+        var w = document.querySelector('[data-framer-name="Wordmark"] p'), c = document.querySelector('[data-framer-name="Caption"] p, [data-framer-name="Caption"]'); if (c && tx.lastChild.textContent !== c.textContent) tx.lastChild.textContent = c.textContent;
         if (!run) { run = true; lastY = window.scrollY || 0; sm = lastY; requestAnimationFrame(frame); } }
       else if (tx) { tx.remove(); tx = null; }
     }
