@@ -258,7 +258,8 @@
     'html.x-about-on [data-xnc],html.x-about-on [data-xn],html.x-about-on [data-xbl],html.x-about-on .x-dial,html.x-about-on .x-lang,html.x-about-on a[data-xf]{mix-blend-mode:normal!important}html.x-about-on [data-xn],html.x-about-on [data-xn] *,html.x-about-on .x-dial,html.x-about-on .x-lang,html.x-about-on .x-lang button,html.x-about-on [class*="framer-text"]{color:#fbefe9!important}html.x-about-on .x-dn{color:#3a1818}',
     'html.x-about-on.x-about-on [data-xn],html.x-about-on.x-about-on [data-xn] *,html.x-about-on.x-about-on [data-xnc] *,html.x-about-on.x-about-on [data-framer-name="Studio Link"] *,html.x-about-on.x-about-on [data-framer-name="Contact Link"] *{color:#fbefe9!important;mix-blend-mode:normal!important}html.x-about-on.x-about-on [data-xnc] img,html.x-about-on.x-about-on a[data-xf] *{filter:none!important;mix-blend-mode:normal!important}',
     'html.x-about-on,html.x-about-on body{background:#265899!important;background-image:none!important}',
-    '.x-ab-bg{position:fixed;left:0;top:0;width:100%;height:100vh;overflow:hidden;z-index:0;pointer-events:none;background:#265899}.x-ab-vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:62% 50%}.x-ab-blue{position:absolute;inset:0;background:#265899;opacity:0}',
+    '.x-ab-bg{position:fixed;left:0;top:0;width:100%;height:100vh;overflow:hidden;z-index:0;pointer-events:none;will-change:transform;background:#265899}.x-ab-vid{position:absolute;top:0;width:max(100%,140vh);left:calc((100% - max(100%,140vh)) * .6);height:auto;-webkit-mask-image:linear-gradient(#000 90%,transparent);mask-image:linear-gradient(#000 90%,transparent)}.x-ab-blue{position:absolute;inset:0;background:#265899;opacity:0}',
+    'html.x-about-on.x-about-on .x-ab-shade,html.x-about-on.x-about-on [data-xbgm].x-ab-shade{position:absolute;inset:0;background:radial-gradient(ellipse 50% 44% at 14% 26%,rgba(2,8,26,.84),rgba(2,8,26,.55) 55%,transparent 100%)!important;pointer-events:none}',
     '.x-ab-grain{position:absolute;inset:-80px;pointer-events:none;mix-blend-mode:overlay;opacity:.22;animation:x-grain .8s steps(6) infinite}@keyframes x-grain{0%{transform:translate(0,0)}17%{transform:translate(-37px,23px)}33%{transform:translate(29px,-41px)}50%{transform:translate(-18px,-12px)}67%{transform:translate(41px,31px)}83%{transform:translate(-26px,38px)}100%{transform:translate(0,0)}}@media (prefers-reduced-motion:reduce){.x-ab-grain{animation:none}}',
     'html[data-xp="about"] [data-framer-name="Wordmark"],html[data-xp="about"] [data-framer-name="Caption"]{z-index:5!important}',
     // titles in Plus Jakarta Sans, the display face of onseis.com (the small mono text keeps its own face)
@@ -289,7 +290,7 @@
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"]{left:6vw!important;top:calc(110px + 22px + 28px)!important;bottom:auto!important;width:min(640px,calc(100vw - 12vw))!important}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"]::before{display:none!important}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Wordmark"],html:not(#x)[data-xp="about"] [data-framer-name="Caption"]{visibility:hidden!important}',
-    '.x-ab-txt{position:fixed;will-change:transform;left:6vw;top:110px;width:min(640px,calc(100vw - 12vw));z-index:8;pointer-events:none;color:#fbefe9;text-shadow:0 1px 16px rgba(58,14,14,.55),0 0 2px rgba(58,14,14,.35)}.x-ab-txt h1{margin:0 0 28px;font:300 22px/1 "Outfit","Plus Jakarta Sans",sans-serif;letter-spacing:.14em;text-transform:uppercase}.x-ab-txt p{margin:0;font:400 17px/1.55 "Lekton","IBM Plex Mono",monospace;letter-spacing:.01em;text-align:justify;text-transform:uppercase}',
+    '.x-ab-txt{position:fixed;will-change:transform;left:6vw;top:110px;width:min(640px,calc(100vw - 12vw));z-index:8;pointer-events:none;color:#fff;mix-blend-mode:difference}.x-ab-txt h1{margin:0 0 28px;font:300 22px/1 "Outfit","Plus Jakarta Sans",sans-serif;letter-spacing:.14em;text-transform:uppercase}.x-ab-txt p{margin:0;font:400 17px/1.55 "Lekton","IBM Plex Mono",monospace;letter-spacing:.01em;text-align:justify;text-transform:uppercase}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"] p,html:not(#x)[data-xp="about"] [data-framer-name="Caption"] *{font-family:"Lekton","IBM Plex Mono",monospace!important;font-weight:400!important;font-size:13px!important;line-height:1.3!important;letter-spacing:.01em!important;text-align:justify!important;text-justify:inter-word!important}',
     // About: laid out like the project pages: small bold title, a calm left-aligned paragraph, the head on the right
     'html[data-xp="about"] [data-framer-name="Wordmark"]{left:40px!important;top:190px!important;width:auto!important;height:auto!important;transform:none!important}',
@@ -1528,7 +1529,7 @@
     if (planet) return;
     planet = { loading: true };
     jfHint(0);
-    import('/extras/freixo.js?v=276').then(function (m) {
+    import('/extras/freixo.js?v=277').then(function (m) {
       planet = m.open({ getDark: function () { return darkness(theme.hour); }, getHour: function () { return theme.hour; }, onClose: function () { planet = null; } });
     }).catch(function () { planet = null; });
   }
@@ -2030,26 +2031,23 @@
       sm += (y - sm) * .12;
       var p = Math.min(1, sm / (H * 1.0)), q = Math.min(1, Math.max(0, (sm - H * .9) / (H * .45)));
       if (vid && vid.duration && ready) { tgt = p * (vid.duration - .04); if (Math.abs(vid.currentTime - tgt) > .012) { try { vid.currentTime = tgt; } catch (e) {} } }
-      cx += (px - cx) * .05; cy += (py - cy) * .05; if (!calm && !coarse) vid.style.transform = 'perspective(1200px) rotateY(' + (cx * 4).toFixed(2) + 'deg) rotateX(' + (-cy * 2.6).toFixed(2) + 'deg) translate3d(' + (-cx * 22).toFixed(1) + 'px,' + (-cy * 12).toFixed(1) + 'px,0) scale(1.1)';
-      blue.style.opacity = (q * q * (3 - 2 * q)).toFixed(3);
-      grain.style.opacity = (.2 + Math.min(.22, vel * .012)).toFixed(3);
-      if (tx) tx.style.transform = 'translate3d(0,' + (-Math.max(0, y - H * 1.25)) + 'px,0)';
+      cx += (px - cx) * .05; cy += (py - cy) * .05; if (!calm && !coarse) vid.style.transform = 'perspective(1200px) rotateY(' + (cx * 4).toFixed(2) + 'deg) rotateX(' + (-cy * 2.6).toFixed(2) + 'deg) translate3d(' + (-cx * 22).toFixed(1) + 'px,' + (-cy * 12).toFixed(1) + 'px,0) scale(1.02)';
+      var off = Math.max(0, sm - H * 1.0); wrap.style.transform = 'translate3d(0,' + (-off).toFixed(1) + 'px,0)';      /* once the video has ended the picture scrolls away with the page and the ground carries on, in its own blue */
+      if (tx) tx.style.transform = 'translate3d(0,' + (-off) + 'px,0)';
       requestAnimationFrame(frame);
     }
     function build() {
       wrap = document.createElement('div'); wrap.className = 'x-ab-bg'; wrap.setAttribute('aria-hidden', 'true');
       vid = document.createElement('video'); vid.muted = true; vid.defaultMuted = true; vid.playsInline = true; vid.preload = 'auto'; vid.setAttribute('muted', ''); vid.setAttribute('playsinline', ''); vid.setAttribute('webkit-playsinline', ''); vid.disablePictureInPicture = true; vid.className = 'x-ab-vid';
-      vid.innerHTML = '<source src="/extras/about/moto.mp4?v=1" type="video/mp4"><source src="/extras/about/moto.webm?v=1" type="video/webm">';
+      vid.innerHTML = '<source src="/extras/about/moto.mp4?v=3" type="video/mp4"><source src="/extras/about/moto.webm?v=3" type="video/webm">';
       vid.addEventListener('loadeddata', function () { ready = true; vid.pause(); });
       blue = document.createElement('div'); blue.className = 'x-ab-blue';
-      var cv = document.createElement('canvas'); cv.width = cv.height = 160; var g2 = cv.getContext('2d'), id = g2.createImageData(160, 160); for (var i = 0; i < id.data.length; i += 4) { var v = 90 + Math.random() * 120; id.data[i] = id.data[i + 1] = id.data[i + 2] = v; id.data[i + 3] = 255; } g2.putImageData(id, 0, 0);
-      grain = document.createElement('div'); grain.className = 'x-ab-grain'; grain.style.backgroundImage = 'url(' + cv.toDataURL('image/png') + ')';
-      wrap.appendChild(vid); wrap.appendChild(blue); wrap.appendChild(grain); document.body.insertBefore(wrap, document.body.firstChild);
+            wrap.appendChild(vid); wrap.appendChild(blue); var sh = document.createElement('div'); sh.className = 'x-ab-shade'; wrap.appendChild(sh); document.body.insertBefore(wrap, document.body.firstChild);
       document.documentElement.classList.add('x-about-on'); vid.load();
     }
     function sync() {
       var on = document.documentElement.getAttribute('data-xp') === 'about';
-      if (on && !wrap) build(); else if (!on && wrap) { wrap.remove(); wrap = vid = blue = grain = null; ready = false; document.documentElement.classList.remove('x-about-on'); }
+      if (on && !wrap) build(); else if (!on && wrap) { wrap.remove(); wrap = vid = blue = null; ready = false; document.documentElement.classList.remove('x-about-on'); }
       if (on) { if (wrap && !wrap.isConnected) document.body.insertBefore(wrap, document.body.firstChild);
         if (!tx || !tx.isConnected) { tx = document.createElement('div'); tx.className = 'x-ab-txt'; tx.setAttribute('aria-hidden', 'true'); tx.innerHTML = '<h1></h1><p></p>'; document.body.appendChild(tx); }
         var w = document.querySelector('[data-framer-name="Wordmark"] p'), c = document.querySelector('[data-framer-name="Caption"] p, [data-framer-name="Caption"]'); if (w && tx.firstChild.textContent !== w.textContent) tx.firstChild.textContent = w.textContent; if (c && tx.lastChild.textContent !== c.textContent) tx.lastChild.textContent = c.textContent;
