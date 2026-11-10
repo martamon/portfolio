@@ -294,7 +294,7 @@
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"]{left:6vw!important;top:calc(110px + 22px + 28px)!important;bottom:auto!important;width:min(640px,calc(100vw - 12vw))!important}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"]::before{display:none!important}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Wordmark"],html:not(#x)[data-xp="about"] [data-framer-name="Caption"]{visibility:hidden!important}',
-    '.x-ab-txt{position:fixed;will-change:transform;left:6vw;top:150px;width:min(560px,calc(100vw - 12vw));z-index:8;pointer-events:none;color:#fff}.x-ab-txt p span{transition:color .3s ease}.x-ab-txt h1{margin:0 0 28px;font:400 22px/1 "Outfit","Plus Jakarta Sans",sans-serif;letter-spacing:.14em;text-transform:uppercase}.x-ab-txt p{margin:0;font:700 14px/1.28 "Lekton","IBM Plex Mono",monospace;letter-spacing:.01em;text-align:justify;text-transform:uppercase}',
+    '.x-ab-txt{position:fixed;will-change:transform;left:6vw;top:150px;width:min(560px,calc(100vw - 12vw));z-index:8;pointer-events:none;color:#fff;text-shadow:.5px .5px 0 rgba(204,204,204,.9),1px 1px 0 rgba(153,153,153,.9),1.5px 1.5px 3px rgba(0,0,0,.9),2.5px 2.5px 12px rgba(0,0,0,.75)}.x-ab-txt p span{color:#fff!important}.x-ab-txt h1{margin:0 0 28px;font:400 22px/1 "Outfit","Plus Jakarta Sans",sans-serif;letter-spacing:.14em;text-transform:uppercase}.x-ab-txt p{margin:0;font:700 14px/1.28 "Lekton","IBM Plex Mono",monospace;letter-spacing:.01em;text-align:justify;text-transform:uppercase}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"] p,html:not(#x)[data-xp="about"] [data-framer-name="Caption"] *{font-family:"Lekton","IBM Plex Mono",monospace!important;font-weight:400!important;font-size:13px!important;line-height:1.3!important;letter-spacing:.01em!important;text-align:justify!important;text-justify:inter-word!important}',
     // tighter lines in the running texts of the site
     'html main[data-xm] [data-framer-name="Project Writeup"] p,html main[data-xm] [data-framer-name="Info"] p,html main[data-xm]~section p,html main[data-xm]~* footer p,html [data-framer-name="Info"] p,.x-ct-text,.x-ct-text p{line-height:1.25!important}',
@@ -2044,7 +2044,7 @@
       if (tx) { var to = Math.max(0, sm - H * .62); tx.style.transform = 'translate3d(0,' + (-to * 1.4).toFixed(1) + 'px,0)'; tx.style.opacity = (1 - Math.min(1, to / (H * .28))).toFixed(3); }      /* the text leaves with the bike */
       var now = performance.now();
       
-      if (tx && words.length && now0 - lT > 90) { lT = now0; sampleWords(); }
+      
       requestAnimationFrame(frame);
     }
     /* claroscuro: every word takes the opposite tone of the picture right behind it (dark on the light sky, light on the dark trees and the blue ground) */
