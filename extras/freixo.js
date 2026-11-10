@@ -1094,7 +1094,7 @@ export function open(opts) {
   // ---- the south coast across the ría: Louro, its dune beach and lagoon, the mountain, a second village and farms
   for (let x = -10.2; x < -6.2; x += .72) hhS(x, .62, 1 + (hc % 2)); for (let x = -9.8; x < -6.4; x += .78) hhS(x, 2.15, 2); hhS(-8.6, 3.2, 1);
   for (let x = 2.0; x < 5.8; x += .72) hhS(x, .62, 1 + (hc % 2)); for (let x = 2.4; x < 5.6; x += .8) hhS(x, 2.15, 2);
-  for (const [fx, inl] of [[-2.4, 3.1]]) { hhS(fx, inl, 2); hhS(fx + .7, inl + .4, 1); const [hx, hz] = onShoreS(fx + .3, inl + 1.0); const hr = horreo(); W(put(hr, hx, hz, seaYawS(hx) + .2, -.02)); }
+  /* (the hórreo that stood here is gone: the village is now a small group of houses round the church, further inland) */
   quay(2.2, 4.6, shoreS, -1, .27);
 
   // ---- boats: smaller than before; every one has its own place (anchored, moored) or its own lane, so none touches another
@@ -1440,7 +1440,8 @@ export function open(opts) {
       for (let i = 0; i < 11; i++) { const y0 = .04 + i * .085, z0 = 1.15 - i * .11, y1 = y0 + .085, z1 = z0 - .11, ln = box(.012, .012, Math.hypot(.11, .085) + .01, rope); ln.position.set(.99, (y0 + y1) / 2 + .13, (z0 + z1) / 2); ln.rotation.x = Math.atan2(.085, .11); g.add(ln); } }
     W(put(g, fx, fz, yaw, -.08));
     for (const x of [-6.2, -5.4, -4.7, 3.2, 3.9, 4.6]) hhS(x, .9 + rnd() * .3, 1 + (hc % 2), { stone: true });
-    const [cx, cz] = onShoreS(-7.6, 3.1); W(put(church(.9), cx, cz, seaYawS(cx), -.03)); }
+    const [cx, cz] = onShoreS(-7.6, 5.4); W(put(church(.9), cx, cz, seaYawS(cx), -.03));
+    hhS(-9.0, 4.6, 2, { stone: true }); hhS(-6.2, 4.7, 1); hhS(-8.8, 6.4, 1); hhS(-6.0, 6.3, 2); }
 
   // ---- the small island: a tiny harbour with a boat, one little house in the middle and two horses grazing
   const horses = [];
