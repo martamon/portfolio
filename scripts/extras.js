@@ -261,7 +261,7 @@
     'html[data-xp="about"] [data-framer-name="Caption"] p,html[data-xp="about"] [data-framer-name="Caption"] *{text-align:left!important;text-align-last:left!important;text-justify:none!important;font-size:13px!important;line-height:1.7!important;letter-spacing:.02em!important;hyphens:none!important}',
     'html[data-xp="about"] [data-framer-name="Caption"]::before{content:"";display:block;width:100%;height:1px;background:currentColor;opacity:.9;margin-bottom:18px}',
     // footer and next-project links: the same growing underline as the contact page on hover
-    'html main[data-xm]~*:not(.x-yt) footer a[href]:not([data-xl]):not([data-xpn]){text-decoration:underline!important;text-decoration-thickness:1px!important;text-underline-offset:5px!important;text-decoration-color:transparent!important;transition:text-decoration-color .45s ease}',
+    'html main[data-xm]~*:not(.x-yt) footer a[href]:not([data-xl]):not([data-xpn]){text-decoration:underline!important;text-decoration-thickness:1px!important;text-underline-offset:2px!important;text-decoration-color:transparent!important;transition:text-decoration-color .45s ease}',
     'html main[data-xm]~*:not(.x-yt) footer a[href]:not([data-xl]):not([data-xpn]):hover,html main[data-xm]~*:not(.x-yt) footer a[href]:not([data-xl]):not([data-xpn]):focus-visible{text-decoration-color:currentColor!important}',
     '.x-ct-social{display:flex;flex-wrap:wrap;gap:6px 22px;margin-top:18px;text-transform:uppercase}',
     '@media(max-width:600px){.x-contact{height:400px}.x-ct-arc{width:250px;transform:translateX(-30%) rotate(12deg)}.x-ct-text{font-size:12px}}',
