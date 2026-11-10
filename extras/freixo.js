@@ -1354,7 +1354,7 @@ export function open(opts) {
   { /* the four gateways stand on the sides of the square itself (in its own frame), so they are centred on each side and turn with it */
     const [sqx, sqz] = AX.A, sa = AX.yaw, ca = Math.cos(sa), sn = Math.sin(sa), [ix, iz] = onShore(-12.8, 3.15), zs = Math.sign((ix - sqx) * sn + (iz - sqz) * ca) || 1;
     const at = (lx, lz) => [sqx + lx * ca + lz * zs * sn, sqz - lx * sn + lz * zs * ca];
-    archway(0, 0, 1.9, 0, sa, at(0, -.62)); archway(0, 0, 1.2, PI / 2, sa, at(-1.24, 0)); archway(0, 0, 1.2, 0, sa, at(0, .62)); }
+    /* the gateway arches are gone */ }
   { /* the alameda: a tree-lined promenade from the arcade square to the round fountain, and on to the stone market, all in one stone paving */
     const stoneP = std(0xd3cbb8, { roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
     const lerpP = (a, b, n) => { const out = []; for (let k = 0; k <= n; k++) { const u = k / n, p = onShore(a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u); out.push([p[0], p[1]]); } return out; };
