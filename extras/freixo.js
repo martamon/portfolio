@@ -1453,7 +1453,7 @@ export function open(opts) {
 
   // ---- a pretty street of little houses with tulip borders, leading inland from the south road (after the reference miniatures)
   const stX = 4.6, stZ0 = shoreS(stX) + 2.3;      // the street begins a clear step beyond the road pavement, so the houses never touch it
-  const stPts = []; { const r0 = roadS.reduce((m, q) => Math.abs(q[0] - stX) < Math.abs(m[0] - stX) ? q : m); stPts.push([stX, r0[1] + .3]); for (let k = 0; k <= 22; k++) stPts.push([stX + .28 * Math.sin(k * .38) * Math.min(1, k / 3), stZ0 + k * .2]); }
+  const stPts = []; { const r0 = roadS.reduce((m, q) => Math.abs(q[0] - stX) < Math.abs(m[0] - stX) ? q : m); stPts.push([stX, r0[1] - .25]); stPts.push([stX, r0[1] + .3]); for (let k = 0; k <= 22; k++) stPts.push([stX + .28 * Math.sin(k * .38) * Math.min(1, k / 3), stZ0 + k * .2]); }
   { const w1 = ribbon(relax(stPts, 3), .7, walkMat, .018, false, undefined, true, 'edge'); w1.renderOrder = 1; W(w1); const a1 = ribbon(relax(stPts, 3), .5, asphalt, .03, false, undefined, true, 'edge'); a1.renderOrder = 2; W(a1); roadMeshes.push(a1); }
   { const PAST = [0xdcb3b4, 0xe8c9b4, 0xf1e0c6, 0xcdb2bb, 0xe6bcab, 0xf0e1cd], RF = [0xd25a4a, 0xdc6a52, 0x6f8fa0, 0xc7503f, 0xe07a5c, 0xb84a40];
     for (let k = 0; k < 5; k++) for (const sd of [-1, 1]) {

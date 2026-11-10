@@ -417,6 +417,7 @@
     // negative/positive in every tone: menu, clock, languages and About always blend, with the worked-out colour
     'html [data-xnc],html[data-xdusk] [data-xnc]{mix-blend-mode:difference!important}html [data-xn],html[data-xdusk] [data-xn],html[data-xnight] [data-xn]{color:var(--xink,#fff)!important}',
     'html .x-dial,html[data-xdusk] .x-dial,html[data-xnight] .x-dial{mix-blend-mode:difference!important;color:var(--xinkb,#fff)!important;opacity:1!important}',
+    'html .x-dial,html .x-lang,html .x-lang button,html .x-lang i,html .x-dial *{font-family:"Inter","Inter Placeholder",sans-serif!important;font-weight:500!important;letter-spacing:0!important;text-transform:none!important}',
     'html .x-lang,html[data-xdusk] .x-lang,html[data-xnight] .x-lang{mix-blend-mode:difference!important;color:var(--xinkb,#fff)!important;opacity:1!important}',
     'html[data-xp="about"] [data-framer-name="Caption"],html[data-xp="about"] [data-framer-name="Wordmark"],html[data-xp="about"] [data-xbl],html[data-xdusk][data-xp="about"] [data-framer-name="Caption"],html[data-xdusk][data-xp="about"] [data-framer-name="Wordmark"],html[data-xdusk][data-xp="about"] [data-xbl]{mix-blend-mode:difference!important}',
     'html[data-xp="about"] [data-framer-name="Caption"] *,html[data-xp="about"] [data-framer-name="Wordmark"] *,html[data-xp="about"] [data-xbl] *,html[data-xp] [data-framer-name="Caption"] [data-xtc]{color:var(--xink,#fff)!important}'
@@ -1477,7 +1478,7 @@
     if (planet) return;
     planet = { loading: true };
     jfHint(0);
-    import('/extras/freixo.js?v=266').then(function (m) {
+    import('/extras/freixo.js?v=267').then(function (m) {
       planet = m.open({ getDark: function () { return darkness(theme.hour); }, getHour: function () { return theme.hour; }, onClose: function () { planet = null; } });
     }).catch(function () { planet = null; });
   }
