@@ -257,8 +257,9 @@
     'html.x-about-on.x-about-on [data-xbgm]{background-image:none!important;background:transparent!important}html.x-about-on.x-about-on[data-xp="about"] [data-framer-name="Content"]::before{display:none!important}',
     'html.x-about-on [data-xnc],html.x-about-on [data-xn],html.x-about-on [data-xbl],html.x-about-on .x-dial,html.x-about-on .x-lang,html.x-about-on a[data-xf]{mix-blend-mode:normal!important}html.x-about-on [data-xn],html.x-about-on [data-xn] *,html.x-about-on .x-dial,html.x-about-on .x-lang,html.x-about-on .x-lang button,html.x-about-on [class*="framer-text"]{color:#fbefe9!important}html.x-about-on .x-dn{color:#3a1818}',
     'html.x-about-on.x-about-on [data-xn],html.x-about-on.x-about-on [data-xn] *,html.x-about-on.x-about-on [data-xnc] *,html.x-about-on.x-about-on [data-framer-name="Studio Link"] *,html.x-about-on.x-about-on [data-framer-name="Contact Link"] *{color:#fbefe9!important;mix-blend-mode:normal!important}html.x-about-on.x-about-on [data-xnc] img,html.x-about-on.x-about-on a[data-xf] *{filter:none!important;mix-blend-mode:normal!important}',
-    'html.x-about-on,html.x-about-on body{background:#994945!important;background-image:none!important}',
+    'html.x-about-on,html.x-about-on body{background:#2c5f9f!important;background-image:none!important}',
     '.x-ab-bg{position:absolute;left:0;top:0;width:100%;height:100vh;overflow:hidden;z-index:0;pointer-events:none;-webkit-mask-image:linear-gradient(#000 82%,transparent);mask-image:linear-gradient(#000 82%,transparent)}.x-ab-bgi{position:absolute;inset:-3%;width:106%;height:106%;object-fit:cover;object-position:center top;will-change:transform;transform-origin:50% 40%}',
+    '.x-ab-grain{position:fixed;inset:-80px;z-index:2;pointer-events:none;mix-blend-mode:overlay;opacity:.22;animation:x-grain .9s steps(6) infinite}@keyframes x-grain{0%{transform:translate(0,0)}17%{transform:translate(-37px,23px)}33%{transform:translate(29px,-41px)}50%{transform:translate(-18px,-12px)}67%{transform:translate(41px,31px)}83%{transform:translate(-26px,38px)}100%{transform:translate(0,0)}}@media (prefers-reduced-motion:reduce){.x-ab-grain{animation:none}}',
     '.x-ab-girl{position:fixed;right:0;bottom:0;height:min(80vh,56vw);z-index:1;pointer-events:none;will-change:transform,opacity;user-select:none}.x-ab-girl img{display:block;height:100%;width:auto;-webkit-user-drag:none}',
     'html[data-xp="about"] [data-framer-name="Wordmark"],html[data-xp="about"] [data-framer-name="Caption"]{z-index:5!important}',
     // titles in Plus Jakarta Sans, the display face of onseis.com (the small mono text keeps its own face)
@@ -2021,28 +2022,29 @@
   /* About: a painted landscape fills the page and its red ground carries on below; Marta rides across it, off to the left as you scroll (with a faint motion blur);
      the landscape tilts in 3D with the pointer; the text stays readable on top */
   (function aboutScene() {
-    var bg = null, bgi = null, girl = null, tx = null, mb = null, cx = 0, cy = 0, px = 0, py = 0, lastY = 0, vel = 0, run = false;
+    var grain = null, sm = 0, bg = null, bgi = null, girl = null, tx = null, mb = null, cx = 0, cy = 0, px = 0, py = 0, lastY = 0, vel = 0, run = false;
     var calm = matchMedia('(prefers-reduced-motion: reduce)').matches, coarse = matchMedia('(pointer:coarse)').matches;
     addEventListener('pointermove', function (e) { px = e.clientX / innerWidth - .5; py = e.clientY / innerHeight - .5; }, { passive: true });
     function frame() {
       if (!girl) { run = false; return; }
-      var y = window.scrollY || 0, dv = y - lastY; lastY = y; vel += (Math.abs(dv) - vel) * .3;
-      var p = Math.min(1, y / (innerHeight * .9)), e = p * p * (3 - 2 * p);
-      cx += (px - cx) * .07; cy += (py - cy) * .07;
+      var y = window.scrollY || 0, dv = y - lastY; lastY = y; vel += (Math.abs(dv) - vel) * .12;
+      sm += (y - sm) * .09; var p = Math.min(1, sm / (innerHeight * 1.1)), e = p * p * (3 - 2 * p);
+      cx += (px - cx) * .04; cy += (py - cy) * .04;
       var gx = -(e * (girl.offsetWidth + innerWidth * .25)) + (calm || coarse ? 0 : cx * 14), gy = calm || coarse ? 0 : cy * 8;
       girl.style.transform = 'translate3d(' + gx.toFixed(1) + 'px,' + gy.toFixed(1) + 'px,0)'; girl.style.opacity = p >= 1 ? '0' : '1';
-      var sd = calm ? 0 : Math.min(7, vel * .45); if (mb) mb.setAttribute('stdDeviation', sd.toFixed(2) + ' 0'); girl.style.filter = sd > .3 ? 'url(#x-mb)' : 'none';
-      if (!calm && !coarse && bgi) bgi.style.transform = 'perspective(1100px) rotateY(' + (cx * 5).toFixed(2) + 'deg) rotateX(' + (-cy * 3.5).toFixed(2) + 'deg) translate3d(' + (-cx * 26).toFixed(1) + 'px,' + (-cy * 16).toFixed(1) + 'px,0) scale(1.12)';
+      var sd = calm ? 0 : Math.min(2.4, Math.abs(sm - y) * .035 + vel * .08); if (mb) mb.setAttribute('stdDeviation', sd.toFixed(2) + ' 0'); girl.style.filter = sd > .25 ? 'url(#x-mb)' : 'none';
+      if (!calm && !coarse && bgi) bgi.style.transform = 'perspective(1100px) rotateY(' + (cx * 3).toFixed(2) + 'deg) rotateX(' + (-cy * 2).toFixed(2) + 'deg) translate3d(' + (-cx * 26).toFixed(1) + 'px,' + (-cy * 16).toFixed(1) + 'px,0) scale(1.12)';
       if (tx) tx.style.transform = 'translate3d(0,' + (-Math.max(0, y - innerHeight * .9)) + 'px,0)';
       requestAnimationFrame(frame);
     }
     function sync() {
       var on = document.documentElement.getAttribute('data-xp') === 'about';
       if (on && !bg) {
-        bg = document.createElement('div'); bg.className = 'x-ab-bg'; bg.setAttribute('aria-hidden', 'true'); bg.innerHTML = '<img class="x-ab-bgi" alt="" decoding="async" src="/extras/about-bg.webp?v=1">'; bgi = bg.firstChild; document.body.insertBefore(bg, document.body.firstChild);
-        girl = document.createElement('div'); girl.className = 'x-ab-girl'; girl.setAttribute('aria-hidden', 'true'); girl.innerHTML = '<img alt="" decoding="async" src="/extras/about-girl.webp?v=5"><svg width="0" height="0" style="position:absolute"><filter id="x-mb" x="-10%" y="-5%" width="120%" height="110%"><feGaussianBlur stdDeviation="0 0"/></filter></svg>'; mb = girl.querySelector('feGaussianBlur'); document.body.appendChild(girl);
+        bg = document.createElement('div'); bg.className = 'x-ab-bg'; bg.setAttribute('aria-hidden', 'true'); bg.innerHTML = '<img class="x-ab-bgi" alt="" decoding="async" src="/extras/about-bg.webp?v=2">'; bgi = bg.firstChild; document.body.insertBefore(bg, document.body.firstChild);
+        girl = document.createElement('div'); girl.className = 'x-ab-girl'; girl.setAttribute('aria-hidden', 'true'); girl.innerHTML = '<img alt="" decoding="async" src="/extras/about-girl.webp?v=9"><svg width="0" height="0" style="position:absolute"><filter id="x-mb" x="-10%" y="-5%" width="120%" height="110%"><feGaussianBlur stdDeviation="0 0"/></filter></svg>'; mb = girl.querySelector('feGaussianBlur'); document.body.appendChild(girl);
+        if (!grain) { var cv = document.createElement('canvas'); cv.width = cv.height = 160; var g2 = cv.getContext('2d'), id = g2.createImageData(160, 160); for (var i = 0; i < id.data.length; i += 4) { var v = 90 + Math.random() * 120; id.data[i] = id.data[i + 1] = id.data[i + 2] = v; id.data[i + 3] = 255; } g2.putImageData(id, 0, 0); grain = document.createElement('div'); grain.className = 'x-ab-grain'; grain.setAttribute('aria-hidden', 'true'); grain.style.backgroundImage = 'url(' + cv.toDataURL('image/png') + ')'; document.body.appendChild(grain); }
         document.documentElement.classList.add('x-about-on');
-      } else if (!on && bg) { bg.remove(); girl.remove(); bg = girl = bgi = mb = null; document.documentElement.classList.remove('x-about-on'); }
+      } else if (!on && bg) { bg.remove(); girl.remove(); if (grain) { grain.remove(); grain = null; } bg = girl = bgi = mb = null; document.documentElement.classList.remove('x-about-on'); }
       if (on) { if (bg && !bg.isConnected) document.body.insertBefore(bg, document.body.firstChild); if (girl && !girl.isConnected) document.body.appendChild(girl);
         if (!tx || !tx.isConnected) { tx = document.createElement('div'); tx.className = 'x-ab-txt'; tx.setAttribute('aria-hidden', 'true'); tx.innerHTML = '<h1></h1><p></p>'; document.body.appendChild(tx); }
         var w = document.querySelector('[data-framer-name="Wordmark"] p'), c = document.querySelector('[data-framer-name="Caption"] p, [data-framer-name="Caption"]'); if (w && tx.firstChild.textContent !== w.textContent) tx.firstChild.textContent = w.textContent; if (c && tx.lastChild.textContent !== c.textContent) tx.lastChild.textContent = c.textContent;
