@@ -259,7 +259,7 @@
     'html.x-about-on.x-about-on [data-xn],html.x-about-on.x-about-on [data-xn] *,html.x-about-on.x-about-on [data-xnc] *,html.x-about-on.x-about-on [data-framer-name="Studio Link"] *,html.x-about-on.x-about-on [data-framer-name="Contact Link"] *{color:#fbefe9!important;mix-blend-mode:normal!important}html.x-about-on.x-about-on [data-xnc] img,html.x-about-on.x-about-on a[data-xf] *{filter:none!important;mix-blend-mode:normal!important}',
     'html.x-about-on.x-about-on div[data-xnc],html.x-about-on.x-about-on div[data-xbl],html.x-about-on.x-about-on [data-xnc] img{mix-blend-mode:normal!important;filter:none!important}html.x-about-on.x-about-on [data-xnc] a,html.x-about-on.x-about-on [data-xnc] a *{color:#f3f7ff!important;text-shadow:none!important}',
     // About by day and by night: softer, lighter and less contrasted by day; darker at night (the page follows the day / night button)
-    'html.x-about-on .x-ab-vid{transition:filter 1.4s ease;filter:brightness(1.1) contrast(.86) saturate(.9)}html.x-about-on[data-xdusk] .x-ab-vid{filter:brightness(.92) contrast(.94) saturate(.92)}html.x-about-on[data-xnight] .x-ab-vid{filter:brightness(.8) contrast(1.28) saturate(.85)}',
+    'html.x-about-on .x-ab-vid{transition:filter 1.4s ease;filter:brightness(1.3) contrast(.9) saturate(.85)}html.x-about-on[data-xdusk] .x-ab-vid{filter:brightness(.92) contrast(.94) saturate(.92)}html.x-about-on[data-xnight] .x-ab-vid{filter:brightness(.8) contrast(1.28) saturate(.85)}',
     'html.x-about-on body::before{content:"";position:fixed;inset:0;z-index:1;pointer-events:none;background:rgba(255,255,255,.07);transition:background 1.4s ease}html.x-about-on[data-xdusk] body::before{background:rgba(6,14,40,.14)}html.x-about-on[data-xnight] body::before{background:rgba(3,9,28,.3)}',
     'html.x-about-on,html.x-about-on body{background:#265899 url(/extras/about/ground.webp?v=2) top center/100% auto repeat-y!important}',
     '.x-ab-bg{position:fixed;left:0;top:0;width:100%;height:100vh;overflow:hidden;z-index:0;pointer-events:none;will-change:transform}.x-ab-vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:62% 100%;transform-origin:50% 100%}',
@@ -294,7 +294,7 @@
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"]{left:6vw!important;top:calc(110px + 22px + 28px)!important;bottom:auto!important;width:min(640px,calc(100vw - 12vw))!important}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"]::before{display:none!important}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Wordmark"],html:not(#x)[data-xp="about"] [data-framer-name="Caption"]{visibility:hidden!important}',
-    '.x-ab-txt{position:fixed;will-change:transform;left:6vw;top:150px;width:min(560px,calc(100vw - 12vw));z-index:8;pointer-events:none;color:#fff}.x-ab-txt p span{transition:color .35s ease}.x-ab-txt h1{margin:0 0 28px;font:400 22px/1 "Outfit","Plus Jakarta Sans",sans-serif;letter-spacing:.14em;text-transform:uppercase}.x-ab-txt p{margin:0;font:400 14px/1.28 "Lekton","IBM Plex Mono",monospace;letter-spacing:.01em;text-align:justify;text-transform:uppercase}',
+    '.x-ab-txt{position:fixed;will-change:transform;left:6vw;top:150px;width:min(560px,calc(100vw - 12vw));z-index:8;pointer-events:none;color:var(--xink,#fff);mix-blend-mode:difference}.x-ab-txt p span{color:var(--xink,#fff)!important}.x-ab-txt h1{margin:0 0 28px;font:400 22px/1 "Outfit","Plus Jakarta Sans",sans-serif;letter-spacing:.14em;text-transform:uppercase}.x-ab-txt p{margin:0;font:700 14px/1.28 "Lekton","IBM Plex Mono",monospace;letter-spacing:.01em;text-align:justify;text-transform:uppercase}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"] p,html:not(#x)[data-xp="about"] [data-framer-name="Caption"] *{font-family:"Lekton","IBM Plex Mono",monospace!important;font-weight:400!important;font-size:13px!important;line-height:1.3!important;letter-spacing:.01em!important;text-align:justify!important;text-justify:inter-word!important}',
     // tighter lines in the running texts of the site
     'html main[data-xm] [data-framer-name="Project Writeup"] p,html main[data-xm] [data-framer-name="Info"] p,html main[data-xm]~section p,html main[data-xm]~* footer p,html [data-framer-name="Info"] p,.x-ct-text,.x-ct-text p{line-height:1.25!important}',
@@ -2043,7 +2043,7 @@
       var off = Math.max(0, sm - H * 1.0); wrap.style.transform = 'translate3d(0,' + (-off).toFixed(1) + 'px,0)';      /* once the video has ended the picture scrolls away with the page and the ground carries on, in its own blue */
       if (tx) tx.style.transform = 'translate3d(0,' + (-off) + 'px,0)';
       var now = performance.now();
-      if (tx && words.length && now - lT > 110) { lT = now; sampleWords(); }
+      
       requestAnimationFrame(frame);
     }
     /* claroscuro: every word takes the opposite tone of the picture right behind it (dark on the light sky, light on the dark trees and the blue ground) */
