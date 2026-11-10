@@ -2028,7 +2028,7 @@
   /* About: the rider video fills the screen and is played by the scroll (no sound): scroll plays it, grain flickers over it; once it has ended the screen fades to the blue
      of the ground and the page carries on over that blue */
   (function aboutScene() {
-    var words = [], lcv = document.createElement('canvas'), lcx = lcv.getContext('2d', { willReadFrequently: true }), lT = 0, px = 0, py = 0, cx = 0, cy = 0, coarse = matchMedia('(pointer:coarse)').matches, wrap = null, vid = null, blue = null, grain = null, tx = null, run = false, sm = 0, lastY = 0, vel = 0, tgt = 0, ready = false;
+    var pw = null, words = [], lcv = document.createElement('canvas'), lcx = lcv.getContext('2d', { willReadFrequently: true }), lT = 0, px = 0, py = 0, cx = 0, cy = 0, coarse = matchMedia('(pointer:coarse)').matches, wrap = null, vid = null, blue = null, grain = null, tx = null, run = false, sm = 0, lastY = 0, vel = 0, tgt = 0, ready = false;
     var calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
     addEventListener('pointermove', function (e) { px = e.clientX / innerWidth - .5; py = e.clientY / innerHeight - .5; }, { passive: true });
     function frame() {
@@ -2038,6 +2038,8 @@
       var p = Math.min(1, sm / (H * 1.0)), q = Math.min(1, Math.max(0, (sm - H * .9) / (H * .45)));
       if (vid && vid.duration && ready) { tgt = p * (vid.duration - .04); if (Math.abs(vid.currentTime - tgt) > .012) { try { vid.currentTime = tgt; } catch (e) {} } }
       cx += (px - cx) * .05; cy += (py - cy) * .05; if (!calm && !coarse) vid.style.transform = 'translate3d(' + (-cx * 18).toFixed(1) + 'px,' + (-cy * 8).toFixed(1) + 'px,0) scale(1.06)'
+      if (!pw || !pw.isConnected) pw = document.querySelector('[data-framer-name="Page Wrapper"]');
+      if (pw) { var qq = Math.min(1, Math.max(0, (sm - H * .88) / (H * .22))); pw.style.opacity = qq.toFixed(3); pw.style.pointerEvents = qq < .5 ? 'none' : ''; }      /* the menu and the sections only appear once the bike has gone */
       var off = Math.max(0, sm - H * 1.0); wrap.style.transform = 'translate3d(0,' + (-off).toFixed(1) + 'px,0)';      /* once the video has ended the picture scrolls away with the page and the ground carries on, in its own blue */
       if (tx) tx.style.transform = 'translate3d(0,' + (-off) + 'px,0)';
       var now = performance.now();
@@ -2074,7 +2076,7 @@
     }
     function sync() {
       var on = document.documentElement.getAttribute('data-xp') === 'about';
-      if (on && !wrap) build(); else if (!on && wrap) { wrap.remove(); wrap = vid = blue = null; ready = false; document.documentElement.classList.remove('x-about-on'); }
+      if (on && !wrap) build(); else if (!on && wrap) { wrap.remove(); if (pw) { pw.style.opacity = ''; pw.style.pointerEvents = ''; } wrap = vid = blue = null; ready = false; document.documentElement.classList.remove('x-about-on'); }
       if (on) { if (wrap && !wrap.isConnected) document.body.insertBefore(wrap, document.body.firstChild);
         if (!tx || !tx.isConnected) { tx = document.createElement('div'); tx.className = 'x-ab-txt'; tx.setAttribute('aria-hidden', 'true'); tx.innerHTML = '<p></p>'; document.body.appendChild(tx); }
         var w = document.querySelector('[data-framer-name="Wordmark"] p'), c = document.querySelector('[data-framer-name="Caption"] p, [data-framer-name="Caption"]'); if (c && tx.lastChild.dataset.src !== c.textContent) { tx.lastChild.dataset.src = c.textContent; tx.lastChild.innerHTML = c.textContent.split(/\s+/).filter(Boolean).map(function (t) { return '<span>' + t.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</span>'; }).join(' '); words = tx.lastChild.children; }
