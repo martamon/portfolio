@@ -888,7 +888,7 @@ export function open(opts) {
   pier.add(put(lh, pierX, endZ, 0, .34, true));
   const lamp = new THREE.PointLight(0xffd36b, 0, 6, 1.6); lamp.position.set(0, .78, 0); lh.add(lamp);
   { const shS = (x) => { let a = 0; for (let k = -8; k <= 8; k++) a += shore(x + k * .1); return a / 17; };      /* the shoreline is stepped: the breakwater follows its smoothed line, so it is one clean curve */
-    const bw = []; for (let t = 0; t <= 1.001; t += .03) { const x = 2.9 + t * 2.0; bw.push([x, shS(x) + .3 + Math.sin(t * 1.5) * 1.0]); }
+    const bw = []; for (let t = -.3; t <= 1.001; t += .03) { const x = 2.9 + t * 2.0, o = t < 0 ? -.45 + .75 * (t + .3) / .3 : .3 + Math.sin(t * 1.5) * 1.0; bw.push([x, shS(x) + o]); }      /* it starts on the land and runs out into the water: joined to the shore */
     for (let k = 0; k < 6; k++) for (let i = 1; i < bw.length - 1; i++) bw[i][1] = (bw[i - 1][1] + 2 * bw[i][1] + bw[i + 1][1]) / 4;
     wallPath(bw, .27, { topH: .14, parapet: .035 }); for (const q of bw) seaObs.push([q[0], q[1], .5]);
     /* granite bollards joined by an old rope rail along the harbour side, and a little lantern at the tip */
@@ -1389,15 +1389,15 @@ export function open(opts) {
   // ---- the Sunday market: a little street with stalls of vegetables, fruit, bread, cheese, octopus, empanadas, sausages and honey
   { let mx = 0, mz = 0, found = false;
     for (const cx of [-15.4, -10.2, -16.6, -8.6, -8.15, 1.8]) { for (const inl of [4.3, 4.7, 3.9, 3.5]) { const [qx, qz] = onShore(cx, inl); let ok = true; for (let a = 0; a < 8 && ok; a++) for (const rr of [.6, 1.25]) if (groundH(qx + Math.cos(a * .785) * rr, qz + Math.sin(a * .785) * rr) < SEA + .05) ok = false; if (ok && groundH(qx, qz) > SEA + .05) { mx = qx; mz = qz; found = true; break; } } if (found) break; }
-    if (found) { const yaw = seaYaw(mx), g = new THREE.Group(), SC = .1;
+    let yaw = 0;
+    if (found) { /* the market street stands square on to the coast road, its end touching the pavement */
+      let bq = roadRaw[0], bd = 9; for (const q of roadRaw) { const d = Math.hypot(q[0] - mx, q[1] - mz); if (d < bd) { bd = d; bq = q; } }
+      let nx = mx - bq[0], nz = mz - bq[1]; const nl = Math.hypot(nx, nz) || 1; nx /= nl; nz /= nl; mx = bq[0] + nx * 1.75; mz = bq[1] + nz * 1.75; yaw = Math.atan2(nx, nz); }
+    if (found) { const g = new THREE.Group(), SC = .1;
     const pave = box(.8, .32, 2.3, std(0xd8cdb6)); pave.position.y = -.14; g.add(pave); const edge = box(.7, .022, 2.2, std(0xcfc3aa)); edge.position.y = .03; g.add(edge);
     const awn = [0xc9473a, 0x2f6fa8, 0xe9b94a, 0x3b9a6a, 0xe277a0, 0x7a58b5, 0xf08a3c, 0x4fb3a8];
     for (let k = 0; k < 4; k++) for (const sd of [-1, 1]) { const st = stall(THREE, std, KINDS[(k * 2 + (sd > 0 ? 1 : 0) + (sd > 0 ? 3 : 0)) % 8], awn[(k * 2 + (sd > 0 ? 1 : 0)) % 8], false); st.scale.setScalar(SC); st.position.set(sd * .31, .035, -.78 + k * .52); st.rotation.y = sd < 0 ? PI / 2 : -PI / 2; g.add(st);
       const vd = person(SHIRTS[(k + (sd > 0 ? 3 : 0)) % SHIRTS.length], { skin: SKINS[k % 4] }); vd.scale.setScalar(.8); vd.position.set(sd * .47, .035, -.78 + k * .52); vd.rotation.y = sd < 0 ? PI / 2 : -PI / 2; g.add(vd); }
-    { /* the market street joins the coast road with a proper road, so no street ends in the middle of nowhere */
-      let bq = null, bd = 9; for (const q of roadRaw) { const d = Math.hypot(q[0] - mx, q[1] - mz); if (d < bd) { bd = d; bq = q; } }
-      if (bq && bd < 3.5) { const n = Math.max(3, Math.round(bd / .15)), link = []; for (let k = 0; k <= n; k++) { const u = k / n; link.push([bq[0] + (mx - bq[0]) * u, bq[1] + (mz - bq[1]) * u]); }
-        const w1 = ribbon(link, .76, walkMat, .018, false, undefined, true, 'edge'); w1.renderOrder = 1; W(w1); const a1 = ribbon(link, .56, asphalt, .03, false, undefined, true, 'edge'); a1.renderOrder = 2; W(a1); roadMeshes.push(a1); } }
     g.userData.fp = 1.3; g.userData.pri = 6; g.userData.market = 1; let mkTop = groundH(mx, mz); for (let k = 0; k < 6; k++) { const a = k * PI / 3 + .4; mkTop = Math.max(mkTop, groundH(mx + Math.cos(a) * 1.3 * .6, mz + Math.sin(a) * 1.3 * .6)); } W(put(g, mx, mz, yaw, -.02));
     for (let k = 0; k < 7; k++) { const p = person(SHIRTS[(k * 3 + 1) % SHIRTS.length], { skin: SKINS[k % 4] }); W(p); strollers.push({ p, x: mx, z: mz, yaw, rx: .1, rz: .72, a: rnd() * 6.28, sp: (.14 + rnd() * .12) * (k % 2 ? 1 : -1), still: k % 4 === 0, lift: .035, sqTop: mkTop }); } } }
 
