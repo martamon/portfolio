@@ -1753,7 +1753,7 @@ export function open(opts) {
   // ---- a little wooden bridge over the river, and neighbours who walk across it
   { const n = riverPts.length, k = Math.floor(n * .66), a1 = riverPts[k - 1], b1 = riverPts[k + 1], c0 = riverPts[k], tx = b1[0] - a1[0], tz = b1[1] - a1[1], tl = Math.hypot(tx, tz) || 1, nx = -tz / tl, nz = tx / tl, wr = riverWidths[k] || .4, len = wr + 1.0;
     BRIDGE_C = [c0[0], c0[1]]; const yaw = Math.atan2(-nz, nx), g = new THREE.Group(), wood = std(0xb98a5a), dark = std(0x8a6a44);
-    const deck = box(len, .04, .28, wood); deck.position.y = .17; g.add(deck); for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const lg = box(.04, .17, .04, dark); lg.position.set(sx * (len / 2 - .08), .085, sz * .1); g.add(lg); }
+    const deck = box(len, .04, .28, wood); deck.position.y = .17; g.add(deck); for (const sx of [-1, 1]) { const ab = box(.2, 1.1, .34, std(0xa7a08e)); ab.position.set(sx * (len / 2 - .1), -.4, 0); g.add(ab); }      /* deep stone abutments: the bridge rests on the banks and never floats */
     for (let q = 0; q < Math.floor(len / .1); q++) { const pl = box(.012, .038, .27, dark); pl.position.set(-len / 2 + .06 + q * .1, .172, 0); g.add(pl); }
     for (const sz of [-1, 1]) { const rl = box(len, .02, .02, dark); rl.position.set(0, .26, sz * .14); g.add(rl); for (let q = 0; q <= 5; q++) { const po = box(.02, .1, .02, dark); po.position.set(-len / 2 + .05 + q * (len - .1) / 5, .21, sz * .14); g.add(po); } }
     const hm = Math.max(groundH(c0[0] + nx * len * .5, c0[1] + nz * len * .5), groundH(c0[0] - nx * len * .5, c0[1] - nz * len * .5), groundH(c0[0], c0[1]));
@@ -1967,7 +1967,7 @@ export function open(opts) {
     if (tourOn) return; tourOn = true; tourMuted = !!(audio && audio.muted);
     mochi.classList.remove('x-ctaon'); mochi.classList.add('x-load'); root.classList.add('x-tour'); if (audio) { audio.sfx('mochinext'); setTimeout(() => audio && audio.mute(true), 500); }
     const t0 = performance.now();
-    import('./conducir.js?v=80').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
+    import('./conducir.js?v=81').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
       .then((m) => { const ab = m.open({ onClose: endTour, getDark: () => nightT, getRain: () => rainT }); if (!ab) throw new Error('no webgl'); setTimeout(mochiClose, 700); })
       .catch(() => { endTour(); mochiClose(); });
   };
