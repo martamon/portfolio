@@ -784,13 +784,13 @@ export function open(opts) {
     const cb = box(.2, .045, .045, std(0xc9c3b2)); cb.position.y = .56; cr.add(cb);
     W(put(cr, cx2, cz2, 0, -.01));
     const [chx, chz] = onShore(-13.0, 5.2); const ch = church(1.25); W(put(ch, chx, chz, seaYaw(chx), -.03));
-    { const [mx, mz] = onShore(-9.6, 6.4); W(put(mercado(), mx, mz, seaYaw(mx), -.02));
+    { const [mx, mz] = onShore(-7.75, 3.0); W(put(mercado(), mx, mz, seaYaw(mx) + PI / 2, -.02));      // the stone market hall closes the east end of the alameda
       // a round stone square in front of the market, with a fountain and stone houses round it
-      { const [qx, qz] = onShore(-12.8, 3.05), sq = new THREE.Group(), pav = new THREE.Mesh(new THREE.CylinderGeometry(.78, .78, 1.3, 32), std(0xd3cbb8)); pav.position.y = -.63; sq.add(pav);   /* a deep stone base, so the fountain square never sinks into the slope */
+      { const [qx, qz] = onShore(-10.3, 3.05), sq = new THREE.Group(), pav = new THREE.Mesh(new THREE.CylinderGeometry(.78, .78, 1.3, 32), std(0xd3cbb8)); pav.position.y = -.63; sq.add(pav);   /* a deep stone base, so the fountain square never sinks into the slope */
         const kerb = new THREE.Mesh(new THREE.TorusGeometry(.78, .03, 6, 36), std(0xb7b09e)); kerb.rotation.x = PI / 2; kerb.position.y = .03; sq.add(kerb);
         for (let k = 0; k < 8; k++) { const sp = box(.015, .005, .56, std(0xb7b09e)); sp.rotation.y = k * PI / 8; sp.position.y = .025; sq.add(sp); }
         const fb = new THREE.Mesh(new THREE.CylinderGeometry(.2, .22, .08, 14), std(0xcfc7b4)); fb.position.y = .06; sq.add(fb); const fw = new THREE.Mesh(new THREE.CylinderGeometry(.17, .17, .02, 14), std(0x74cfdb, { transparent: true, opacity: .85 })); fw.position.y = .1; sq.add(fw); const fc = new THREE.Mesh(new THREE.CylinderGeometry(.025, .035, .22, 6), std(0xcfc7b4)); fc.position.y = .17; sq.add(fc);
-        sq.userData.fp = 0; sq.scale.setScalar(.58); W(put(sq, qx, qz, 0, .02 + Math.max(0, Math.max(groundH(qx + .9, qz), groundH(qx - .9, qz), groundH(qx, qz + .9), groundH(qx, qz - .9)) - groundH(qx, qz))));      // the round fountain stands in the middle of the big plaza
+        sq.userData.fp = 0; sq.scale.setScalar(.5); W(put(sq, qx, qz, 0, .02 + Math.max(0, Math.max(groundH(qx + .9, qz), groundH(qx - .9, qz), groundH(qx, qz + .9), groundH(qx, qz - .9)) - groundH(qx, qz))));      // the round fountain stands in the middle of the big plaza
         // little fishermen's cottages round the square, each turned to face it
         [[-1.3, 4.05], [1.3, 4.05]].forEach(([dx, inl], k) => { const [hx, hz] = onShore(-9.6 + dx, inl), hs = house({ w: .3, d: .26, floors: 1, wall: [0xf7f1e4, 0xd8e8f0, 0xf6e2b8, 0xf2d4c4, 0xe3efe6][k % 5], roof: [0xc9473a, 0x2f6fa8, 0xe9b94a, 0xc9473a, 0x5fae8a][k % 5], gal: false, shut: [0x2f6fa8, 0xb4483a, 0x4a9a74][k % 3], fr: k + 8, door: 0x2f6fa8 }); hs.userData.pri = 4; hs.userData.fp = .32; W(put(hs, hx, hz, Math.atan2(qx - hx, qz - hz), -.02)); const bar = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, .05, 8), std(0x4f8fc0)); const bg = new THREE.Group(); bg.add(bar); bar.position.y = .025; bg.userData.fp = .05; bg.userData.pri = 4; W(put(bg, hx + (qx - hx) * .22, hz + (qz - hz) * .22, 0, -.02)); }); } const [lx, lz] = onShore(-17.2, 2.5); W(put(lonja(), lx, lz, seaYaw(lx), -.02));
     }
@@ -1356,12 +1356,12 @@ export function open(opts) {
   { /* the alameda: a tree-lined promenade from the arcade square to the round fountain, and on to the stone market, all in one stone paving */
     const stoneP = std(0xd3cbb8, { roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
     const lerpP = (a, b, n) => { const out = []; for (let k = 0; k <= n; k++) { const u = k / n, p = onShore(a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u); out.push([p[0], p[1]]); } return out; };
-    const legs = [[[-11.5, 3.05], [-9.6, 3.05]], [[-9.6, 3.05], [-9.6, 5.8]]];
-    for (const [a, b] of legs) { const pts = lerpP(a, b, 12), r = ribbon(pts, .62, stoneP, .03, false, undefined, true, 'edge'); r.renderOrder = 3; W(r);
+    const legs = [[[-11.5, 3.05], [-8.5, 3.05]]];
+    for (const [a, b] of legs) { const pts = lerpP(a, b, 24), r = ribbon(pts, .62, stoneP, .03, false, undefined, true, 'edge'); r.renderOrder = 3; W(r);
       const kb = ribbon(pts, .66, std(0xb7b09e, { roughness: 1, side: THREE.DoubleSide }), .024, false, undefined, true, 'edge'); kb.renderOrder = 2; W(kb);
-      for (let k = 1; k < pts.length - 1; k += 2) { const a2 = pts[k - 1], b2 = pts[k + 1], dx = b2[0] - a2[0], dz = b2[1] - a2[1], l = Math.hypot(dx, dz) || 1, nx = -dz / l, nz = dx / l;
-        for (const sd of [-1, 1]) { const tx = pts[k][0] + nx * .42 * sd, tz = pts[k][1] + nz * .42 * sd, tr = new THREE.Group(), tk = new THREE.Mesh(new THREE.CylinderGeometry(.014, .02, .2, 6), std(0x7a5a3c)); tk.position.y = .1; tr.add(tk); const cr = new THREE.Mesh(new THREE.IcosahedronGeometry(.1, 1), std(k % 4 === 1 ? 0xe2a042 : 0x3f9576, { flatShading: true })); cr.position.y = .27; tr.add(cr); tr.userData.fp = 0; W(put(tr, tx, tz, 0, .03)); }
-        if (k % 4 === 3) for (const sd of [-1, 1]) { const bx = pts[k][0] + nx * .27 * sd, bz = pts[k][1] + nz * .27 * sd, bn = new THREE.Group(); bn.add(box(.14, .025, .045, std(0x8a6a44))); const bk = box(.14, .045, .01, std(0x8a6a44)); bk.position.set(0, .04, -.02); bn.add(bk); bn.userData.fp = 0; W(put(bn, bx, bz, Math.atan2(-nz * sd, nx * sd) + PI / 2, .045)); } } }
+      for (let k = 1; k < pts.length - 1; k += 1) { const a2 = pts[k - 1], b2 = pts[k + 1], dx = b2[0] - a2[0], dz = b2[1] - a2[1], l = Math.hypot(dx, dz) || 1, nx = -dz / l, nz = dx / l;
+        if (k % 6 === 1) for (const sd of [-1, 1]) { const tx = pts[k][0] + nx * .42 * sd, tz = pts[k][1] + nz * .42 * sd, tr = new THREE.Group(), tk = new THREE.Mesh(new THREE.CylinderGeometry(.014, .02, .2, 6), std(0x7a5a3c)); tk.position.y = .1; tr.add(tk); const cr = new THREE.Mesh(new THREE.IcosahedronGeometry(.1, 1), std(k % 4 === 1 ? 0xe2a042 : 0x3f9576, { flatShading: true })); cr.position.y = .27; tr.add(cr); tr.userData.fp = 0; W(put(tr, tx, tz, 0, .03)); }
+        if (k % 6 === 4) for (const sd of [-1, 1]) { const bx = pts[k][0] + nx * .27 * sd, bz = pts[k][1] + nz * .27 * sd, bn = new THREE.Group(); bn.add(box(.14, .025, .045, std(0x8a6a44))); const bk = box(.14, .045, .01, std(0x8a6a44)); bk.position.set(0, .04, -.02); bn.add(bk); bn.userData.fp = 0; W(put(bn, bx, bz, Math.atan2(-nz * sd, nx * sd) + PI / 2, .045)); } } }
   }
   { const sqM = square(-12.8, 3.05, 2.4, 1.5, { trees: 2, tables: 3, people: 6 });
   }
