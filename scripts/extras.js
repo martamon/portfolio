@@ -257,10 +257,9 @@
     'html.x-about-on.x-about-on [data-xbgm]{background-image:none!important;background:transparent!important}html.x-about-on.x-about-on[data-xp="about"] [data-framer-name="Content"]::before{display:none!important}',
     'html.x-about-on [data-xnc],html.x-about-on [data-xn],html.x-about-on [data-xbl],html.x-about-on .x-dial,html.x-about-on .x-lang,html.x-about-on a[data-xf]{mix-blend-mode:normal!important}html.x-about-on [data-xn],html.x-about-on [data-xn] *,html.x-about-on .x-dial,html.x-about-on .x-lang,html.x-about-on .x-lang button,html.x-about-on [class*="framer-text"]{color:#fbefe9!important}html.x-about-on .x-dn{color:#3a1818}',
     'html.x-about-on.x-about-on [data-xn],html.x-about-on.x-about-on [data-xn] *,html.x-about-on.x-about-on [data-xnc] *,html.x-about-on.x-about-on [data-framer-name="Studio Link"] *,html.x-about-on.x-about-on [data-framer-name="Contact Link"] *{color:#fbefe9!important;mix-blend-mode:normal!important}html.x-about-on.x-about-on [data-xnc] img,html.x-about-on.x-about-on a[data-xf] *{filter:none!important;mix-blend-mode:normal!important}',
-    'html.x-about-on,html.x-about-on body{background:#265899!important;background-image:none!important}',
-    'html[data-xp="about"] video.x-ab-vid{-webkit-mask-image:radial-gradient(ellipse 52% 54% at 56% 50%,#000 80%,transparent 100%)!important;mask-image:radial-gradient(ellipse 52% 54% at 56% 50%,#000 80%,transparent 100%)!important}',
-    '.x-ab-bg{position:fixed;left:0;top:0;width:100%;height:100vh;overflow:hidden;z-index:0;pointer-events:none;will-change:transform;background:#265899}.x-ab-vid{position:absolute;top:0;width:max(78%,110vh);left:calc((100% - max(78%,110vh)) * .65);top:3vh;height:auto;-webkit-mask-image:radial-gradient(ellipse 52% 54% at 56% 50%,#000 80%,transparent 100%);mask-image:radial-gradient(ellipse 52% 54% at 56% 50%,#000 80%,transparent 100%)}.x-ab-blue{position:absolute;inset:0;background:#265899;opacity:0}',
-    'html.x-about-on.x-about-on .x-ab-shade,html.x-about-on.x-about-on [data-xbgm].x-ab-shade{position:absolute;inset:0;background:radial-gradient(ellipse 50% 44% at 14% 26%,rgba(2,8,26,.84),rgba(2,8,26,.55) 55%,transparent 100%)!important;pointer-events:none}',
+    'html.x-about-on,html.x-about-on body{background:#265899 url(/extras/about/ground.webp?v=2) top center/100% auto repeat-y!important}',
+    '.x-ab-bg{position:fixed;left:0;top:0;width:100%;height:100vh;overflow:hidden;z-index:0;pointer-events:none;will-change:transform}.x-ab-vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:62% 100%;-webkit-mask-image:linear-gradient(#000 88%,transparent);mask-image:linear-gradient(#000 88%,transparent)}.x-ab-blue{position:absolute;inset:0;background:#265899;opacity:0}',
+    
     '.x-ab-grain{position:absolute;inset:-80px;pointer-events:none;mix-blend-mode:overlay;opacity:.22;animation:x-grain .8s steps(6) infinite}@keyframes x-grain{0%{transform:translate(0,0)}17%{transform:translate(-37px,23px)}33%{transform:translate(29px,-41px)}50%{transform:translate(-18px,-12px)}67%{transform:translate(41px,31px)}83%{transform:translate(-26px,38px)}100%{transform:translate(0,0)}}@media (prefers-reduced-motion:reduce){.x-ab-grain{animation:none}}',
     'html[data-xp="about"] [data-framer-name="Wordmark"],html[data-xp="about"] [data-framer-name="Caption"]{z-index:5!important}',
     // titles in Plus Jakarta Sans, the display face of onseis.com (the small mono text keeps its own face)
@@ -291,7 +290,7 @@
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"]{left:6vw!important;top:calc(110px + 22px + 28px)!important;bottom:auto!important;width:min(640px,calc(100vw - 12vw))!important}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"]::before{display:none!important}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Wordmark"],html:not(#x)[data-xp="about"] [data-framer-name="Caption"]{visibility:hidden!important}',
-    '.x-ab-txt{position:fixed;will-change:transform;left:6vw;top:110px;width:min(640px,calc(100vw - 12vw));z-index:8;pointer-events:none;color:#fff;mix-blend-mode:difference}.x-ab-txt h1{margin:0 0 28px;font:300 22px/1 "Outfit","Plus Jakarta Sans",sans-serif;letter-spacing:.14em;text-transform:uppercase}.x-ab-txt p{margin:0;font:400 17px/1.28 "Lekton","IBM Plex Mono",monospace;letter-spacing:.01em;text-align:justify;text-transform:uppercase}',
+    '.x-ab-txt{position:fixed;will-change:transform;left:6vw;top:110px;width:min(640px,calc(100vw - 12vw));z-index:8;pointer-events:none;color:#fff;mix-blend-mode:difference}.x-ab-txt h1{margin:0 0 28px;font:400 22px/1 "Outfit","Plus Jakarta Sans",sans-serif;letter-spacing:.14em;text-transform:uppercase}.x-ab-txt p{margin:0;font:700 17px/1.28 "Lekton","IBM Plex Mono",monospace;letter-spacing:.01em;text-align:justify;text-transform:uppercase}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"] p,html:not(#x)[data-xp="about"] [data-framer-name="Caption"] *{font-family:"Lekton","IBM Plex Mono",monospace!important;font-weight:400!important;font-size:13px!important;line-height:1.3!important;letter-spacing:.01em!important;text-align:justify!important;text-justify:inter-word!important}',
     // tighter lines in the running texts of the site
     'html main[data-xm] [data-framer-name="Project Writeup"] p,html main[data-xm] [data-framer-name="Info"] p,html main[data-xm]~section p,html main[data-xm]~* footer p,html [data-framer-name="Info"] p,.x-ct-text,.x-ct-text p{line-height:1.25!important}',
@@ -2045,7 +2044,7 @@
       vid.innerHTML = '<source src="/extras/about/moto.mp4?v=3" type="video/mp4"><source src="/extras/about/moto.webm?v=3" type="video/webm">';
       vid.addEventListener('loadeddata', function () { ready = true; vid.pause(); });
       blue = document.createElement('div'); blue.className = 'x-ab-blue';
-            wrap.appendChild(vid); wrap.appendChild(blue); var sh = document.createElement('div'); sh.className = 'x-ab-shade'; wrap.appendChild(sh); document.body.insertBefore(wrap, document.body.firstChild);
+            wrap.appendChild(vid); wrap.appendChild(blue); document.body.insertBefore(wrap, document.body.firstChild);
       document.documentElement.classList.add('x-about-on'); vid.load();
     }
     function sync() {
