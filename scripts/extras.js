@@ -291,7 +291,7 @@
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"]{left:6vw!important;top:calc(110px + 22px + 28px)!important;bottom:auto!important;width:min(640px,calc(100vw - 12vw))!important}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"]::before{display:none!important}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Wordmark"],html:not(#x)[data-xp="about"] [data-framer-name="Caption"]{visibility:hidden!important}',
-    '.x-ab-txt{position:fixed;will-change:transform;left:6vw;top:150px;width:min(560px,calc(100vw - 12vw));z-index:8;pointer-events:none;color:#fff;text-shadow:0 0 2px rgba(6,16,44,.95),0 1px 3px rgba(6,16,44,.9),0 0 14px rgba(6,16,44,.75)}.x-ab-txt h1{margin:0 0 28px;font:400 22px/1 "Outfit","Plus Jakarta Sans",sans-serif;letter-spacing:.14em;text-transform:uppercase}.x-ab-txt p{margin:0;font:700 14px/1.28 "Lekton","IBM Plex Mono",monospace;letter-spacing:.01em;text-align:justify;text-transform:uppercase}',
+    '.x-ab-txt{position:fixed;will-change:transform;left:6vw;top:150px;width:min(560px,calc(100vw - 12vw));z-index:8;pointer-events:none;color:#fff}.x-ab-txt p span{transition:color .35s ease}.x-ab-txt h1{margin:0 0 28px;font:400 22px/1 "Outfit","Plus Jakarta Sans",sans-serif;letter-spacing:.14em;text-transform:uppercase}.x-ab-txt p{margin:0;font:400 14px/1.28 "Lekton","IBM Plex Mono",monospace;letter-spacing:.01em;text-align:justify;text-transform:uppercase}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"] p,html:not(#x)[data-xp="about"] [data-framer-name="Caption"] *{font-family:"Lekton","IBM Plex Mono",monospace!important;font-weight:400!important;font-size:13px!important;line-height:1.3!important;letter-spacing:.01em!important;text-align:justify!important;text-justify:inter-word!important}',
     // tighter lines in the running texts of the site
     'html main[data-xm] [data-framer-name="Project Writeup"] p,html main[data-xm] [data-framer-name="Info"] p,html main[data-xm]~section p,html main[data-xm]~* footer p,html [data-framer-name="Info"] p,.x-ct-text,.x-ct-text p{line-height:1.25!important}',
@@ -414,7 +414,7 @@
     // project pages in the style of onseis.com/project/penry-psychology: title in capitals, details and text in small capital mono type, justified, with fine rules
     'main[data-xm] [data-framer-name="Project Title"] p{text-transform:uppercase!important;font-size:34px!important;line-height:1!important;letter-spacing:-.035em!important;font-weight:700!important}',
     'main[data-xm] [data-framer-name="Project Type & Year"]{display:flex!important;flex-direction:row!important;flex-wrap:wrap;align-items:baseline!important;gap:0 10px!important;height:auto!important;padding-bottom:14px;border-bottom:1px solid var(--xink,#fff)}',
-    'main[data-xm] [data-framer-name="Project Type"] p,main[data-xm] [data-framer-name="Year Completed"] p,main[data-xm] [data-framer-name="Project Writeup"] p{font-family:"IBM Plex Mono","IBM Plex Mono Placeholder",monospace!important;font-weight:500!important;font-size:12.5px!important;line-height:1.35em!important;letter-spacing:.03em!important;text-transform:uppercase!important}',
+    'main[data-xm] [data-framer-name="Project Type"] p,main[data-xm] [data-framer-name="Year Completed"] p,main[data-xm] [data-framer-name="Project Writeup"] p{font-family:"IBM Plex Mono","IBM Plex Mono Placeholder",monospace!important;font-weight:400!important;font-size:12.5px!important;line-height:1.35em!important;letter-spacing:.03em!important;text-transform:uppercase!important}',
     'main[data-xm] [data-framer-name="Year Completed"] p::before{content:"\\2013\\00a0\\00a0"}',
     'main[data-xm] [data-framer-name="Project Writeup"] p{text-align:justify!important;text-justify:inter-word;hyphens:auto}',
     'main[data-xm] [data-framer-name="Project Writeup"]{padding-top:2px}',
@@ -2025,7 +2025,7 @@
   /* About: the rider video fills the screen and is played by the scroll (no sound): scroll plays it, grain flickers over it; once it has ended the screen fades to the blue
      of the ground and the page carries on over that blue */
   (function aboutScene() {
-    var bl = null, px = 0, py = 0, cx = 0, cy = 0, coarse = matchMedia('(pointer:coarse)').matches, wrap = null, vid = null, blue = null, grain = null, tx = null, run = false, sm = 0, lastY = 0, vel = 0, tgt = 0, ready = false;
+    var words = [], lcv = document.createElement('canvas'), lcx = lcv.getContext('2d', { willReadFrequently: true }), lT = 0, px = 0, py = 0, cx = 0, cy = 0, coarse = matchMedia('(pointer:coarse)').matches, wrap = null, vid = null, blue = null, grain = null, tx = null, run = false, sm = 0, lastY = 0, vel = 0, tgt = 0, ready = false;
     var calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
     addEventListener('pointermove', function (e) { px = e.clientX / innerWidth - .5; py = e.clientY / innerHeight - .5; }, { passive: true });
     function frame() {
@@ -2036,8 +2036,28 @@
       if (vid && vid.duration && ready) { tgt = p * (vid.duration - .04); if (Math.abs(vid.currentTime - tgt) > .012) { try { vid.currentTime = tgt; } catch (e) {} } }
       cx += (px - cx) * .05; cy += (py - cy) * .05; if (!calm && !coarse) vid.style.transform = 'translate3d(' + (-cx * 18).toFixed(1) + 'px,' + (-cy * 8).toFixed(1) + 'px,0) scale(1.06)'
       var off = Math.max(0, sm - H * 1.0); wrap.style.transform = 'translate3d(0,' + (-off).toFixed(1) + 'px,0)';      /* once the video has ended the picture scrolls away with the page and the ground carries on, in its own blue */
-      if (tx) tx.style.transform = 'translate3d(0,' + (-off) + 'px,0)'; if (bl) bl.style.transform = 'translate3d(0,' + (-off) + 'px,0)';
+      if (tx) tx.style.transform = 'translate3d(0,' + (-off) + 'px,0)';
+      var now = performance.now();
+      if (tx && words.length && now - lT > 110) { lT = now; sampleWords(); }
       requestAnimationFrame(frame);
+    }
+    /* claroscuro: every word takes the opposite tone of the picture right behind it (dark on the light sky, light on the dark trees and the blue ground) */
+    function sampleWords() {
+      var r = vid ? vid.getBoundingClientRect() : null, W = 96, Hc = 54, ok = false;
+      lcv.width = W; lcv.height = Hc;
+      if (r && vid.videoWidth && vid.readyState > 1 && r.bottom > 0) { try { lcx.drawImage(vid, 0, 0, W, Hc); lcx.getImageData(0, 0, 1, 1); ok = true; } catch (e) {} }
+      var data = ok ? lcx.getImageData(0, 0, W, Hc).data : null, vw = vid ? vid.videoWidth : 1, vh = vid ? vid.videoHeight : 1;
+      var sc = r ? Math.max(r.width / vw, r.height / vh) : 1, dx = r ? (r.width - vw * sc) * .62 : 0, dy = r ? (r.height - vh * sc) : 0;
+      for (var i = 0; i < words.length; i++) {
+        var b = words[i].getBoundingClientRect(), cxw = b.left + b.width / 2, cyw = b.top + b.height / 2, L = .33;
+        if (data && cyw > r.top && cyw < r.bottom - r.height * .08) {
+          var u = ((cxw - r.left - dx) / sc) / vw, v = ((cyw - r.top - dy) / sc) / vh, acc = 0, n = 0;
+          for (var oy = -1; oy <= 1; oy++) for (var ox = -2; ox <= 2; ox++) { var X = Math.round(u * W) + ox, Y = Math.round(v * Hc) + oy; if (X >= 0 && X < W && Y >= 0 && Y < Hc) { var k = (Y * W + X) * 4; acc += (data[k] * .2126 + data[k + 1] * .7152 + data[k + 2] * .0722) / 255; n++; } }
+          if (n) L = acc / n;
+        }
+        var el = words[i], was = el.__d, dark = was === undefined ? L > .5 : (was ? L > .44 : L > .56);
+        if (was !== dark) { el.__d = dark; el.style.setProperty('color', dark ? '#071230' : '#ffffff', 'important'); }
+      }
     }
     function build() {
       wrap = document.createElement('div'); wrap.className = 'x-ab-bg'; wrap.setAttribute('aria-hidden', 'true');
@@ -2050,10 +2070,10 @@
     }
     function sync() {
       var on = document.documentElement.getAttribute('data-xp') === 'about';
-      if (on && !wrap) build(); else if (!on && wrap) { wrap.remove(); if (bl) { bl.remove(); bl = null; } wrap = vid = blue = null; ready = false; document.documentElement.classList.remove('x-about-on'); }
+      if (on && !wrap) build(); else if (!on && wrap) { wrap.remove(); wrap = vid = blue = null; ready = false; document.documentElement.classList.remove('x-about-on'); }
       if (on) { if (wrap && !wrap.isConnected) document.body.insertBefore(wrap, document.body.firstChild);
         if (!tx || !tx.isConnected) { tx = document.createElement('div'); tx.className = 'x-ab-txt'; tx.setAttribute('aria-hidden', 'true'); tx.innerHTML = '<p></p>'; document.body.appendChild(tx); }
-        var w = document.querySelector('[data-framer-name="Wordmark"] p'), c = document.querySelector('[data-framer-name="Caption"] p, [data-framer-name="Caption"]'); if (c && tx.lastChild.textContent !== c.textContent) tx.lastChild.textContent = c.textContent;
+        var w = document.querySelector('[data-framer-name="Wordmark"] p'), c = document.querySelector('[data-framer-name="Caption"] p, [data-framer-name="Caption"]'); if (c && tx.lastChild.dataset.src !== c.textContent) { tx.lastChild.dataset.src = c.textContent; tx.lastChild.innerHTML = c.textContent.split(/\s+/).filter(Boolean).map(function (t) { return '<span>' + t.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</span>'; }).join(' '); words = tx.lastChild.children; }
         if (!run) { run = true; lastY = window.scrollY || 0; sm = lastY; requestAnimationFrame(frame); } }
       else if (tx) { tx.remove(); tx = null; }
     }
