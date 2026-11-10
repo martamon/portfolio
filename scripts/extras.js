@@ -253,7 +253,9 @@
     '.x-ct-text{position:absolute;left:0;bottom:24px;font-size:12.5px;line-height:1.75;letter-spacing:.12em}',
     '.x-ct-text a{color:inherit!important;text-decoration:none;background:linear-gradient(currentColor,currentColor) 0 100%/0 1px no-repeat;transition:background-size .7s cubic-bezier(.22,.8,.24,1)}',
     '.x-ct-text a:hover,.x-ct-text a:focus-visible{background-size:100% 1px}',
-    'html[data-xp="about"] [data-framer-name="Video Left"],html[data-xp="about"] [data-framer-name="Video Right"]{transform:translateX(16vw);}',
+    'html[data-xp="about"] [data-framer-name="Video Left"],html[data-xp="about"] [data-framer-name="Video Right"],html[data-xp="about"] [data-framer-name="Hero Video"]>video,html[data-xp="about"] [data-framer-name="Hero Video"] canvas{display:none!important}',
+    '.x-ab-img{position:fixed;right:3vw;bottom:0;height:min(92vh,92vw);aspect-ratio:1/1;z-index:1;pointer-events:none;will-change:transform;user-select:none;mix-blend-mode:multiply}.x-ab-img img{position:absolute;inset:0;width:100%;height:100%;-webkit-user-drag:none}.x-ab-hair{mix-blend-mode:multiply}.x-ab-body{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 7%);mask-image:linear-gradient(90deg,transparent 0,#000 7%)}.x-ab-hair{transform-origin:53% 33%;filter:url(#x-hairf);animation:x-hair 5.5s ease-in-out infinite alternate}@keyframes x-hair{0%{transform:rotate(-1.6deg) skewY(.9deg) scaleX(.995)}50%{transform:rotate(.4deg) skewY(-.5deg) scaleX(1.012)}100%{transform:rotate(1.7deg) skewY(.7deg) scaleX(1.004)}}@media (prefers-reduced-motion:reduce){.x-ab-hair{animation:none;filter:none}}',
+    'html[data-xp="about"] [data-framer-name="Wordmark"],html[data-xp="about"] [data-framer-name="Caption"]{z-index:5!important}',
     // titles in Plus Jakarta Sans, the display face of onseis.com (the small mono text keeps its own face)
     '@font-face{font-family:"Plus Jakarta Sans";font-weight:600;font-style:normal;font-display:swap;src:url(/fonts.gstatic.com/s/plusjakartasans/pjs-600.ttf) format("truetype")}',
     '@font-face{font-family:"Plus Jakarta Sans";font-weight:700;font-style:normal;font-display:swap;src:url(/fonts.gstatic.com/s/plusjakartasans/pjs-700.ttf) format("truetype")}',
@@ -276,10 +278,12 @@
     '@font-face{font-family:"Lekton";font-weight:400;font-style:normal;font-display:swap;src:url(/fonts.gstatic.com/s/lekton/lekton-400.ttf) format("truetype")}',
     '@font-face{font-family:"Lekton";font-weight:700;font-style:normal;font-display:swap;src:url(/fonts.gstatic.com/s/lekton/lekton-700.ttf) format("truetype")}',
     '@font-face{font-family:"Outfit";font-weight:300;font-style:normal;font-display:swap;src:url(/fonts.gstatic.com/s/outfit/outfit-300.ttf) format("truetype")}',
-    'html:not(#x)[data-xp="about"] [data-framer-name="Wordmark"]{left:6vw!important;top:110px!important;mix-blend-mode:normal!important}',
-    'html:not(#x)[data-xp="about"] [data-framer-name="Wordmark"] p{font-family:"Outfit","Plus Jakarta Sans",sans-serif!important;font-size:22px!important;font-weight:300!important;letter-spacing:.14em!important;line-height:1!important;text-transform:uppercase!important;color:var(--xtone,#26324a)!important;white-space:nowrap!important}',
+    'html:not(#x)[data-xp="about"] [data-framer-name="Wordmark"]{left:6vw!important;top:110px!important;mix-blend-mode:difference!important}',
+    'html:not(#x)[data-xp="about"] [data-framer-name="Wordmark"] p{font-family:"Outfit","Plus Jakarta Sans",sans-serif!important;font-size:22px!important;font-weight:300!important;letter-spacing:.14em!important;line-height:1!important;text-transform:uppercase!important;color:var(--xink,#fff)!important;white-space:nowrap!important}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"]{left:6vw!important;top:calc(110px + 22px + 28px)!important;bottom:auto!important;width:min(640px,calc(100vw - 12vw))!important}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"]::before{display:none!important}',
+    'html:not(#x)[data-xp="about"] [data-framer-name="Wordmark"],html:not(#x)[data-xp="about"] [data-framer-name="Caption"]{visibility:hidden!important}',
+    '.x-ab-txt{position:fixed;will-change:transform;left:6vw;top:110px;width:min(640px,calc(100vw - 12vw));z-index:8;pointer-events:none;mix-blend-mode:difference;color:var(--xink,#fff)}.x-ab-txt h1{margin:0 0 28px;font:300 22px/1 "Outfit","Plus Jakarta Sans",sans-serif;letter-spacing:.14em;text-transform:uppercase}.x-ab-txt p{margin:0;font:400 17px/1.55 "Lekton","IBM Plex Mono",monospace;letter-spacing:.01em;text-align:justify;text-transform:uppercase}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"] p,html:not(#x)[data-xp="about"] [data-framer-name="Caption"] *{font-family:"Lekton","IBM Plex Mono",monospace!important;font-weight:400!important;font-size:13px!important;line-height:1.3!important;letter-spacing:.01em!important;text-align:justify!important;text-justify:inter-word!important}',
     // About: laid out like the project pages: small bold title, a calm left-aligned paragraph, the head on the right
     'html[data-xp="about"] [data-framer-name="Wordmark"]{left:40px!important;top:190px!important;width:auto!important;height:auto!important;transform:none!important}',
@@ -2008,6 +2012,22 @@
     } catch (e) {}
   }
   setInterval(paintInk, 1000);
+  /* About: a picture of Marta on a motorbike sits behind the text (white dropped out with multiply); as the page scrolls it rides off to the left, then the page goes on */
+  (function aboutMoto() {
+    var el = null, tx = null, ticking = false;
+    function place() { ticking = false; if (!el) return; var y = window.scrollY || 0, p = Math.min(1, y / (innerHeight * .9)), e = p * p * (3 - 2 * p); el.style.transform = 'translate3d(' + (-(e * (el.offsetWidth + innerWidth * .7)) ) + 'px,0,0)'; el.style.opacity = p >= 1 ? '0' : '1'; if (tx) tx.style.transform = 'translate3d(0,' + (-Math.max(0, y - innerHeight * .9)) + 'px,0)'; }
+    function sync() {
+      var on = document.documentElement.getAttribute('data-xp') === 'about';
+      if (el && !el.isConnected) { if (on) document.body.appendChild(el); else el = null; }
+      if (on && !el) { el = document.createElement('div'); el.className = 'x-ab-img'; el.setAttribute('aria-hidden', 'true'); el.innerHTML = '<img class="x-ab-body" alt="" decoding="async" src="/extras/about-moto.webp?v=5"><img class="x-ab-hair" alt="" decoding="async" src="/extras/about-hair.webp?v=5"><svg width="0" height="0" style="position:absolute"><filter id="x-hairf" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency=".006 .02" numOctaves="2" seed="4" result="n"><animate attributeName="baseFrequency" dur="7s" values=".006 .02;.009 .028;.006 .02" repeatCount="indefinite"/></feTurbulence><feDisplacementMap in="SourceGraphic" in2="n" scale="16" xChannelSelector="R" yChannelSelector="G"/></filter></svg>'; document.body.appendChild(el); place(); }
+      else if (!on && el) { el.remove(); el = null; }
+      if (on) { if (!tx || !tx.isConnected) { tx = document.createElement('div'); tx.className = 'x-ab-txt'; tx.setAttribute('aria-hidden', 'true'); tx.innerHTML = '<h1></h1><p></p>'; document.body.appendChild(tx); }
+        var w = document.querySelector('[data-framer-name="Wordmark"] p'), c = document.querySelector('[data-framer-name="Caption"] p, [data-framer-name="Caption"]'); if (w && tx.firstChild.textContent !== w.textContent) tx.firstChild.textContent = w.textContent; if (c && tx.lastChild.textContent !== c.textContent) tx.lastChild.textContent = c.textContent; }
+      else if (tx) { tx.remove(); tx = null; }
+    }
+    addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(place); } }, { passive: true });
+    addEventListener('resize', place); setInterval(sync, 400); sync();
+  })();
   var paintTheme0 = paintTheme; paintTheme = function () { paintTheme0(); paintInk(); };
   // the day / night button, as on the planet: the page is in the tone of the real hour until you pick the other one (and back)
   var DN_MOON = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>';
