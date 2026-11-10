@@ -1501,8 +1501,7 @@ export function open(opts) {
     { const sp = []; for (let k = 0; k <= 12; k++) sp.push([base[0] - .3 + k * .05 + Math.sin(k * .6) * .12, base[1] + 1.0 - k * .22]); const sr = route(relax(sp, 2));
       for (const [c, u, v, off] of [[1, .1, .05, .06], [5, .7, -.045, -.06], [3, .4, .03, 0]]) { const pp = person(SHIRTS[c], { skin: SKINS[c % 4] }); pp.scale.setScalar(.85); W(pp); pathers.push({ p: pp, r: sr, u, v, off, bob: 1, lift: 0 }); } }
     const [cx, cz] = [base[0] + 1.9, base[1] - .5]; if (groundH(cx, cz) > .3) { const pl = new THREE.Group(); pl.userData.fp = .95; pl.userData.pri = 3; W(put(pl, cx, cz, 0, -.05)); const ch = church(.7); ch.position.y = 0; const cg = new THREE.Group(); cg.add(ch); W(put(cg, cx, cz, -.3, -.05)); }
-    const [px, pz] = [base[0] - 1.9, base[1] + .8]; if (groundH(px, pz) > .2) { const pool = new THREE.Mesh(new THREE.CylinderGeometry(.34, .34, .03, 18), std(0x45b6d0, { transparent: true, opacity: .92, roughness: .15 })); pool.scale.z = .7; const pg = new THREE.Group(); pg.add(pool); W(put(pg, px, pz, .3, .02));
-      const arch = new THREE.Group(); const ab = box(.5, .36, .24, stoneT); ab.position.y = .1; arch.add(ab); const ah = new THREE.Mesh(new THREE.CylinderGeometry(.11, .11, .26, 12), std(0x1b1a18)); ah.rotation.x = PI / 2; ah.position.set(0, .06, .02); arch.add(ah); W(put(arch, px + .35, pz - .4, -.3, -.04)); }
+    /* (the little pool and stone arch that stood here are gone) */
   }
   // the village keeps its clearing
   // ---- two schools with a football pitch where children play, and one tiny pitch
@@ -1743,7 +1742,7 @@ export function open(opts) {
     for (let q = 0; q < Math.floor(len / .1); q++) { const pl = box(.012, .038, .27, dark); pl.position.set(-len / 2 + .06 + q * .1, .172, 0); g.add(pl); }
     for (const sz of [-1, 1]) { const rl = box(len, .02, .02, dark); rl.position.set(0, .26, sz * .14); g.add(rl); for (let q = 0; q <= 5; q++) { const po = box(.02, .1, .02, dark); po.position.set(-len / 2 + .05 + q * (len - .1) / 5, .21, sz * .14); g.add(po); } }
     const hm = Math.max(groundH(c0[0] + nx * len * .5, c0[1] + nz * len * .5), groundH(c0[0] - nx * len * .5, c0[1] - nz * len * .5), groundH(c0[0], c0[1]));
-    g.userData.fp = len * .5 + .2; g.userData.pri = 5; put(g, c0[0], c0[1], yaw, hm + .02 - groundH(c0[0], c0[1])); W(g);
+    g.userData.fp = len * .5 + .2; g.userData.pri = 5; g.userData.bridgeObj = 1; put(g, c0[0], c0[1], yaw, hm + .02 - groundH(c0[0], c0[1])); W(g);
     // houses on both banks, a little way beyond the bridge ends
     [[-1, 1.15, 0], [1, 1.15, 1], [-1, 1.95, 2], [1, 2.0, 3], [-1, 2.8, 4]].forEach(([sd, dist, i3]) => { const ex = c0[0] + nx * sd * (len / 2 + dist) + (tx / tl) * (i3 % 2 ? .5 : -.5), ez = c0[1] + nz * sd * (len / 2 + dist) + (tz / tl) * (i3 % 2 ? .5 : -.5); if (groundH(ex, ez) < .3 || inletD(ex, ez) < .7) return; const hs = house({ w: .44, d: .38, floors: 1 + (i3 % 2), wall: WALLS[(i3 * 3 + 2) % WALLS.length], roof: ROOF[i3 % ROOF.length], gal: false, shut: [0x3d78a8, 0x4a9a74, 0xb4483a][i3 % 3], fr: i3 + 7, stone: i3 % 2 === 1 }); hs.userData.pri = 2; W(put(hs, ex, ez, yaw + (sd > 0 ? PI / 2 : -PI / 2), -.02)); });
     const pts = [[c0[0] + nx * (len / 2 + .5), c0[1] + nz * (len / 2 + .5)], [c0[0] - nx * (len / 2 + .5), c0[1] - nz * (len / 2 + .5)]], rt = route(pts);
@@ -1757,7 +1756,7 @@ export function open(opts) {
     const kept = [];
     for (const it of items) {
       const bad = it.circles.some((c) => kept.some((k) => k.circles.some((kc) => Math.hypot(c[0] - kc[0], c[1] - kc[1]) < c[2] + kc[2] + (it.pri >= 4 && k.pri >= 4 ? -.05 : .3))) || (it.pri < 3 && nearRoad(c, it.pri < 2)) || (it.pri < 3 && kept.some((k) => k.pri === 3 && k.circles.some((kc) => Math.hypot(c[0] - kc[0], c[1] - kc[1]) < c[2] + kc[2] + .7))));
-      const inRiver = it.pri < 6 && it.circles.some((c) => inletD(c[0], c[1]) < c[2] * .8 + .3 || RIVERC.some((q, qi) => Math.hypot(q[0] - c[0], q[1] - c[1]) < c[2] * .8 + RIVERW[qi] / 2 + .08));
+      const inRiver = it.pri < 6 && !it.o.userData.bridgeObj && it.circles.some((c) => inletD(c[0], c[1]) < c[2] * .8 + .3 || RIVERC.some((q, qi) => Math.hypot(q[0] - c[0], q[1] - c[1]) < c[2] * .8 + RIVERW[qi] / 2 + .08));
       if (bad || inRiver) world.remove(it.o); else { addOutline(it.o); if (it.home) HOMES.push([it.x, it.z, it.circles[0][2]]); kept.push(it); for (const c of it.circles) keptC.push(c); }
     } }
   // ---- bus shelters (marquesinas) beside the roads, placed after the tidy pass so they skip whatever stands in the way
