@@ -60,11 +60,11 @@ const COVES = [[-4.2, shore(-4.2) - .15], [3.9, shore(3.9) - .15], [-19.0, shore
 const INLET = [[-6.4, shore(-6.4) + .5], [-6.4, shore(-6.4) - .9], [-6.25, shore(-6.4) - 2.2], [-6.4, shore(-6.4) - 3.4]];     // Esteiro's inlet
 const INLET2 = [[5.8, shore(5.8) + .5], [5.8, shore(5.8) - 1.0], [5.65, shore(5.8) - 2.6], [5.8, shore(5.8) - 4.2], [5.5, -7.2], [6.6, -8.5]];            // the river of Outes (its channel runs on up to where the hillside river takes over)
 // the river of Outes up the hillside: its course is dug into the ground itself (see groundH), so the water lies in a real channel
-const RIVERC = (() => { const raw = [[INLET2[3][0], INLET2[3][1]], [INLET2[4][0], INLET2[4][1]], [6.6, -8.5], [7.9, -9.0], [8.4, -10.3], [9.8, -10.7], [10.2, -12.0], [11.3, -12.4]], d = [];
+const RIVERC = (() => { const raw = [[INLET2[4][0], INLET2[4][1]], [6.6, -8.5], [7.9, -9.0], [8.4, -10.3], [9.8, -10.7], [10.2, -12.0], [11.3, -12.4]], d = [];
   for (let i = 0; i < raw.length - 1; i++) for (let k = 0; k < 6; k++) d.push([raw[i][0] + (raw[i + 1][0] - raw[i][0]) * k / 6, raw[i][1] + (raw[i + 1][1] - raw[i][1]) * k / 6]); d.push(raw[raw.length - 1]);
   let q = d; for (let k = 0; k < 6; k++) q = q.map((p, i) => (i === 0 || i === q.length - 1) ? p : [(q[i - 1][0] + 2 * p[0] + q[i + 1][0]) / 4, (q[i - 1][1] + 2 * p[1] + q[i + 1][1]) / 4]); return q; })();
 const RIVERW = RIVERC.map((_, i) => (.78 * Math.pow(1 - i / (RIVERC.length - 1), 1.25) + .05) * Math.min(1, .12 + i / 9));      // it grows out of the sea channel, so it begins with no square end
-const INLET3 = [[-1.2, shoreS(-1.2) - .6], [-1.2, shoreS(-1.2) + 1.0], [-1.1, shoreS(-1.2) + 2.4], [-1.2, shoreS(-1.2) + 3.7]];      // Ézaro: the sea runs in as a short river up to the waterfall
+const INLET3 = [[-1.2, shoreS(-1.2) - .6], [-1.2, shoreS(-1.2) + 1.0], [-1.1, shoreS(-1.2) + 2.3], [-1.2, shoreS(-1.2) + 3.3]];      // Ézaro: the sea runs in as a short river up to the waterfall
 const INLETS = [INLET, INLET2, INLET3];
 const LOURO = [-19.8, shore(-19.8) - 3.0], LAG = [-19.0, shore(-19.0) - 1.9], HILL2 = [12.6, shore(12.6) - 8.5];
 function inletD(x, z) {
@@ -96,7 +96,7 @@ function groundRaw(x, z) {
 // the school yards and the little pitch sit on flat ground: the hill is levelled round them
 let FLAT = null; const flatList = () => FLAT;
 function groundH(x, z) {
-  if (!FLAT) { FLAT = []; for (const [fx, inl, r, so, lvl] of [[-.5, 5.05, 2.1], [15.6, 4.55, 2.1], [-7.6, 4.85, 1.3], [8.3, 1.4, 1.0], [2.2, 5.4, 1.9, 1], [3.9, 7.0, .9], [14.2, 7.4, .9], [-17.8, 1.4, 1.7, 0, 1], [19.6, 1.4, 1.7, 0, 1], [-12.1, 1.45, 1.7, 1, 1], [7.6, 1.45, 1.7, 1, 1]]) { const cz = so ? shoreS(fx) + inl : shore(fx) - inl; FLAT.push([fx, cz, r * 1.25, lvl ? Math.max(groundRaw(fx, cz), .14) : groundRaw(fx, cz) - .02]); } }      // (the last four: the road ends and their car parks, levelled completely smooth)
+  if (!FLAT) { FLAT = []; for (const [fx, inl, r, so, lvl] of [[-.5, 5.05, 2.7, 0, 1], [15.6, 4.55, 2.7, 0, 1], [-7.6, 4.85, 1.3], [8.3, 1.4, 1.0], [2.2, 5.4, 1.9, 1], [3.9, 7.0, .9], [14.2, 7.4, .9], [-17.8, 1.4, 1.7, 0, 1], [19.6, 1.4, 1.7, 0, 1], [-12.1, 1.45, 1.7, 1, 1], [7.6, 1.45, 1.7, 1, 1]]) { const cz = so ? shoreS(fx) + inl : shore(fx) - inl; FLAT.push([fx, cz, r * 1.25, lvl ? Math.max(groundRaw(fx, cz), .14) : groundRaw(fx, cz) - .02]); } }      // (the last four: the road ends and their car parks, levelled completely smooth)
   let h = groundRaw(x, z);
   for (const f of FLAT) { const d = Math.hypot(x - f[0], z - f[1]); if (d < f[2] * 1.9) h += (f[3] - h) * (1 - sstep(f[2] * .8, f[2] * 1.9, d)); }
   if (x > 4.5 && x < 12.5 && z < -5.5 && z > -14) { let cv = 0; for (let i = 0; i < RIVERC.length; i++) { const w2 = RIVERW[i] / 2 + .03, d = Math.hypot(x - RIVERC[i][0], z - RIVERC[i][1]); if (d < w2 + .22) cv = Math.max(cv, 1 - sstep(w2, w2 + .22, d)); } h -= .14 * cv; }      // the river bed
@@ -935,7 +935,7 @@ export function open(opts) {
     roadN.rb = roadN.rb || []; roadN.rb.push([jx, z0]);
   }
   { const rn = relax(roadN, 3); rn.rb = roadN.rb; roadN.length = 0; rn.forEach((q) => roadN.push(q)); }
-  { const cut = [[]]; for (const q of roadRaw) { if (roadN.rb.some(([jx, z0]) => Math.hypot(q[0] - jx, q[1] - z0) < RB + .12)) { if (cut[cut.length - 1].length) cut.push([]); } else cut[cut.length - 1].push(q); } for (const part of cut) if (part.length > 2) buildRoad(part); }
+  { const cut = [[]]; for (const q of roadRaw) { if (roadN.rb.some(([jx, z0]) => Math.hypot(q[0] - jx, q[1] - z0) < RB - .1)) { if (cut[cut.length - 1].length) cut.push([]); } else cut[cut.length - 1].push(q); } for (const part of cut) if (part.length > 2) buildRoad(part); }
   for (const [jx, z0] of roadN.rb) {
     const hb = Math.max(groundH(jx, z0), .07), mk = (r0, r1, mat, lift) => { const m = new THREE.Mesh(new THREE.RingGeometry(r0, r1, 48, 1), mat); m.rotation.x = -PI / 2; m.userData.ribbon = true; const g = new THREE.Group(); g.add(m); W(put(g, jx, z0, 0, hb + lift, true)); return m; };
     const lift0 = -SEA;
@@ -1433,6 +1433,11 @@ export function open(opts) {
     for (let k = 0; k < 16; k++) { const fo = new THREE.Mesh(new THREE.IcosahedronGeometry(.06 + (k % 3) * .022, 1), std(0xffffff, { transparent: true, opacity: .85, roughness: 1 })); g.add(fo); falls.push({ foam: fo, k, a: k * .6 }); }
     const mist = new THREE.Mesh(new THREE.SphereGeometry(.36, 12, 8), std(0xffffff, { transparent: true, opacity: .4, roughness: 1 })); mist.position.set(0, .14, .74); mist.scale.set(1.4, .55, 1.1); g.add(mist); falls.push({ mist });
     for (let k = 0; k < 22; k++) { const sp = new THREE.Mesh(new THREE.SphereGeometry(.016, 5, 4), std(0xffffff, { transparent: true, opacity: .8 })); g.add(sp); falls.push({ spray: sp, k, ph: rnd() }); }
+    /* a wooden boardwalk beside the fall: planks climbing the rocks on the right-hand side, with posts and a rope rail */
+    { const wood = std(0xb98a5a), dark = std(0x8a6a44), rope = std(0xcdb27c);
+      for (let i = 0; i < 12; i++) { const y = .04 + i * .085, z = 1.15 - i * .11, pl = box(.26, .02, .12, wood); pl.position.set(.85, y, z); g.add(pl); const sup = box(.04, y + .5, .04, dark); sup.position.set(.85 + (i % 2 ? .1 : -.1), (y - .5) / 2, z); g.add(sup); }
+      for (let i = 0; i <= 11; i += 3) { const y = .04 + i * .085, z = 1.15 - i * .11, po = box(.02, .13, .02, dark); po.position.set(.99, y + .08, z); g.add(po); }
+      for (let i = 0; i < 11; i++) { const y0 = .04 + i * .085, z0 = 1.15 - i * .11, y1 = y0 + .085, z1 = z0 - .11, ln = box(.012, .012, Math.hypot(.11, .085) + .01, rope); ln.position.set(.99, (y0 + y1) / 2 + .13, (z0 + z1) / 2); ln.rotation.x = Math.atan2(.085, .11); g.add(ln); } }
     W(put(g, fx, fz, yaw, -.08));
     for (const x of [-3.7, -2.9, -2.2, .4, 1.1, 1.8]) hhS(x, .9 + rnd() * .3, 1 + (hc % 2), { stone: true });
     const [cx, cz] = onShoreS(-3.4, 3.1); W(put(church(.9), cx, cz, seaYawS(cx), -.03)); }
@@ -1457,7 +1462,7 @@ export function open(opts) {
 
   // ---- a pretty street of little houses with tulip borders, leading inland from the south road (after the reference miniatures)
   const stX = 4.6, stZ0 = shoreS(stX) + 2.3;      // the street begins a clear step beyond the road pavement, so the houses never touch it
-  const stPts = []; { const r0 = roadS.reduce((m, q) => Math.abs(q[0] - stX) < Math.abs(m[0] - stX) ? q : m); stPts.push([stX, r0[1] - .25]); stPts.push([stX, r0[1] + .3]); for (let k = 0; k <= 22; k++) stPts.push([stX + .28 * Math.sin(k * .38) * Math.min(1, k / 3), stZ0 + k * .2]); }
+  const stPts = []; { const r0 = roadS.reduce((m, q) => Math.abs(q[0] - stX) < Math.abs(m[0] - stX) ? q : m); stPts.push([stX, r0[1]]); stPts.push([stX, r0[1] + .35]); for (let k = 0; k <= 22; k++) stPts.push([stX + .28 * Math.sin(k * .38) * Math.min(1, k / 3), stZ0 + k * .2]); }
   { const w1 = ribbon(relax(stPts, 3), .7, walkMat, .018, false, undefined, true, 'edge'); w1.renderOrder = 1; W(w1); const a1 = ribbon(relax(stPts, 3), .5, asphalt, .03, false, undefined, true, 'edge'); a1.renderOrder = 2; W(a1); roadMeshes.push(a1); }
   { const PAST = [0xdcb3b4, 0xe8c9b4, 0xf1e0c6, 0xcdb2bb, 0xe6bcab, 0xf0e1cd], RF = [0xd25a4a, 0xdc6a52, 0x6f8fa0, 0xc7503f, 0xe07a5c, 0xb84a40];
     for (let k = 0; k < 5; k++) for (const sd of [-1, 1]) {
