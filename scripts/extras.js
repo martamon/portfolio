@@ -257,7 +257,10 @@
     'html.x-about-on.x-about-on [data-xbgm]{background-image:none!important;background:transparent!important}html.x-about-on.x-about-on[data-xp="about"] [data-framer-name="Content"]::before{display:none!important}',
     'html.x-about-on [data-xnc],html.x-about-on [data-xn],html.x-about-on [data-xbl],html.x-about-on .x-dial,html.x-about-on .x-lang,html.x-about-on a[data-xf]{mix-blend-mode:normal!important}html.x-about-on [data-xn],html.x-about-on [data-xn] *,html.x-about-on .x-dial,html.x-about-on .x-lang,html.x-about-on .x-lang button,html.x-about-on [class*="framer-text"]{color:#fbefe9!important}html.x-about-on .x-dn{color:#3a1818}',
     'html.x-about-on.x-about-on [data-xn],html.x-about-on.x-about-on [data-xn] *,html.x-about-on.x-about-on [data-xnc] *,html.x-about-on.x-about-on [data-framer-name="Studio Link"] *,html.x-about-on.x-about-on [data-framer-name="Contact Link"] *{color:#fbefe9!important;mix-blend-mode:normal!important}html.x-about-on.x-about-on [data-xnc] img,html.x-about-on.x-about-on a[data-xf] *{filter:none!important;mix-blend-mode:normal!important}',
-    'html.x-about-on.x-about-on div[data-xnc],html.x-about-on.x-about-on div[data-xbl],html.x-about-on.x-about-on [data-xnc] img{mix-blend-mode:normal!important;filter:none!important}html.x-about-on.x-about-on [data-xnc] a,html.x-about-on.x-about-on [data-xnc] a *{color:#f3f7ff!important;text-shadow:0 1px 10px rgba(10,30,70,.45)}',
+    'html.x-about-on.x-about-on div[data-xnc],html.x-about-on.x-about-on div[data-xbl],html.x-about-on.x-about-on [data-xnc] img{mix-blend-mode:normal!important;filter:none!important}html.x-about-on.x-about-on [data-xnc] a,html.x-about-on.x-about-on [data-xnc] a *{color:#f3f7ff!important;text-shadow:none!important}',
+    // About by day and by night: softer, lighter and less contrasted by day; darker at night (the page follows the day / night button)
+    'html.x-about-on .x-ab-vid{transition:filter 1.4s ease;filter:brightness(1.1) contrast(.86) saturate(.9)}html.x-about-on[data-xdusk] .x-ab-vid{filter:brightness(.92) contrast(.94) saturate(.92)}html.x-about-on[data-xnight] .x-ab-vid{filter:brightness(.58) contrast(1.02) saturate(.85)}',
+    'html.x-about-on body::before{content:"";position:fixed;inset:0;z-index:1;pointer-events:none;background:rgba(255,255,255,.07);transition:background 1.4s ease}html.x-about-on[data-xdusk] body::before{background:rgba(6,14,40,.14)}html.x-about-on[data-xnight] body::before{background:rgba(3,9,28,.42)}',
     'html.x-about-on,html.x-about-on body{background:#265899 url(/extras/about/ground.webp?v=2) top center/100% auto repeat-y!important}',
     '.x-ab-bg{position:fixed;left:0;top:0;width:100%;height:100vh;overflow:hidden;z-index:0;pointer-events:none;will-change:transform}.x-ab-vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:62% 100%;transform-origin:50% 100%}',
     
@@ -2054,6 +2057,7 @@
           var u = ((cxw - r.left - dx) / sc) / vw, v = ((cyw - r.top - dy) / sc) / vh, acc = 0, n = 0;
           for (var oy = -1; oy <= 1; oy++) for (var ox = -2; ox <= 2; ox++) { var X = Math.round(u * W) + ox, Y = Math.round(v * Hc) + oy; if (X >= 0 && X < W && Y >= 0 && Y < Hc) { var k = (Y * W + X) * 4; acc += (data[k] * .2126 + data[k + 1] * .7152 + data[k + 2] * .0722) / 255; n++; } }
           if (n) L = acc / n;
+          var hd = document.documentElement; L *= hd.hasAttribute('data-xnight') ? .52 : hd.hasAttribute('data-xdusk') ? .9 : 1.08;
         }
         var el = words[i], was = el.__d, dark = was === undefined ? L > .5 : (was ? L > .44 : L > .56);
         if (was !== dark) { el.__d = dark; el.style.setProperty('color', dark ? '#071230' : '#ffffff', 'important'); }
