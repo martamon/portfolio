@@ -270,6 +270,8 @@
     'html [data-xbl]:has([data-xo*="PROJECTS"],[data-xo*="PROYECTOS"],[data-xo*="PROXECTOS"]) p{padding-bottom:3px!important;background:linear-gradient(currentColor,currentColor) 0 100%/100% 1px no-repeat!important}',
     'html footer a,html footer p,html footer span{font-family:"IBM Plex Mono","IBM Plex Mono Placeholder",monospace!important;font-size:12.5px!important;font-weight:500!important;letter-spacing:.06em!important;text-transform:uppercase!important}',
     'html a[data-framer-name="Primary"]:has([data-xo*="PROJECTS"],[data-xo*="PROYECTOS"],[data-xo*="PROXECTOS"]),html a[data-framer-name="Primary"]:has([data-xo*="PROJECTS"],[data-xo*="PROYECTOS"],[data-xo*="PROXECTOS"])::before,html a[data-framer-name="Primary"]:has([data-xo*="PROJECTS"],[data-xo*="PROYECTOS"],[data-xo*="PROXECTOS"])::after{border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;outline:0!important;content:none!important}',
+    // the intro welcome text (was Switzer): Plus Jakarta Sans in capitals with open spacing, like onseis.com
+    'html p[style*="Switzer"],html p[style*="Switzer"] *{font-family:"Plus Jakarta Sans","Inter",sans-serif!important;font-weight:600!important;font-size:15px!important;letter-spacing:.05em!important;line-height:1.6!important;text-transform:uppercase!important;color:var(--xtone,#3a4458)!important}',
     // About: laid out like the project pages: small bold title, a calm left-aligned paragraph, the head on the right
     'html[data-xp="about"] [data-framer-name="Wordmark"]{left:40px!important;top:190px!important;width:auto!important;height:auto!important;transform:none!important}',
     'html[data-xp="about"] [data-framer-name="Wordmark"] p{font-family:"Inter","Inter Placeholder",sans-serif!important;font-size:34px!important;font-weight:700!important;letter-spacing:-.03em!important;line-height:1.05!important;text-transform:uppercase!important;white-space:nowrap!important}',
@@ -417,7 +419,10 @@
     '.x-ov{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);z-index:3;display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:0 20px;pointer-events:none;color:#fff;font:500 13px/1.2 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.05em;-webkit-text-stroke:.28px currentColor;text-transform:uppercase;}',
     '.x-ov-l{flex:0 1 auto;max-width:42%}.x-ov-r{display:flex;gap:12px;text-align:right;justify-content:flex-end;flex:0 1 58%}.x-ov i,.x-ov b{font-style:normal;font-weight:500}.x-ov b{white-space:nowrap}',
     // on hover the name and the details glide towards each other and meet in the middle (or, on every second card, start together and drift apart)
-    '.x-ov-l,.x-ov-r{transition:transform 1.25s cubic-bezier(.65,0,.25,1)!important;will-change:transform}',
+    // project name on the card: a thin rule grows under it on hover, like the contact links
+    '.x-ov-l{text-decoration:underline!important;text-decoration-thickness:1px!important;text-underline-offset:4px!important;text-decoration-color:transparent!important;transition:text-decoration-color .45s ease,transform 1.25s cubic-bezier(.65,0,.25,1)!important}',
+    'a:hover .x-ov-l,a:focus-visible .x-ov-l,.x-ov:hover .x-ov-l{text-decoration-color:currentColor!important}',
+    '.x-ov-l,.x-ov-r{transition:transform 1.25s cubic-bezier(.65,0,.25,1),text-decoration-color .45s ease!important;will-change:transform}',
     'html main[data-xhome] [data-xhi] a .x-ov[data-m] .x-ov-l,html main[data-xhome] [data-xhi] a .x-ov[data-m] .x-ov-r{transition:transform 1.25s cubic-bezier(.65,0,.25,1)!important}',
     // while the pointer is on a card the details drift towards the name and back, slowly and without stopping; leaving lets them settle back in place the same way
     'html main[data-xhome] [data-xhi][data-xph="1"] a .x-ov .x-ov-r{transform:translateX(calc(var(--xj,0px) * -1))!important}',
