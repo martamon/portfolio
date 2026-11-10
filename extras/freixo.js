@@ -1377,7 +1377,7 @@ export function open(opts) {
     g.userData.fp = 0; W(put(g, bx, bz, AX.yaw, .02));
   }
   { /* houses on both sides of the alameda, turned to face it */
-    [[-1, .5, 0], [1, .5, 1], [-1, 1.6, 2], [1, 1.6, 3], [-1, 2.7, 4], [1, 2.8, 5]].forEach(([sd, t, k]) => { const [cx, cz] = AX.at(t), nx = -AX.uz * sd, nz = AX.ux * sd, hx = cx + nx * 1.15, hz = cz + nz * 1.15;
+    [[-1, .4, 0], [1, .4, 1], [-1, 1.35, 2], [1, 1.35, 3]].forEach(([sd, t, k]) => { const [cx, cz] = AX.at(t), nx = -AX.uz * sd, nz = AX.ux * sd, hx = cx + nx * 1.3, hz = cz + nz * 1.3;
       const hs = house({ w: .38, d: .32, floors: 1 + (k % 2), wall: [0xf7f1e4, 0xd8e8f0, 0xf6e2b8, 0xf2d4c4, 0xe3efe6, 0xf2c6a8][k % 6], roof: ROOF[k % ROOF.length], gal: false, shut: [0x2f6fa8, 0xb4483a, 0x4a9a74][k % 3], fr: k + 20, door: 0x2f6fa8 }); hs.userData.pri = 4; hs.userData.fp = .3; W(put(hs, hx, hz, Math.atan2(-nx, -nz) + PI / 2 * 0 + Math.atan2(0, 1), -.02)); hs.rotation.y += 0; });
   }
   { const sqM = square(-12.8, 3.05, 2.4, ALW, { trees: 0, tables: 2, people: 2, at: AX.A, yaw: AX.yaw, noSlab: true });
