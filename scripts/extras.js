@@ -259,7 +259,7 @@
     'html.x-about-on.x-about-on [data-xn],html.x-about-on.x-about-on [data-xn] *,html.x-about-on.x-about-on [data-xnc] *,html.x-about-on.x-about-on [data-framer-name="Studio Link"] *,html.x-about-on.x-about-on [data-framer-name="Contact Link"] *{color:#fbefe9!important;mix-blend-mode:normal!important}html.x-about-on.x-about-on [data-xnc] img,html.x-about-on.x-about-on a[data-xf] *{filter:none!important;mix-blend-mode:normal!important}',
     'html.x-about-on,html.x-about-on body{background:#265899!important;background-image:none!important}',
     '.x-ab-bg{position:fixed;left:0;top:0;width:100%;height:100vh;overflow:hidden;z-index:0;pointer-events:none;will-change:transform;background:#265899}.x-ab-vid{position:absolute;top:0;width:max(100%,140vh);left:calc((100% - max(100%,140vh)) * .6);height:auto;-webkit-mask-image:linear-gradient(#000 90%,transparent);mask-image:linear-gradient(#000 90%,transparent)}.x-ab-blue{position:absolute;inset:0;background:#265899;opacity:0}',
-    'html.x-about-on.x-about-on .x-ab-shade,html.x-about-on.x-about-on [data-xbgm].x-ab-shade{position:absolute;inset:0;background:radial-gradient(ellipse 46% 40% at 14% 26%,rgba(2,8,26,.62),rgba(2,8,26,.36) 55%,transparent 100%)!important;pointer-events:none}',
+    'html.x-about-on.x-about-on .x-ab-shade,html.x-about-on.x-about-on [data-xbgm].x-ab-shade{position:absolute;inset:0;background:radial-gradient(ellipse 50% 44% at 14% 26%,rgba(2,8,26,.84),rgba(2,8,26,.55) 55%,transparent 100%)!important;pointer-events:none}',
     '.x-ab-grain{position:absolute;inset:-80px;pointer-events:none;mix-blend-mode:overlay;opacity:.22;animation:x-grain .8s steps(6) infinite}@keyframes x-grain{0%{transform:translate(0,0)}17%{transform:translate(-37px,23px)}33%{transform:translate(29px,-41px)}50%{transform:translate(-18px,-12px)}67%{transform:translate(41px,31px)}83%{transform:translate(-26px,38px)}100%{transform:translate(0,0)}}@media (prefers-reduced-motion:reduce){.x-ab-grain{animation:none}}',
     'html[data-xp="about"] [data-framer-name="Wordmark"],html[data-xp="about"] [data-framer-name="Caption"]{z-index:5!important}',
     // titles in Plus Jakarta Sans, the display face of onseis.com (the small mono text keeps its own face)
@@ -1529,7 +1529,7 @@
     if (planet) return;
     planet = { loading: true };
     jfHint(0);
-    import('/extras/freixo.js?v=276').then(function (m) {
+    import('/extras/freixo.js?v=277').then(function (m) {
       planet = m.open({ getDark: function () { return darkness(theme.hour); }, getHour: function () { return theme.hour; }, onClose: function () { planet = null; } });
     }).catch(function () { planet = null; });
   }
