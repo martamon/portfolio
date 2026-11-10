@@ -1320,8 +1320,8 @@ export function open(opts) {
     }
     for (const sx of [-1, 1]) { const bn = new THREE.Group(); bn.add(box(.2, .035, .06, std(0x8a6a44))); const bk = box(.2, .06, .012, std(0x8a6a44)); bk.position.set(0, .05, -.03); bn.add(bk); const a = yaw, tx = px + sx * w * .3 * Math.cos(a) + d * .38 * Math.sin(a), tz = pz - sx * w * .3 * Math.sin(a) + d * .38 * Math.cos(a); W(put(bn, tx, tz, yaw, .045 + up(tx, tz))); }
     if (o.tables) {   // a café terrace: round tables with four chairs and a parasol, in two rows
-      const cols = [0xc9473a, 0x2f6fa8, 0xe9b94a, 0x3b9a6a, 0xe277a0, 0x4fb3a8], nT = o.tables, rows = 2, per = Math.ceil(nT / rows);
-      for (let k = 0; k < nT; k++) { const r = Math.floor(k / per), c = k % per, lx = (c - (per - 1) / 2) * w * .36, lz = (r - .5) * d * .44;
+      const cols = [0xc9473a, 0x2f6fa8, 0xe9b94a, 0x3b9a6a, 0xe277a0, 0x4fb3a8], nT = o.tables, rows = 1, per = nT;      /* the terrace tables stand in one tidy row down the middle of the plaza */
+      for (let k = 0; k < nT; k++) { const r = Math.floor(k / per), c = k % per, lx = (c - (per - 1) / 2) * w * .3, lz = 0;
         const a = yaw, tx = px + lx * Math.cos(a) + lz * Math.sin(a), tz = pz - lx * Math.sin(a) + lz * Math.cos(a), g = new THREE.Group();
         const top = new THREE.Mesh(new THREE.CylinderGeometry(.1, .1, .016, 14), std(0xf4efe4)); top.position.y = .13; g.add(top); const leg = new THREE.Mesh(new THREE.CylinderGeometry(.014, .02, .13, 6), std(0x8a6a44)); leg.position.y = .065; g.add(leg);
         for (let q = 0; q < 4; q += 2) { const ca = q * PI / 2 + .4, ch = new THREE.Group(); ch.position.set(Math.cos(ca) * .17, 0, Math.sin(ca) * .17); ch.rotation.y = -ca + PI / 2; const st = box(.07, .012, .07, std(0x6b4a2a)); st.position.y = .07; ch.add(st); const bk = box(.07, .07, .012, std(0x6b4a2a)); bk.position.set(0, .11, -.03); ch.add(bk); for (const [lx2, lz2] of [[-.028, -.028], [.028, -.028], [-.028, .028], [.028, .028]]) { const l = box(.01, .07, .01, std(0x6b4a2a)); l.position.set(lx2, .035, lz2); ch.add(l); } g.add(ch); }
@@ -1345,7 +1345,7 @@ export function open(opts) {
     const bb = box(.06, .08, .008, std(0x34414f)); bb.position.set(.17, .05, z + .09); bb.rotation.x = -.15; g.add(bb);
     g.userData.fp = .42; g.userData.pri = 5; return g;
   }
-  { const [cx, cz] = onShore(-14.35, 3.35); W(put(cafe(0xc9473a), cx, cz, seaYaw(cx), -.02)); }
+  { const [cx, cz] = AX.at(-1.6); W(put(cafe(0xc9473a), cx, cz, Math.atan2(AX.ux, AX.uz), -.02)); }      // the café closes the west end of the plaza, facing it
   const archway = (x, inl, sc, yawAdd, yawFix, pos) => { const [ax, az] = pos || onShore(x, inl), g = new THREE.Group(), st = std(0xcfc7b4), st2 = std(0xb9b2a0), R = .2;   // a stone gateway: two piers, a round arch with a keystone and a small cross
     for (const sx of [-1, 1]) { const pl = box(.085, .32, .085, st); pl.position.set(sx * (R + .01), .16, 0); g.add(pl); const cp = box(.108, .03, .108, st2); cp.position.set(sx * (R + .01), .335, 0); g.add(cp); const bs = box(.108, .035, .108, st2); bs.position.set(sx * (R + .01), .0175, 0); g.add(bs); }
     const arc = new THREE.Mesh(new THREE.TorusGeometry(R + .01, .04, 8, 24, PI), st); arc.position.y = .32; g.add(arc);
@@ -1365,7 +1365,7 @@ export function open(opts) {
         if (k % 6 === 1) for (const sd of [-1, 1]) { const tx = pts[k][0] + nx * .6 * sd, tz = pts[k][1] + nz * .6 * sd, tr = new THREE.Group(), tk = new THREE.Mesh(new THREE.CylinderGeometry(.014, .02, .2, 6), std(0x7a5a3c)); tk.position.y = .1; tr.add(tk); const cr = new THREE.Mesh(new THREE.IcosahedronGeometry(.1, 1), std(k % 4 === 1 ? 0xe2a042 : 0x3f9576, { flatShading: true })); cr.position.y = .27; tr.add(cr); tr.userData.fp = 0; W(put(tr, tx, tz, 0, .03)); }
         if (k % 6 === 4) for (const sd of [-1, 1]) { const bx = pts[k][0] + nx * .4 * sd, bz = pts[k][1] + nz * .4 * sd, bn = new THREE.Group(); bn.add(box(.14, .025, .045, std(0x8a6a44))); const bk = box(.14, .045, .01, std(0x8a6a44)); bk.position.set(0, .04, -.02); bn.add(bk); bn.userData.fp = 0; W(put(bn, bx, bz, Math.atan2(-nz * sd, nx * sd) + PI / 2, .045)); } } }
   }
-  { const sqM = square(-12.8, 3.05, 2.4, ALW, { trees: 0, tables: 3, people: 5, at: AX.A, yaw: AX.yaw });
+  { const sqM = square(-12.8, 3.05, 2.4, ALW, { trees: 0, tables: 3, people: 3, at: AX.A, yaw: AX.yaw });
   }
   // ---- the shipyard (astillero) on the outskirts, by the sea: a big shed, a slipway with rails, a boat on stocks, a gantry crane and a hull being built
   { let sx = 0, sz = 0, found = false, flip = false;
