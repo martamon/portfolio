@@ -1019,7 +1019,7 @@ export function open(opts) {
   { const white = std(0xf8f4ea, { roughness: 1, polygonOffset: true, polygonOffsetFactor: -8, polygonOffsetUnits: -8 }), mkLamp = (col, on) => new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: on, roughness: .4 });
     const spotsFor = (ri, want) => { const r = routes[ri], out = [];
       for (const w0 of want) { let best = null; for (let d = 0; d <= .1 && !best; d += .004) for (const sg of [1, -1]) { const u = w0 + sg * d; if (u < .05 || u > .95) continue; const [x, z, yaw] = routeAt(r, u), sy = Math.sin(yaw), cy = Math.cos(yaw);
-          const okG = [-.5, -.3, 0, .3, .5].every((o) => groundH(x + sy * o, z + cy * o) > .06) && inletD(x, z) > 1.1 && (riverPts || []).every((q) => Math.hypot(q[0] - x, q[1] - z) > 1.0) && (roadN.rb || []).every(([jx, z0]) => Math.hypot(x - jx, z - z0) > 1.5) && out.every((o2) => Math.abs(o2.u - u) > .07);
+          const okG = [-.5, -.3, 0, .3, .5].every((o) => groundH(x + sy * o, z + cy * o) > .06) && inletD(x, z) > 1.1 && (riverPts || []).every((q) => Math.hypot(q[0] - x, q[1] - z) > 1.0) && (roadN.rb || []).every(([jx, z0]) => Math.hypot(x - jx, z - z0) > 1.5) && out.every((o2) => Math.abs(o2.u - u) > .07) && !(ri === 1 && Math.abs(x - 4.6) < 1.5) && !(ri === 0 && Math.abs(x + 15.4) < 2.0)      /* never at a side-street junction */;
           if (okG) best = { u, x, z, yaw }; }
         if (best) out.push(best); }
       return out; };
@@ -1441,8 +1441,8 @@ export function open(opts) {
     for (const [hx, hz, c, mn, ry] of [[-.9, .35, 0x7a4a2e, 0x2a1a10, .6], [.95, -.2, 0xf1ece0, 0x8a7a66, 3.4]]) { const h = horse(c, mn), w = new THREE.Group(); h.g.scale.setScalar(.5); w.add(h.g); const x = ix + hx, z = iz + hz; put(w, x, z, ry, -.02); W(w); horses.push({ h, ph: rnd() * 6 }); } }
 
   // ---- a pretty street of little houses with tulip borders, leading inland from the south road (after the reference miniatures)
-  const stX = 4.6, stZ0 = shoreS(stX) + 1.5;
-  const stPts = []; { const r0 = roadS.reduce((m, q) => Math.abs(q[0] - stX) < Math.abs(m[0] - stX) ? q : m); for (let k = 0; k <= 22; k++) stPts.push([r0[0] + (stX - r0[0]) * Math.min(1, k / 3) + .28 * Math.sin(k * .38) * Math.min(1, k / 4), r0[1] + .64 + k * .2]); }      /* the street starts exactly on the south road and leaves it straight */
+  const stX = 4.6, stZ0 = shoreS(stX) + 2.3;      // the street begins a clear step beyond the road pavement, so the houses never touch it
+  const stPts = []; { const r0 = roadS.reduce((m, q) => Math.abs(q[0] - stX) < Math.abs(m[0] - stX) ? q : m); stPts.push([stX, r0[1] + .3]); for (let k = 0; k <= 22; k++) stPts.push([stX + .28 * Math.sin(k * .38) * Math.min(1, k / 3), stZ0 + k * .2]); }
   { const w1 = ribbon(relax(stPts, 3), .7, walkMat, .018, false, undefined, true, 'edge'); w1.renderOrder = 1; W(w1); const a1 = ribbon(relax(stPts, 3), .5, asphalt, .03, false, undefined, true, 'edge'); a1.renderOrder = 2; W(a1); roadMeshes.push(a1); }
   { const PAST = [0xdcb3b4, 0xe8c9b4, 0xf1e0c6, 0xcdb2bb, 0xe6bcab, 0xf0e1cd], RF = [0xd25a4a, 0xdc6a52, 0x6f8fa0, 0xc7503f, 0xe07a5c, 0xb84a40];
     for (let k = 0; k < 5; k++) for (const sd of [-1, 1]) {
@@ -2310,7 +2310,7 @@ export function open(opts) {
       c.legs.forEach((l, i) => { l.rotation.z = graze ? 0 : Math.sin(t * 4 + i * PI / 2 + c.ph) * .25; });
       if (c.kind === 'rabbit' && !graze) c.g.position.addScaledVector(c.g.position.clone().normalize(), Math.max(0, Math.sin(t * 5 + c.ph)) * .03);
     }
-    for (const o of horses) { const g = Math.max(0, Math.sin(t * .5 + o.ph)); o.h.head.rotation.z = -g * .9 + Math.sin(t * 2 + o.ph) * .03; }
+    for (const o of horses) o.h.head.rotation.z = -.35;      // the island horses stand still, calmly grazing
     for (const f of falls) {
       if (f.mist) { f.mist.scale.set(1.4 + Math.sin(t * 2) * .1, .55 + Math.sin(t * 2) * .05, 1.1); f.mist.material.opacity = .36 + Math.sin(t * 1.6) * .07; }
       else if (f.foam) { const u = (t * .5 + f.k / 16) % 1, r = .14 + u * .5; f.foam.position.set(Math.cos(f.a + f.k) * r * .8 + Math.sin(t * 1.3 + f.k) * .03, .035 + Math.sin(t * 4 + f.k) * .012, .72 + Math.abs(Math.sin(f.a + f.k * 2)) * r * .9); f.foam.material.opacity = .9 * (1 - u); f.foam.scale.setScalar(.7 + u * .8); }
