@@ -786,9 +786,9 @@ export function open(opts) {
     const cb = box(.2, .045, .045, std(0xc9c3b2)); cb.position.y = .56; cr.add(cb);
     W(put(cr, cx2, cz2, 0, -.01));
     const [chx, chz] = onShore(-13.0, 5.2); const ch = church(1.25); W(put(ch, chx, chz, seaYaw(chx), -.03));
-    { const [mx, mz] = AX.at(4.45); W(put(mercado(), mx, mz, Math.atan2(-AX.ux, -AX.uz), -.02));      // the stone market hall closes the east end of the alameda
+    { const [mx, mz] = AX.at(3.7); W(put(mercado(), mx, mz, Math.atan2(-AX.ux, -AX.uz), -.02));      // the stone market hall closes the east end of the alameda
       // a round stone square in front of the market, with a fountain and stone houses round it
-      { const [qx, qz] = AX.at(1.95), sq = new THREE.Group(), pav = new THREE.Mesh(new THREE.CylinderGeometry(.78, .78, 1.3, 32), std(0xd3cbb8)); pav.position.y = -.63; sq.add(pav);   /* a deep stone base, so the fountain square never sinks into the slope */
+      { const [qx, qz] = AX.at(1.6), sq = new THREE.Group(), pav = new THREE.Mesh(new THREE.CylinderGeometry(.78, .78, 1.3, 32), std(0xd3cbb8)); pav.position.y = -.63; sq.add(pav);   /* a deep stone base, so the fountain square never sinks into the slope */
         const kerb = new THREE.Mesh(new THREE.TorusGeometry(.78, .03, 6, 36), std(0xb7b09e)); kerb.rotation.x = PI / 2; kerb.position.y = .03; sq.add(kerb);
         for (let k = 0; k < 8; k++) { const sp = box(.015, .005, .56, std(0xb7b09e)); sp.rotation.y = k * PI / 8; sp.position.y = .025; sq.add(sp); }
         const fb = new THREE.Mesh(new THREE.CylinderGeometry(.2, .22, .08, 14), std(0xcfc7b4)); fb.position.y = .06; sq.add(fb); const fw = new THREE.Mesh(new THREE.CylinderGeometry(.17, .17, .02, 14), std(0x74cfdb, { transparent: true, opacity: .85 })); fw.position.y = .1; sq.add(fw); const fc = new THREE.Mesh(new THREE.CylinderGeometry(.025, .035, .22, 6), std(0xcfc7b4)); fc.position.y = .17; sq.add(fc);
@@ -935,12 +935,12 @@ export function open(opts) {
     roadN.rb = roadN.rb || []; roadN.rb.push([jx, z0]);
   }
   { const rn = relax(roadN, 3); rn.rb = roadN.rb; roadN.length = 0; rn.forEach((q) => roadN.push(q)); }
-  { const cut = [[]]; for (const q of roadRaw) { if (roadN.rb.some(([jx, z0]) => Math.hypot(q[0] - jx, q[1] - z0) < RB + .3)) { if (cut[cut.length - 1].length) cut.push([]); } else cut[cut.length - 1].push(q); } for (const part of cut) if (part.length > 2) buildRoad(part); }
+  { const cut = [[]]; for (const q of roadRaw) { if (roadN.rb.some(([jx, z0]) => Math.hypot(q[0] - jx, q[1] - z0) < RB + .12)) { if (cut[cut.length - 1].length) cut.push([]); } else cut[cut.length - 1].push(q); } for (const part of cut) if (part.length > 2) buildRoad(part); }
   for (const [jx, z0] of roadN.rb) {
     const hb = Math.max(groundH(jx, z0), .07), mk = (r0, r1, mat, lift) => { const m = new THREE.Mesh(new THREE.RingGeometry(r0, r1, 48, 1), mat); m.rotation.x = -PI / 2; m.userData.ribbon = true; const g = new THREE.Group(); g.add(m); W(put(g, jx, z0, 0, hb + lift, true)); return m; };
     const lift0 = -SEA;
-    mk(RB - .4, RB + .5, walkMat, lift0 + .018);      // the roundabout is the same road: same pavement and the very same asphalt, joined to the roads that reach it
-    roadMeshes.push(mk(RB - .28, RB + .28, asphalt, lift0 + .03));
+    mk(RB - .4, RB + .5, std(0xe2cba0, { roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 }), lift0 + .008);      // the roundabout is the same road: same pavement and the very same asphalt, joined to the roads that reach it
+    { const rm = mk(RB - .28, RB + .28, std(0x808a98, { roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -9, polygonOffsetUnits: -9 }), lift0 + .04); rm.renderOrder = 6; roadMeshes.push(rm); }
     const isl2 = new THREE.Mesh(new THREE.CylinderGeometry(RB - .3, RB - .27, .05, 28), std(0x7fb35a)); const ig = new THREE.Group(); ig.add(isl2);
     const tr = new THREE.Mesh(new THREE.CylinderGeometry(.015, .02, .16, 6), std(0x7a5a3c)); tr.position.y = .1; ig.add(tr); const cr = new THREE.Mesh(new THREE.IcosahedronGeometry(.11, 2), std(0x3f9576, { flatShading: true })); cr.position.y = .24; ig.add(cr);
     W(put(ig, jx, z0, 0, hb + .04, true));
@@ -1358,7 +1358,7 @@ export function open(opts) {
   { /* the alameda: a tree-lined promenade from the arcade square to the round fountain, and on to the stone market, all in one stone paving */
     const stoneP = std(0xd3cbb8, { roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
     const lerpP = (a, b, n) => { const out = []; for (let k = 0; k <= n; k++) { const u = k / n, p = onShore(a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u); out.push([p[0], p[1]]); } return out; };
-    const legs = [[-1.3, 3.8]];
+    const legs = [[-1.3, 3.05]];
     for (const [a, b] of legs) { const pts = []; for (let k = 0; k <= 24; k++) pts.push(AX.at(a + (b - a) * k / 24)); const r = ribbon(pts, ALW, stoneP, .03, false, undefined, true, 'edge'); r.renderOrder = 3; W(r);
       const kb = ribbon(pts, ALW + .06, std(0xb7b09e, { roughness: 1, side: THREE.DoubleSide }), .024, false, undefined, true, 'edge'); kb.renderOrder = 2; W(kb);
       for (let k = 1; k < pts.length - 1; k += 1) { const a2 = pts[k - 1], b2 = pts[k + 1], dx = b2[0] - a2[0], dz = b2[1] - a2[1], l = Math.hypot(dx, dz) || 1, nx = -dz / l, nz = dx / l;
@@ -1366,7 +1366,7 @@ export function open(opts) {
         if (k % 6 === 4) for (const sd of [-1, 1]) { const bx = pts[k][0] + nx * .4 * sd, bz = pts[k][1] + nz * .4 * sd, bn = new THREE.Group(); bn.add(box(.14, .025, .045, std(0x8a6a44))); const bk = box(.14, .045, .01, std(0x8a6a44)); bk.position.set(0, .04, -.02); bn.add(bk); bn.userData.fp = 0; W(put(bn, bx, bz, Math.atan2(-nz * sd, nx * sd) + PI / 2, .045)); } } }
   }
   { /* a bandstand (palco de música): an eight-sided stone base with slim columns and a domed roof, in the middle of the promenade */
-    const [bx, bz] = AX.at(3.1), g = new THREE.Group(), cream = std(0xf4ead2), teal = std(0x3f8f9e), gold = std(0xe9b94a);
+    const [bx, bz] = AX.at(2.4), g = new THREE.Group(), cream = std(0xf4ead2), teal = std(0x3f8f9e), gold = std(0xe9b94a);
     const base = new THREE.Mesh(new THREE.CylinderGeometry(.32, .34, .75, 8), std(0xd3cbb8)); base.position.y = -.33; g.add(base);
     const floor = new THREE.Mesh(new THREE.CylinderGeometry(.3, .3, .03, 8), std(0xc9b48a)); floor.position.y = .045; g.add(floor);
     for (let k = 0; k < 8; k++) { const a = k * PI / 4 + PI / 8, col = new THREE.Mesh(new THREE.CylinderGeometry(.009, .011, .24, 6), cream); col.position.set(Math.cos(a) * .27, .17, Math.sin(a) * .27); g.add(col); }
@@ -1375,6 +1375,10 @@ export function open(opts) {
     const fin = new THREE.Mesh(new THREE.SphereGeometry(.03, 8, 6), gold); fin.position.y = .58; g.add(fin); const sp = new THREE.Mesh(new THREE.CylinderGeometry(.004, .004, .1, 4), gold); sp.position.y = .6; g.add(sp);
     for (let i = 0; i < 2; i++) { const st = box(.16 - i * .02, .022, .06, std(0xd3cbb8)); st.position.set(.0, .01 + i * .02, -.38 + i * -.0); g.add(st); }
     g.userData.fp = 0; W(put(g, bx, bz, AX.yaw, .02));
+  }
+  { /* houses on both sides of the alameda, turned to face it */
+    [[-1, .5, 0], [1, .5, 1], [-1, 1.6, 2], [1, 1.6, 3], [-1, 2.7, 4], [1, 2.8, 5]].forEach(([sd, t, k]) => { const [cx, cz] = AX.at(t), nx = -AX.uz * sd, nz = AX.ux * sd, hx = cx + nx * 1.15, hz = cz + nz * 1.15;
+      const hs = house({ w: .38, d: .32, floors: 1 + (k % 2), wall: [0xf7f1e4, 0xd8e8f0, 0xf6e2b8, 0xf2d4c4, 0xe3efe6, 0xf2c6a8][k % 6], roof: ROOF[k % ROOF.length], gal: false, shut: [0x2f6fa8, 0xb4483a, 0x4a9a74][k % 3], fr: k + 20, door: 0x2f6fa8 }); hs.userData.pri = 4; hs.userData.fp = .3; W(put(hs, hx, hz, Math.atan2(-nx, -nz) + PI / 2 * 0 + Math.atan2(0, 1), -.02)); hs.rotation.y += 0; });
   }
   { const sqM = square(-12.8, 3.05, 2.4, ALW, { trees: 0, tables: 2, people: 2, at: AX.A, yaw: AX.yaw, noSlab: true });
   }
