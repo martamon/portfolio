@@ -2041,7 +2041,7 @@
       if (!pw || !pw.isConnected) pw = document.querySelector('[data-framer-name="Page Wrapper"]');
       if (pw) { var qq = Math.min(1, Math.max(0, (sm - H * .88) / (H * .22))); pw.style.opacity = qq.toFixed(3); pw.style.pointerEvents = qq < .5 ? 'none' : ''; }      /* the menu and the sections only appear once the bike has gone */
       var off = Math.max(0, sm - H * 1.0); wrap.style.transform = 'translate3d(0,' + (-off).toFixed(1) + 'px,0)';      /* once the video has ended the picture scrolls away with the page and the ground carries on, in its own blue */
-      if (tx) tx.style.transform = 'translate3d(0,' + (-off) + 'px,0)';
+      if (tx) { var to = Math.max(0, sm - H * .62); tx.style.transform = 'translate3d(0,' + (-to * 1.4).toFixed(1) + 'px,0)'; tx.style.opacity = (1 - Math.min(1, to / (H * .28))).toFixed(3); }      /* the text leaves with the bike */
       var now = performance.now();
       
       requestAnimationFrame(frame);
