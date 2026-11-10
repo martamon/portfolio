@@ -278,7 +278,7 @@
     '@font-face{font-family:"Outfit";font-weight:300;font-style:normal;font-display:swap;src:url(/fonts.gstatic.com/s/outfit/outfit-300.ttf) format("truetype")}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Wordmark"]{left:6vw!important;top:110px!important;mix-blend-mode:normal!important}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Wordmark"] p{font-family:"Outfit","Plus Jakarta Sans",sans-serif!important;font-size:22px!important;font-weight:300!important;letter-spacing:.14em!important;line-height:1!important;text-transform:uppercase!important;color:var(--xtone,#26324a)!important;white-space:nowrap!important}',
-    'html:not(#x)[data-xp="about"] [data-framer-name="Caption"]{left:6vw!important;top:calc(110px + 22px + 28px)!important;bottom:auto!important;width:min(520px,calc(100vw - 12vw))!important}',
+    'html:not(#x)[data-xp="about"] [data-framer-name="Caption"]{left:6vw!important;top:calc(110px + 22px + 28px)!important;bottom:auto!important;width:min(640px,calc(100vw - 12vw))!important}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"]::before{display:none!important}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"] p,html:not(#x)[data-xp="about"] [data-framer-name="Caption"] *{font-family:"Lekton","IBM Plex Mono",monospace!important;font-weight:400!important;font-size:13px!important;line-height:1.3!important;letter-spacing:.01em!important;text-align:justify!important;text-justify:inter-word!important}',
     // About: laid out like the project pages: small bold title, a calm left-aligned paragraph, the head on the right
