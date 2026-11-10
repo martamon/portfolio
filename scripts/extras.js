@@ -253,7 +253,7 @@
     '.x-ct-text{position:absolute;left:0;bottom:24px;font-size:12.5px;line-height:1.75;letter-spacing:.12em}',
     '.x-ct-text a{color:inherit!important;text-decoration:none;background:linear-gradient(currentColor,currentColor) 0 100%/0 1px no-repeat;transition:background-size .7s cubic-bezier(.22,.8,.24,1)}',
     '.x-ct-text a:hover,.x-ct-text a:focus-visible{background-size:100% 1px}',
-    'html[data-xp="about"] [data-framer-name="Video Left"],html[data-xp="about"] [data-framer-name="Video Right"]{transform:translateX(12vw);}',
+    'html[data-xp="about"] [data-framer-name="Video Left"],html[data-xp="about"] [data-framer-name="Video Right"]{transform:translateX(16vw);}',
     // titles in Plus Jakarta Sans, the display face of onseis.com (the small mono text keeps its own face)
     '@font-face{font-family:"Plus Jakarta Sans";font-weight:600;font-style:normal;font-display:swap;src:url(/fonts.gstatic.com/s/plusjakartasans/pjs-600.ttf) format("truetype")}',
     '@font-face{font-family:"Plus Jakarta Sans";font-weight:700;font-style:normal;font-display:swap;src:url(/fonts.gstatic.com/s/plusjakartasans/pjs-700.ttf) format("truetype")}',
@@ -272,11 +272,10 @@
     'html a[data-framer-name="Primary"]:has([data-xo*="PROJECTS"],[data-xo*="PROYECTOS"],[data-xo*="PROXECTOS"]),html a[data-framer-name="Primary"]:has([data-xo*="PROJECTS"],[data-xo*="PROYECTOS"],[data-xo*="PROXECTOS"])::before,html a[data-framer-name="Primary"]:has([data-xo*="PROJECTS"],[data-xo*="PROYECTOS"],[data-xo*="PROXECTOS"])::after{border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;outline:0!important;content:none!important}',
     // the intro welcome text (was Switzer): Plus Jakarta Sans in capitals with open spacing, like onseis.com
     'html p[style*="Switzer"],html p[style*="Switzer"] *{font-family:"Plus Jakarta Sans","Inter",sans-serif!important;font-weight:600!important;font-size:15px!important;letter-spacing:.05em!important;line-height:1.6!important;text-transform:uppercase!important;color:var(--xtone,#3a4458)!important}',
-    // About, in the manner of chanpan.com.ar: the head as a dark, very contrasted silhouette and the name huge on top of it (negative over the head), the long text underneath
-    'html:not(#x)[data-xp="about"] [data-framer-name="Video Left"],html[data-xp="about"] [data-framer-name="Video Right"]{filter:grayscale(1) brightness(.42) contrast(1.9)!important}',
-    'html:not(#x)[data-xp="about"] [data-framer-name="Wordmark"]{left:2.2vw!important;top:19vh!important;z-index:6!important;mix-blend-mode:difference!important}',
-    'html:not(#x)[data-xp="about"] [data-framer-name="Wordmark"] p{font-family:"Plus Jakarta Sans","Inter",sans-serif!important;font-size:21vw!important;font-weight:800!important;letter-spacing:-.065em!important;line-height:.8!important;text-transform:lowercase!important;color:var(--xink,#f2f2f2)!important;white-space:nowrap!important}',
-    'html:not(#x)[data-xp="about"] [data-framer-name="Caption"]{top:auto!important;bottom:70px!important;left:2.2vw!important;width:min(440px,calc(100vw - 60px))!important;z-index:6!important}',
+    // About: natural head on the right; a distinct headline (large Plus Jakarta Sans) and a long, wide paragraph on the left
+    'html:not(#x)[data-xp="about"] [data-framer-name="Wordmark"]{left:40px!important;top:120px!important;mix-blend-mode:normal!important}',
+    'html:not(#x)[data-xp="about"] [data-framer-name="Wordmark"] p{font-family:"Plus Jakarta Sans","Inter",sans-serif!important;font-size:min(9vw,120px)!important;font-weight:800!important;letter-spacing:-.06em!important;line-height:.85!important;text-transform:lowercase!important;color:var(--xtone,#26324a)!important;white-space:nowrap!important}',
+    'html:not(#x)[data-xp="about"] [data-framer-name="Caption"]{left:40px!important;top:calc(120px + min(9vw,120px) + 36px)!important;bottom:auto!important;width:min(620px,calc(100vw - 80px))!important}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"]::before{display:none!important}',
     // About: laid out like the project pages: small bold title, a calm left-aligned paragraph, the head on the right
     'html[data-xp="about"] [data-framer-name="Wordmark"]{left:40px!important;top:190px!important;width:auto!important;height:auto!important;transform:none!important}',
