@@ -254,6 +254,10 @@
     '.x-ct-text a{color:inherit!important;text-decoration:none;background:linear-gradient(currentColor,currentColor) 0 100%/0 1px no-repeat;transition:background-size .7s cubic-bezier(.22,.8,.24,1)}',
     '.x-ct-text a:hover,.x-ct-text a:focus-visible{background-size:100% 1px}',
     'html[data-xp="about"] [data-framer-name="Video Left"],html[data-xp="about"] [data-framer-name="Video Right"]{transform:translateX(12vw);}',
+    // titles in Plus Jakarta Sans, the display face of onseis.com (the small mono text keeps its own face)
+    '@font-face{font-family:"Plus Jakarta Sans";font-weight:600;font-style:normal;font-display:swap;src:url(/fonts.gstatic.com/s/plusjakartasans/pjs-600.ttf) format("truetype")}',
+    '@font-face{font-family:"Plus Jakarta Sans";font-weight:700;font-style:normal;font-display:swap;src:url(/fonts.gstatic.com/s/plusjakartasans/pjs-700.ttf) format("truetype")}',
+    'html [data-framer-name="Project Title"] p,html [data-framer-name="Project Title"] h1,html[data-xp="about"] [data-framer-name="Wordmark"] p{font-family:"Plus Jakarta Sans","Inter",sans-serif!important;font-weight:700!important;letter-spacing:-.025em!important}',
     // About: laid out like the project pages: small bold title, a calm left-aligned paragraph, the head on the right
     'html[data-xp="about"] [data-framer-name="Wordmark"]{left:40px!important;top:190px!important;width:auto!important;height:auto!important;transform:none!important}',
     'html[data-xp="about"] [data-framer-name="Wordmark"] p{font-family:"Inter","Inter Placeholder",sans-serif!important;font-size:34px!important;font-weight:700!important;letter-spacing:-.03em!important;line-height:1.05!important;text-transform:uppercase!important;white-space:nowrap!important}',
