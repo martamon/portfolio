@@ -1307,8 +1307,8 @@ export function open(opts) {
   function square(x, inl, w, d, o) {
     o = o || {};
     const [px, pz] = o.at || onShore(x, inl), yaw = o.yaw !== undefined ? o.yaw : seaYaw(px), slab = new THREE.Group();
-    const sl = box(w, .16, d, std(0xe3d9c2)); sl.position.y = -.068; slab.add(sl);
-    const bd = box(w + .06, .15, d + .06, std(0xc9bfa8)); bd.position.y = -.074; slab.add(bd);
+    if (!o.noSlab) { const sl = box(w, .16, d, std(0xe3d9c2)); sl.position.y = -.068; slab.add(sl);
+    const bd = box(w + .06, .15, d + .06, std(0xc9bfa8)); bd.position.y = -.074; slab.add(bd); }
     const fpS = Math.max(w, d) * .62; let slabTop = groundH(px, pz); for (let k = 0; k < 6; k++) { const a = k * PI / 3 + .4; slabTop = Math.max(slabTop, groundH(px + Math.cos(a) * fpS * .6, pz + Math.sin(a) * fpS * .6)); }
     const up = (x, z) => Math.max(0, slabTop - groundH(x, z));      /* everything on the square stands on the slab, however the ground slopes under it */
     slab.userData.fp = Math.max(w, d) * .62; slab.userData.pri = 6; slab.userData.sqW = w; W(put(slab, px, pz, yaw, -.04));
@@ -1358,7 +1358,7 @@ export function open(opts) {
   { /* the alameda: a tree-lined promenade from the arcade square to the round fountain, and on to the stone market, all in one stone paving */
     const stoneP = std(0xd3cbb8, { roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
     const lerpP = (a, b, n) => { const out = []; for (let k = 0; k <= n; k++) { const u = k / n, p = onShore(a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u); out.push([p[0], p[1]]); } return out; };
-    const legs = [[1.2, 5.1]];
+    const legs = [[-1.3, 5.1]];
     for (const [a, b] of legs) { const pts = []; for (let k = 0; k <= 24; k++) pts.push(AX.at(a + (b - a) * k / 24)); const r = ribbon(pts, ALW, stoneP, .03, false, undefined, true, 'edge'); r.renderOrder = 3; W(r);
       const kb = ribbon(pts, ALW + .06, std(0xb7b09e, { roughness: 1, side: THREE.DoubleSide }), .024, false, undefined, true, 'edge'); kb.renderOrder = 2; W(kb);
       for (let k = 1; k < pts.length - 1; k += 1) { const a2 = pts[k - 1], b2 = pts[k + 1], dx = b2[0] - a2[0], dz = b2[1] - a2[1], l = Math.hypot(dx, dz) || 1, nx = -dz / l, nz = dx / l;
@@ -1376,7 +1376,7 @@ export function open(opts) {
     for (let i = 0; i < 2; i++) { const st = box(.16 - i * .02, .022, .06, std(0xd3cbb8)); st.position.set(.0, .01 + i * .02, -.38 + i * -.0); g.add(st); }
     g.userData.fp = 0; W(put(g, bx, bz, AX.yaw, .02));
   }
-  { const sqM = square(-12.8, 3.05, 2.4, ALW, { trees: 0, tables: 3, people: 3, at: AX.A, yaw: AX.yaw });
+  { const sqM = square(-12.8, 3.05, 2.4, ALW, { trees: 0, tables: 3, people: 3, at: AX.A, yaw: AX.yaw, noSlab: true });
   }
   // ---- the shipyard (astillero) on the outskirts, by the sea: a big shed, a slipway with rails, a boat on stocks, a gantry crane and a hull being built
   { let sx = 0, sz = 0, found = false, flip = false;
