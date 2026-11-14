@@ -2536,7 +2536,6 @@ export function open(opts) {
   }
   root.querySelector('.x-pl-x').addEventListener('click', close);
   const look = (x, z, zoom, snap, tilt) => { focus = { q: faceCamera(dirFrom(x, z, new THREE.Vector3()), tilt === undefined ? .45 : tilt), dist: baseDist * (zoom || .5) }; if (snap) { world.quaternion.copy(focus.q); dist = distT = focus.dist; focus = null; } };
-  if (window.__plD) window.__plD({ look, world, camera, THREE, fireworks, fiestaFx, onShore, onShoreS, shore, shoreS, keep: () => { lastInput = performance.now(); focus = null; }, setDist: (d) => { dist = d; distT = d; }, baseDist: () => baseDist, faceCamera, dirFrom, nightT: () => nightT, rainT: () => rainT });
   return { bridgeAt: () => (typeof BRIDGE_C !== 'undefined' ? BRIDGE_C : null), audio, close, root, spots, show, look, scene, camera, world, dbg: { shore, shoreS, LOURO, HILL2, INLET, INLET2 } };
 }
 

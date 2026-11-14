@@ -988,10 +988,10 @@
     goPage(a.href);
   }, true);
   function hotOn(c) {
-    c.setAttribute('data-xhot', ''); c.setAttribute('data-xph', '1');
+    c.setAttribute('data-xhot', ''); c.setAttribute('data-xph', '1'); plSwap(c, true);
     clearInterval(c.__xhi); c.__xhi = setInterval(function () { c.setAttribute('data-xph', c.getAttribute('data-xph') === '1' ? '0' : '1'); }, 2100);
   }
-  function hotOff(c) { clearInterval(c.__xhi); c.removeAttribute('data-xhot'); c.removeAttribute('data-xph'); }
+  function hotOff(c) { plSwap(c, false); clearInterval(c.__xhi); c.removeAttribute('data-xhot'); c.removeAttribute('data-xph'); }
   addEventListener('pointermove', function (e) {
     var m = pageKey() === 'home' && document.querySelector('main[data-xhome]');
     if (!m || e.pointerType === 'touch') return;
@@ -1537,7 +1537,7 @@
     if (planet) return;
     planet = { loading: true };
     jfHint(0);
-    import('/extras/freixo.js?v=279').then(function (m) {
+    import('/extras/freixo.js?v=280').then(function (m) {
       planet = m.open({ getDark: function () { return darkness(theme.hour); }, getHour: function () { return theme.hour; }, onClose: function () { planet = null; } });
     }).catch(function () { planet = null; });
   }
@@ -1879,6 +1879,8 @@
     var lw = l.offsetWidth, rw = r.offsetWidth, free = Math.max(0, W - lw - rw);
     ov.style.setProperty('--xj', Math.max(0, free - 14).toFixed(1) + 'px'); ov.__w = W;
   }
+  var PL_SPIN = '/extras/planeta/cover-spin.webp?v=1', PL_STILL = '/extras/planeta/cover.webp', plWarm = new Image(); setTimeout(function () { plWarm.src = PL_SPIN; }, 2500);
+  function plSwap(c, on) { var a = c.querySelector('a[href="./planeta-marta"]'), im = a && a.querySelector('img'); if (!im) return; im.removeAttribute('srcset'); im.src = on ? PL_SPIN : PL_STILL; }   /* the planet turns while the card is hot */
   function homeTitles(on) {
     if (!on) return;
     var cards = document.querySelectorAll('main[data-xhome] [data-xhi]');
@@ -1891,8 +1893,7 @@
       ov.innerHTML = '<span class="x-ov-l"></span><span class="x-ov-r"><i></i><b></b></span>';
       ov.querySelector('.x-ov-l').textContent = name; ov.querySelector('.x-ov-r i').textContent = mt[0]; ov.querySelector('.x-ov-r b').textContent = mt[1];
       pic.appendChild(ov); setAttr(cards[i], 'data-xov', '');
-      if (slug === 'planeta-marta') { (function (card, im) { if (!im) return; var still = im.getAttribute('src'), warm = new Image(); setTimeout(function () { warm.src = '/extras/planeta/cover-spin.webp?v=1'; }, 2500);
-        card.addEventListener('pointerenter', function () { im.removeAttribute('srcset'); im.src = '/extras/planeta/cover-spin.webp?v=1'; }); card.addEventListener('pointerleave', function () { im.src = still; }); })(a, pic.querySelector('img')); }      /* the planet turns while the pointer is on its card */
+      /* planeta-marta hover handled by the delegated listener at the bottom of homeTitles */
       if (i % 3 !== 1) cards[i].__xscr = true;   /* some cards: the words scramble into place when the pointer arrives */
     }
   }
