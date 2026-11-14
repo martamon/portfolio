@@ -47,7 +47,7 @@
   if (/[?&]xoff\b/.test(location.search)) return;
 
   // language of the site (English, Spanish, Galician): the switch in the corner and the translation of every text
-  try { import('/extras/i18n.js?v=27').catch(function () {}); } catch (e) {}
+  try { import('/extras/i18n.js?v=28').catch(function () {}); } catch (e) {}
 
   // In-app browsers (LinkedIn, Instagram, ...) end up on a blank page as soon as the YouTube player of the home page is created, so
   // there every YouTube iframe shows its still picture with a link to YouTube instead (?xinapp forces this in any browser).
@@ -298,6 +298,8 @@
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"] p,html:not(#x)[data-xp="about"] [data-framer-name="Caption"] *{font-family:"Lekton","IBM Plex Mono",monospace!important;font-weight:400!important;font-size:13px!important;line-height:1.3!important;letter-spacing:.01em!important;text-align:justify!important;text-justify:inter-word!important}',
     // tighter lines in the running texts of the site
     'html main[data-xm] [data-framer-name="Project Writeup"] p,html main[data-xm] [data-framer-name="Info"] p,html main[data-xm]~section p,html main[data-xm]~* footer p,html [data-framer-name="Info"] p,.x-ct-text,.x-ct-text p{line-height:1.25!important}',
+    // the direct link to the planet on its project page
+    'a.x-visit{display:inline-block;margin-top:.9em;color:inherit!important;text-decoration:underline!important;text-decoration-thickness:1px!important;text-underline-offset:3px!important;text-decoration-color:transparent!important;transition:text-decoration-color .45s ease}a.x-visit:hover,a.x-visit:focus-visible{text-decoration-color:currentColor!important}',
     // About: laid out like the project pages: small bold title, a calm left-aligned paragraph, the head on the right
     'html[data-xp="about"] [data-framer-name="Wordmark"]{left:40px!important;top:190px!important;width:auto!important;height:auto!important;transform:none!important}',
     'html[data-xp="about"] [data-framer-name="Wordmark"] p{font-family:"Inter","Inter Placeholder",sans-serif!important;font-size:34px!important;font-weight:700!important;letter-spacing:-.03em!important;line-height:1.05!important;text-transform:uppercase!important;white-space:nowrap!important}',
@@ -1189,7 +1191,7 @@
   // ---- the video player of the site: every YouTube video is shown with its own controls (play, sound, full screen) and nothing of YouTube
   // around it: no logo, no title or channel, no timeline. The YouTube player sits in a box taller than the picture and the picture is
   // cropped to the video, so whatever the player draws at its top and bottom edges stays outside the visible window.
-  var VP_RATIO = { 'NSqkOhJESYo': 9 / 16 };      // Soap&Glory is a vertical video
+  var VP_RATIO = { 'PlanetaMrt1': 1, 'NSqkOhJESYo': 9 / 16 };      // Soap&Glory is a vertical video
   var VP_IC = {
     play: '<svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z" fill="currentColor" stroke="none"/></svg>',
     pause: '<svg viewBox="0 0 24 24"><path d="M8 5.5v13M16 5.5v13"/></svg>',
@@ -1213,7 +1215,7 @@
     }
   });
   // the videos you upload to /extras/video/ (name.mp4 and, optionally, name.jpg as its cover) play from the site itself instead of YouTube
-  var VP_FILE = { 'NSqkOhJESYo': 'soapglory', 'CCBU84Ma-gE': 'schweppes', '6LFyBTCP7ig': 'china', 'NrxFBp4bl2Q': 'inicio', 'dyls5U16TLE': 'portugal' };
+  var VP_FILE = { 'PlanetaMrt1': 'planeta', 'NSqkOhJESYo': 'soapglory', 'CCBU84Ma-gE': 'schweppes', '6LFyBTCP7ig': 'china', 'NrxFBp4bl2Q': 'inicio', 'dyls5U16TLE': 'portugal' };
   // Safari (and phones) may refuse to start a video without a gesture: the first tap / key / click anywhere starts every autoplaying video that is on screen
   // ---- one sound at a time, and only when asked for. The sound belongs to the one player whose sound button was pressed (vpOwner);
   // everything else is held muted: other players of the page, copies left behind in hidden layouts, videos Framer put there itself and
@@ -1855,7 +1857,7 @@
   // ---- home cards in the manner of nolan-barret.framer.website: the project name and its type / year written over the picture
   // (white, small mono, across the middle), the picture slightly out of focus until the pointer is on it, and on some cards the
   // words scramble into place on hover
-  var PROJ_META = { 'ayeaye': ['TFG Editorial design & photography', '2023 - 2024'], 'china': ['Art Direction, Photography', '2025'], 'djone': ['Art direction, Photography', '2025'],
+  var PROJ_META = { 'planeta-marta': ['Interactive 3D world & web experience', '2025 - 2026'], 'ayeaye': ['TFG Editorial design & photography', '2023 - 2024'], 'china': ['Art Direction, Photography', '2025'], 'djone': ['Art direction, Photography', '2025'],
     'greece': ['Photography', '2026'], 'lexus-singapore': ['Ai generative and retoucher', '2025'], 'nothing-to-see-here': ['Art direction, Ai image generative', '2025'],
     'pedrapas': ['Brand identity', '2024'], 'portugal': ['Photography', '2024'], 'schweppes': ['Ai generative and retoucher', '2026'], 'soapglory': ['Ai generative and retoucher', '2025-2026'],
     'soidades-de-onte': ['Art direction, Ai image generative', '2025'], 'studio-girls': ['Photography', '2023'] };
@@ -1889,6 +1891,8 @@
       ov.innerHTML = '<span class="x-ov-l"></span><span class="x-ov-r"><i></i><b></b></span>';
       ov.querySelector('.x-ov-l').textContent = name; ov.querySelector('.x-ov-r i').textContent = mt[0]; ov.querySelector('.x-ov-r b').textContent = mt[1];
       pic.appendChild(ov); setAttr(cards[i], 'data-xov', '');
+      if (slug === 'planeta-marta') { (function (card, im) { if (!im) return; var still = im.getAttribute('src'), warm = new Image(); setTimeout(function () { warm.src = '/extras/planeta/cover-spin.webp?v=1'; }, 2500);
+        card.addEventListener('pointerenter', function () { im.removeAttribute('srcset'); im.src = '/extras/planeta/cover-spin.webp?v=1'; }); card.addEventListener('pointerleave', function () { im.src = still; }); })(a, pic.querySelector('img')); }      /* the planet turns while the pointer is on its card */
       if (i % 3 !== 1) cards[i].__xscr = true;   /* some cards: the words scramble into place when the pointer arrives */
     }
   }
@@ -2468,6 +2472,7 @@
     styleMenu();
     styleCaptions(p === 'home');
     try { homeTitles(p === 'home'); } catch (er) {}
+    try { if (/^\/planeta-marta\/?$/.test(location.pathname)) { var wr = document.querySelector('[data-framer-name="Project Writeup"]'); if (wr && !wr.querySelector('a.x-visit')) { var vp = document.createElement('p'); vp.className = 'framer-text framer-styles-preset-189x7y4'; vp.setAttribute('data-styles-preset', 'C7GBCUBvm'); vp.innerHTML = '<a class="x-visit" href="/?xplanet">\u21b3 Visit the planet</a>'; wr.appendChild(vp); } } } catch (er) {}
     applyHome(p === 'home');
     setupTilt(p === 'contact');
     if (p === 'about') aboutHead();
@@ -2477,7 +2482,7 @@
       for (var tq = 0; tq < ti.length; tq++) if (ti[tq].textContent.trim() === 'Regular Studio') ti[tq].textContent = 'Martamon';
     }
     setupReel(p === 'home');
-    setupDrifter(p === 'contact' ? 'swim' : 'walk');
+    setupDrifter(p === 'contact' ? 'swim' : false);      /* the little creature lives only on the Contact page */
     setupContact(p === 'contact');
 
     var faces = document.querySelectorAll('a[href="./#hero"],a[href="/#hero"],a[href="./"]');

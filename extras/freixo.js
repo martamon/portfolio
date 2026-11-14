@@ -3,7 +3,7 @@
 // fishermen on anchored boats, cars, boats under sail, birds and clouds that keep moving. Opened from the Contact page (three clicks on the creature).
 // open({ night, onClose }) shows it on top of the page and returns { close }.
 import * as THREE from './three.module.min.js';
-import { mochiText, MOCHI, tr } from './i18n.js?v=27';
+import { mochiText, MOCHI, tr } from './i18n.js?v=28';
 import { stall, KINDS } from './mercadillo.js?v=1';
 const mochiLen = MOCHI.length;
 
@@ -96,7 +96,7 @@ function groundRaw(x, z) {
 // the school yards and the little pitch sit on flat ground: the hill is levelled round them
 let FLAT = null; const flatList = () => FLAT;
 function groundH(x, z) {
-  if (!FLAT) { FLAT = []; for (const [fx, inl, r, so, lvl] of [[-.5, 5.05, 2.7, 0, 1], [15.6, 4.55, 2.7, 0, 1], [-7.6, 4.85, 1.3], [8.3, 1.4, 1.0], [2.2, 5.4, 1.9, 1], [3.9, 7.0, .9], [14.2, 7.4, .9], [-17.8, 1.4, 1.7, 0, 1], [19.6, 1.4, 1.7, 0, 1], [-12.1, 1.45, 1.7, 1, 1], [7.6, 1.45, 1.7, 1, 1]]) { const cz = so ? shoreS(fx) + inl : shore(fx) - inl; FLAT.push([fx, cz, r * 1.25, lvl ? Math.max(groundRaw(fx, cz), .14) : groundRaw(fx, cz) - .02]); } }      // (the last four: the road ends and their car parks, levelled completely smooth)
+  if (!FLAT) { FLAT = []; for (const [fx, inl, r, so, lvl] of [[-.5, 5.05, 2.7, 0, 1], [15.6, 4.55, 2.7, 0, 1], [-7.6, 4.85, 1.3], [8.3, 1.4, 1.0], [2.2, 5.4, 1.9, 1], [3.9, 7.0, .9], [14.2, 7.4, .9], [-17.8, 1.4, 1.7, 0, 1], [19.6, 1.4, 1.7, 0, 1], [-12.1, 1.45, 1.7, 1, 1], [7.6, 1.45, 1.7, 1, 1]]) { const cz = so ? shoreS(fx) + inl : shore(fx) - inl; FLAT.push([fx, cz, r * 1.25, lvl ? Math.max(groundRaw(fx, cz), .14) : groundRaw(fx, cz) - .02]); } { const bk = Math.floor(RIVERC.length * .66), bx = RIVERC[bk][0], bz = RIVERC[bk][1]; FLAT.push([bx, bz, 1.5, groundRaw(bx, bz) + .02]); }      /* the two banks at the footbridge are levelled, so the bridge rests flat on both */ }      // (the last four: the road ends and their car parks, levelled completely smooth)
   let h = groundRaw(x, z);
   for (const f of FLAT) { const d = Math.hypot(x - f[0], z - f[1]); if (d < f[2] * 1.9) h += (f[3] - h) * (1 - sstep(f[2] * .8, f[2] * 1.9, d)); }
   if (x > 4.5 && x < 12.5 && z < -5.5 && z > -14) { let cv = 0; for (let i = 0; i < RIVERC.length; i++) { const w2 = RIVERW[i] / 2 + .03, d = Math.hypot(x - RIVERC[i][0], z - RIVERC[i][1]); if (d < w2 + .22) cv = Math.max(cv, 1 - sstep(w2, w2 + .22, d)); } h -= .14 * cv; }      // the river bed
@@ -2536,6 +2536,7 @@ export function open(opts) {
   }
   root.querySelector('.x-pl-x').addEventListener('click', close);
   const look = (x, z, zoom, snap, tilt) => { focus = { q: faceCamera(dirFrom(x, z, new THREE.Vector3()), tilt === undefined ? .45 : tilt), dist: baseDist * (zoom || .5) }; if (snap) { world.quaternion.copy(focus.q); dist = distT = focus.dist; focus = null; } };
+  if (window.__plD) window.__plD({ look, world, camera, THREE, fireworks, fiestaFx, onShore, onShoreS, shore, shoreS, keep: () => { lastInput = performance.now(); focus = null; }, setDist: (d) => { dist = d; distT = d; }, baseDist: () => baseDist, faceCamera, dirFrom, nightT: () => nightT, rainT: () => rainT });
   return { bridgeAt: () => (typeof BRIDGE_C !== 'undefined' ? BRIDGE_C : null), audio, close, root, spots, show, look, scene, camera, world, dbg: { shore, shoreS, LOURO, HILL2, INLET, INLET2 } };
 }
 
