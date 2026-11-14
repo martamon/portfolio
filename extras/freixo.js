@@ -1441,7 +1441,10 @@ export function open(opts) {
     W(put(g, fx, fz, yaw, -.08));
     for (const x of [-6.2, -5.4, -4.7, 3.2, 3.9, 4.6]) hhS(x, .9 + rnd() * .3, 1 + (hc % 2), { stone: true });
     const [cx, cz] = onShoreS(-7.6, 5.4); W(put(church(.9), cx, cz, seaYawS(cx), -.03));
-    hhS(-9.0, 4.6, 2, { stone: true }); hhS(-6.2, 4.7, 1); hhS(-8.8, 6.4, 1); hhS(-6.0, 6.3, 2); }
+    hhS(-9.0, 4.6, 2, { stone: true }); hhS(-6.2, 4.7, 1); hhS(-8.8, 6.4, 1); hhS(-6.0, 6.3, 2);
+    /* little stone houses on both banks of the river, around the waterfall (placed by hand: no thinning, clear of the river and the boardwalk) */
+    for (const [x, inl, fl] of [[-2.9, 4.0, 1], [-2.15, 5.3, 1], [-3.3, 3.0, 1], [-.55, 3.3, 1], [-.2, 4.2, 1], [-3.1, 5.4, 1], [.2, 3.0, 1], [-1.6, 5.9, 1]]) {
+      const o = mk(fl, { stone: true }); o.wall = GRANITE[hc % 3]; o.gal = false; const [px, pz] = onShoreS(x, inl); const hs = house(o); hs.scale.setScalar(.8); W(put(hs, px, pz, seaYawS(px) + o.turn, -.02)); } }
 
   // ---- the small island: a tiny harbour with a boat, one little house in the middle and two horses grazing
   const horses = [];
