@@ -461,6 +461,9 @@
     'main[data-xhome] [data-xov][data-xhot] a[href] img{filter:brightness(.74) saturate(1.08) contrast(1.04)!important;transform:scale(1)!important}',   /* sharp and in full colour, but still dark enough for the white type */
     '@media(hover:none){main[data-xhome] [data-xov] a[href] img{filter:brightness(.85) saturate(.9)!important;transform:none!important}}',
     '@media(max-width:809px){.x-ov{font-size:11px;padding:0 12px}.x-ov-r{gap:8px}}',
+    /* the right-hand words (type, then year) sit on two lines, flush left, starting at the middle of the card */
+    'html main[data-xhome] [data-xhi] a .x-ov .x-ov-r{display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:flex-start!important;text-align:left!important;gap:3px!important;flex:0 0 58%!important;max-width:58%!important;transform:none!important}html main[data-xhome] [data-xhi] a .x-ov .x-ov-l{max-width:40%!important}html main[data-xhome] [data-xhi] a .x-ov .x-ov-r i{white-space:normal}',
+    '@media(max-width:1200px){html main[data-xhome] [data-xhi] a .x-ov{font-size:12px;letter-spacing:.02em}html main[data-xhome] [data-xhi] a .x-ov .x-ov-r{flex:0 0 66%!important;max-width:66%!important}html main[data-xhome] [data-xhi] a .x-ov .x-ov-l{max-width:32%!important}}',
     // every text of the site in the tones of the MARTAMON wordmark (see paintInk)
     // negative/positive type everywhere: Framer's root box isolated the page, so a blended text had nothing behind it; it no longer does.
     // Sticky boxes are layers of their own, so there the whole box carries the blend; elsewhere the text itself does.
