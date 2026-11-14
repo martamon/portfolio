@@ -854,8 +854,10 @@
           pcl.removeAttribute('data-xov'); pcl.removeAttribute('data-xhot'); pcl.removeAttribute('data-xph');
           var pas = pcl.querySelectorAll('a[href="./soapglory"]'), pim = pcl.querySelectorAll('img'), pcp = pcl.querySelector('[data-xcap]');
           for (pq = 0; pq < pas.length; pq++) pas[pq].setAttribute('href', './planeta-marta');
-          for (pq = 0; pq < pim.length; pq++) { pim[pq].removeAttribute('srcset'); pim[pq].removeAttribute('sizes'); pim[pq].src = '/extras/planeta/cover.webp'; pim[pq].alt = 'Planeta Marta'; }
+          for (pq = 0; pq < pim.length; pq++) { pim[pq].removeAttribute('srcset'); pim[pq].removeAttribute('sizes'); pim[pq].src = '/extras/planeta/cover.webp?v=2'; pim[pq].alt = 'Planeta Marta'; }
           if (pcp) pcp.textContent = 'Planeta Marta';
+          /* Framer starts cards hidden and slides them in; a copy nobody reveals must start out shown */
+          var pall = pcl.querySelectorAll('*'); for (pq = -1; pq < pall.length; pq++) { var pe = pq < 0 ? pcl : pall[pq]; if (pe.style) { pe.style.removeProperty('opacity'); pe.style.removeProperty('transform'); pe.style.removeProperty('will-change'); } pe.removeAttribute('data-framer-appear-id'); }
           kids[j].parentNode.insertBefore(pcl, kids[j].nextSibling); kids.splice(j + 1, 0, pcl);
           break;
         }
