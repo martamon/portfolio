@@ -3,7 +3,7 @@
 // fishermen on anchored boats, cars, boats under sail, birds and clouds that keep moving. Opened from the Contact page (three clicks on the creature).
 // open({ night, onClose }) shows it on top of the page and returns { close }.
 import * as THREE from './three.module.min.js';
-import { mochiText, MOCHI, tr } from './i18n.js?v=30';
+import { mochiText, MOCHI, tr } from './i18n.js?v=31';
 import { stall, KINDS } from './mercadillo.js?v=1';
 const mochiLen = MOCHI.length;
 

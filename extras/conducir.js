@@ -3,7 +3,7 @@
 // into the sea, where the world turns turquoise and the car keeps rolling along the seabed, past fish and an old wreck. Glowing orbs hold
 // information about the ría; press E (or tap the button) next to one to read it.
 import * as THREE from './three.module.min.js';
-import { INFO, TALKERS, TALKER_NAMES, getLang, tr } from './i18n.js?v=30';
+import { INFO, TALKERS, TALKER_NAMES, getLang, tr } from './i18n.js?v=31';
 import { stall, KINDS } from './mercadillo.js?v=1';
 
 const PI = Math.PI, LI = ['en', 'es', 'gl'];

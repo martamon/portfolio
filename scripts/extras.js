@@ -47,7 +47,7 @@
   if (/[?&]xoff\b/.test(location.search)) return;
 
   // language of the site (English, Spanish, Galician): the switch in the corner and the translation of every text
-  try { import('/extras/i18n.js?v=30').catch(function () {}); } catch (e) {}
+  try { import('/extras/i18n.js?v=31').catch(function () {}); } catch (e) {}
 
   // In-app browsers (LinkedIn, Instagram, ...) end up on a blank page as soon as the YouTube player of the home page is created, so
   // there every YouTube iframe shows its still picture with a link to YouTube instead (?xinapp forces this in any browser).
@@ -849,7 +849,7 @@
         }
       };
       collect(m);
-      /* Planeta Marta is not in Framer's project data, so the browser's own render of the list leaves it out: a copy of the Soap&Glory card takes its place right after it */
+      /* My Little World is not in Framer's project data, so the browser's own render of the list leaves it out: a copy of the Soap&Glory card takes its place right after it */
       if (!m.querySelector('a[href="./planeta-marta"]')) {
         for (j = 0; j < kids.length; j++) if (kids[j].querySelector('a[href="./soapglory"]')) {
           var pcl = kids[j].cloneNode(true), pov = pcl.querySelectorAll('.x-ov'), pq;
@@ -857,8 +857,8 @@
           pcl.removeAttribute('data-xov'); pcl.removeAttribute('data-xhot'); pcl.removeAttribute('data-xph');
           var pas = pcl.querySelectorAll('a[href="./soapglory"]'), pim = pcl.querySelectorAll('img'), pcp = pcl.querySelector('[data-xcap]');
           for (pq = 0; pq < pas.length; pq++) pas[pq].setAttribute('href', './planeta-marta');
-          for (pq = 0; pq < pim.length; pq++) { pim[pq].removeAttribute('srcset'); pim[pq].removeAttribute('sizes'); pim[pq].src = '/extras/planeta/cover.webp?v=2'; pim[pq].alt = 'Planeta Marta'; }
-          if (pcp) pcp.textContent = 'Planeta Marta';
+          for (pq = 0; pq < pim.length; pq++) { pim[pq].removeAttribute('srcset'); pim[pq].removeAttribute('sizes'); pim[pq].src = '/extras/planeta/cover.webp?v=2'; pim[pq].alt = 'My Little World'; }
+          if (pcp) pcp.textContent = 'My Little World';
           /* Framer starts cards hidden and slides them in; a copy nobody reveals must start out shown */
           var pall = pcl.querySelectorAll('*'); for (pq = -1; pq < pall.length; pq++) { var pe = pq < 0 ? pcl : pall[pq]; if (pe.style) { pe.style.removeProperty('opacity'); pe.style.removeProperty('transform'); pe.style.removeProperty('will-change'); } pe.removeAttribute('data-framer-appear-id'); }
           kids[j].parentNode.insertBefore(pcl, kids[j].nextSibling); kids.splice(j + 1, 0, pcl);
@@ -1556,7 +1556,7 @@
     if (planet) return;
     planet = { loading: true };
     jfHint(0);
-    import('/extras/freixo.js?v=283').then(function (m) {
+    import('/extras/freixo.js?v=284').then(function (m) {
       planet = m.open({ getDark: function () { return darkness(theme.hour); }, getHour: function () { return theme.hour; }, onClose: function () { planet = null; } });
     }).catch(function () { planet = null; });
   }
