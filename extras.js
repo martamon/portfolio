@@ -47,7 +47,7 @@
   if (/[?&]xoff\b/.test(location.search)) return;
 
   // language of the site (English, Spanish, Galician): the switch in the corner and the translation of every text
-  try { import('/extras/i18n.js?v=29').catch(function () {}); } catch (e) {}
+  try { import('/extras/i18n.js?v=30').catch(function () {}); } catch (e) {}
 
   // In-app browsers (LinkedIn, Instagram, ...) end up on a blank page as soon as the YouTube player of the home page is created, so
   // there every YouTube iframe shows its still picture with a link to YouTube instead (?xinapp forces this in any browser).
@@ -1553,7 +1553,7 @@
     if (planet) return;
     planet = { loading: true };
     jfHint(0);
-    import('/extras/freixo.js?v=281').then(function (m) {
+    import('/extras/freixo.js?v=282').then(function (m) {
       planet = m.open({ getDark: function () { return darkness(theme.hour); }, getHour: function () { return theme.hour; }, onClose: function () { planet = null; } });
     }).catch(function () { planet = null; });
   }
@@ -1873,7 +1873,7 @@
   // ---- home cards in the manner of nolan-barret.framer.website: the project name and its type / year written over the picture
   // (white, small mono, across the middle), the picture slightly out of focus until the pointer is on it, and on some cards the
   // words scramble into place on hover
-  var PROJ_META = { 'planeta-marta': ['Interactive 3D world & web experience', '2025 - 2026'], 'ayeaye': ['TFG Editorial design & photography', '2023 - 2024'], 'china': ['Art Direction, Photography', '2025'], 'djone': ['Art direction, Photography', '2025'],
+  var PROJ_META = { 'planeta-marta': ['Interactive 3D world', '2025 - 2026'], 'ayeaye': ['TFG Editorial design & photography', '2023 - 2024'], 'china': ['Art Direction, Photography', '2025'], 'djone': ['Art direction, Photography', '2025'],
     'greece': ['Photography', '2026'], 'lexus-singapore': ['Ai generative and retoucher', '2025'], 'nothing-to-see-here': ['Art direction, Ai image generative', '2025'],
     'pedrapas': ['Brand identity', '2024'], 'portugal': ['Photography', '2024'], 'schweppes': ['Ai generative and retoucher', '2026'], 'soapglory': ['Ai generative and retoucher', '2025-2026'],
     'soidades-de-onte': ['Art direction, Ai image generative', '2025'], 'studio-girls': ['Photography', '2023'] };
