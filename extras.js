@@ -47,7 +47,7 @@
   if (/[?&]xoff\b/.test(location.search)) return;
 
   // language of the site (English, Spanish, Galician): the switch in the corner and the translation of every text
-  try { import('/extras/i18n.js?v=28').catch(function () {}); } catch (e) {}
+  try { import('/extras/i18n.js?v=29').catch(function () {}); } catch (e) {}
 
   // In-app browsers (LinkedIn, Instagram, ...) end up on a blank page as soon as the YouTube player of the home page is created, so
   // there every YouTube iframe shows its still picture with a link to YouTube instead (?xinapp forces this in any browser).
@@ -846,6 +846,20 @@
         }
       };
       collect(m);
+      /* Planeta Marta is not in Framer's project data, so the browser's own render of the list leaves it out: a copy of the Soap&Glory card takes its place right after it */
+      if (!m.querySelector('a[href="./planeta-marta"]')) {
+        for (j = 0; j < kids.length; j++) if (kids[j].querySelector('a[href="./soapglory"]')) {
+          var pcl = kids[j].cloneNode(true), pov = pcl.querySelectorAll('.x-ov'), pq;
+          for (pq = 0; pq < pov.length; pq++) pov[pq].remove();
+          pcl.removeAttribute('data-xov'); pcl.removeAttribute('data-xhot'); pcl.removeAttribute('data-xph');
+          var pas = pcl.querySelectorAll('a[href="./soapglory"]'), pim = pcl.querySelectorAll('img'), pcp = pcl.querySelector('[data-xcap]');
+          for (pq = 0; pq < pas.length; pq++) pas[pq].setAttribute('href', './planeta-marta');
+          for (pq = 0; pq < pim.length; pq++) { pim[pq].removeAttribute('srcset'); pim[pq].removeAttribute('sizes'); pim[pq].src = '/extras/planeta/cover.webp'; pim[pq].alt = 'Planeta Marta'; }
+          if (pcp) pcp.textContent = 'Planeta Marta';
+          kids[j].parentNode.insertBefore(pcl, kids[j].nextSibling); kids.splice(j + 1, 0, pcl);
+          break;
+        }
+      }
       for (j = 0; j < kids.length; j++) {
         kids[j].setAttribute('data-xhi', '');
         kids[j].style.setProperty('--mw', colW + 'px');
@@ -1537,7 +1551,7 @@
     if (planet) return;
     planet = { loading: true };
     jfHint(0);
-    import('/extras/freixo.js?v=280').then(function (m) {
+    import('/extras/freixo.js?v=281').then(function (m) {
       planet = m.open({ getDark: function () { return darkness(theme.hour); }, getHour: function () { return theme.hour; }, onClose: function () { planet = null; } });
     }).catch(function () { planet = null; });
   }
@@ -1879,7 +1893,7 @@
     var lw = l.offsetWidth, rw = r.offsetWidth, free = Math.max(0, W - lw - rw);
     ov.style.setProperty('--xj', Math.max(0, free - 14).toFixed(1) + 'px'); ov.__w = W;
   }
-  var PL_SPIN = '/extras/planeta/cover-spin.webp?v=1', PL_STILL = '/extras/planeta/cover.webp', plWarm = new Image(); setTimeout(function () { plWarm.src = PL_SPIN; }, 2500);
+  var PL_SPIN = '/extras/planeta/cover-spin.webp?v=2', PL_STILL = '/extras/planeta/cover.webp', plWarm = new Image(); setTimeout(function () { plWarm.src = PL_SPIN; }, 2500);
   function plSwap(c, on) { var a = c.querySelector('a[href="./planeta-marta"]'), im = a && a.querySelector('img'); if (!im) return; im.removeAttribute('srcset'); im.src = on ? PL_SPIN : PL_STILL; }   /* the planet turns while the card is hot */
   function homeTitles(on) {
     if (!on) return;
@@ -2557,6 +2571,7 @@
     goPage(a.href);
   }, true);
 
+  document.addEventListener('click', function (e) { var v = e.target.closest && e.target.closest('a.x-visit'); if (!v || e.button || e.metaKey || e.ctrlKey || e.shiftKey) return; e.preventDefault(); e.stopPropagation(); openPlanet(); }, true);   /* the project's link opens the planet right where you are; closing it leaves you on the project */
   if (/[?&]xplanet\b/.test(location.search)) setTimeout(openPlanet, 1200);   // ?xplanet opens the planet at once (to share or test)
 
   // pictures decode off the main thread and the ones far down load only when needed (smoother scrolling, lighter first load)
