@@ -1647,8 +1647,11 @@ export function open(opts) {
     for (const [x0, x1, inl] of [[-17.2, -9.6, 4.6], [-9.0, -2.4, 3.9], [-.8, 4.2, 4.2], [7.4, 13.4, 4.3], [-8.7, -6.2, 5.3]]) for (let x = x0; x < x1; x += .95) hh(x, inl + (rnd() - .5) * .25, 1 + (hc % 2), { shut: [0x3d78a8, 0x4a9a74, 0xb4483a][hc % 3] });
     for (const x of [-18.6, -16.9, -15.4]) hh(x, 2.4, 1 + (hc % 2)); for (const x of [14.0, 15.1, 17.9]) hh(x, 2.6, 1 + (hc % 2));
     /* more little houses: a second, looser row behind the hill cottages and a few between the villages */
-    for (const [x0, x1, inl] of [[-16.8, -9.9, 5.6], [-8.6, -2.6, 5.0], [-.4, 4.0, 5.3], [7.8, 13.2, 5.4]]) for (let x = x0; x < x1; x += 1.05) hh(x, inl + (rnd() - .5) * .3, 1);
+    for (const [x0, x1, inl] of [[-16.8, -9.9, 5.6], [-.4, 4.0, 5.3], [7.8, 13.2, 5.4]]) for (let x = x0; x < x1; x += 1.05) hh(x, inl + (rnd() - .5) * .3, 1);
     for (const x of [-12.2, -.9, 6.3, 14.3, 19.6]) hh(x, 2.1, 1);
+    /* a little village of its own in the meadow behind the Esteiro inlet: placed by hand, never thinned out, clear of the squares and the road links */
+    for (const [x, inl, fl] of [[-8.1, 5.0, 1], [-7.5, 6.3, 1], [-8.0, 7.7, 1], [-6.9, 4.7, 1], [-6.0, 5.4, 2], [-5.6, 6.9, 1], [-6.6, 8.1, 1], [-5.0, 4.4, 1], [-4.5, 5.9, 1], [-4.2, 7.3, 1], [-3.4, 4.8, 1], [-3.2, 6.3, 2], [-3.9, 8.2, 1], [-7.2, 9.0, 1], [-2.6, 5.6, 1], [-5.8, 3.9, 1], [-4.9, 7.1, 1], [-3.7, 3.7, 1], [-2.2, 4.3, 1], [-2.0, 7.0, 1], [-1.4, 5.0, 1], [-3.0, 9.0, 1], [-5.2, 9.3, 1], [-1.0, 6.6, 1], [-6.2, 7.5, 1], [-4.6, 3.6, 1], [-8.6, 8.6, 1]]) {
+      if (inSq(x, inl) || roadClear(x, inl)) continue; const o = mk(fl, {}); const [px, pz] = onShore(x, inl); const hs = house(o); W(put(hs, px, pz, seaYaw(px) + o.turn, -.02)); }
     // crop fields: rows of vegetables, vines, wheat, ploughed earth and flower beds on the gentle slopes
     const CROPS = [[0x6fae3a, 0x4f8f2d], [0xe6c85a, 0xcfa83a], [0x8a5a3a, 0x6f452c], [0x7aa84a, 0x9c5fb0], [0x5f8f3a, 0x3d6f26], [0xe9a23a, 0xd4812a]];
     const field = (x, z, ang, w, d, ci, lift) => {
@@ -1803,11 +1806,12 @@ export function open(opts) {
       return g; };
     const at = (pts, x) => { let best = null, bd = 1e9; for (const q of pts) { const d2 = Math.abs(q[0] - x); if (d2 < bd) { bd = d2; best = q; } } return best; };
     const okSpot = (x, z) => groundH(x, z) > SEA + .08 && !keptC.some((c) => Math.hypot(c[0] - x, c[1] - z) < c[2] + .12) && ![roadRaw, roadS].every((pts) => true) ;
-    let k = 0;
-    for (const [pts, xs, south] of [[roadN, [-14.6, -6.0, 3.2, 9.8], false], [roadS, [-6.4, 1.6], true]]) for (const x0 of xs) {
-      const q = at(pts, x0), sl = (shore(q[0] + .25) - shore(q[0] - .25)) / .5, yaw = south ? PI + Math.atan2(-sl, 1) : Math.atan2(-sl, 1), off = south ? .5 : -.5, x = q[0], z = q[1] + off;
-      if (!(groundH(x, z) > SEA + .08) || keptC.some((c) => Math.hypot(c[0] - x, c[1] - z) < c[2] + .1)) continue;
-      const sh = shelter([0x3f8f9e, 0xe9873a, 0x5fae8a, 0xc9473a][k++ % 4]); sh.userData.bus = 1; W(put(sh, x, z, yaw, .012));
+    let k = 0; const placedSh = [];
+    for (const [pts, xs, south] of [[roadN, [-14.6, -6.0, 3.2, 9.8], false], [roadS, [-6.4, 1.6], true]]) for (const x00 of xs) for (const dxs of [0, .7, -.7, 1.4, -1.4]) {
+      if (placedSh.some((o) => o[2] === x00 && o[3] === south)) continue;
+      const x0 = x00 + dxs, q = at(pts, x0), sl = (shore(q[0] + .25) - shore(q[0] - .25)) / .5, yaw = south ? PI + Math.atan2(-sl, 1) : Math.atan2(-sl, 1), off = south ? .5 : -.5, x = q[0], z = q[1] + off;
+      if (!(groundH(x, z) > SEA + .08) || keptC.some((c) => Math.hypot(c[0] - x, c[1] - z) < c[2] + .1) || crossings.some((X) => Math.hypot(X.x - x, X.z - z) < 1.05) || placedSh.some((o) => Math.hypot(o[0] - x, o[1] - z) < .5)) continue;
+      placedSh.push([x, z, x00, south]); const sh = shelter([0x3f8f9e, 0xe9873a, 0x5fae8a, 0xc9473a][k++ % 4]); sh.userData.bus = 1; W(put(sh, x, z, yaw, .012));
       const p2 = person(SHIRTS[(k * 3) % SHIRTS.length], { skin: SKINS[k % 4] }); p2.scale.setScalar(.8); W(put(p2, x, z + (south ? .02 : -.02), yaw + PI, .014)); }
   }
   { const solids = [], dd3 = new THREE.Vector3();
@@ -1925,6 +1929,7 @@ export function open(opts) {
 
   // shadows for everything that stands on the ground
   world.traverse((o) => { if (o.isMesh && o !== sea && !o.userData.ribbon && !o.isInstancedMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  world.traverse((o) => { if (o.isMesh && o.userData.ribbon && !o.isInstancedMesh) { o.castShadow = false; o.receiveShadow = true; } });      /* roads and pavements take the shadows of the people, cars and lamps that stand on them */
   terrain.receiveShadow = true; terrain.castShadow = false;
   const ORDER = ['Muros arcades', 'Muros old town', 'Church and hórreo', 'Seafarers’ quarter', 'Esteiro harbour', 'Esteiro beach', 'O Freixo pier', 'Fishing boats', 'O Freixo beach', 'Bateas', 'Ponte Nafonso', 'Outes church', 'Cove across the ría', 'Louro beach', 'Monte Louro'];
   spots.sort((a, b) => ORDER.indexOf(a.title) - ORDER.indexOf(b.title));
@@ -1986,7 +1991,7 @@ export function open(opts) {
     if (tourOn) return; tourOn = true; tourMuted = !!(audio && audio.muted);
     mochi.classList.remove('x-ctaon'); mochi.classList.add('x-load'); root.classList.add('x-tour'); if (audio) { audio.sfx('mochinext'); setTimeout(() => audio && audio.mute(true), 500); }
     const t0 = performance.now();
-    import('./conducir.js?v=85').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
+    import('./conducir.js?v=86').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
       .then((m) => { const ab = m.open({ onClose: endTour, getDark: () => nightT, getRain: () => rainT }); if (!ab) throw new Error('no webgl'); setTimeout(mochiClose, 700); })
       .catch(() => { endTour(); mochiClose(); });
   };

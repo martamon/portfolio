@@ -775,7 +775,7 @@ export function open(opts) {
   // ---- two zebra crossings (Esteiro and Muros) and traffic lights at some of them: the cars wait at the red
   const xings = [];
   { const lampG = new THREE.SphereGeometry(.17, 10, 8), mats = (c) => new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: .05, roughness: .5 });
-    VILLAGES.forEach(([, z0], vi) => { for (const [dz, light] of vi === 1 ? [[-7, true]] : vi === 3 ? [[9, true]] : []) { const zc = z0 + dz, rx = ROADX(zc), xg = { z: zc, light: !!light, red: false };
+    VILLAGES.forEach(([, z0], vi) => { for (const [dz, light] of vi === 1 || vi === 3 ? [[-7, true]] : []) { const zc = z0 + dz, rx = ROADX(zc), xg = { z: zc, light: !!light, red: false };
       for (let k = -3; k <= 3; k++) ribbon([[ROADX(zc + k * .8) - 2.5, zc + k * .8], [ROADX(zc + k * .8) + 2.5, zc + k * .8]], .46, 0xf6f0e2, .115, 6);
       if (light) { for (const sd of [-1, 1]) { const px = rx + sd * 3.9, pg = new THREE.Group(), pole = new THREE.Mesh(new THREE.CylinderGeometry(.06, .07, 3.4, 6), std(0x4a4f57)); pole.position.y = 1.7; pg.add(pole);
           const box = new THREE.Mesh(rbox(.46, 1.3, .4, .08), std(0x2d3138)); box.position.set(0, 3.5, 0); pg.add(box); const L = [0xe0463a, 0xf2c14a, 0x4fb87a].map((c, i) => { const m = new THREE.Mesh(lampG, mats(c)); m.position.set(0, 3.95 - i * .4, sd < 0 ? .2 : -.2); pg.add(m); return m; });
