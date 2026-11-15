@@ -1198,7 +1198,7 @@ export function open(opts) {
     const fl = new THREE.Mesh(new THREE.BoxGeometry(.05, .012, .22), skin); fl.position.x = -.19; tail.add(fl);
     g.scale.setScalar(sc || 1); return { g, tail };
   }
-  for (const [cx, cz, rx, rz, sp, ph, n, gap] of [[-4.4, 5.2, 2.3, 2.4, .26, 0, 3, .035], [-4.4, 4.7, 1.8, 1.9, -.26, 2, 2, .04]]) {
+  for (const [cx, cz, rx, rz, sp, ph, n, gap] of [[-2.2, 5.2, 1.9, 2.4, .26, 0, 3, .035], [-2.2, 4.7, 1.5, 1.9, -.26, 2, 2, .04]]) {
     for (let k = 0; k < n; k++) { const d = dolphin(1.25), w = new THREE.Group(); w.add(d.g); W(w); seaLife.push({ kind: 'dol', w, d, cx, cz, rx, rz, sp, a: ph + k * (gap || .55), ph: rnd() * 6, off: k * .22 }); }
   }
   const fishBody = new THREE.SphereGeometry(.05, 8, 6), fishTail = new THREE.ConeGeometry(.04, .07, 4), fishEye = new THREE.SphereGeometry(.009, 5, 4), eyeM = std(0x1b1b1b);
@@ -1225,7 +1225,7 @@ export function open(opts) {
   };
   /* dolphins and whales keep to the open sea: their z is held away from both coasts (the channel is narrower in places, so they gather in its middle there) */
   const seaZ = (x, z, m) => { const n = shore(x), sS = shoreS(x), mid = (n + sS) / 2, h = Math.max(0, (sS - n) / 2 - m); return mid + Math.max(-h, Math.min(h, z - mid)); };
-  whale(-4.4, 5.4, 2.7, 2.8, .1, 1.2, .7); whale(-4.4, 4.8, 2.1, 2.3, -.09, 3.9, .75); whale(-4.4, 5.6, 1.7, 2.0, .08, 5.6, .65);
+  whale(-2.2, 5.4, 2.2, 2.8, .1, 1.2, .7); whale(-2.2, 4.8, 1.8, 2.3, -.09, 3.9, .75); whale(-2.2, 5.6, 1.4, 2.0, .08, 5.6, .65);
 
   // ---- canoes (piraguas) paddling slowly up and down the coast, close to the beaches
   const canoes = [];
@@ -2403,7 +2403,7 @@ export function open(opts) {
       c.off += (c.offT - c.off) * Math.min(1, dt * 3);
       const [x, z, yaw] = routeAt(c.r, c.u), sy = Math.sin(yaw), cy = Math.cos(yaw), px = x + sy * c.off, pz = z + cy * c.off, onW = 0;
       const hd0 = yaw + (c.dir < 0 ? PI : 0); c.px0 = px; c.pz0 = pz; if (c.hdS === undefined) c.hdS = hd0; { let dh = hd0 - c.hdS; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); c.hdS += dh * Math.min(1, dt * 30); } const hd = c.hdS, hx = Math.cos(hd), hz = -Math.sin(hd);
-      { const want = roadLift(px, pz, .028 + Math.max(0, .07 - groundH(px, pz))) + .012; c.ly = c.ly === undefined ? want : c.ly + (want - c.ly) * Math.min(1, dt * 16); put(c.w, px, pz, hd, c.ly + (onW > 0 ? onW * Math.max(0, (Math.abs(px - INLET[0][0]) < 1.5 ? .2 : .28) - groundH(px, pz)) : 0)); }
+      { const want = roadLift(px, pz, .028 + Math.max(0, .07 - groundH(px, pz))) + .002; c.ly = c.ly === undefined ? want : c.ly + (want - c.ly) * Math.min(1, dt * 16); put(c.w, px, pz, hd, c.ly + (onW > 0 ? onW * Math.max(0, (Math.abs(px - INLET[0][0]) < 1.5 ? .2 : .28) - groundH(px, pz)) : 0)); }
       if (onW <= 0) { const tg = Math.max(-.07, Math.min(.07, Math.atan2(groundH(px + hx * .12, pz + hz * .12) - groundH(px - hx * .12, pz - hz * .12), .24) * .4)); c.pit = c.pit === undefined ? 0 : c.pit + (tg - c.pit) * Math.min(1, dt * 4); c.w.quaternion.multiply(_q.setFromAxisAngle(Zax, c.pit)); }      /* a gentle, smoothed tilt: the vehicles never rear up at the front */
     }
     for (const s of sailers) {
