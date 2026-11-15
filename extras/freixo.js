@@ -1198,7 +1198,7 @@ export function open(opts) {
     const fl = new THREE.Mesh(new THREE.BoxGeometry(.05, .012, .22), skin); fl.position.x = -.19; tail.add(fl);
     g.scale.setScalar(sc || 1); return { g, tail };
   }
-  for (const [cx, cz, rx, rz, sp, ph, n, gap] of [[-1.5, 5.2, 6.2, 2.4, .13, 0, 3, .035], [-1.5, 4.7, 5.0, 1.9, -.13, 2, 2, .04]]) {
+  for (const [cx, cz, rx, rz, sp, ph, n, gap] of [[-3.8, 5.2, 3.4, 2.4, .2, 0, 3, .035], [-3.8, 4.7, 2.6, 1.9, -.2, 2, 2, .04]]) {
     for (let k = 0; k < n; k++) { const d = dolphin(1.25), w = new THREE.Group(); w.add(d.g); W(w); seaLife.push({ kind: 'dol', w, d, cx, cz, rx, rz, sp, a: ph + k * (gap || .55), ph: rnd() * 6, off: k * .22 }); }
   }
   const fishBody = new THREE.SphereGeometry(.05, 8, 6), fishTail = new THREE.ConeGeometry(.04, .07, 4), fishEye = new THREE.SphereGeometry(.009, 5, 4), eyeM = std(0x1b1b1b);
@@ -1225,7 +1225,7 @@ export function open(opts) {
   };
   /* dolphins and whales keep to the open sea: their z is held away from both coasts (the channel is narrower in places, so they gather in its middle there) */
   const seaZ = (x, z, m) => { const n = shore(x), sS = shoreS(x), mid = (n + sS) / 2, h = Math.max(0, (sS - n) / 2 - m); return mid + Math.max(-h, Math.min(h, z - mid)); };
-  whale(-1.5, 5.4, 7.0, 2.8, .05, 1.2, .7); whale(-1.5, 4.8, 5.8, 2.3, -.045, 3.9, .75); whale(-1.5, 5.6, 4.8, 2.0, .04, 5.6, .65);
+  whale(-3.8, 5.4, 3.8, 2.8, .08, 1.2, .7); whale(-3.8, 4.8, 3.0, 2.3, -.07, 3.9, .75); whale(-3.8, 5.6, 2.4, 2.0, .06, 5.6, .65);
 
   // ---- canoes (piraguas) paddling slowly up and down the coast, close to the beaches
   const canoes = [];
@@ -2367,13 +2367,13 @@ export function open(opts) {
       if (o.kind === 'dol') {                          // swims under the surface, then leaps in an arc and dives back in
         const c = (t * .42 + o.ph) % 3.2, leap = c < 1 ? Math.sin(c * PI) : 0, vy = c < 1 ? Math.cos(c * PI) : 0;
         if (c < 1 && !o.up) { o.up = 1; if (audio && Math.random() < .5) audio.sfx('splash'); } else if (c >= 1) o.up = 0;
-        { const px = o.cx + o.rx * Math.cos(o.a); put(o.w, px, seaZ(px, o.cz + o.rz * Math.sin(o.a) + o.off, 1.9), yaw, -.09 + leap * .42, true); }
+        { const px = o.cx + o.rx * Math.cos(o.a); put(o.w, px, seaZ(px, o.cz + o.rz * Math.sin(o.a) + o.off, 3.1), yaw, -.09 + leap * .42, true); }
         o.d.g.rotation.z = c < 1 ? vy * -.7 : Math.sin(t * 2 + o.ph) * .04; o.d.tail.rotation.z = Math.sin(t * 7 + o.ph) * .35;
       } else if (o.kind === 'turtle') {
         put(o.w, o.cx + o.rx * Math.cos(o.a), o.cz + o.rz * Math.sin(o.a), yaw, -.02 + Math.sin(t * .8 + o.ph) * .008, true);
         o.g.rotation.z = Math.sin(t * 1.2) * .04;
       } else {                                         // the whale glides far out, raises its tail now and then and blows
-        { const px = o.cx + o.rx * Math.cos(o.a); put(o.w, px, seaZ(px, o.cz + o.rz * Math.sin(o.a), 2.4), yaw, -.1, true); }
+        { const px = o.cx + o.rx * Math.cos(o.a); put(o.w, px, seaZ(px, o.cz + o.rz * Math.sin(o.a), 3.4), yaw, -.1, true); }
         const c = (t * .13) % 1; o.tail.rotation.z = Math.sin(t * .9) * .14 + (c > .8 ? Math.sin((c - .8) / .2 * PI) * .5 : 0); o.spout.visible = c > .45 && c < .6; o.g.rotation.z = Math.sin(t * .5) * .03;
       }
     }
