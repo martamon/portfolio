@@ -294,7 +294,7 @@
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"]{left:6vw!important;top:calc(110px + 22px + 28px)!important;bottom:auto!important;width:min(640px,calc(100vw - 12vw))!important}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"]::before{display:none!important}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Wordmark"],html:not(#x)[data-xp="about"] [data-framer-name="Caption"]{visibility:hidden!important}',
-    '.x-ab-txt{position:fixed;left:6vw;top:62px;width:min(640px,calc(100vw - 12vw));z-index:8;pointer-events:none;color:#fff;text-shadow:none}.x-ab-txt p span{transition:color .3s ease}.x-ab-txt h1{margin:0 0 28px;font:400 22px/1 "Outfit","Plus Jakarta Sans",sans-serif;letter-spacing:.14em;text-transform:uppercase}.x-ab-txt p{margin:0;font:400 13.5px/1.28 "Lekton","IBM Plex Mono",monospace;letter-spacing:.01em;text-align:justify;text-transform:uppercase}',
+    '.x-ab-txt{position:fixed;left:6vw;top:62px;width:min(640px,calc(100vw - 12vw));z-index:8;pointer-events:none;color:#fff;text-shadow:none}.x-ab-txt.dk,.x-ab-txt.dk *{color:#071230!important}.x-ab-txt:not(.dk) *{color:#fff!important}.x-ab-txt h1{margin:0 0 28px;font:400 22px/1 "Outfit","Plus Jakarta Sans",sans-serif;letter-spacing:.14em;text-transform:uppercase}.x-ab-txt p{margin:0;font:400 13.5px/1.28 "Lekton","IBM Plex Mono",monospace;letter-spacing:.01em;text-align:justify;text-transform:uppercase}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"] p,html:not(#x)[data-xp="about"] [data-framer-name="Caption"] *{font-family:"Lekton","IBM Plex Mono",monospace!important;font-weight:400!important;font-size:13px!important;line-height:1.3!important;letter-spacing:.01em!important;text-align:justify!important;text-justify:inter-word!important}',
     // tighter lines in the running texts of the site
     'html main[data-xm] [data-framer-name="Project Writeup"] p,html main[data-xm] [data-framer-name="Info"] p,html main[data-xm]~section p,html main[data-xm]~* footer p,html [data-framer-name="Info"] p,.x-ct-text,.x-ct-text p{line-height:1.25!important}',
@@ -2072,24 +2072,25 @@
       if (tx && words.length && now0 - lT > 90) { lT = now0; sampleWords(); }
       requestAnimationFrame(frame);
     }
-    /* claroscuro: every word takes the opposite tone of the picture right behind it (dark on the light sky, light on the dark trees and the blue ground) */
+    /* claroscuro, by what is behind the words: the picture's brightness is turned into two complementary masks, so the same text shows dark wherever the picture is light (sky, haze) and white wherever it is dark (trees, ground), following the shapes of the background and not the words */
+    var tx2 = null, mcv = document.createElement('canvas'), mx = mcv.getContext('2d', { willReadFrequently: true }), ocv = document.createElement('canvas'), ox2 = ocv.getContext('2d'), ocv2 = document.createElement('canvas'), ox3 = ocv2.getContext('2d');
     function sampleWords() {
-      var r = vid ? vid.getBoundingClientRect() : null, W = 96, Hc = 54, ok = false;
-      lcv.width = W; lcv.height = Hc;
-      if (r && vid.videoWidth && vid.readyState > 1 && r.bottom > 0) { try { lcx.drawImage(vid, 0, 0, W, Hc); lcx.getImageData(0, 0, 1, 1); ok = true; } catch (e) {} }
-      var data = ok ? lcx.getImageData(0, 0, W, Hc).data : null, vw = vid ? vid.videoWidth : 1, vh = vid ? vid.videoHeight : 1;
-      var sc = r ? Math.max(r.width / vw, r.height / vh) : 1, dx = r ? (r.width - vw * sc) * .62 : 0, dy = r ? (r.height - vh * sc) : 0;
-      for (var i = 0; i < words.length; i++) {
-        var b = words[i].getBoundingClientRect(), cxw = b.left + b.width / 2, cyw = b.top + b.height / 2, L = .33;
-        if (data && cyw > r.top && cyw < r.bottom - r.height * .08) {
-          var u = ((cxw - r.left - dx) / sc) / vw, v = ((cyw - r.top - dy) / sc) / vh, acc = 0, n = 0;
-          for (var oy = -1; oy <= 1; oy++) for (var ox = -2; ox <= 2; ox++) { var X = Math.round(u * W) + ox, Y = Math.round(v * Hc) + oy; if (X >= 0 && X < W && Y >= 0 && Y < Hc) { var k = (Y * W + X) * 4; acc += (data[k] * .2126 + data[k + 1] * .7152 + data[k + 2] * .0722) / 255; n++; } }
-          if (n) L = acc / n;
-          var hd = document.documentElement; L *= hd.hasAttribute('data-xnight') ? .52 : hd.hasAttribute('data-xdusk') ? .9 : 1.08;
-        }
-        var el = words[i], was = el.__d, dark = was === undefined ? L > .5 : (was ? L > .44 : L > .56);
-        if (was !== dark) { el.__d = dark; el.style.setProperty('color', dark ? '#071230' : '#ffffff', 'important'); }
+      if (!tx || !tx2) return;
+      var K = 5, MW = Math.max(8, Math.ceil(innerWidth / K)), MH = Math.max(8, Math.ceil(innerHeight / K)), r = vid ? vid.getBoundingClientRect() : null, ok = false;
+      mcv.width = ocv.width = ocv2.width = MW; mcv.height = ocv.height = ocv2.height = MH;
+      mx.fillStyle = '#545454'; mx.fillRect(0, 0, MW, MH);
+      if (r && vid.videoWidth && vid.readyState > 1 && r.bottom > 0) { var vw = vid.videoWidth, vh = vid.videoHeight, sc = Math.max(r.width / vw, r.height / vh), dx = (r.width - vw * sc) * .62, dy = r.height - vh * sc;
+        try { mx.drawImage(vid, (r.left + dx) / K, (r.top + dy) / K, vw * sc / K, vh * sc / K); mx.getImageData(0, 0, 1, 1); ok = true; } catch (e) {} }
+      var data = mx.getImageData(0, 0, MW, MH).data, hd = document.documentElement, g = hd.hasAttribute('data-xnight') ? .52 : hd.hasAttribute('data-xdusk') ? .9 : 1.08;
+      var dm = ox2.createImageData(MW, MH), wm = ox3.createImageData(MW, MH);
+      for (var i = 0, n = MW * MH; i < n; i++) {
+        var L = ok ? (data[i * 4] * .2126 + data[i * 4 + 1] * .7152 + data[i * 4 + 2] * .0722) / 255 * g : .33, t = Math.min(1, Math.max(0, (L - .4) / .16)); t = t * t * (3 - 2 * t);
+        dm.data[i * 4 + 3] = Math.round(t * 255); wm.data[i * 4 + 3] = Math.round((1 - t) * 255);
       }
+      ox2.putImageData(dm, 0, 0); ox3.putImageData(wm, 0, 0);
+      var u1 = 'url(' + ocv2.toDataURL() + ')', u2 = 'url(' + ocv.toDataURL() + ')', b = tx.getBoundingClientRect(), pos = (-b.left) + 'px ' + (-b.top) + 'px', sz = innerWidth + 'px ' + innerHeight + 'px';
+      function mask(el, u) { var st = el.style; st.webkitMaskImage = st.maskImage = u; st.webkitMaskSize = st.maskSize = sz; st.webkitMaskPosition = st.maskPosition = pos; st.webkitMaskRepeat = st.maskRepeat = 'no-repeat'; }
+      mask(tx, u1); mask(tx2, u2);
     }
     function build() {
       wrap = document.createElement('div'); wrap.className = 'x-ab-bg'; wrap.setAttribute('aria-hidden', 'true');
@@ -2105,9 +2106,10 @@
       if (on && !wrap) build(); else if (!on && wrap) { wrap.remove(); if (pw) { pw.style.opacity = ''; pw.style.pointerEvents = ''; } wrap = vid = blue = null; ready = false; document.documentElement.classList.remove('x-about-on'); }
       if (on) { if (wrap && !wrap.isConnected) document.body.insertBefore(wrap, document.body.firstChild);
         if (!tx || !tx.isConnected) { tx = document.createElement('div'); tx.className = 'x-ab-txt'; tx.setAttribute('aria-hidden', 'true'); tx.innerHTML = '<p></p>'; document.body.appendChild(tx); }
-        var w = document.querySelector('[data-framer-name="Wordmark"] p'), c = document.querySelector('[data-framer-name="Caption"] p, [data-framer-name="Caption"]'); if (c && tx.lastChild.dataset.src !== c.textContent) { tx.lastChild.dataset.src = c.textContent; tx.lastChild.innerHTML = c.textContent.split(/\s+/).filter(Boolean).map(function (t) { return '<span>' + t.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</span>'; }).join(' '); words = tx.lastChild.children; }
+        if (!tx2 || !tx2.isConnected) { tx2 = document.createElement('div'); tx2.className = 'x-ab-txt dk'; tx2.setAttribute('aria-hidden', 'true'); document.body.appendChild(tx2); }
+        var w = document.querySelector('[data-framer-name="Wordmark"] p'), c = document.querySelector('[data-framer-name="Caption"] p, [data-framer-name="Caption"]'); if (c && tx.lastChild.dataset.src !== c.textContent) { tx.lastChild.dataset.src = c.textContent; tx.lastChild.innerHTML = c.textContent.split(/\s+/).filter(Boolean).map(function (t) { return '<span>' + t.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</span>'; }).join(' '); words = tx.lastChild.children; } if (tx2 && tx2.innerHTML !== tx.innerHTML) { tx2.innerHTML = tx.innerHTML; lT = 0; }
         if (!run) { run = true; lastY = window.scrollY || 0; sm = lastY; requestAnimationFrame(frame); } }
-      else if (tx) { tx.remove(); tx = null; }
+      else if (tx) { tx.remove(); tx = null; if (tx2) { tx2.remove(); tx2 = null; } }
     }
     setInterval(sync, 400); sync();
   })();
