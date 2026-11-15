@@ -294,7 +294,7 @@
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"]{left:6vw!important;top:calc(110px + 22px + 28px)!important;bottom:auto!important;width:min(640px,calc(100vw - 12vw))!important}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"]::before{display:none!important}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Wordmark"],html:not(#x)[data-xp="about"] [data-framer-name="Caption"]{visibility:hidden!important}',
-    '.x-ab-txt{position:fixed;left:6vw;top:62px;width:min(640px,calc(100vw - 12vw));z-index:8;pointer-events:none;color:#fff;text-shadow:none}.x-ab-txt.dk,.x-ab-txt.dk *{color:#071230!important}.x-ab-txt:not(.dk) *{color:#fff!important}.x-ab-txt h1{margin:0 0 28px;font:400 22px/1 "Outfit","Plus Jakarta Sans",sans-serif;letter-spacing:.14em;text-transform:uppercase}.x-ab-txt p{margin:0;font:400 13.5px/1.28 "Lekton","IBM Plex Mono",monospace;letter-spacing:.01em;text-align:justify;text-transform:uppercase}',
+    '.x-ab-txt{position:fixed;left:6vw;top:62px;width:min(640px,calc(100vw - 12vw));z-index:8;pointer-events:none;color:#fff;text-shadow:none}.x-ab-txt.dk,.x-ab-txt.dk *{color:#020812!important;text-shadow:0 0 5px rgba(255,255,255,.38),0 0 1px rgba(255,255,255,.5)}.x-ab-txt:not(.dk) *{color:#fff!important;text-shadow:0 0 5px rgba(2,8,18,.5),0 0 1px rgba(2,8,18,.6)}.x-ab-txt h1{margin:0 0 28px;font:400 22px/1 "Outfit","Plus Jakarta Sans",sans-serif;letter-spacing:.14em;text-transform:uppercase}.x-ab-txt p{margin:0;font:400 13.5px/1.28 "Lekton","IBM Plex Mono",monospace;letter-spacing:.01em;text-align:justify;text-transform:uppercase}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"] p,html:not(#x)[data-xp="about"] [data-framer-name="Caption"] *{font-family:"Lekton","IBM Plex Mono",monospace!important;font-weight:400!important;font-size:13px!important;line-height:1.3!important;letter-spacing:.01em!important;text-align:justify!important;text-justify:inter-word!important}',
     // tighter lines in the running texts of the site
     'html main[data-xm] [data-framer-name="Project Writeup"] p,html main[data-xm] [data-framer-name="Info"] p,html main[data-xm]~section p,html main[data-xm]~* footer p,html [data-framer-name="Info"] p,.x-ct-text,.x-ct-text p{line-height:1.25!important}',
@@ -2084,7 +2084,7 @@
       var data = mx.getImageData(0, 0, MW, MH).data, hd = document.documentElement, g = hd.hasAttribute('data-xnight') ? .52 : hd.hasAttribute('data-xdusk') ? .9 : 1.08;
       var dm = ox2.createImageData(MW, MH), wm = ox3.createImageData(MW, MH);
       for (var i = 0, n = MW * MH; i < n; i++) {
-        var L = ok ? (data[i * 4] * .2126 + data[i * 4 + 1] * .7152 + data[i * 4 + 2] * .0722) / 255 * g : .33, t = Math.min(1, Math.max(0, (L - .4) / .16)); t = t * t * (3 - 2 * t);
+        var L = ok ? (data[i * 4] * .2126 + data[i * 4 + 1] * .7152 + data[i * 4 + 2] * .0722) / 255 * g : .33, t = Math.min(1, Math.max(0, (L - .46) / .07)); t = t * t * (3 - 2 * t);
         dm.data[i * 4 + 3] = Math.round(t * 255); wm.data[i * 4 + 3] = Math.round((1 - t) * 255);
       }
       ox2.putImageData(dm, 0, 0); ox3.putImageData(wm, 0, 0);
