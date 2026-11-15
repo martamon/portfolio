@@ -772,6 +772,18 @@ export function open(opts) {
     for (const z of [-58, -22, 12, 48, -80, 76]) { const cx = COAST(z) - 54 + (noise(z, 3) - .5) * 8; if (H(cx, z) > 1.8 && hill.length < 3 && !solid(cx, z, 7)) { const w = 6.2 + rng() * 1.2, d = 5.2, h = houseMesh(w, d, 1 + (hill.length % 2), WALLS[(hill.length * 3 + 1) % WALLS.length], ROOFS[(hill.length + 2) % ROOFS.length], true); addTo(h, cx, z, PI / 2 + (rng() - .5) * .5, h.userData.r); hill.push([cx, z]); } }
     for (const [cx, z] of hill) { const kinds = [sheep, sheep, sheep, sheep, cow, cow, horse].slice(0, 4 + Math.floor(rng() * 3)); if (hill.indexOf(hill.find((q) => q[0] === cx)) === 1) kinds.push(sheep, sheep);
       kinds.forEach((kf, i) => { const g = kf(), a0 = rng() * 6.28, rr = 7 + rng() * 5, ax = cx - 8 + Math.cos(a0) * rr * .7, az = z + Math.sin(a0) * rr; grazers.push({ g, cx: ax, cz: az, r: 2.5 + rng() * 3.5, a: rng() * 6.28, sp: (kf === sheep ? .5 : kf === cow ? .35 : .55) * (.8 + rng() * .4), ph: rng() * 20, big: kf !== sheep, x: ax, z: az, yaw: rng() * 6.28 }); }); } }
+  // ---- zebra crossings (two in every village) and traffic lights at some of them: the cars wait at the red
+  const xings = [];
+  { const lampG = new THREE.SphereGeometry(.17, 10, 8), mats = (c) => new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: .05, roughness: .5 });
+    VILLAGES.forEach(([, z0], vi) => { for (const [dz, light] of [[-7, vi % 2 === 1 || vi === 4], [9, vi === 2 || vi === 3]]) { const zc = z0 + dz, rx = ROADX(zc), xg = { z: zc, light: !!light, red: false };
+      for (let k = -3; k <= 3; k++) ribbon([[ROADX(zc + k * .8) - 2.5, zc + k * .8], [ROADX(zc + k * .8) + 2.5, zc + k * .8]], .46, 0xf6f0e2, .115, 6);
+      if (light) { for (const sd of [-1, 1]) { const px = rx + sd * 3.9, pg = new THREE.Group(), pole = new THREE.Mesh(new THREE.CylinderGeometry(.06, .07, 3.4, 6), std(0x4a4f57)); pole.position.y = 1.7; pg.add(pole);
+          const box = new THREE.Mesh(rbox(.46, 1.3, .4, .08), std(0x2d3138)); box.position.set(0, 3.5, 0); pg.add(box); const L = [0xe0463a, 0xf2c14a, 0x4fb87a].map((c, i) => { const m = new THREE.Mesh(lampG, mats(c)); m.position.set(0, 3.95 - i * .4, sd < 0 ? .2 : -.2); pg.add(m); return m; });
+          pg.position.set(px, H(px, zc), zc); pg.rotation.y = sd < 0 ? PI / 2 : -PI / 2; scene.add(pg); (xg.lamps = xg.lamps || []).push(L); } }
+      xings.push(xg); } });
+    // cycle: green 7 s, amber 1.5 s, red 5 s (each crossing out of step with the others)
+    xings.update = (t) => { xings.forEach((xg, i) => { const c = (t + i * 3.7) % 13.5, st = c < 7 ? 0 : c < 8.5 ? 1 : 2; xg.red = xg.light && st > 0; if (xg.lamps) for (const L of xg.lamps) L.forEach((m, k) => { m.material.emissiveIntensity = (k === 0 && st === 2) || (k === 1 && st === 1) || (k === 2 && st === 0) ? 1.4 : .05; }); }); };
+    xings.holds = (v) => xings.some((xg) => xg.red && (xg.z - v.z) * v.dir > .8 && (xg.z - v.z) * v.dir < 7.5); }
   // ---- traffic: two little cars and a bus that stops at every bus shelter and takes on the people who wait there
   const traffic = [];
   { const mk = (L, W2, Hh, col, bus) => { const g = new THREE.Group(), add = (geo, c, x, y, z, ex) => { const o = new THREE.Mesh(geo, std(c, ex)); o.position.set(x, y, z); o.castShadow = true; g.add(o); return o; };
@@ -790,8 +802,9 @@ export function open(opts) {
     // the people waiting at the shelters (they board the bus, and a new one turns up a little later)
     const waiters = stops.map(([bx, bz], i) => { const w = person([0x4f8fc0, 0xe9a0c0, 0xf2c14a, 0x5fae8a, 0xc9a0e8][i % 5], [0xf0c9a0, 0xe3b185, 0xf5d6b5][i % 3]); { const sc = new THREE.Group(), cc = [0xc9473a, 0x2f6fa8, 0x3b8f6a][i % 3]; const bd = new THREE.Mesh(rbox(.4, .62, .26, .07), std(cc)); bd.position.y = .38; sc.add(bd); const hdl = new THREE.Mesh(new THREE.CylinderGeometry(.015, .015, .5, 5), std(0x3a3f47)); hdl.position.set(0, .88, 0); sc.add(hdl); const hg = new THREE.Mesh(new THREE.BoxGeometry(.18, .03, .03), std(0x3a3f47)); hg.position.y = 1.13; sc.add(hg); for (const q of [-.12, .12]) { const wl = new THREE.Mesh(new THREE.SphereGeometry(.04, 8, 6), std(0x23262b)); wl.position.set(q, .04, 0); sc.add(wl); } sc.traverse((o) => { if (o.isMesh) o.castShadow = true; }); sc.position.set(.1, 0, .78); sc.rotation.y = PI / 2; w.add(sc); } w.scale.setScalar(.88); w.position.set(bx - .1, H(bx, bz) + .08, bz + .1); w.rotation.y = PI / 2 + 0; scene.add(w); return { p: w, bx, bz, st: 'wait', t: 0, x: bx - .1, z: bz + .1 }; });
     traffic.update = (dt) => {
+      xings.t = (xings.t || 0) + dt; xings.update(xings.t);
       for (const v of traffic) { const g = v.g;
-        if (v.wait > 0) { v.wait -= dt; } else { let stopAt = null; if (v.bus) for (const w of waiters) if (w.st === 'wait' && (w.bz - v.z) * v.dir > -.5 && (w.bz - v.z) * v.dir < 6) { stopAt = w; break; }
+        if (v.wait > 0) { v.wait -= dt; } else if (xings.holds(v)) { /* red light: wait */ } else { let stopAt = null; if (v.bus) for (const w of waiters) if (w.st === 'wait' && (w.bz - v.z) * v.dir > -.5 && (w.bz - v.z) * v.dir < 6) { stopAt = w; break; }
           if (stopAt) { const d = stopAt.bz - v.z; if (Math.abs(d) < .5) { v.wait = 4.5; stopAt.st = 'board'; stopAt.t = 0; } else v.z += Math.sign(d) * Math.min(Math.abs(d), v.sp * .5 * dt); } else v.z += v.dir * v.sp * dt; }
         if (v.z < -96) v.z = 96; if (v.z > 96) v.z = -96;
         const x = ROADX(v.z) + v.lane, x2 = ROADX(v.z + v.dir * 2); const hd = Math.atan2(x2 - ROADX(v.z), v.dir * 2); g.position.set(x, H(x, v.z) + .02, v.z); g.rotation.y = hd; }
