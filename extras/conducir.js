@@ -776,10 +776,11 @@ export function open(opts) {
   const xings = [];
   { const lampG = new THREE.SphereGeometry(.17, 10, 8), mats = (c) => new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: .05, roughness: .5 });
     VILLAGES.forEach(([, z0], vi) => { for (const [dz, light] of vi === 1 || vi === 3 ? [[-7, true]] : []) { const zc = z0 + dz, rx = ROADX(zc), xg = { z: zc, light: !!light, red: false };
-      for (let k = -3; k <= 3; k++) ribbon([[ROADX(zc + k * .8) - 2.5, zc + k * .8], [ROADX(zc + k * .8) + 2.5, zc + k * .8]], .46, 0xf6f0e2, .115, 6);
-      if (light) { for (const sd of [-1, 1]) { const px = rx + sd * 3.9, pg = new THREE.Group(), pole = new THREE.Mesh(new THREE.CylinderGeometry(.06, .07, 3.4, 6), std(0x4a4f57)); pole.position.y = 1.7; pg.add(pole);
+      const dxz = ROADX(zc + .5) - ROADX(zc - .5), dl = Math.hypot(dxz, 1), tx = dxz / dl, tz = 1 / dl, nx = tz, nz = -tx, cx0 = ROADX(zc);      // the road's direction here, and straight across it
+      for (let k = -3; k <= 3; k++) { const mx = cx0 + tx * k * .8, mz = zc + tz * k * .8; ribbon([[mx - nx * 2.6, mz - nz * 2.6], [mx + nx * 2.6, mz + nz * 2.6]], .46, 0xf6f0e2, .115, 6); }
+      if (light) { for (const sd of [-1, 1]) { const px = cx0 + nx * sd * 3.9, pz0 = zc + nz * sd * 3.9, pg = new THREE.Group(), pole = new THREE.Mesh(new THREE.CylinderGeometry(.06, .07, 3.4, 6), std(0x4a4f57)); pole.position.y = 1.7; pg.add(pole);
           const box = new THREE.Mesh(rbox(.46, 1.3, .4, .08), std(0x2d3138)); box.position.set(0, 3.5, 0); pg.add(box); const L = [0xe0463a, 0xf2c14a, 0x4fb87a].map((c, i) => { const m = new THREE.Mesh(lampG, mats(c)); m.position.set(0, 3.95 - i * .4, sd < 0 ? .2 : -.2); pg.add(m); return m; });
-          pg.position.set(px, H(px, zc), zc); pg.rotation.y = sd < 0 ? PI / 2 : -PI / 2; scene.add(pg); (xg.lamps = xg.lamps || []).push(L); } }
+          pg.position.set(px, H(px, pz0), pz0); pg.rotation.y = (sd < 0 ? PI / 2 : -PI / 2) + Math.atan2(tx, tz); scene.add(pg); (xg.lamps = xg.lamps || []).push(L); } }
       xings.push(xg); } });
     // cycle: green 7 s, amber 1.5 s, red 5 s (each crossing out of step with the others)
     xings.update = (t) => { xings.forEach((xg, i) => { const c = (t + i * 3.7) % 13.5, st = c < 7 ? 0 : c < 8.5 ? 1 : 2; xg.red = xg.light && st > 0; if (xg.lamps) for (const L of xg.lamps) L.forEach((m, k) => { m.material.emissiveIntensity = (k === 0 && st === 2) || (k === 1 && st === 1) || (k === 2 && st === 0) ? 1.4 : .05; }); }); };
