@@ -47,7 +47,7 @@
   if (/[?&]xoff\b/.test(location.search)) return;
 
   // language of the site (English, Spanish, Galician): the switch in the corner and the translation of every text
-  try { import('/extras/i18n.js?v=35').catch(function () {}); } catch (e) {}
+  try { import('/extras/i18n.js?v=36').catch(function () {}); } catch (e) {}
 
   // In-app browsers (LinkedIn, Instagram, ...) end up on a blank page as soon as the YouTube player of the home page is created, so
   // there every YouTube iframe shows its still picture with a link to YouTube instead (?xinapp forces this in any browser).
@@ -2505,7 +2505,7 @@
     styleMenu();
     styleCaptions(p === 'home');
     try { homeTitles(p === 'home'); } catch (er) {}
-    try { if (/^\/(portugal|greece|china)\/?$/.test(location.pathname)) { var wr2 = document.querySelector('[data-framer-name="Project Writeup"]'); if (wr2 && !wr2.querySelector('.x-sony')) { var sp = document.createElement('p'); sp.className = 'framer-text framer-styles-preset-189x7y4 x-sony'; sp.setAttribute('data-styles-preset', 'C7GBCUBvm'); sp.style.marginTop = '1em'; sp.textContent = 'Images captured with a Sony Alpha 7R IV, image editing and retouching, mainly color adjustments.'; wr2.appendChild(sp); } } } catch (er) {}
+    try { if (/^\/(portugal|greece|china|studio-girls)\/?$/.test(location.pathname)) { var wr2 = document.querySelector('[data-framer-name="Project Writeup"]'); if (wr2 && !wr2.querySelector('.x-sony')) { var sp = document.createElement('p'); sp.className = 'framer-text framer-styles-preset-189x7y4 x-sony'; sp.setAttribute('data-styles-preset', 'C7GBCUBvm'); sp.style.marginTop = '1em'; sp.textContent = 'Images captured with a Sony Alpha 7R IV, image editing and retouching, mainly color adjustments.'; wr2.appendChild(sp); if (/studio-girls/.test(location.pathname)) { var sp2 = document.createElement('p'); sp2.className = 'framer-text framer-styles-preset-189x7y4 x-sony'; sp2.setAttribute('data-styles-preset', 'C7GBCUBvm'); sp2.style.marginTop = '1em'; sp2.textContent = 'Studio lighting and handling of photography studio equipment.'; wr2.appendChild(sp2); } } } } catch (er) {}
     try { if (/^\/planeta-marta\/?$/.test(location.pathname)) { var wr = document.querySelector('[data-framer-name="Project Writeup"]'); if (wr && !wr.querySelector('a.x-visit')) { var vp = document.createElement('p'); vp.className = 'framer-text framer-styles-preset-189x7y4'; vp.setAttribute('data-styles-preset', 'C7GBCUBvm'); vp.innerHTML = '<a class="x-visit" href="/?xplanet">\u21b3 Visit the planet</a>'; wr.appendChild(vp); } } } catch (er) {}
     applyHome(p === 'home');
     setupTilt(p === 'contact');
