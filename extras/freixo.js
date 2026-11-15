@@ -484,7 +484,7 @@ function stoneBridge(span, nA, bw, mat, deckMat, hump) {
 function ribbon(pts, width, mat, lift, dash, flo, noSkip, flat) {
   if (flat === 'edge') {       // a road: each edge of the ribbon follows the ground under it (smoothed along the road), so it is never raised on one side and sunk on the other
     flo = flo === undefined ? .07 : flo; const N = pts.length, HL = [], HR = [], nl = [];
-    for (let i = 0; i < N; i++) { const a2 = pts[Math.max(0, i - 1)], b2 = pts[Math.min(N - 1, i + 1)], tx = b2[0] - a2[0], tz = b2[1] - a2[1], l = Math.hypot(tx, tz) || 1, nx = -tz / l * width / 2, nz = tx / l * width / 2; nl.push([nx, nz]); const gm = groundH(pts[i][0], pts[i][1]), gl = Math.max(groundH(pts[i][0] + nx, pts[i][1] + nz), groundH(pts[i][0] + nx * 1.5, pts[i][1] + nz * 1.5)), gr = Math.max(groundH(pts[i][0] - nx, pts[i][1] - nz), groundH(pts[i][0] - nx * 1.5, pts[i][1] - nz * 1.5)); HL.push(Math.max(gl, gm, flo)); HR.push(Math.max(gr, gm, flo)); }
+    for (let i = 0; i < N; i++) { const a2 = pts[Math.max(0, i - 1)], b2 = pts[Math.min(N - 1, i + 1)], tx = b2[0] - a2[0], tz = b2[1] - a2[1], l = Math.hypot(tx, tz) || 1, nx = -tz / l * width / 2, nz = tx / l * width / 2; nl.push([nx, nz]); const sn = .38 / (width / 2) /* every ribbon of a road samples the ground over the same reach (the widest, the pavement), so the asphalt can never sit lower than the pavement beside it */, mx = nx * sn, mz = nz * sn; const gm = groundH(pts[i][0], pts[i][1]), gl = Math.max(groundH(pts[i][0] + mx, pts[i][1] + mz), groundH(pts[i][0] + mx * 1.5, pts[i][1] + mz * 1.5)), gr = Math.max(groundH(pts[i][0] - mx, pts[i][1] - mz), groundH(pts[i][0] - mx * 1.5, pts[i][1] - mz * 1.5)); HL.push(Math.max(gl, gm, flo)); HR.push(Math.max(gr, gm, flo)); }
     const rL = HL.slice(), rR = HR.slice();
     for (let pass = 0; pass < 8; pass++) for (let i = 1; i < N - 1; i++) { HL[i] = HL[i] * .5 + (HL[i - 1] + HL[i + 1]) * .25; HR[i] = HR[i] * .5 + (HR[i - 1] + HR[i + 1]) * .25; }
     for (let i = 0; i < N; i++) { HL[i] = Math.max(HL[i], rL[i]); HR[i] = Math.max(HR[i], rR[i]); }      /* never below the ground: the terrain cannot cover the road */
@@ -918,13 +918,13 @@ export function open(opts) {
   const buildRoad = (pts, up) => { roadList.push([pts, up || 0]); };
   const flushRoads = () => {
     // every road is laid at the same height, all the pavements first and all the asphalt above them, so crossings and junctions merge with no seams
-    for (const [pts] of roadList) { const m = ribbon(pts, .76, walkMat, .018, false, undefined, true, 'edge'); m.renderOrder = 1; W(m); }
+    for (const [pts0] of roadList) { const pts = pts0.filter((q) => !(roadN.rb || []).some(([jx, z0]) => Math.hypot(q[0] - jx, q[1] - z0) < RB - .3)); if (pts.length < 3) continue; const m = ribbon(pts, .76, walkMat, .018, false, undefined, true, 'edge'); m.renderOrder = 1; W(m); }      /* the pavement stops at the roundabout's edge (no slivers poking into it) */
     for (const [pts] of roadList) { const m = ribbon(pts, .56, asphalt, .03, false, undefined, true, 'edge'); m.renderOrder = 2; W(m); roadMeshes.push(m); }
     /* real pavements: a raised pale stone footway on each side of the carriageway, with a darker kerb stone along the road edge */
     const foot = std(0xd9d2c4, { roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }), kerbM = std(0xb4ad9d, { roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -5, polygonOffsetUnits: -5 });
-    for (const [pts] of roadList) for (const sg of [-1, 1]) { const f = ribbon(sideOf(pts, sg * .4), .2, foot, .05, false, undefined, true, 'edge'); f.renderOrder = 3; W(f); const k = ribbon(sideOf(pts, sg * .29), .03, kerbM, .056, false, undefined, true, 'edge'); k.renderOrder = 4; W(k); }
+    for (const [pts1] of roadList) for (const sg of [-1, 1]) { const pts = pts1.filter((q) => !(roadN.rb || []).some(([jx, z0]) => Math.hypot(q[0] - jx, q[1] - z0) < RB + .02)); if (pts.length < 3) continue; const f = ribbon(sideOf(pts, sg * .4), .2, foot, .05, false, undefined, true, 'edge'); f.renderOrder = 3; W(f); const k = ribbon(sideOf(pts, sg * .29), .03, kerbM, .056, false, undefined, true, 'edge'); k.renderOrder = 4; W(k); }
     const centre = std(0xf4f0e4, { roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -5, polygonOffsetUnits: -5 });
-    for (const [pts] of roadList) { const m = ribbon(pts, .014, centre, .036, true, undefined, true, 'edge'); m.renderOrder = 3; W(m); }     // the dashed line down the middle of every road
+    for (const [pts0] of roadList) { const pts = pts0.filter((q) => !(roadN.rb || []).some(([jx, z0]) => Math.hypot(q[0] - jx, q[1] - z0) < RB + .32)); if (pts.length < 3) continue; const m = ribbon(pts, .014, centre, .036, true, undefined, true, 'edge'); m.renderOrder = 3; W(m); }      /* the dashes stop at the roundabout's edge */     // the dashed line down the middle of every road
   };
   // the roundabout: a flat ring (pavement + asphalt + grass island) where the coast road is cut; the cars follow the inland half of the ring
   const RB = 0.62, roadRaw = relax(roadN, 4);
@@ -957,8 +957,8 @@ export function open(opts) {
     const e = atEnd ? rd[rd.length - 1] : rd[0], p2 = atEnd ? rd[rd.length - 3] : rd[2], dx = e[0] - p2[0], dz = e[1] - p2[1], dl = Math.hypot(dx, dz) || 1, ux = dx / dl, uz = dz / dl;
     const cx = e[0] + ux * .5, cz = e[1] + uz * .5, hb = Math.max(groundH(cx, cz), .07), yaw = Math.atan2(-uz, ux);
     if (groundH(cx, cz) < -.02) continue;
-    const lot = new THREE.Group(), slab = box(.8, .7, 1.25, std(0xdcd0b8)); slab.position.y = -.345; lot.add(slab); const tar = box(.74, .02, 1.17, std(0x808a98)); tar.position.y = .01; lot.add(tar);
-    for (let i = 0; i < 4; i++) { const ln = box(.5, .006, .018, std(0xf6f0e2)); ln.position.set(-.04, .022, -.5 + i * .33); lot.add(ln); }
+    const lot = new THREE.Group(), slab = box(.8, .7, 1.25, std(0xdcd0b8)); slab.position.y = -.345; slab.userData.ribbon = true; lot.add(slab); const tar = box(.74, .02, 1.17, std(0x808a98)); tar.position.y = .01; tar.userData.ribbon = true; lot.add(tar);      /* painted ground: it takes shadows but throws none */
+    for (let i = 0; i < 4; i++) { const ln = box(.5, .006, .018, std(0xf6f0e2)); ln.position.set(-.04, .022, -.5 + i * .33); ln.userData.ribbon = true; lot.add(ln); }
     lot.userData.fp = .75; lot.userData.pri = 4; W(put(lot, cx, cz, yaw, hb + .05 - SEA, true));
     { const link = [[e[0] - ux * .15, e[1] - uz * .15], [cx - ux * .2, cz - uz * .2]]; const w1 = ribbon(link, .76, walkMat, .018, false, undefined, true, 'edge'); W(w1); const a1 = ribbon(link, .56, asphalt, .03, false, undefined, true, 'edge'); a1.renderOrder = 2; W(a1); roadMeshes.push(a1); }      // the road runs straight into the car park
     [[0xe9577a, -.33], [0x4f8fc0, .0], [0xf2c14a, .33]].slice(0, atEnd ? 2 : 3).forEach(([col, off], k) => { if (k === 2 && roadN === rd) return; const pc = car(col, false); pc.scale.setScalar(.58); const pg = new THREE.Group(); pg.add(pc); parked.push(pg); const ox = -cz * 0, qx = cx + (-uz) * off * -1, qz = cz + ux * off * -1; W(put(pg, cx - uz * off, cz + ux * off, yaw + PI / 2 + (k % 2 ? PI : 0), hb + .062 - SEA, true)); });
@@ -1019,7 +1019,7 @@ export function open(opts) {
   { const rs = relax(roadS, 3); roadBridge(rs, INLET3[0][0], 1.3); }
   const routes = [route(roadN), route(roadS)];
   // ---- zebra crossings with traffic lights: cars stop at the red (and for anybody still on the stripes), and the little people cross ONLY there, when the light for them is green
-  const crossings = [], LCYC = 17, zebraG = new THREE.BoxGeometry(.24, .012, .034);
+  const crossings = [], LCYC = 17, zebraG = new THREE.BoxGeometry(.24, .004, .034);
   const lightState = (X, t) => { const c = (t + X.off) % LCYC; return c < 8 ? 'go' : c < 9.6 ? 'amber' : c < 15.2 ? 'red' : 'wait'; };   // for the cars; the people walk while it is red (from 10.4 to 15.2)
   { const white = std(0xf8f4ea, { roughness: 1, polygonOffset: true, polygonOffsetFactor: -8, polygonOffsetUnits: -8 }), mkLamp = (col, on) => new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: on, roughness: .4 });
     const spotsFor = (ri, want) => { const r = routes[ri], out = [];
@@ -1030,7 +1030,7 @@ export function open(opts) {
       return out; };
     [[0, [.1, .2, .33, .45, .58, .72, .88]], [1, [.15, .3, .5, .68, .85]]].forEach(([ri, want]) => spotsFor(ri, want).forEach((c, i) => {
       const X = { r: routes[ri], u: c.u, x: c.x, z: c.z, yaw: c.yaw, off: crossings.length * 5.3 + i * 2, peds: [], ready: false, occ: false, g: new THREE.Group(), red: mkLamp(0xff5a4a, .1), green: mkLamp(0x5fdc8a, .1), amb: mkLamp(0xffc24a, .1) };
-      for (let k = -3; k <= 3; k++) { const st = new THREE.Mesh(zebraG, white); st.position.set(0, 0, k * .058); X.g.add(st); }
+      for (let k = -3; k <= 3; k++) { const st = new THREE.Mesh(zebraG, white); st.position.set(0, 0, k * .058); st.userData.ribbon = true; X.g.add(st); }
       W(X.g);
       const sy = Math.sin(c.yaw), cy = Math.cos(c.yaw), tx = Math.cos(c.yaw), tz = -Math.sin(c.yaw);
       for (const sd of [-1, 1]) {   // a light on each kerb, a little before the stripes (in the direction of the traffic that comes towards it)
@@ -1198,7 +1198,7 @@ export function open(opts) {
     const fl = new THREE.Mesh(new THREE.BoxGeometry(.05, .012, .22), skin); fl.position.x = -.19; tail.add(fl);
     g.scale.setScalar(sc || 1); return { g, tail };
   }
-  for (const [cx, cz, rx, rz, sp, ph, n, gap] of [[-3.8, 5.2, 3.4, 2.4, .2, 0, 3, .035], [-3.8, 4.7, 2.6, 1.9, -.2, 2, 2, .04]]) {
+  for (const [cx, cz, rx, rz, sp, ph, n, gap] of [[-4.4, 5.2, 2.3, 2.4, .26, 0, 3, .035], [-4.4, 4.7, 1.8, 1.9, -.26, 2, 2, .04]]) {
     for (let k = 0; k < n; k++) { const d = dolphin(1.25), w = new THREE.Group(); w.add(d.g); W(w); seaLife.push({ kind: 'dol', w, d, cx, cz, rx, rz, sp, a: ph + k * (gap || .55), ph: rnd() * 6, off: k * .22 }); }
   }
   const fishBody = new THREE.SphereGeometry(.05, 8, 6), fishTail = new THREE.ConeGeometry(.04, .07, 4), fishEye = new THREE.SphereGeometry(.009, 5, 4), eyeM = std(0x1b1b1b);
@@ -1225,7 +1225,7 @@ export function open(opts) {
   };
   /* dolphins and whales keep to the open sea: their z is held away from both coasts (the channel is narrower in places, so they gather in its middle there) */
   const seaZ = (x, z, m) => { const n = shore(x), sS = shoreS(x), mid = (n + sS) / 2, h = Math.max(0, (sS - n) / 2 - m); return mid + Math.max(-h, Math.min(h, z - mid)); };
-  whale(-3.8, 5.4, 3.8, 2.8, .08, 1.2, .7); whale(-3.8, 4.8, 3.0, 2.3, -.07, 3.9, .75); whale(-3.8, 5.6, 2.4, 2.0, .06, 5.6, .65);
+  whale(-4.4, 5.4, 2.7, 2.8, .1, 1.2, .7); whale(-4.4, 4.8, 2.1, 2.3, -.09, 3.9, .75); whale(-4.4, 5.6, 1.7, 2.0, .08, 5.6, .65);
 
   // ---- canoes (piraguas) paddling slowly up and down the coast, close to the beaches
   const canoes = [];
@@ -1991,7 +1991,7 @@ export function open(opts) {
     if (tourOn) return; tourOn = true; tourMuted = !!(audio && audio.muted);
     mochi.classList.remove('x-ctaon'); mochi.classList.add('x-load'); root.classList.add('x-tour'); if (audio) { audio.sfx('mochinext'); setTimeout(() => audio && audio.mute(true), 500); }
     const t0 = performance.now();
-    import('./conducir.js?v=86').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
+    import('./conducir.js?v=87').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
       .then((m) => { const ab = m.open({ onClose: endTour, getDark: () => nightT, getRain: () => rainT }); if (!ab) throw new Error('no webgl'); setTimeout(mochiClose, 700); })
       .catch(() => { endTour(); mochiClose(); });
   };
@@ -2372,13 +2372,13 @@ export function open(opts) {
       if (o.kind === 'dol') {                          // swims under the surface, then leaps in an arc and dives back in
         const c = (t * .42 + o.ph) % 3.2, leap = c < 1 ? Math.sin(c * PI) : 0, vy = c < 1 ? Math.cos(c * PI) : 0;
         if (c < 1 && !o.up) { o.up = 1; if (audio && Math.random() < .5) audio.sfx('splash'); } else if (c >= 1) o.up = 0;
-        { const px = o.cx + o.rx * Math.cos(o.a); put(o.w, px, seaZ(px, o.cz + o.rz * Math.sin(o.a) + o.off, 3.1), yaw, -.09 + leap * .42, true); }
+        { const px = o.cx + o.rx * Math.cos(o.a); put(o.w, px, seaZ(px, o.cz + o.rz * Math.sin(o.a) + o.off, 3.8), yaw, -.09 + leap * .42, true); }
         o.d.g.rotation.z = c < 1 ? vy * -.7 : Math.sin(t * 2 + o.ph) * .04; o.d.tail.rotation.z = Math.sin(t * 7 + o.ph) * .35;
       } else if (o.kind === 'turtle') {
         put(o.w, o.cx + o.rx * Math.cos(o.a), o.cz + o.rz * Math.sin(o.a), yaw, -.02 + Math.sin(t * .8 + o.ph) * .008, true);
         o.g.rotation.z = Math.sin(t * 1.2) * .04;
       } else {                                         // the whale glides far out, raises its tail now and then and blows
-        { const px = o.cx + o.rx * Math.cos(o.a); put(o.w, px, seaZ(px, o.cz + o.rz * Math.sin(o.a), 3.4), yaw, -.1, true); }
+        { const px = o.cx + o.rx * Math.cos(o.a); put(o.w, px, seaZ(px, o.cz + o.rz * Math.sin(o.a), 4.0), yaw, -.1, true); }
         const c = (t * .13) % 1; o.tail.rotation.z = Math.sin(t * .9) * .14 + (c > .8 ? Math.sin((c - .8) / .2 * PI) * .5 : 0); o.spout.visible = c > .45 && c < .6; o.g.rotation.z = Math.sin(t * .5) * .03;
       }
     }
@@ -2412,7 +2412,7 @@ export function open(opts) {
       s.b.position.y = Math.sin(t * 1.5 + s.ph) * .02; s.b.rotation.z = Math.sin(t * 1.1 + s.ph) * .05 - .04; s.b.rotation.x = Math.sin(t * .9 + s.ph * 2) * .035;
     }
     for (const X of crossings) {
-      X.n = (X.n || 0) + 1; if (X.n < 60 || X.n % 300 === 0) { X.ready = true; X.ly = roadLift(X.x, X.z, .05); put(X.g, X.x, X.z, X.yaw, X.ly + .01); }
+      X.n = (X.n || 0) + 1; if (X.n < 60 || X.n % 300 === 0) { X.ready = true; X.ly = roadLift(X.x, X.z, .05); put(X.g, X.x, X.z, X.yaw, X.ly + .003); }
       const ls = lightState(X, t), cc = (t + X.off) % LCYC, walk = cc >= 10.4 && cc < 15.2;
       X.red.emissiveIntensity = ls === 'go' ? .08 : ls === 'amber' ? .08 : 1.5; X.green.emissiveIntensity = ls === 'go' ? 1.5 : .08; X.amb.emissiveIntensity = ls === 'amber' ? 1.5 : .08;
       let occ = false; const sy = Math.sin(X.yaw), cy = Math.cos(X.yaw), ry = roadLift(X.x, X.z, .05);
