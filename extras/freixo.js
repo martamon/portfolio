@@ -3,7 +3,7 @@
 // fishermen on anchored boats, cars, boats under sail, birds and clouds that keep moving. Opened from the Contact page (three clicks on the creature).
 // open({ night, onClose }) shows it on top of the page and returns { close }.
 import * as THREE from './three.module.min.js';
-import { mochiText, MOCHI, tr } from './i18n.js?v=31';
+import { mochiText, MOCHI, tr } from './i18n.js?v=32';
 import { stall, KINDS } from './mercadillo.js?v=1';
 const mochiLen = MOCHI.length;
 
@@ -1198,9 +1198,7 @@ export function open(opts) {
     const fl = new THREE.Mesh(new THREE.BoxGeometry(.05, .012, .22), skin); fl.position.x = -.19; tail.add(fl);
     g.scale.setScalar(sc || 1); return { g, tail };
   }
-  for (const [cx, cz, rx, rz, sp, ph, n, gap] of [[-2.2, 5.2, 1.9, 2.4, .26, 0, 3, .035], [-2.2, 4.7, 1.5, 1.9, -.26, 2, 2, .04]]) {
-    for (let k = 0; k < n; k++) { const d = dolphin(1.25), w = new THREE.Group(); w.add(d.g); W(w); seaLife.push({ kind: 'dol', w, d, cx, cz, rx, rz, sp, a: ph + k * (gap || .55), ph: rnd() * 6, off: k * .22 }); }
-  }
+  /* no dolphins: the sea is left to the boats, the fish and the turtles */
   const fishBody = new THREE.SphereGeometry(.05, 8, 6), fishTail = new THREE.ConeGeometry(.04, .07, 4), fishEye = new THREE.SphereGeometry(.009, 5, 4), eyeM = std(0x1b1b1b);
   function fish(col) {
     const g = new THREE.Group(), m = std(col), b = new THREE.Mesh(fishBody, m); b.scale.set(1.7, .75, .45); g.add(b);
@@ -1225,7 +1223,6 @@ export function open(opts) {
   };
   /* dolphins and whales keep to the open sea: their z is held away from both coasts (the channel is narrower in places, so they gather in its middle there) */
   const seaZ = (x, z, m) => { const n = shore(x), sS = shoreS(x), mid = (n + sS) / 2, h = Math.max(0, (sS - n) / 2 - m); return mid + Math.max(-h, Math.min(h, z - mid)); };
-  whale(-2.2, 5.4, 2.2, 2.8, .1, 1.2, .7); whale(-2.2, 4.8, 1.8, 2.3, -.09, 3.9, .75); whale(-2.2, 5.6, 1.4, 2.0, .08, 5.6, .65);
 
   // ---- canoes (piraguas) paddling slowly up and down the coast, close to the beaches
   const canoes = [];
