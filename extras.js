@@ -2069,15 +2069,17 @@
       var now = performance.now();
       
       
-      if (tx && words.length && now0 - lT > 90) { lT = now0; sampleWords(); }
+      if (tx && words.length && now0 - lT > 110 && !mPend) { lT = now0; sampleWords(); }
+      if (tx && tx2 && vid && sRect) nudgeMask();
       requestAnimationFrame(frame);
     }
     /* claroscuro, by what is behind the words: the picture's brightness is turned into two complementary masks, so the same text shows dark wherever the picture is light (sky, haze) and white wherever it is dark (trees, ground), following the shapes of the background and not the words */
-    var tx2 = null, mcv = document.createElement('canvas'), mx = mcv.getContext('2d', { willReadFrequently: true }), ocv = document.createElement('canvas'), ox2 = ocv.getContext('2d'), ocv2 = document.createElement('canvas'), ox3 = ocv2.getContext('2d');
+    var tx2 = null, mPend = false, sRect = null, mcv = document.createElement('canvas'), mx = mcv.getContext('2d', { willReadFrequently: true }), ocv = document.createElement('canvas'), ox2 = ocv.getContext('2d'), ocv2 = document.createElement('canvas'), ox3 = ocv2.getContext('2d');
     function sampleWords() {
       if (!tx || !tx2) return;
       var K = 5, MW = Math.max(8, Math.ceil(innerWidth / K)), MH = Math.max(8, Math.ceil(innerHeight / K)), r = vid ? vid.getBoundingClientRect() : null, ok = false;
       mcv.width = ocv.width = ocv2.width = MW; mcv.height = ocv.height = ocv2.height = MH;
+      var sr = r || { left: 0, top: 0 };
       mx.fillStyle = '#545454'; mx.fillRect(0, 0, MW, MH);
       if (r && vid.videoWidth && vid.readyState > 1 && r.bottom > 0) { var vw = vid.videoWidth, vh = vid.videoHeight, sc = Math.max(r.width / vw, r.height / vh), dx = (r.width - vw * sc) * .62, dy = r.height - vh * sc;
         try { mx.drawImage(vid, (r.left + dx) / K, (r.top + dy) / K, vw * sc / K, vh * sc / K); mx.getImageData(0, 0, 1, 1); ok = true; } catch (e) {} }
@@ -2088,9 +2090,18 @@
         dm.data[i * 4 + 3] = Math.round(t * 255); wm.data[i * 4 + 3] = Math.round((1 - t) * 255);
       }
       ox2.putImageData(dm, 0, 0); ox3.putImageData(wm, 0, 0);
-      var u1 = 'url(' + ocv2.toDataURL() + ')', u2 = 'url(' + ocv.toDataURL() + ')', b = tx.getBoundingClientRect(), pos = (-b.left) + 'px ' + (-b.top) + 'px', sz = innerWidth + 'px ' + innerHeight + 'px';
-      function mask(el, u) { var st = el.style; st.webkitMaskImage = st.maskImage = u; st.webkitMaskSize = st.maskSize = sz; st.webkitMaskPosition = st.maskPosition = pos; st.webkitMaskRepeat = st.maskRepeat = 'no-repeat'; }
-      mask(tx, u1); mask(tx2, u2);
+      var uw = ocv2.toDataURL(), ud = ocv.toDataURL(), b = tx.getBoundingClientRect(), sz = innerWidth + 'px ' + innerHeight + 'px';
+      /* the new masks are decoded before they replace the old ones, so the words never flash unmasked (or vanish) while an image loads */
+      var iw = new Image(), idk = new Image(), left = 2; mPend = true;
+      function done() { if (--left) return; mPend = false; if (!tx || !tx2) return;
+        function mask(el, u) { var st = el.style; st.webkitMaskImage = st.maskImage = 'url(' + u + ')'; st.webkitMaskSize = st.maskSize = sz; st.webkitMaskRepeat = st.maskRepeat = 'no-repeat'; }
+        mask(tx, uw); mask(tx2, ud); sRect = { l: sr.left, t: sr.top, bl: b.left, bt: b.top }; nudgeMask(); }
+      iw.onload = idk.onload = done; iw.onerror = idk.onerror = function () { mPend = false; }; iw.src = uw; idk.src = ud;
+    }
+    /* between two samples the picture keeps moving (scroll parallax): the masks follow it exactly */
+    function nudgeMask() {
+      var r = vid.getBoundingClientRect(), dx = r.left - sRect.l, dy = r.top - sRect.t, pos = (-sRect.bl + dx) + 'px ' + (-sRect.bt + dy) + 'px';
+      tx.style.webkitMaskPosition = tx.style.maskPosition = pos; tx2.style.webkitMaskPosition = tx2.style.maskPosition = pos;
     }
     function build() {
       wrap = document.createElement('div'); wrap.className = 'x-ab-bg'; wrap.setAttribute('aria-hidden', 'true');
