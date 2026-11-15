@@ -1198,7 +1198,7 @@ export function open(opts) {
     const fl = new THREE.Mesh(new THREE.BoxGeometry(.05, .012, .22), skin); fl.position.x = -.19; tail.add(fl);
     g.scale.setScalar(sc || 1); return { g, tail };
   }
-  for (const [cx, cz, rx, rz, sp, ph, n, gap] of [[0, 5.2, 17, 2.4, .075, 0, 3, .035], [0, 4.7, 14, 1.9, -.075, 2, 2, .04]]) {
+  for (const [cx, cz, rx, rz, sp, ph, n, gap] of [[-1.5, 5.2, 6.2, 2.4, .13, 0, 3, .035], [-1.5, 4.7, 5.0, 1.9, -.13, 2, 2, .04]]) {
     for (let k = 0; k < n; k++) { const d = dolphin(1.25), w = new THREE.Group(); w.add(d.g); W(w); seaLife.push({ kind: 'dol', w, d, cx, cz, rx, rz, sp, a: ph + k * (gap || .55), ph: rnd() * 6, off: k * .22 }); }
   }
   const fishBody = new THREE.SphereGeometry(.05, 8, 6), fishTail = new THREE.ConeGeometry(.04, .07, 4), fishEye = new THREE.SphereGeometry(.009, 5, 4), eyeM = std(0x1b1b1b);
@@ -1225,7 +1225,7 @@ export function open(opts) {
   };
   /* dolphins and whales keep to the open sea: their z is held away from both coasts (the channel is narrower in places, so they gather in its middle there) */
   const seaZ = (x, z, m) => { const n = shore(x), sS = shoreS(x), mid = (n + sS) / 2, h = Math.max(0, (sS - n) / 2 - m); return mid + Math.max(-h, Math.min(h, z - mid)); };
-  whale(0, 5.4, 18, 2.8, .03, 1.2, .7); whale(0, 4.8, 15, 2.3, -.025, 3.9, .75); whale(0, 5.6, 12, 2, .02, 5.6, .65);
+  whale(-1.5, 5.4, 7.0, 2.8, .05, 1.2, .7); whale(-1.5, 4.8, 5.8, 2.3, -.045, 3.9, .75); whale(-1.5, 5.6, 4.8, 2.0, .04, 5.6, .65);
 
   // ---- canoes (piraguas) paddling slowly up and down the coast, close to the beaches
   const canoes = [];
@@ -1986,7 +1986,7 @@ export function open(opts) {
     if (tourOn) return; tourOn = true; tourMuted = !!(audio && audio.muted);
     mochi.classList.remove('x-ctaon'); mochi.classList.add('x-load'); root.classList.add('x-tour'); if (audio) { audio.sfx('mochinext'); setTimeout(() => audio && audio.mute(true), 500); }
     const t0 = performance.now();
-    import('./conducir.js?v=84').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
+    import('./conducir.js?v=85').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
       .then((m) => { const ab = m.open({ onClose: endTour, getDark: () => nightT, getRain: () => rainT }); if (!ab) throw new Error('no webgl'); setTimeout(mochiClose, 700); })
       .catch(() => { endTour(); mochiClose(); });
   };
