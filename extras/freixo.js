@@ -939,7 +939,12 @@ export function open(opts) {
   for (const [jx, z0] of roadN.rb) {
     const hb = Math.max(groundH(jx, z0), .07), mk = (r0, r1, mat, lift) => { const m = new THREE.Mesh(new THREE.RingGeometry(r0, r1, 48, 1), mat); m.rotation.x = -PI / 2; m.userData.ribbon = true; const g = new THREE.Group(); g.add(m); W(put(g, jx, z0, 0, hb + lift, true)); return m; };
     const lift0 = -SEA;
-    mk(RB - .4, RB + .5, std(0xe2cba0, { roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 }), lift0 + .008);      // the roundabout is the same road: same pavement and the very same asphalt, joined to the roads that reach it
+    { /* the pavement ring is left open where the roads come in, so the road runs on into the roundabout without a kerb across it */
+      const pav = std(0xe2cba0, { roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 }), TAU = PI * 2, gaps = [];
+      for (const side of [-1, 1]) { const ps = roadRaw.filter((q) => (q[0] - jx) * side > 0 && Math.hypot(q[0] - jx, q[1] - z0) > RB + .3 && Math.hypot(q[0] - jx, q[1] - z0) < RB + 1.3); if (ps.length) { let sx = 0, sz = 0; for (const q of ps) { const d = Math.hypot(q[0] - jx, q[1] - z0); sx += (q[0] - jx) / d; sz += (q[1] - z0) / d; } gaps.push((-Math.atan2(sz, sx) + TAU * 4) % TAU); } }
+      gaps.sort((a, b) => a - b); const HW = .5;
+      if (gaps.length < 2) mk(RB - .4, RB + .5, pav, lift0 + .008);
+      else for (let i = 0; i < gaps.length; i++) { const a0 = gaps[i] + HW, a1 = gaps[(i + 1) % gaps.length] - HW + (i + 1 === gaps.length ? TAU : 0); if (a1 > a0) { const m = mk(RB - .4, RB + .5, pav, lift0 + .008); m.geometry.dispose(); m.geometry = new THREE.RingGeometry(RB - .4, RB + .5, Math.max(6, Math.ceil((a1 - a0) * 8)), 1, a0, a1 - a0); } } }      // the roundabout is the same road: same pavement and the very same asphalt, joined to the roads that reach it
     { const rm = mk(RB - .28, RB + .28, std(0x808a98, { roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -9, polygonOffsetUnits: -9 }), lift0 + .04); rm.renderOrder = 6; roadMeshes.push(rm); }
     const isl2 = new THREE.Mesh(new THREE.CylinderGeometry(RB - .3, RB - .27, .05, 28), std(0x7fb35a)); const ig = new THREE.Group(); ig.add(isl2);
     const tr = new THREE.Mesh(new THREE.CylinderGeometry(.015, .02, .16, 6), std(0x7a5a3c)); tr.position.y = .1; ig.add(tr); const cr = new THREE.Mesh(new THREE.IcosahedronGeometry(.11, 2), std(0x3f9576, { flatShading: true })); cr.position.y = .24; ig.add(cr);
@@ -1218,6 +1223,8 @@ export function open(opts) {
     g.scale.setScalar(sc);
     const w = new THREE.Group(); w.add(g); W(w); seaLife.push({ kind: 'whale', w, g, tail, spout: sp2, cx, cz, rx, rz, sp, a, ph: rnd() * 6 });
   };
+  /* dolphins and whales keep to the open sea: their z is held away from both coasts (the channel is narrower in places, so they gather in its middle there) */
+  const seaZ = (x, z, m) => { const n = shore(x), sS = shoreS(x), mid = (n + sS) / 2, h = Math.max(0, (sS - n) / 2 - m); return mid + Math.max(-h, Math.min(h, z - mid)); };
   whale(0, 5.4, 18, 2.8, .03, 1.2, .7); whale(0, 4.8, 15, 2.3, -.025, 3.9, .75); whale(0, 5.6, 12, 2, .02, 5.6, .65);
 
   // ---- canoes (piraguas) paddling slowly up and down the coast, close to the beaches
@@ -1639,6 +1646,9 @@ export function open(opts) {
     // more houses along the village streets, in rows that keep a clear gap
     for (const [x0, x1, inl] of [[-17.2, -9.6, 4.6], [-9.0, -2.4, 3.9], [-.8, 4.2, 4.2], [7.4, 13.4, 4.3], [-8.7, -6.2, 5.3]]) for (let x = x0; x < x1; x += .95) hh(x, inl + (rnd() - .5) * .25, 1 + (hc % 2), { shut: [0x3d78a8, 0x4a9a74, 0xb4483a][hc % 3] });
     for (const x of [-18.6, -16.9, -15.4]) hh(x, 2.4, 1 + (hc % 2)); for (const x of [14.0, 15.1, 17.9]) hh(x, 2.6, 1 + (hc % 2));
+    /* more little houses: a second, looser row behind the hill cottages and a few between the villages */
+    for (const [x0, x1, inl] of [[-16.8, -9.9, 5.6], [-8.6, -2.6, 5.0], [-.4, 4.0, 5.3], [7.8, 13.2, 5.4]]) for (let x = x0; x < x1; x += 1.05) hh(x, inl + (rnd() - .5) * .3, 1);
+    for (const x of [-12.2, -.9, 6.3, 14.3, 19.6]) hh(x, 2.1, 1);
     // crop fields: rows of vegetables, vines, wheat, ploughed earth and flower beds on the gentle slopes
     const CROPS = [[0x6fae3a, 0x4f8f2d], [0xe6c85a, 0xcfa83a], [0x8a5a3a, 0x6f452c], [0x7aa84a, 0x9c5fb0], [0x5f8f3a, 0x3d6f26], [0xe9a23a, 0xd4812a]];
     const field = (x, z, ang, w, d, ci, lift) => {
@@ -1976,7 +1986,7 @@ export function open(opts) {
     if (tourOn) return; tourOn = true; tourMuted = !!(audio && audio.muted);
     mochi.classList.remove('x-ctaon'); mochi.classList.add('x-load'); root.classList.add('x-tour'); if (audio) { audio.sfx('mochinext'); setTimeout(() => audio && audio.mute(true), 500); }
     const t0 = performance.now();
-    import('./conducir.js?v=83').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
+    import('./conducir.js?v=84').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
       .then((m) => { const ab = m.open({ onClose: endTour, getDark: () => nightT, getRain: () => rainT }); if (!ab) throw new Error('no webgl'); setTimeout(mochiClose, 700); })
       .catch(() => { endTour(); mochiClose(); });
   };
@@ -2357,22 +2367,22 @@ export function open(opts) {
       if (o.kind === 'dol') {                          // swims under the surface, then leaps in an arc and dives back in
         const c = (t * .42 + o.ph) % 3.2, leap = c < 1 ? Math.sin(c * PI) : 0, vy = c < 1 ? Math.cos(c * PI) : 0;
         if (c < 1 && !o.up) { o.up = 1; if (audio && Math.random() < .5) audio.sfx('splash'); } else if (c >= 1) o.up = 0;
-        put(o.w, o.cx + o.rx * Math.cos(o.a) + Math.sin(o.a) * 0, o.cz + o.rz * Math.sin(o.a) + o.off, yaw, -.09 + leap * .42, true);
+        { const px = o.cx + o.rx * Math.cos(o.a); put(o.w, px, seaZ(px, o.cz + o.rz * Math.sin(o.a) + o.off, 1.9), yaw, -.09 + leap * .42, true); }
         o.d.g.rotation.z = c < 1 ? vy * -.7 : Math.sin(t * 2 + o.ph) * .04; o.d.tail.rotation.z = Math.sin(t * 7 + o.ph) * .35;
       } else if (o.kind === 'turtle') {
         put(o.w, o.cx + o.rx * Math.cos(o.a), o.cz + o.rz * Math.sin(o.a), yaw, -.02 + Math.sin(t * .8 + o.ph) * .008, true);
         o.g.rotation.z = Math.sin(t * 1.2) * .04;
       } else {                                         // the whale glides far out, raises its tail now and then and blows
-        put(o.w, o.cx + o.rx * Math.cos(o.a), o.cz + o.rz * Math.sin(o.a), yaw, -.1, true);
+        { const px = o.cx + o.rx * Math.cos(o.a); put(o.w, px, seaZ(px, o.cz + o.rz * Math.sin(o.a), 2.4), yaw, -.1, true); }
         const c = (t * .13) % 1; o.tail.rotation.z = Math.sin(t * .9) * .14 + (c > .8 ? Math.sin((c - .8) / .2 * PI) * .5 : 0); o.spout.visible = c > .45 && c < .6; o.g.rotation.z = Math.sin(t * .5) * .03;
       }
     }
-    for (const c of clouds) { c.rotation.y += c.userData.sp * dt; c.scale.setScalar(1 + rainT * .55); }
-    for (const g of gulls) { g.rotateY(g.userData.sp * dt * .6); const f = Math.sin(t * 7 + g.userData.ph) * .85; g.userData.b.w1.rotation.z = f; g.userData.b.w2.rotation.z = -f; }
+    for (const c of clouds) { c.rotation.y += c.userData.sp * dt * .45; c.scale.setScalar(1 + rainT * .55); }
+    for (const g of gulls) { g.rotateY(g.userData.sp * dt * .3); const f = Math.sin(t * 3.6 + g.userData.ph) * .85; g.userData.b.w1.rotation.z = f; g.userData.b.w2.rotation.z = -f; }
     for (const f of flyers) {
-      f.a += f.sp * dt; const sg = Math.sign(f.sp), tx = -f.rx * Math.sin(f.a) * sg, tz = f.rz * Math.cos(f.a) * sg;
+      f.a += f.sp * dt * .5; const sg = Math.sign(f.sp), tx = -f.rx * Math.sin(f.a) * sg, tz = f.rz * Math.cos(f.a) * sg;
       put(f.b.wrap, f.cx + f.rx * Math.cos(f.a), f.cz + f.rz * Math.sin(f.a), Math.atan2(-tz, tx), f.lift + Math.sin(t * 1.3 + f.ph) * .12, true);
-      const fl = Math.sin(t * 9 + f.ph) * .9; f.b.w1.rotation.z = fl; f.b.w2.rotation.z = -fl;
+      const fl = Math.sin(t * 4.5 + f.ph) * .9; f.b.w1.rotation.z = fl; f.b.w2.rotation.z = -fl;
     }
     for (const c of cars) {
       if (c.offT === undefined) { c.offT = c.off; c.v0 = Math.abs(c.v); c.dir = Math.sign(c.v) || 1; c.vm = 1; }
