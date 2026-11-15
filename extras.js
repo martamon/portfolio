@@ -294,7 +294,7 @@
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"]{left:6vw!important;top:calc(110px + 22px + 28px)!important;bottom:auto!important;width:min(640px,calc(100vw - 12vw))!important}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"]::before{display:none!important}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Wordmark"],html:not(#x)[data-xp="about"] [data-framer-name="Caption"]{visibility:hidden!important}',
-    '.x-ab-txt{position:fixed;left:6vw;top:62px;width:min(640px,calc(100vw - 12vw));z-index:8;pointer-events:none;color:#fff;text-shadow:none}.x-ab-txt.dk,.x-ab-txt.dk *{color:#020812!important;text-shadow:0 0 5px rgba(255,255,255,.38),0 0 1px rgba(255,255,255,.5)}.x-ab-txt:not(.dk) *{color:#fff!important;text-shadow:0 0 5px rgba(2,8,18,.5),0 0 1px rgba(2,8,18,.6)}.x-ab-txt h1{margin:0 0 28px;font:400 22px/1 "Outfit","Plus Jakarta Sans",sans-serif;letter-spacing:.14em;text-transform:uppercase}.x-ab-txt p{margin:0;font:400 13.5px/1.28 "Lekton","IBM Plex Mono",monospace;letter-spacing:.01em;text-align:justify;text-transform:uppercase}',
+    '.x-ab-txt{position:fixed;left:6vw;top:62px;width:min(640px,calc(100vw - 12vw));z-index:8;pointer-events:none;color:#fff;text-shadow:none}.x-ab-txt.dk,.x-ab-txt.dk *{color:#020812!important;text-shadow:0 0 5px rgba(255,255,255,.38),0 0 1px rgba(255,255,255,.5)}.x-ab-txt:not(.dk) *{color:#fff!important;text-shadow:0 0 5px rgba(2,8,18,.5),0 0 1px rgba(2,8,18,.6)}.x-ab-txt h1{margin:0 0 28px;font:400 22px/1 "Outfit","Plus Jakarta Sans",sans-serif;letter-spacing:.14em;text-transform:uppercase}.x-ab-txt p{margin:0;font:400 13.5px/1.28 "IBM Plex Mono","IBM Plex Mono Placeholder",monospace;letter-spacing:.02em;text-align:justify;text-transform:uppercase}',
     'html:not(#x)[data-xp="about"] [data-framer-name="Caption"] p,html:not(#x)[data-xp="about"] [data-framer-name="Caption"] *{font-family:"Lekton","IBM Plex Mono",monospace!important;font-weight:400!important;font-size:13px!important;line-height:1.3!important;letter-spacing:.01em!important;text-align:justify!important;text-justify:inter-word!important}',
     // tighter lines in the running texts of the site
     'html main[data-xm] [data-framer-name="Project Writeup"] p,html main[data-xm] [data-framer-name="Info"] p,html main[data-xm]~section p,html main[data-xm]~* footer p,html [data-framer-name="Info"] p,.x-ct-text,.x-ct-text p{line-height:1.25!important}',
@@ -1556,7 +1556,7 @@
     if (planet) return;
     planet = { loading: true };
     jfHint(0);
-    import('/extras/freixo.js?v=292').then(function (m) {
+    import('/extras/freixo.js?v=293').then(function (m) {
       planet = m.open({ getDark: function () { return darkness(theme.hour); }, getHour: function () { return theme.hour; }, onClose: function () { planet = null; } });
     }).catch(function () { planet = null; });
   }
