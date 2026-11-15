@@ -1176,5 +1176,5 @@ export function open(opts) {
     opts.onClose && opts.onClose();
   }
   root.querySelector('.x-dr-x').addEventListener('click', close);
-  return { close, state: S, dbg: { colliders, lanes, traffic, casa, walkers, fishers, scene, camera, grazers, talkers, ROADX, COAST, H } };
+  return { close, state: S, dbg: { colliders, lanes, traffic, casa, walkers, fishers, scene, camera, grazers, talkers, orbs, ROADX, COAST, H } };
 }
