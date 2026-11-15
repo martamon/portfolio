@@ -1198,7 +1198,10 @@ export function open(opts) {
     const fl = new THREE.Mesh(new THREE.BoxGeometry(.05, .012, .22), skin); fl.position.x = -.19; tail.add(fl);
     g.scale.setScalar(sc || 1); return { g, tail };
   }
-  /* no dolphins: the sea is left to the boats, the fish and the turtles */
+  /* a few dolphins in the open sea, far from the villages (west part of the bay) */
+  for (const [cx, cz, rx, rz, sp, ph, n, gap] of [[-8.6, 5.0, 1.7, 2.0, .24, 0, 3, .04]]) {
+    for (let k = 0; k < n; k++) { const d = dolphin(1.25), w = new THREE.Group(); w.add(d.g); W(w); seaLife.push({ kind: 'dol', w, d, cx, cz, rx, rz, sp, a: ph + k * (gap || .55), ph: rnd() * 6, off: k * .22 }); }
+  }
   const fishBody = new THREE.SphereGeometry(.05, 8, 6), fishTail = new THREE.ConeGeometry(.04, .07, 4), fishEye = new THREE.SphereGeometry(.009, 5, 4), eyeM = std(0x1b1b1b);
   function fish(col) {
     const g = new THREE.Group(), m = std(col), b = new THREE.Mesh(fishBody, m); b.scale.set(1.7, .75, .45); g.add(b);
@@ -1223,6 +1226,7 @@ export function open(opts) {
   };
   /* dolphins and whales keep to the open sea: their z is held away from both coasts (the channel is narrower in places, so they gather in its middle there) */
   const seaZ = (x, z, m) => { const n = shore(x), sS = shoreS(x), mid = (n + sS) / 2, h = Math.max(0, (sS - n) / 2 - m); return mid + Math.max(-h, Math.min(h, z - mid)); };
+  whale(-9.4, 5.2, 2.2, 2.2, .07, 1.5, .7); whale(-8.0, 4.8, 1.8, 1.8, -.06, 4.2, .75);
 
   // ---- canoes (piraguas) paddling slowly up and down the coast, close to the beaches
   const canoes = [];
