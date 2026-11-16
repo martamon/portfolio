@@ -1337,7 +1337,7 @@
       if (!p.ready) { if (!p.waiting) { p.waiting = true; p.check.then(function () { p.ready = true; make(auto); }); } return; }
       var go = auto || p.auto || p.wantPlay; p.wantPlay = false;
       if (p.file) {
-        var v = document.createElement('video'); p.v = v; v.className = 'x-vp-vid'; v.src = p.file; v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', ''); v.preload = 'auto'; v.muted = true; v.defaultMuted = true; v.setAttribute('muted', ''); v.autoplay = !!(o.autoplay || o.loop); v.loop = !!p.loop; v.disablePictureInPicture = true;
+        var v = document.createElement('video'); p.v = v; v.className = 'x-vp-vid'; v.src = p.file; v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', ''); v.preload = go ? 'auto' : 'metadata';      /* a video that nobody has asked to play only fetches its first bytes */ v.muted = true; v.defaultMuted = true; v.setAttribute('muted', ''); v.autoplay = !!(o.autoplay || o.loop); v.loop = !!p.loop; v.disablePictureInPicture = true;
         v.setAttribute('aria-label', o.title || 'Video');
         v.addEventListener('loadedmetadata', function () { if (v.videoWidth && v.videoHeight) { var rr = v.videoWidth / v.videoHeight; el.style.setProperty('--r', String(rr)); el.classList.toggle('x-vp-v', rr < 1); try { schedule(); } catch (er) {} if (rr < 1 && host.parentElement && !host.hasAttribute('data-xvhost')) { setAttr(host, 'data-xvhost', ''); var up2 = host.parentElement; if (up2 && /deo/i.test(up2.getAttribute('data-framer-name') || '')) setAttr(up2, 'data-xvhost', ''); } } });
         v.addEventListener('playing', function () { p.on = true; el.classList.add('x-play', 'x-seen'); if (el.classList.contains('x-hov')) { el.classList.remove('x-hov'); faces(false); } paint(); });
@@ -1912,7 +1912,7 @@
     var lw = l.offsetWidth, rw = r.offsetWidth, free = Math.max(0, W - lw - rw);
     ov.style.setProperty('--xj', Math.max(0, free - 14).toFixed(1) + 'px'); ov.__w = W;
   }
-  var PL_SPIN = '/extras/planeta/cover-spin.webp?v=2', PL_STILL = '/extras/planeta/cover.webp', plWarm = new Image(); setTimeout(function () { plWarm.src = PL_SPIN; }, 2500);
+  var PL_SPIN = '/extras/planeta/cover-spin.webp?v=3', PL_STILL = '/extras/planeta/cover.webp', plWarm = new Image(); setTimeout(function () { try { var cn = navigator.connection; if (/^\/?$/.test(location.pathname) && !(cn && (cn.saveData || /2g|3g/.test(cn.effectiveType || ''))) && innerWidth > 809) plWarm.src = PL_SPIN; } catch (e) {} }, 6000);      /* only on the home page, once it is settled, and not on slow or data-saving connections */
   function plSwap(c, on) { var a = c.querySelector('a[href="./planeta-marta"]'), im = a && a.querySelector('img'); if (!im) return; im.removeAttribute('srcset'); im.src = on ? PL_SPIN : PL_STILL; }   /* the planet turns while the card is hot */
   function aRowClone(rows) {
     var src = null; for (var i = 0; i < rows.length; i++) if (rows[i][0] === 'PHOTOSHOP') src = rows[i][1]; if (!src) return null;
