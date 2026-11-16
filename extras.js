@@ -2529,7 +2529,7 @@
     styleMenu();
     styleCaptions(p === 'home');
     try { homeTitles(p === 'home'); } catch (er) {}
-    try { if (false && /^\/about\/?$/.test(location.pathname)) { var ps0 = document.querySelectorAll('p'), byName = {}, aeP = null; for (var pi0 = 0; pi0 < ps0.length; pi0++) { var tt = ps0[pi0].textContent.trim(); if (tt && !byName[tt.toUpperCase()]) byName[tt.toUpperCase()] = ps0[pi0]; }
+    try { if (/^\/about\/?$/.test(location.pathname)) { var ps0 = document.querySelectorAll('p'), byName = {}, aeP = null; for (var pi0 = 0; pi0 < ps0.length; pi0++) { var tt = ps0[pi0].textContent.trim(); if (tt && !byName[tt.toUpperCase()]) byName[tt.toUpperCase()] = ps0[pi0]; }
       var rowOf = function (p) { var e = p; for (var k = 0; k < 5 && e; k++) e = e.parentElement; return e; };
       if (byName['AFTER EFFECTS'] && byName['LIGHTROOM'] && !document.querySelector('.x-skillrow')) { var aRow = rowOf(byName['AFTER EFFECTS']), lRow = rowOf(byName['LIGHTROOM']);
         if (aRow && lRow && aRow !== lRow && aRow.parentElement === lRow.parentElement) { var prevRow = lRow; ['Framer', 'Seedance', 'Freepik', 'Magnific', 'Google Veo', 'Nano Banana', 'Gemini', 'Claude'].forEach(function (nm) { var c = aRow.cloneNode(true); c.classList.add('x-skillrow'); var cp = c.querySelector('p'); if (cp) cp.textContent = nm; var cq = c.querySelectorAll('*'); for (var cn = 0; cn < cq.length; cn++) { cq[cn].style.opacity = ''; cq[cn].style.transform = ''; cq[cn].style.willChange = ''; cq[cn].removeAttribute('data-framer-appear-id'); } prevRow.parentElement.insertBefore(c, prevRow.nextSibling); prevRow = c; });
