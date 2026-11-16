@@ -614,7 +614,7 @@ export function open(opts) {
       for (let i = 0; i < 6; i++) { const w2 = person(shirts[i], skins[i % 4]); scene.add(w2); const a = x0 - 3 - (i % 3) * 4, b2 = x0 - LEN + 3 + (i % 3) * 2; walkers.push({ p: w2, pts: [[a, z + (i % 2 ? .9 : -.9)], [(a + b2) / 2, z + (i % 2 ? -.6 : .6)], [b2, z + (i % 2 ? .9 : -.9)]], d: i * 4.5, sp: .45 + (i % 3) * .12, dir: i % 2 ? 1 : -1, lift: .14 }); }
       reserved.push([x0 - LEN - 2, x0 + 5, z - 6.5, z + 6.5]); mkt = { x: x0 - LEN / 2, z }; } }
   VILLAGES.forEach(([name, z0], vi) => {
-    const rx = ROADX(z0), cnt = vi === 3 ? 8 : 5; let made = 0;
+    const rx = ROADX(z0), cnt = vi === 3 ? 6 : 3; let made = 0;      /* fewer houses: room for hórreos */
     // houses along the road and the lanes: set well back, spaced out, each turned to face its way
     // the square of stone is laid out first, so no house can be put on it or against it
     const PZ0 = vi === 3 ? z0 - 6 : z0 + 1;      /* Muros' square sits clear of the supermarket's car park */
@@ -630,7 +630,7 @@ export function open(opts) {
     }
     { const bs = busStop(); let bz = z0 + 9; for (const dz of [0, -6, 6, -12, 12, 17]) { const zz = z0 + 9 + dz; if (viol(bs.userData, ROADX(zz) + 6.4, zz, -PI / 2)[0] <= 0) { bz = zz; break; } } const bx = ROADX(bz) + 6.4; stops.push([bx, bz]); addTo(bs, bx, bz, -PI / 2, 2.6); shelters.push([bx - .2, bz - .9], [bx - .2, bz + .9]); }
     const sc = ROADX(z0 - 2) - 16, cr = cruceiro(); addTo(cr, sc, z0 - 14, 0, 2.3);
-    for (let k = 0; k < 1; k++) { const hx = rx - 19 - rng() * 7, hzz = z0 - 12 + k * 12 + (rng() - .5) * 4; if (H(hx, hzz) < .4 || solid(hx, hzz, 7) || plazas.some((pl) => Math.hypot(pl[0] - hx, pl[1] - hzz) < pl[2] + 5) || lanes.some((pts) => pts.some((q) => Math.hypot(q[0] - hx, q[1] - hzz) < 6.5))) continue; const hr = horreo(); const yaw = rng() * PI * 2; addTo(hr, hx, hzz, yaw, hr.userData.r); if (vi === 1 && !infoSpots.length) infoSpots.push(['horreo', hx + Math.cos(yaw) * 0 + 6.5, hzz]); }
+    for (let k = 0; k < 2; k++) { const hx = rx - 19 - rng() * 9, hzz = z0 - 12 + k * 17 + (rng() - .5) * 4; if (H(hx, hzz) < .4 || solid(hx, hzz, 7) || plazas.some((pl) => Math.hypot(pl[0] - hx, pl[1] - hzz) < pl[2] + 5) || lanes.some((pts) => pts.some((q) => Math.hypot(q[0] - hx, q[1] - hzz) < 6.5))) continue; const hr = horreo(); const yaw = rng() * PI * 2; addTo(hr, hx, hzz, yaw, hr.userData.r); if (vi === 1 && !infoSpots.length) infoSpots.push(['horreo', hx + Math.cos(yaw) * 0 + 6.5, hzz]); }
     if (vi === 3 || vi === 2) { const ch = church(); const cx = rx - 21, cz = z0 + (vi === 3 ? -21 : 17); if (!solid(cx, cz, 9)) addTo(ch, cx, cz, PI / 2, 8); }
   });
   for (const [px, pz, pr] of plazas) {
