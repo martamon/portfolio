@@ -1900,6 +1900,15 @@
   }
   var PL_SPIN = '/extras/planeta/cover-spin.webp?v=2', PL_STILL = '/extras/planeta/cover.webp', plWarm = new Image(); setTimeout(function () { plWarm.src = PL_SPIN; }, 2500);
   function plSwap(c, on) { var a = c.querySelector('a[href="./planeta-marta"]'), im = a && a.querySelector('img'); if (!im) return; im.removeAttribute('srcset'); im.src = on ? PL_SPIN : PL_STILL; }   /* the planet turns while the card is hot */
+  function aRowClone(rows) {
+    var src = null; for (var i = 0; i < rows.length; i++) if (rows[i][0] === 'PHOTOSHOP') src = rows[i][1]; if (!src) return null;
+    var t = src.cloneNode(true); t.classList.add('x-skilltog'); t.style.cursor = 'pointer'; var cq = t.querySelectorAll('*'); for (var n = 0; n < cq.length; n++) { cq[n].style.opacity = ''; cq[n].style.transform = ''; cq[n].style.willChange = ''; cq[n].removeAttribute('data-framer-appear-id'); }
+    var tp = t.querySelector('p'), L = { en: ['+ MORE', '\u2212 LESS'], es: ['+ M\u00c1S', '\u2212 MENOS'], gl: ['+ M\u00c1IS', '\u2212 MENOS'] };
+    var paint = function () { var l = L[document.documentElement.lang] || L.en; tp.textContent = t.__open ? l[1] : l[0]; };
+    t.__open = false; paint(); t.__paint = paint;
+    t.addEventListener('click', function () { t.__open = !t.__open; paint(); var sib = t.nextSibling; while (sib) { if (sib.nodeType === 1) sib.style.display = t.__open ? '' : 'none'; sib = sib.nextSibling; } });
+    src.parentElement.insertBefore(t, src.nextSibling); return t;
+  }
   function homeTitles(on) {
     if (!on) return;
     var cards = document.querySelectorAll('main[data-xhome] [data-xhi]');
@@ -2506,10 +2515,19 @@
     styleMenu();
     styleCaptions(p === 'home');
     try { homeTitles(p === 'home'); } catch (er) {}
-    try { if (/^\/about\/?$/.test(location.pathname)) { var ae = null, lr = null, ps0 = document.querySelectorAll('p'); for (var pi0 = 0; pi0 < ps0.length; pi0++) { var tt = ps0[pi0].textContent.trim(); if (tt === 'AFTER EFFECTS') ae = ps0[pi0]; else if (tt === 'LIGHTROOM') lr = ps0[pi0]; }
-      for (var di = 0; di < ps0.length; di++) { var dt = ps0[di].textContent.trim(); if ((dt === 'FIGMA' || dt === 'GOOGLE AI') && ps0[di].parentElement) { var dr = ps0[di]; for (var dk = 0; dk < 5 && dr; dk++) dr = dr.parentElement; if (dr && dr.parentElement) dr.style.display = 'none'; } }      /* skills taken off the list */
-      if (ae && lr && !document.querySelector('.x-skillrow')) { var rowOf = function (p) { var e = p; for (var k = 0; k < 5 && e; k++) e = e.parentElement; return e; }, aRow = rowOf(ae), lRow = rowOf(lr);
-        if (aRow && lRow && aRow !== lRow && aRow.parentElement === lRow.parentElement) { var prevRow = lRow; ['Framer', 'Seedance', 'Freepik', 'Magnific', 'Google Veo', 'Nano Banana', 'Gemini', 'Claude'].forEach(function (nm) { var c = aRow.cloneNode(true); c.classList.add('x-skillrow'); var cp = c.querySelector('p'); if (cp) cp.textContent = nm; var cq = c.querySelectorAll('*'); for (var cn = 0; cn < cq.length; cn++) { cq[cn].style.opacity = ''; cq[cn].style.transform = ''; cq[cn].style.willChange = ''; cq[cn].removeAttribute('data-framer-appear-id'); } prevRow.parentElement.insertBefore(c, prevRow.nextSibling); prevRow = c; }); var gp = lRow.parentElement; for (var gk = 0; gk < 6 && gp && gp !== document.body; gk++) { var gcs = getComputedStyle(gp); if (gcs.overflow !== 'visible' || gk < 2) { gp.style.height = 'auto'; gp.style.minHeight = gp.getBoundingClientRect().height + 440 + 'px'; gp.style.overflow = 'visible'; } gp = gp.parentElement; } } } } } catch (er) {}
+    try { if (/^\/about\/?$/.test(location.pathname)) { var ps0 = document.querySelectorAll('p'), byName = {}, aeP = null; for (var pi0 = 0; pi0 < ps0.length; pi0++) { var tt = ps0[pi0].textContent.trim(); if (tt && !byName[tt.toUpperCase()]) byName[tt.toUpperCase()] = ps0[pi0]; }
+      var rowOf = function (p) { var e = p; for (var k = 0; k < 5 && e; k++) e = e.parentElement; return e; };
+      if (byName['AFTER EFFECTS'] && byName['LIGHTROOM'] && !document.querySelector('.x-skillrow')) { var aRow = rowOf(byName['AFTER EFFECTS']), lRow = rowOf(byName['LIGHTROOM']);
+        if (aRow && lRow && aRow !== lRow && aRow.parentElement === lRow.parentElement) { var prevRow = lRow; ['Framer', 'Seedance', 'Freepik', 'Magnific', 'Google Veo', 'Nano Banana', 'Gemini', 'Claude'].forEach(function (nm) { var c = aRow.cloneNode(true); c.classList.add('x-skillrow'); var cp = c.querySelector('p'); if (cp) cp.textContent = nm; var cq = c.querySelectorAll('*'); for (var cn = 0; cn < cq.length; cn++) { cq[cn].style.opacity = ''; cq[cn].style.transform = ''; cq[cn].style.willChange = ''; cq[cn].removeAttribute('data-framer-appear-id'); } prevRow.parentElement.insertBefore(c, prevRow.nextSibling); prevRow = c; });
+          var gp = lRow.parentElement; for (var gk = 0; gk < 6 && gp && gp !== document.body; gk++) { var gcs = getComputedStyle(gp); if (gcs.overflow !== 'visible' || gk < 2) { gp.style.height = 'auto'; gp.style.overflow = 'visible'; } gp = gp.parentElement; } } }
+      /* the skills: five in view, the rest behind a "more" tab */
+      var KEEP = ['PHOTOSHOP', 'LIGHTROOM', 'CLAUDE', 'GOOGLE AI', 'FREEPIK'], parentRow = null, tog = document.querySelector('.x-skilltog'); if (byName['AFTER EFFECTS']) parentRow = rowOf(byName['AFTER EFFECTS']);
+      if (parentRow && parentRow.parentElement) { var par = parentRow.parentElement, rows = [], nm2; for (var ri = 0; ri < par.children.length; ri++) { var rc = par.children[ri]; if (rc.classList.contains('x-skilltog')) continue; var rp = rc.querySelector('p'); if (!rp) continue; nm2 = rp.textContent.trim().toUpperCase(); if (nm2 === 'FIGMA') { rc.style.display = 'none'; continue; } rows.push([nm2, rc]); }
+        if (rows.length > 8) {
+          if (!tog) { tog = aRowClone(rows); }
+          if (tog && tog.__paint) tog.__paint(); if (tog && !tog.__placed) { tog.__placed = 1; var open = tog.__open, first = KEEP.map(function (k) { for (var q = 0; q < rows.length; q++) if (rows[q][0] === k) return rows[q][1]; return null; }).filter(Boolean), anchor = par.firstChild;
+            first.forEach(function (r) { if (r.previousSibling !== anchor || true) par.insertBefore(r, tog); r.style.display = ''; });
+            rows.forEach(function (x) { if (first.indexOf(x[1]) < 0) { par.insertBefore(x[1], tog.nextSibling); x[1].style.display = open ? '' : 'none'; } }); } } } } } catch (er) {}
     try { if (/^\/(portugal|greece|china|studio-girls|djone)\/?$/.test(location.pathname)) { var wr2 = document.querySelector('[data-framer-name="Project Writeup"]'); if (wr2 && !wr2.querySelector('.x-sony')) { var sp = document.createElement('p'); sp.className = 'framer-text framer-styles-preset-189x7y4 x-sony'; sp.setAttribute('data-styles-preset', 'C7GBCUBvm'); sp.style.marginTop = '1em'; sp.textContent = 'Images captured with a Sony Alpha 7R IV, image editing and retouching, mainly color adjustments.'; wr2.appendChild(sp); if (/studio-girls|djone/.test(location.pathname)) { var sp2 = document.createElement('p'); sp2.className = 'framer-text framer-styles-preset-189x7y4 x-sony'; sp2.setAttribute('data-styles-preset', 'C7GBCUBvm'); sp2.style.marginTop = '1em'; sp2.textContent = 'Studio lighting and handling of photography studio equipment.'; wr2.appendChild(sp2); } } } } catch (er) {}
     try { if (/^\/planeta-marta\/?$/.test(location.pathname)) { var wr = document.querySelector('[data-framer-name="Project Writeup"]'); if (wr && !wr.querySelector('a.x-visit')) { var vp = document.createElement('p'); vp.className = 'framer-text framer-styles-preset-189x7y4'; vp.setAttribute('data-styles-preset', 'C7GBCUBvm'); vp.innerHTML = '<a class="x-visit" href="/?xplanet">\u21b3 Visit the planet</a>'; wr.appendChild(vp); } } } catch (er) {}
     applyHome(p === 'home');
