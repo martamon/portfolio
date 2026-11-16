@@ -2295,10 +2295,16 @@ export function open(opts) {
   let _crestO = null, fieldsList = null;
   let raf = 0, last = performance.now(), t = 0, frame = 0, closed = false;
   const tv = new THREE.Vector3(), camDir = new THREE.Vector3(0, 0, 1), prj = new THREE.Vector3();
+  const camL = new THREE.Vector3(), CULLR2 = (R * .6) * (R * .6);
+  const ADA = { acc: 0, n: 0, pr: renderer.getPixelRatio(), max: renderer.getPixelRatio(), min: .65, shEvery: 2 };
   const loop = (now) => {
     raf = requestAnimationFrame(loop);
     if (tourOn) { last = now; return; }            // the planet rests while the dive under the sea is open
-    const dt = Math.min(.05, (now - last) / 1000); last = now; t += dt; frame++;
+    const raw = (now - last) / 1000, dt = Math.min(.05, raw); last = now; t += dt; frame++;
+    /* fluid on any device: the picture's sharpness follows the speed. If frames take too long the resolution drops a notch (and shadows refresh less often); if there is room to spare it climbs back */
+    if (raw < .25) { ADA.acc += raw; if (++ADA.n >= 40) { const avg = ADA.acc / ADA.n; ADA.acc = 0; ADA.n = 0;
+        if (avg > .024 && ADA.pr > ADA.min) { ADA.pr = Math.max(ADA.min, ADA.pr - .2); renderer.setPixelRatio(ADA.pr); size(); ADA.shEvery = avg > .034 ? 3 : 2; }
+        else if (avg < .0175 && ADA.pr < ADA.max) { ADA.pr = Math.min(ADA.max, ADA.pr + .1); renderer.setPixelRatio(ADA.pr); size(); if (ADA.pr >= ADA.max) ADA.shEvery = 2; } } }
     if (!manual && opts.getDark) night = opts.getDark();       // the planet follows the real hour of the visitor (and the dial of the page)
     const nb2 = night > .5 ? 1 : 0; if (audio && nb2 !== lastNight) { lastNight = nb2; audio.setNight(!!nb2); audio.sfx(nb2 ? 'night' : 'day'); }
     nightT += (night - nightT) * (1 - Math.exp(-dt * (manual ? 1.2 : 1.0))); if (Math.abs(night - nightT) < .002) nightT = night;
@@ -2536,6 +2542,9 @@ export function open(opts) {
       }
       u.lp = planeOf(_d.copy(g.position).normalize());
     }
+    /* everything standing on the far side of the planet is left out of the drawing (and of the shadow pass): only what faces the camera is sent to the graphics card */
+    if (frame % 3 === 0) { camL.copy(camera.position); world.worldToLocal(camL); const camD = camL.length(), thr = Math.max(-.2, Math.min(.5, R / camD - .12)); camL.normalize(); const ch = world.children; for (let ci = 0; ci < ch.length; ci++) { const o = ch[ci]; if (o.userData.noCull) continue; const pl = o.position.lengthSq(); if (pl < CULLR2) { o.visible = true; continue; } o.visible = (o.position.x * camL.x + o.position.y * camL.y + o.position.z * camL.z) / Math.sqrt(pl) > thr; } }
+    renderer.shadowMap.autoUpdate = false; if (frame % ADA.shEvery === 0 || frame < 4) renderer.shadowMap.needsUpdate = true;      // moving shadows are refreshed every other frame (less often if the device is struggling)
     if (!(root.classList.contains('x-mochi') && (frame & 1))) renderer.render(scene, camera);      // behind Mochi's blur the planet only needs every other frame
   };
   raf = requestAnimationFrame(loop);
