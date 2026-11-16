@@ -2065,7 +2065,7 @@
       if (!pw || !pw.isConnected) pw = document.querySelector('[data-framer-name="Page Wrapper"]');
       if (pw) { var qq = Math.min(1, Math.max(0, (sm - H * .88) / (H * .22))); pw.style.opacity = qq.toFixed(3); pw.style.pointerEvents = qq < .5 ? 'none' : ''; }      /* the menu and the sections only appear once the bike has gone */
       var off = Math.max(0, sm - H * 1.0); wrap.style.transform = 'translate3d(0,' + (-off).toFixed(1) + 'px,0)';      /* once the video has ended the picture scrolls away with the page and the ground carries on, in its own blue */
-      if (tx) { var to = Math.max(0, sm - H * .62); tx.style.top = (62 - to * 1.4).toFixed(1) + 'px';      /* moved with top, not a transform, so the blend sees the picture behind */ tx.style.opacity = (1 - Math.min(1, to / (H * .28))).toFixed(3); }      /* the text leaves with the bike */
+      if (tx) { var to = Math.max(0, sm - H * .62); tx.style.top = (62 - to * 1.4).toFixed(1) + 'px';      /* moved with top, not a transform, so the blend sees the picture behind */ tx.style.opacity = (1 - Math.min(1, to / (H * .28))).toFixed(3); if (tx2) { tx2.style.top = tx.style.top; tx2.style.opacity = tx.style.opacity; } }      /* the text leaves with the bike */
       var now = performance.now();
       
       
@@ -2101,7 +2101,7 @@
     }
     /* between two samples the picture keeps moving (scroll parallax): the masks follow it exactly */
     function nudgeMask() {
-      var r = vid.getBoundingClientRect(), dx = r.left - sRect.l, dy = r.top - sRect.t, pos = (-sRect.bl + dx) + 'px ' + (-sRect.bt + dy) + 'px';
+      var r = vid.getBoundingClientRect(), tb = tx.getBoundingClientRect(), dx = r.left - sRect.l, dy = r.top - sRect.t, pos = (-tb.left + dx) + 'px ' + (-tb.top + dy) + 'px';
       tx.style.webkitMaskPosition = tx.style.maskPosition = pos; tx2.style.webkitMaskPosition = tx2.style.maskPosition = pos;
     }
     function build() {
