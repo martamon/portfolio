@@ -2065,7 +2065,7 @@
       if (!pw || !pw.isConnected) pw = document.querySelector('[data-framer-name="Page Wrapper"]');
       if (pw) { var qq = Math.min(1, Math.max(0, (sm - H * .88) / (H * .22))); pw.style.opacity = qq.toFixed(3); pw.style.pointerEvents = qq < .5 ? 'none' : ''; }      /* the menu and the sections only appear once the bike has gone */
       var off = Math.max(0, sm - H * 1.0); wrap.style.transform = 'translate3d(0,' + (-off).toFixed(1) + 'px,0)';      /* once the video has ended the picture scrolls away with the page and the ground carries on, in its own blue */
-      if (tx) { var to = Math.max(0, sm - H * .62); tx.style.top = (62 - to * 1.4).toFixed(1) + 'px';      /* moved with top, not a transform, so the blend sees the picture behind */ tx.style.opacity = (1 - Math.min(1, to / (H * .28))).toFixed(3); }      /* the text leaves with the bike */
+      if (tx) { var to = Math.max(0, sm - H * .62); tx.style.top = (62 - to * 1.4).toFixed(1) + 'px';      /* moved with top, not a transform, so the blend sees the picture behind */ tx.style.opacity = (1 - Math.min(1, to / (H * .28))).toFixed(3); if (tx2) { tx2.style.top = tx.style.top; tx2.style.opacity = tx.style.opacity; } }      /* the text leaves with the bike */
       var now = performance.now();
       
       
@@ -2101,7 +2101,7 @@
     }
     /* between two samples the picture keeps moving (scroll parallax): the masks follow it exactly */
     function nudgeMask() {
-      var r = vid.getBoundingClientRect(), dx = r.left - sRect.l, dy = r.top - sRect.t, pos = (-sRect.bl + dx) + 'px ' + (-sRect.bt + dy) + 'px';
+      var r = vid.getBoundingClientRect(), tb = tx.getBoundingClientRect(), dx = r.left - sRect.l, dy = r.top - sRect.t, pos = (-tb.left + dx) + 'px ' + (-tb.top + dy) + 'px';
       tx.style.webkitMaskPosition = tx.style.maskPosition = pos; tx2.style.webkitMaskPosition = tx2.style.maskPosition = pos;
     }
     function build() {
@@ -2506,7 +2506,9 @@
     styleMenu();
     styleCaptions(p === 'home');
     try { homeTitles(p === 'home'); } catch (er) {}
-    try { if (/^\/about\/?$/.test(location.pathname)) { var lr = null, ps0 = document.querySelectorAll('p'); for (var pi0 = 0; pi0 < ps0.length; pi0++) if (ps0[pi0].textContent.trim() === 'LIGHTROOM' && !ps0[pi0].__xs) lr = ps0[pi0]; if (lr && !lr.parentNode.querySelector('.x-skill')) { var prev = lr; ['Framer', 'Seedance', 'Freepik', 'Magnific', 'Google Veo', 'Nano Banana', 'Gemini', 'Claude'].forEach(function (nm) { var c = lr.cloneNode(false); c.className = lr.className + ' x-skill'; c.textContent = nm; prev.parentNode.insertBefore(c, prev.nextSibling); prev = c; }); } } } catch (er) {}
+    try { if (/^\/about\/?$/.test(location.pathname)) { var ae = null, lr = null, ps0 = document.querySelectorAll('p'); for (var pi0 = 0; pi0 < ps0.length; pi0++) { var tt = ps0[pi0].textContent.trim(); if (tt === 'AFTER EFFECTS') ae = ps0[pi0]; else if (tt === 'LIGHTROOM') lr = ps0[pi0]; }
+      if (ae && lr && !document.querySelector('.x-skillrow')) { var rowOf = function (p) { var e = p; for (var k = 0; k < 5 && e; k++) e = e.parentElement; return e; }, aRow = rowOf(ae), lRow = rowOf(lr);
+        if (aRow && lRow && aRow !== lRow && aRow.parentElement === lRow.parentElement) { var prevRow = lRow; ['Framer', 'Seedance', 'Freepik', 'Magnific', 'Google Veo', 'Nano Banana', 'Gemini', 'Claude'].forEach(function (nm) { var c = aRow.cloneNode(true); c.classList.add('x-skillrow'); var cp = c.querySelector('p'); if (cp) cp.textContent = nm; var cq = c.querySelectorAll('*'); for (var cn = 0; cn < cq.length; cn++) { cq[cn].style.opacity = ''; cq[cn].style.transform = ''; cq[cn].style.willChange = ''; cq[cn].removeAttribute('data-framer-appear-id'); } prevRow.parentElement.insertBefore(c, prevRow.nextSibling); prevRow = c; }); var gp = lRow.parentElement; for (var gk = 0; gk < 6 && gp && gp !== document.body; gk++) { var gcs = getComputedStyle(gp); if (gcs.overflow !== 'visible' || gk < 2) { gp.style.height = 'auto'; gp.style.minHeight = gp.getBoundingClientRect().height + 440 + 'px'; gp.style.overflow = 'visible'; } gp = gp.parentElement; } } } } } catch (er) {}
     try { if (/^\/(portugal|greece|china|studio-girls|djone)\/?$/.test(location.pathname)) { var wr2 = document.querySelector('[data-framer-name="Project Writeup"]'); if (wr2 && !wr2.querySelector('.x-sony')) { var sp = document.createElement('p'); sp.className = 'framer-text framer-styles-preset-189x7y4 x-sony'; sp.setAttribute('data-styles-preset', 'C7GBCUBvm'); sp.style.marginTop = '1em'; sp.textContent = 'Images captured with a Sony Alpha 7R IV, image editing and retouching, mainly color adjustments.'; wr2.appendChild(sp); if (/studio-girls|djone/.test(location.pathname)) { var sp2 = document.createElement('p'); sp2.className = 'framer-text framer-styles-preset-189x7y4 x-sony'; sp2.setAttribute('data-styles-preset', 'C7GBCUBvm'); sp2.style.marginTop = '1em'; sp2.textContent = 'Studio lighting and handling of photography studio equipment.'; wr2.appendChild(sp2); } } } } catch (er) {}
     try { if (/^\/planeta-marta\/?$/.test(location.pathname)) { var wr = document.querySelector('[data-framer-name="Project Writeup"]'); if (wr && !wr.querySelector('a.x-visit')) { var vp = document.createElement('p'); vp.className = 'framer-text framer-styles-preset-189x7y4'; vp.setAttribute('data-styles-preset', 'C7GBCUBvm'); vp.innerHTML = '<a class="x-visit" href="/?xplanet">\u21b3 Visit the planet</a>'; wr.appendChild(vp); } } } catch (er) {}
     applyHome(p === 'home');
