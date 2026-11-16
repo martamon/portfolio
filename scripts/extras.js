@@ -2069,7 +2069,7 @@
       var now = performance.now();
       
       
-      if (tx && words.length && now0 - lT > 110 && !mPend) { lT = now0; sampleWords(); }
+      if (tx && words.length && now0 - lT > 60 && !mPend) { lT = now0; sampleWords(); }
       if (tx && tx2 && vid && sRect) nudgeMask();
       requestAnimationFrame(frame);
     }
@@ -2083,6 +2083,7 @@
       mx.fillStyle = '#545454'; mx.fillRect(0, 0, MW, MH);
       if (r && vid.videoWidth && vid.readyState > 1 && r.bottom > 0) { var vw = vid.videoWidth, vh = vid.videoHeight, sc = Math.max(r.width / vw, r.height / vh), dx = (r.width - vw * sc) * .62, dy = r.height - vh * sc;
         try { mx.drawImage(vid, (r.left + dx) / K, (r.top + dy) / K, vw * sc / K, vh * sc / K); mx.getImageData(0, 0, 1, 1); ok = true; } catch (e) {} }
+      if (!ok) { lT = 0; if (sRect) return; }      /* no picture to read yet (the video is seeking): keep the last masks, try again at once */
       var data = mx.getImageData(0, 0, MW, MH).data, hd = document.documentElement, g = hd.hasAttribute('data-xnight') ? .52 : hd.hasAttribute('data-xdusk') ? .9 : 1.08;
       var dm = ox2.createImageData(MW, MH), wm = ox3.createImageData(MW, MH);
       for (var i = 0, n = MW * MH; i < n; i++) {
@@ -2107,7 +2108,7 @@
       wrap = document.createElement('div'); wrap.className = 'x-ab-bg'; wrap.setAttribute('aria-hidden', 'true');
       vid = document.createElement('video'); vid.muted = true; vid.defaultMuted = true; vid.playsInline = true; vid.preload = 'auto'; vid.setAttribute('muted', ''); vid.setAttribute('playsinline', ''); vid.setAttribute('webkit-playsinline', ''); vid.disablePictureInPicture = true; vid.className = 'x-ab-vid';
       vid.innerHTML = '<source src="/extras/about/moto.mp4?v=3" type="video/mp4"><source src="/extras/about/moto.webm?v=3" type="video/webm">';
-      vid.addEventListener('loadeddata', function () { ready = true; vid.pause(); });
+      vid.addEventListener('loadeddata', function () { ready = true; vid.pause(); }); vid.addEventListener('seeked', function () { lT = 0; }); vid.addEventListener('seeking', function () { lT = 0; });
       blue = document.createElement('div'); blue.className = 'x-ab-blue';
             wrap.appendChild(vid); wrap.appendChild(blue); document.body.insertBefore(wrap, document.body.firstChild);
       document.documentElement.classList.add('x-about-on'); vid.load();
