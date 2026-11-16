@@ -768,7 +768,7 @@ export function open(opts) {
   const inSq = (x, inl) => SQ.some((q) => x > q[0] && x < q[1] && inl > q[2] && inl < q[3]);
   const JX = [8.3], LINKX = [8.3];
   const roadClear = (x, inl) => LINKX.some((lx) => Math.abs(x - lx) < .65 && inl > .9 && inl < 7.9)  || JX.some((jx) => Math.abs(x - jx) < 1.05 && inl < 2.6 && inl > .5);
-  let hk = 0; const thin = () => (hk++ % 5) > 1;
+  let hk = 0; const thin = () => (hk++ % 10) > 2;
   const hh = (x, inl, floors, extra) => { if (thin() || inSq(x, inl) || roadClear(x, inl) || (cove(x, shore(x) - inl) > .04 && inl < 3.7)) return null; const o = mk(floors, extra); if (o.stone) { o.wall = GRANITE[hc % 3]; o.gal = false; o.roof = ROOF[hc % 3]; } const [px, pz] = onShore(x, inl); const hs = house(o); W(put(hs, px, pz, seaYaw(px) + o.turn, -.02)); return hs; };
   const hhS = (x, inl, floors, extra) => { if (thin() || (x > 3.3 && x < 5.9 && inl > 1.0) || (cove(x, shoreS(x) + inl) > .04 && inl < 3.7)) return null; const o = mk(floors, extra); if (o.stone) { o.wall = GRANITE[hc % 3]; o.gal = false; } const [px, pz] = onShoreS(x, inl); const hs = house(o); W(put(hs, px, pz, seaYawS(px) + o.turn, -.02)); return hs; };
   const shoreEdge = (fn, sg) => (x, off) => fn(x) - sg * off;       // sg -1: land lies to the north of the water line (north coast), +1: to the south
@@ -797,6 +797,9 @@ export function open(opts) {
         [[-1.3, 4.05], [1.3, 4.05]].forEach(([dx, inl], k) => { const [hx, hz] = onShore(-9.6 + dx, inl), hs = house({ w: .3, d: .26, floors: 1, wall: [0xf7f1e4, 0xd8e8f0, 0xf6e2b8, 0xf2d4c4, 0xe3efe6][k % 5], roof: [0xc9473a, 0x2f6fa8, 0xe9b94a, 0xc9473a, 0x5fae8a][k % 5], gal: false, shut: [0x2f6fa8, 0xb4483a, 0x4a9a74][k % 3], fr: k + 8, door: 0x2f6fa8 }); hs.userData.pri = 4; hs.userData.fp = .32; W(put(hs, hx, hz, Math.atan2(qx - hx, qz - hz), -.02)); const bar = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, .05, 8), std(0x4f8fc0)); const bg = new THREE.Group(); bg.add(bar); bar.position.y = .025; bg.userData.fp = .05; bg.userData.pri = 4; W(put(bg, hx + (qx - hx) * .22, hz + (qz - hz) * .22, 0, -.02)); }); } const [lx, lz] = onShore(-17.2, 2.5); W(put(lonja(), lx, lz, seaYaw(lx), -.02));
     }
     const [hx, hz] = onShore(-11.4, 4.5); const hr = horreo(); hr.scale.setScalar(1.15); W(put(hr, hx, hz, seaYaw(hx) + .35, -.02));
+    /* more Galician hórreos: a few in the villages and some up on the mountain, among the pines */
+    for (const [x, inl, rot] of [[-15.6, 3.4, .2], [-4.2, 5.6, -.3], [3.6, 5.9, .4], [-1.2, 8.8, .1], [-9.8, 9.4, -.25], [5.8, 9.2, .3], [-13.4, 8.6, .5], [9.4, 9.8, -.2], [14.2, 8.4, .15], [0.8, 10.6, .35]]) {
+      const [hx2, hz2] = onShore(x, inl); const h2 = horreo(); h2.scale.setScalar(1.05 + (inl > 8 ? .1 : 0)); h2.userData.fp = .5; h2.userData.pri = 2; W(put(h2, hx2, hz2, seaYaw(hx2) + rot, -.02)); }
     spot('Church and hórreo', 'Old town', 'A granite church with its tall bell tower, and in front of it a hórreo on stone legs: the two pieces that make up the heart of a Galician old town.', ch, .55);
     spot('Muros arcades', 'Soportales', 'The arcades (soportales) of Muros: granite arches along the waterfront, shops at street level and white galleries above, all looking at the sea.', hubAt(-14.6, shore(-14.6) - 1.2, .4), .5);
     spot('Muros old town', 'Casco antiguo', 'Granite houses, narrow cobbled lanes and a stone cruceiro in the little square: the old town of Muros climbs up the slope behind the arcades.', hubAt(-13.1, shore(-13.1) - 2.6, .5), .5); }
@@ -1036,7 +1039,7 @@ export function open(opts) {
       for (const sd of [-1, 1]) {   // a light on each kerb, a little before the stripes (in the direction of the traffic that comes towards it)
         const lp = new THREE.Group(), pole = new THREE.Mesh(new THREE.CylinderGeometry(.007, .01, .26, 6), std(0x2f3a45)); pole.position.y = .13; lp.add(pole);
         const hd = box(.034, .09, .034, std(0x2b3036)); hd.position.y = .29; lp.add(hd);
-        for (const [m, y] of [[X.red, .315], [X.amb, .29], [X.green, .265]]) { const d = new THREE.Mesh(new THREE.SphereGeometry(.0105, 10, 8), m); d.position.set(.0175 * sd, y, 0); lp.add(d); }
+        for (const [m, y] of [[X.red, .315], [X.amb, .29], [X.green, .265]]) { const d = new THREE.Mesh(new THREE.SphereGeometry(.0105, 10, 8), m); d.position.set(.0175, y, 0); lp.add(d); }      /* every head faces the traffic that comes towards its kerb */
         lp.rotation.y = 0; const px = c.x + sy * .44 * sd - tx * .12 * sd, pz = c.z + cy * .44 * sd - tz * .12 * sd; W(put(lp, px, pz, c.yaw + (sd > 0 ? PI : 0), .03)); }
       for (let k = 0; k < 3; k++) { const p = person(SHIRTS[(crossings.length * 3 + k * 2 + 1) % SHIRTS.length], { skin: SKINS[(k + crossings.length) % 4], hat: k === 1 ? 0xe9e2d2 : undefined }); p.scale.setScalar(.9); W(p); X.peds.push({ p, s: (k % 2 ? 1 : -1) * .4, state: 'wait', wait: k * .9, dir: k % 2 ? -1 : 1, ph: 0 }); }
       crossings.push(X); }));
@@ -1651,7 +1654,7 @@ export function open(opts) {
     for (const [x0, x1, inl] of [[-16.8, -9.9, 5.6], [-.4, 4.0, 5.3], [7.8, 13.2, 5.4]]) for (let x = x0; x < x1; x += 1.05) hh(x, inl + (rnd() - .5) * .3, 1);
     for (const x of [-12.2, -.9, 6.3, 14.3, 19.6]) hh(x, 2.1, 1);
     /* a little village of its own in the meadow behind the Esteiro inlet: placed by hand, never thinned out, clear of the squares and the road links */
-    for (const [x, inl, fl] of [[-8.1, 5.0, 1], [-7.5, 6.3, 1], [-8.0, 7.7, 1], [-6.9, 4.7, 1], [-6.0, 5.4, 2], [-5.6, 6.9, 1], [-6.6, 8.1, 1], [-5.0, 4.4, 1], [-4.5, 5.9, 1], [-4.2, 7.3, 1], [-3.4, 4.8, 1], [-3.2, 6.3, 2], [-3.9, 8.2, 1], [-7.2, 9.0, 1], [-2.6, 5.6, 1], [-5.8, 3.9, 1], [-4.9, 7.1, 1], [-3.7, 3.7, 1], [-2.2, 4.3, 1], [-2.0, 7.0, 1], [-1.4, 5.0, 1], [-3.0, 9.0, 1], [-5.2, 9.3, 1], [-1.0, 6.6, 1], [-6.2, 7.5, 1], [-4.6, 3.6, 1], [-8.6, 8.6, 1]]) {
+    for (const [x, inl, fl] of [[-8.1, 5.0, 1], [-8.0, 7.7, 1], [-6.0, 5.4, 2], [-6.6, 8.1, 1], [-4.5, 5.9, 1], [-3.4, 4.8, 1], [-3.9, 8.2, 1], [-2.6, 5.6, 1], [-4.9, 7.1, 1], [-2.2, 4.3, 1], [-1.4, 5.0, 1], [-5.2, 9.3, 1], [-6.2, 7.5, 1]]) {
       if (inSq(x, inl) || roadClear(x, inl)) continue; const o = mk(fl, {}); const [px, pz] = onShore(x, inl); const hs = house(o); W(put(hs, px, pz, seaYaw(px) + o.turn, -.02)); }
     // crop fields: rows of vegetables, vines, wheat, ploughed earth and flower beds on the gentle slopes
     const CROPS = [[0x6fae3a, 0x4f8f2d], [0xe6c85a, 0xcfa83a], [0x8a5a3a, 0x6f452c], [0x7aa84a, 0x9c5fb0], [0x5f8f3a, 0x3d6f26], [0xe9a23a, 0xd4812a]];
@@ -1992,7 +1995,7 @@ export function open(opts) {
     if (tourOn) return; tourOn = true; tourMuted = !!(audio && audio.muted);
     mochi.classList.remove('x-ctaon'); mochi.classList.add('x-load'); root.classList.add('x-tour'); if (audio) { audio.sfx('mochinext'); setTimeout(() => audio && audio.mute(true), 500); }
     const t0 = performance.now();
-    import('./conducir.js?v=88').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
+    import('./conducir.js?v=89').then((m) => new Promise((ok) => setTimeout(() => ok(m), Math.max(0, 2800 - (performance.now() - t0)))))
       .then((m) => { const ab = m.open({ onClose: endTour, getDark: () => nightT, getRain: () => rainT }); if (!ab) throw new Error('no webgl'); setTimeout(mochiClose, 700); })
       .catch(() => { endTour(); mochiClose(); });
   };
