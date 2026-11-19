@@ -1965,8 +1965,8 @@
 
   // ---- the "Coming soon" project is gone: no card on the home page, footer links skip it, its URL goes home
   function dropComingSoon(p) {
-    if (p === 'coming-soon') { location.replace('/'); return; }
-    var i, a, links = document.querySelectorAll('a[href$="coming-soon"]');
+    if (p === 'coming-soon' || p === 'schweppes') { location.replace('/'); return; }      /* Schweppes is put away for now (files kept): its address goes home */
+    var i, a, links = document.querySelectorAll('a[href$="coming-soon"],a[href$="schweppes"]');
     for (i = 0; i < links.length; i++) {
       a = links[i];
       if (p === 'home') {
@@ -1976,7 +1976,7 @@
         setAttr(c, 'data-xs', '');
       } else if (a.closest('section')) {
         // project footer: "↳ Coming soon" (next) and "Coming soon ↵" (previous)
-        var next = /^\s*↳/.test(a.textContent), slug = next ? 'china' : 'lexus-singapore';
+        var next = /^\s*↳/.test(a.textContent), isSw = /schweppes$/.test(a.getAttribute('href') || ''), slug = isSw ? (next ? 'soidades-de-onte' : 'china') : (next ? 'china' : 'lexus-singapore');
         setAttr(a, 'href', './' + slug);
         setAttr(a, 'data-xl', '');
         var label = next ? '↳ ' + TITLES[slug] : TITLES[slug] + ' ↵';
